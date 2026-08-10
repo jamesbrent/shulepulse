@@ -643,13 +643,15 @@
     padding: 56px 16px 16px;
   }
 
-  .parent-stats { grid-template-columns: repeat(2, 1fr); }
+  .parent-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
   .parent-header { flex-direction: column; align-items: flex-start; gap: 12px; }
   .header-actions { width: 100%; flex-wrap: wrap; gap: 8px; }
 }
 
 @media (max-width: 480px) {
-  .parent-stats { grid-template-columns: repeat(2, 1fr); }
+  .parent-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .p-stat-card { padding: 14px; }
+  .p-stat-value { font-size: 22px; }
   .header-actions .btn-secondary { display: none; }
 }

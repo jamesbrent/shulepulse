@@ -775,11 +775,16 @@ select.form-input { cursor: pointer; }
     padding: 56px 16px 16px;
   }
 
-  .da-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .da-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .da-summary { grid-template-columns: repeat(2, 1fr); }
+
+  .da-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .da-header-actions { width: 100%; flex-wrap: wrap; gap: 8px; }
 }
 
 @media (max-width: 480px) {
-  .da-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .da-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .da-stat-card { padding: 14px; }
+  .da-stat-value { font-size: 22px; }
   .da-summary { grid-template-columns: repeat(2, 1fr); }
 }

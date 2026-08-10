@@ -382,13 +382,15 @@
   .hod-sidebar.open { transform: translateX(0); }
 
   .hod-main { margin-left: 0; padding: 56px 16px 16px; }
-  .hod-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .hod-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .hod-header { flex-direction: column; align-items: flex-start; gap: 12px; }
   .hod-header-actions { width: 100%; flex-wrap: wrap; gap: 8px; }
 }
 
 @media (max-width: 480px) {
-  .hod-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .hod-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .hod-stat-card { padding: 14px; }
+  .hod-stat-value { font-size: 22px; }
   .hod-header-actions .hod-btn-secondary { display: none; }
 }
 
