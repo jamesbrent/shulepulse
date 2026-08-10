@@ -547,6 +547,9 @@ textarea.lib-input { resize: vertical; }
 
 .text-muted { color: #94a3b8; }
 
+.lib-spin { animation: lib-spin 0.9s linear infinite; }
+@keyframes lib-spin { to { transform: rotate(360deg); } }
+
 @media (max-width: 768px) {
   .lib-modal-body { padding: 14px 16px; }
   .lib-form-grid { grid-template-columns: 1fr; }

@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { Search, BookOpen, BookMarked, RefreshCw, Clock, AlertTriangle, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import {
-  fmtDate, daysOverdue, fetchRules, ruleForType
+  fmtDate, daysOverdue, fetchRules, ruleForType, memberCodeForUser
 } from '../../lib/library'
 import './LibrarianDashboard.css'
 
-export default function MyLibrary({ schoolId, name, email, role }) {
+export default function MyLibrary({ schoolId, name, email, role, userId }) {
   const [member, setMember] = useState(null)
   const [myLoans, setMyLoans] = useState([])
   const [history, setHistory] = useState([])
@@ -27,19 +27,20 @@ export default function MyLibrary({ schoolId, name, email, role }) {
       .from('library_members')
       .select('*')
       .eq('school_id', schoolId)
-      .eq('email', email)
+      .eq('profile_id', userId)
       .maybeSingle()
 
-    if (!m) {
-      const code = `${(role || 'user').slice(0, 3).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
-      const { data: created } = await supabase.from('library_members').insert({
+    if (!m && userId) {
+      const code = await memberCodeForUser(schoolId, email, role)
+      const { data: created } = await supabase.from('library_members').upsert({
         school_id: schoolId,
+        profile_id: userId,
         full_name: name,
         email,
         member_type: role,
         member_code: code,
         status: 'active',
-      }).select().single().catch(() => null)
+      }, { onConflict: 'school_id,profile_id' }).select().single().catch(() => null)
       m = created
     }
     return m

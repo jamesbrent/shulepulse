@@ -217,7 +217,7 @@ export default function TeacherDashboard() {
       case 'comments':
         return <Comments profile={profile} />
       case 'library':
-        return <MyLibrary schoolId={profile?.school_id} name={profile?.full_name} email={profile?.email} role="teacher" />
+        return <MyLibrary schoolId={profile?.school_id} name={profile?.full_name} email={profile?.email} role="teacher" userId={profile?.id} />
       case 'notices':
         return <NoticesPage profile={profile} />
       case 'support':

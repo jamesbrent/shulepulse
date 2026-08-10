@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Users, X, UserPlus } from 'lucide-react'
+import { Plus, Search, Users, X, UserPlus, RefreshCw } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { memberTypeLabel, fetchRules, ruleForType } from '../../lib/library'
+import { memberTypeLabel, fetchRules, ruleForType, syncLibraryMembers } from '../../lib/library'
 
 export default function LibraryMembers({ schoolId }) {
   const [members, setMembers] = useState([])
   const [search, setSearch] = useState('')
   const [rules, setRules] = useState([])
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ full_name: '', member_type: 'student', member_code: '' })
   const [saving, setSaving] = useState(false)
@@ -19,6 +20,7 @@ export default function LibraryMembers({ schoolId }) {
 
   const fetchAll = async () => {
     setLoading(true)
+    await syncLibraryMembers(schoolId)
     const [res, rulesRes] = await Promise.all([
       supabase.from('library_members').select('*').eq('school_id', schoolId).order('full_name'),
       fetchRules(schoolId),
@@ -26,6 +28,14 @@ export default function LibraryMembers({ schoolId }) {
     setMembers(res.data || [])
     setRules(rulesRes)
     setLoading(false)
+  }
+
+  const resync = async () => {
+    setSyncing(true)
+    await syncLibraryMembers(schoolId)
+    const { data } = await supabase.from('library_members').select('*').eq('school_id', schoolId).order('full_name')
+    setMembers(data || [])
+    setSyncing(false)
   }
 
   const filtered = members.filter(m => {
@@ -75,8 +85,11 @@ export default function LibraryMembers({ schoolId }) {
           <Search size={15} color="#94a3b8" />
           <input placeholder="Search by name, code or email..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
+        <button className="lib-btn" onClick={resync} disabled={syncing}>
+          <RefreshCw size={15} className={syncing ? 'lib-spin' : ''} /> {syncing ? 'Syncing...' : 'Sync Users'}
+        </button>
         <button className="lib-btn lib-btn-blue" onClick={() => { setShowAdd(true); setError('') }}>
-          <UserPlus size={15} /> Add Member
+          <UserPlus size={15} /> Add Guest
         </button>
       </div>
 
@@ -84,7 +97,7 @@ export default function LibraryMembers({ schoolId }) {
         <div className="lib-card-header">
           <div>
             <h2>Library Members ({filtered.length})</h2>
-            <p>Active and suspended members</p>
+            <p>Auto-synced from this school's registered users</p>
           </div>
           <Users size={16} color="#94a3b8" />
         </div>
@@ -93,7 +106,7 @@ export default function LibraryMembers({ schoolId }) {
           <div className="lib-empty">
             <Users size={36} color="#cbd5e1" />
             <p>No members found</p>
-            <span>Add a member to start lending books</span>
+            <span>Add users to the school or press "Sync Users" to refresh</span>
           </div>
         ) : (
           <div className="lib-table-wrap">
@@ -138,9 +151,11 @@ export default function LibraryMembers({ schoolId }) {
                           <button className="lib-btn" onClick={() => toggleStatus(m)}>
                             {m.status === 'active' ? 'Suspend' : 'Activate'}
                           </button>
-                          <button className="lib-btn lib-btn-danger" onClick={() => deleteMember(m)} title="Remove">
-                            <X size={14} />
-                          </button>
+                          {!m.profile_id && (
+                            <button className="lib-btn lib-btn-danger" onClick={() => deleteMember(m)} title="Remove">
+                              <X size={14} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -156,7 +171,7 @@ export default function LibraryMembers({ schoolId }) {
         <div className="lib-modal-backdrop" onClick={() => !saving && setShowAdd(false)}>
           <div className="lib-modal" onClick={e => e.stopPropagation()}>
             <div className="lib-modal-header">
-              <h3>Add Library Member</h3>
+              <h3>Add Guest Member</h3>
               <button className="lib-modal-close" onClick={() => setShowAdd(false)}><Plus size={18} style={{ transform: 'rotate(45deg)' }} /></button>
             </div>
             <div className="lib-modal-body">
@@ -181,7 +196,7 @@ export default function LibraryMembers({ schoolId }) {
             <div className="lib-modal-footer">
               <button className="lib-btn" onClick={() => setShowAdd(false)}>Cancel</button>
               <button className="lib-btn lib-btn-blue" onClick={addMember} disabled={saving}>
-                {saving ? 'Adding...' : 'Add Member'}
+                {saving ? 'Adding...' : 'Add Guest'}
               </button>
             </div>
           </div>

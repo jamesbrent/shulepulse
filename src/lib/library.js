@@ -70,3 +70,87 @@ export async function currentBorrowedCount(memberId) {
     .in('status', ['issued', 'overdue'])
   return count || 0
 }
+
+const ROLE_TO_MEMBER_TYPE = {
+  student: 'student',
+  teacher: 'teacher',
+  class_teacher: 'teacher',
+  hod: 'admin',
+  admin: 'admin',
+  deputy_administrator: 'admin',
+  bursar: 'admin',
+  registrar: 'admin',
+  librarian: 'librarian',
+}
+
+export function memberTypeForRole(role) {
+  return ROLE_TO_MEMBER_TYPE[role] || null
+}
+
+export async function memberCodeForUser(schoolId, email, role) {
+  if (role === 'student') {
+    const { data: s } = await supabase
+      .from('students')
+      .select('admission_number')
+      .eq('school_id', schoolId).eq('email', email)
+      .maybeSingle()
+    return s?.admission_number ? `STD/${s.admission_number}` : null
+  }
+  if (role === 'teacher' || role === 'class_teacher') {
+    const { data: t } = await supabase
+      .from('teachers')
+      .select('staff_number, teacher_code, employee_number')
+      .eq('school_id', schoolId).eq('email', email)
+      .maybeSingle()
+    const code = t?.staff_number || t?.teacher_code || t?.employee_number
+    return code ? `TCH/${code}` : null
+  }
+  return null
+}
+
+export async function syncLibraryMembers(schoolId) {
+  if (!schoolId) return
+  const [profilesRes, studentsRes, teachersRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, email, full_name, role')
+      .eq('school_id', schoolId)
+      .neq('role', 'parent'),
+    supabase
+      .from('students')
+      .select('email, admission_number')
+      .eq('school_id', schoolId).eq('status', 'active'),
+    supabase
+      .from('teachers')
+      .select('email, staff_number, teacher_code, employee_number')
+      .eq('school_id', schoolId),
+  ])
+
+  const students = new Map((studentsRes.data || []).map(s => [s.email, s]))
+  const teachers = new Map((teachersRes.data || []).map(t => [t.email, t]))
+
+  const rows = (profilesRes.data || []).map(p => {
+    const type = memberTypeForRole(p.role)
+    if (!type) return null
+    let code = null
+    if (type === 'student' && students.has(p.email)) code = `STD/${students.get(p.email).admission_number}`
+    if (type === 'teacher' && teachers.has(p.email)) {
+      const t = teachers.get(p.email)
+      code = `TCH/${t.staff_number || t.teacher_code || t.employee_number}`
+    }
+    return {
+      school_id: schoolId,
+      profile_id: p.id,
+      member_type: type,
+      full_name: p.full_name,
+      email: p.email,
+      member_code: code,
+    }
+  }).filter(Boolean)
+
+  if (rows.length) {
+    await supabase
+      .from('library_members')
+      .upsert(rows, { onConflict: 'school_id,profile_id' })
+  }
+}

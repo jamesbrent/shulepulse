@@ -671,6 +671,7 @@ export default function StudentPortal() {
           name={student?.full_name || profile?.full_name}
           email={profile?.email || student?.email}
           role="student"
+          userId={profile?.id}
         />
       </div>
     )

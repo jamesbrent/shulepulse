@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import {
-  memberTypeLabel, fetchRules, ruleForType, fmtDate, daysOverdue
+  memberTypeLabel, fetchRules, ruleForType, fmtDate, daysOverdue, syncLibraryMembers
 } from '../../lib/library'
 
 export default function LibraryBorrowReturn({ schoolId }) {
@@ -27,6 +27,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
 
   const fetchAll = async () => {
     setLoading(true)
+    await syncLibraryMembers(schoolId)
     const [loansRes, membersRes, booksRes, rulesRes] = await Promise.all([
       supabase.from('library_loans')
         .select('*, books:library_books(title, author, available_copies), members:library_members(full_name, member_type, member_code)')
@@ -82,8 +83,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
       return
     }
 
-    const { data: user } = await supabase.auth.getUser()
-    const { data: prof } = await supabase.from('profiles').select('id').eq('id', user.data.user.id).single()
+    const { data: { user } } = await supabase.auth.getUser()
     const { data: book } = await supabase.from('library_books').select('available_copies').eq('id', issueBook).single()
     if (!book || book.available_copies <= 0) {
       setIssueError('This book has no available copies')
@@ -95,7 +95,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
       school_id: schoolId,
       book_id: issueBook,
       member_id: issueMember,
-      issued_by: prof?.id || null,
+      issued_by: user?.id || null,
       due_date: issueDue,
       status: 'issued',
     }).select().single()
