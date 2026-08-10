@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, ClipboardList, BarChart2, Calendar,
   Bell, LogOut, Save, CheckCircle, XCircle, MessageSquare,
-  BookOpen, Award
+  BookOpen, Award, Menu, X
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -41,6 +41,7 @@ export default function TeacherDashboard() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const { logoUrl, schoolName } = useBrandingStore()
 
   useEffect(() => {
@@ -363,7 +364,18 @@ export default function TeacherDashboard() {
 
   return (
     <div className="teacher-root">
-      <aside className="teacher-sidebar">
+      <button className="teacher-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && <div className="teacher-mobile-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`teacher-sidebar ${mobileOpen ? 'open' : ''}`}>
+        {mobileOpen && (
+          <button className="teacher-mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        )}
         <div className="sidebar-brand">
           {logoUrl ? (
             <img src={logoUrl} alt={schoolName || 'Logo'} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }} />
@@ -386,7 +398,7 @@ export default function TeacherDashboard() {
             <button
               key={item.key}
               className={`nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.key)}
+              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -395,7 +407,7 @@ export default function TeacherDashboard() {
         </nav>
         <RoleSwitcher />
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
+          <button className="logout-btn" onClick={() => { handleLogout(); setMobileOpen(false) }}>
             <LogOut size={16} />
             <span>Logout</span>
           </button>
@@ -409,7 +421,7 @@ export default function TeacherDashboard() {
             <p>{new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
           <div className="header-actions">
-            <button className="btn-primary" onClick={() => setActiveNav('grades')}>
+            <button className="btn-primary" onClick={() => { setActiveNav('grades'); setMobileOpen(false) }}>
               <BarChart2 size={15} />
               Submit Grades
             </button>

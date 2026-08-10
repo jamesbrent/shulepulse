@@ -1792,7 +1792,7 @@
 }
 
 @media (max-width: 480px) {
-  .sp-stats-grid { grid-template-columns: 1fr; }
+  .sp-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .sp-quick-actions { grid-template-columns: repeat(2, 1fr); }
   .sp-self-service-grid { grid-template-columns: repeat(2, 1fr); }
   .sp-quick-links { flex-direction: column; }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, ClipboardList, BarChart3, MessageSquare,
   Users, LogOut, Calendar, TrendingUp, CheckCircle, XCircle, Clock,
-  Phone, Mail, UserCheck, BookOpen, Bell
+  Phone, Mail, UserCheck, BookOpen, Bell, Menu, X
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -30,6 +30,7 @@ export default function ClassTeacherDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { logoUrl, schoolName } = useBrandingStore()
   const [activeNav, setActiveNav] = useState('dashboard')
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [teacherData, setTeacherData] = useState(null)
   const [school, setSchool] = useState(null)
   const [currentTerm, setCurrentTerm] = useState('Term 1')
@@ -202,19 +203,19 @@ export default function ClassTeacherDashboard() {
               <h3>Quick Actions</h3>
             </div>
             <div className="ct-quick-actions">
-              <button className="ct-quick-action-btn" onClick={() => setActiveNav('attendance')}>
+              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('attendance'); setMobileOpen(false) }}>
                 <ClipboardList size={20} />
                 <span>Mark Attendance</span>
               </button>
-              <button className="ct-quick-action-btn" onClick={() => setActiveNav('performance')}>
+              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('performance'); setMobileOpen(false) }}>
                 <BarChart3 size={20} />
                 <span>View Performance</span>
               </button>
-              <button className="ct-quick-action-btn" onClick={() => setActiveNav('comments')}>
+              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('comments'); setMobileOpen(false) }}>
                 <MessageSquare size={20} />
                 <span>Class Comments</span>
               </button>
-              <button className="ct-quick-action-btn" onClick={() => setActiveNav('communication')}>
+              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('communication'); setMobileOpen(false) }}>
                 <Phone size={20} />
                 <span>Contact Parents</span>
               </button>
@@ -255,7 +256,18 @@ export default function ClassTeacherDashboard() {
 
   return (
     <div className="ct-root">
-      <aside className="ct-sidebar">
+      <button className="ct-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && <div className="ct-mobile-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`ct-sidebar ${mobileOpen ? 'open' : ''}`}>
+        {mobileOpen && (
+          <button className="ct-mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        )}
         <div className="ct-sidebar-brand">
           {logoUrl ? (
             <img src={logoUrl} alt={schoolName || 'Logo'} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }} />
@@ -280,7 +292,7 @@ export default function ClassTeacherDashboard() {
             <button
               key={item.key}
               className={`ct-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.key)}
+              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
             >
               <span className="ct-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -289,7 +301,7 @@ export default function ClassTeacherDashboard() {
         </nav>
         <RoleSwitcher />
         <div className="ct-sidebar-footer">
-          <button className="ct-logout-btn" onClick={handleLogout}>
+          <button className="ct-logout-btn" onClick={() => { setMobileOpen(false); handleLogout() }}>
             <LogOut size={16} />
             <span>Logout</span>
           </button>

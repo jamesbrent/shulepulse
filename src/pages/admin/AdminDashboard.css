@@ -899,7 +899,7 @@
 }
 
 @media (max-width: 480px) {
-  .adm-kpi-row { grid-template-columns: 1fr; }
+  .adm-kpi-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .adm-table-card { margin: 0 -14px; }
   .adm-pagination { flex-wrap: wrap; gap: 8px; justify-content: center; }
 }

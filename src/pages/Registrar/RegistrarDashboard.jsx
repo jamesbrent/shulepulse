@@ -4,7 +4,8 @@ import {
   LogOut, Download, GraduationCap, FileText, Archive, Shield,
   RefreshCw, Printer, Clock, AlertCircle,
   CheckCircle, UserX, Database, TrendingUp, TrendingDown,
-  Phone, IdCard, Bell, Activity, ExternalLink, MessageSquare
+  Phone, IdCard, Bell, Activity, ExternalLink, MessageSquare,
+  Menu, X
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -42,6 +43,7 @@ export default function RegistrarDashboard() {
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
   const [activeNav, setActiveNav] = useState('dashboard')
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [stats, setStats] = useState({
     totalStudents: 0, newAdmissions: 0, transfersIn: 0,
     transfersOut: 0, alumni: 0, pendingFiles: 0,
@@ -191,6 +193,7 @@ export default function RegistrarDashboard() {
   ]
 
   const handleLogout = async () => {
+    setMobileOpen(false)
     await supabase.auth.signOut()
     window.location.href = basePath('/')
   }
@@ -383,7 +386,7 @@ export default function RegistrarDashboard() {
                     <span className="rd-alert-msg">
                       {t.text} <strong>• {t.count} student{t.count !== 1 ? 's' : ''}</strong>
                     </span>
-                    <button className={`rd-alert-fix ${cfg.fixCls}`} onClick={() => { if (t.nav) setActiveNav(t.nav) }}>Fix</button>
+                    <button className={`rd-alert-fix ${cfg.fixCls}`} onClick={() => { if (t.nav) setActiveNav(t.nav); setMobileOpen(false) }}>Fix</button>
                   </div>
                 )
               })}
@@ -474,7 +477,7 @@ export default function RegistrarDashboard() {
           <div className="rd-card-hdr">
             <h3><Activity size={16} /> Recent Registrar Activity</h3>
             {recentActivity.length > 0 && (
-              <button className="reg-btn-primary small" onClick={() => setActiveNav('students')}>
+              <button className="reg-btn-primary small" onClick={() => { setActiveNav('students'); setMobileOpen(false) }}>
                 <ExternalLink size={13} /> View All
               </button>
             )}
@@ -513,7 +516,7 @@ export default function RegistrarDashboard() {
           </div>
           <div className="rd-actions">
             {actions.map(a => (
-              <button key={a.label} className="rd-action" onClick={() => setActiveNav(a.nav)}>
+              <button key={a.label} className="rd-action" onClick={() => { setActiveNav(a.nav); setMobileOpen(false) }}>
                 <div className={`rd-action-icon ${a.iconCls}`}>{a.icon}</div>
                 <span className="rd-action-lbl">{a.label}</span>
                 <span className="rd-action-desc">{a.desc}</span>
@@ -580,7 +583,18 @@ export default function RegistrarDashboard() {
 
   return (
     <div className="reg-root">
-      <aside className="reg-sidebar">
+      <button className="reg-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && <div className="reg-mobile-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`reg-sidebar ${mobileOpen ? 'open' : ''}`}>
+        {mobileOpen && (
+          <button className="reg-mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        )}
         <div className="reg-sidebar-brand">
           {logoUrl ? (
             <img src={logoUrl} alt={schoolName || 'Logo'} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }} />
@@ -601,7 +615,7 @@ export default function RegistrarDashboard() {
             <button
               key={item.key}
               className={`reg-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.key)}
+              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
             >
               <span className="reg-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -626,7 +640,7 @@ export default function RegistrarDashboard() {
             </p>
           </div>
           <div className="reg-header-actions">
-            <button className="reg-btn-primary" onClick={() => setActiveNav('admissions')}>
+            <button className="reg-btn-primary" onClick={() => { setActiveNav('admissions'); setMobileOpen(false) }}>
               <UserPlus size={15} /> New Admission
             </button>
             <button className="reg-btn-secondary" onClick={fetchRegistrarData} style={{ padding: '9px 14px' }}>

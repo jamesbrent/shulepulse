@@ -3,7 +3,7 @@ import {
   LayoutDashboard, BarChart2, DollarSign, ClipboardList,
   Bell, MessageSquare, LogOut, Phone, CreditCard,
   TrendingUp, TrendingDown, Minus, CheckCircle, Users,
-  ChevronDown
+  ChevronDown, Menu, X
 } from 'lucide-react'
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -35,6 +35,7 @@ export default function ParentPortal() {
   const [school, setSchool] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showChildDropdown, setShowChildDropdown] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const { logoUrl, schoolName } = useBrandingStore()
 
   useEffect(() => {
@@ -105,7 +106,18 @@ export default function ParentPortal() {
 
   return (
     <div className="parent-root">
-      <aside className="parent-sidebar">
+      <button className="parent-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && <div className="parent-mobile-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`parent-sidebar ${mobileOpen ? 'open' : ''}`}>
+        {mobileOpen && (
+          <button className="parent-mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        )}
         <div className="sidebar-brand">
           {logoUrl ? (
             <img src={logoUrl} alt={schoolName || 'Logo'} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }} />
@@ -140,7 +152,7 @@ export default function ParentPortal() {
                   <button
                     key={c.id}
                     className={`sidebar-child-option ${activeChild?.id === c.id ? 'active' : ''}`}
-                    onClick={() => { setActiveChild(c); setShowChildDropdown(false) }}
+                    onClick={() => { setActiveChild(c); setShowChildDropdown(false); setMobileOpen(false) }}
                   >
                     <span className="child-option-avatar">
                       {c.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -169,7 +181,7 @@ export default function ParentPortal() {
             <button
               key={item.key}
               className={`nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.key)}
+              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -179,7 +191,7 @@ export default function ParentPortal() {
         <RoleSwitcher />
 
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
+          <button className="logout-btn" onClick={() => { handleLogout(); setMobileOpen(false) }}>
             <LogOut size={16} />
             <span>Logout</span>
           </button>
@@ -217,7 +229,7 @@ export default function ParentPortal() {
                 No phone on file
               </button>
             )}
-            <button className="btn-primary" onClick={() => setActiveNav('fees')}>
+            <button className="btn-primary" onClick={() => { setActiveNav('fees'); setMobileOpen(false) }}>
               <CreditCard size={15} />
               Pay Fees
             </button>

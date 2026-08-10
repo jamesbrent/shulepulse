@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, DollarSign, CreditCard, Receipt, FileText,
-  BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare
+  BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare, Menu, X
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -32,6 +32,7 @@ export default function BursarDashboard() {
   const { logoUrl, schoolName } = useBrandingStore()
   const [activeNav, setActiveNav] = useState('dashboard')
   const [openRecordPayment, setOpenRecordPayment] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [stats, setStats] = useState({
     totalCollected: 0,
     outstanding: 0,
@@ -212,7 +213,18 @@ export default function BursarDashboard() {
 
   return (
     <div className="b-root">
-      <aside className="b-sidebar">
+      <button className="b-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && <div className="b-mobile-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`b-sidebar ${mobileOpen ? 'open' : ''}`}>
+        {mobileOpen && (
+          <button className="b-mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        )}
         <div className="b-sidebar-brand">
           {logoUrl ? (
             <img src={logoUrl} alt={schoolName || 'Logo'} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }} />
@@ -233,7 +245,7 @@ export default function BursarDashboard() {
             <button
               key={item.key}
               className={`b-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.key)}
+              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
             >
               <span className="b-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -256,10 +268,10 @@ export default function BursarDashboard() {
             <p>{currentTerm ? `${currentTerm}, ${currentYear}` : `${currentYear}`} · {school?.name || ''}</p>
           </div>
           <div className="b-header-actions">
-            <button className="b-btn-secondary" onClick={() => setActiveNav('reports')}>
+            <button className="b-btn-secondary" onClick={() => { setActiveNav('reports'); setMobileOpen(false) }}>
               <Upload size={15} /> Export Report
             </button>
-            <button className="b-btn-primary" onClick={() => { setActiveNav('payments'); setOpenRecordPayment(true) }}>
+            <button className="b-btn-primary" onClick={() => { setActiveNav('payments'); setOpenRecordPayment(true); setMobileOpen(false) }}>
               <UserPlus size={15} /> Record Payment
             </button>
             <div className="b-admin-avatar">

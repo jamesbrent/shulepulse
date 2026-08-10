@@ -4,7 +4,7 @@ import {
   TrendingUp, Settings, LogOut, Plus, Search,
   Eye, Edit, Ban, Trash2, Building2, Download, CheckCircle,
   GraduationCap, UserCheck, DollarSign, Calendar,
-  Activity, ArrowUp, ArrowDown, History, MessageSquare
+  Activity, ArrowUp, ArrowDown, History, MessageSquare, Menu, X
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -49,6 +49,7 @@ export default function SuperadminDashboard() {
   const [viewSchool, setViewSchool] = useState(null)
   const [editSchool, setEditSchool] = useState(null)
   const [toast, setToast] = useState(null)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     loadAll()
@@ -376,7 +377,18 @@ export default function SuperadminDashboard() {
 
   return (
     <div className="super-root">
-      <aside className="super-sidebar">
+      <button className="super-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && <div className="super-mobile-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`super-sidebar ${mobileOpen ? 'open' : ''}`}>
+        {mobileOpen && (
+          <button className="super-mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        )}
         <div className="sidebar-brand">
           <div className="sidebar-logo">SP</div>
           <span>ShulePulse</span>
@@ -387,7 +399,7 @@ export default function SuperadminDashboard() {
         </div>
         <nav className="sidebar-nav">
           {navItems.map((item) => (
-            <button key={item.key} className={`nav-item ${activeNav === item.key ? 'active' : ''}`} onClick={() => setActiveNav(item.key)}>
+            <button key={item.key} className={`nav-item ${activeNav === item.key ? 'active' : ''}`} onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}>
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
             </button>
@@ -395,7 +407,7 @@ export default function SuperadminDashboard() {
         </nav>
         <RoleSwitcher />
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
+          <button className="logout-btn" onClick={() => { setMobileOpen(false); handleLogout() }}>
             <LogOut size={16} />
             <span>Logout</span>
           </button>
@@ -409,10 +421,10 @@ export default function SuperadminDashboard() {
             <p>ShulePulse · {new Date().toLocaleDateString('en-KE', { month: 'long', year: 'numeric' })}</p>
           </div>
           <div className="header-actions">
-            <button className="btn-secondary" onClick={handleExport}>
+            <button className="btn-secondary" onClick={() => { setMobileOpen(false); handleExport() }}>
               <Download size={15} /> Export Data
             </button>
-            <button className="btn-primary" onClick={() => setShowOnboard(true)}>
+            <button className="btn-primary" onClick={() => { setMobileOpen(false); setShowOnboard(true) }}>
               <Plus size={15} /> Onboard School
             </button>
           </div>

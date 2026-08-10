@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, BarChart2, GraduationCap, ClipboardList,
   LogOut, Upload, ChevronRight, BookOpen, Settings, ShieldCheck,
-  FileBarChart, FileText, Bell, MessageSquare
+  FileBarChart, FileText, Bell, MessageSquare, Menu, X
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -28,6 +28,7 @@ export default function HODDashboard() {
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
   const [activeNav, setActiveNav] = useState('dashboard')
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [stats, setStats] = useState({
     totalSubjects: 0,
     avgPerformance: 0,
@@ -246,7 +247,18 @@ export default function HODDashboard() {
 
   return (
     <div className="hod-root">
-      <aside className="hod-sidebar">
+      <button className="hod-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && <div className="hod-mobile-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`hod-sidebar ${mobileOpen ? 'open' : ''}`}>
+        {mobileOpen && (
+          <button className="hod-mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        )}
         <div className="hod-sidebar-brand">
           {logoUrl ? (
             <img src={logoUrl} alt={schoolName || 'Logo'} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }} />
@@ -267,7 +279,7 @@ export default function HODDashboard() {
             <button
               key={item.key}
               className={`hod-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.key)}
+              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
             >
               <span className="hod-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -290,10 +302,10 @@ export default function HODDashboard() {
             <p>{currentTerm ? `${currentTerm}, ${currentYear}` : `${currentYear}`} · {school?.name || ''}</p>
           </div>
           <div className="hod-header-actions">
-            <button className="hod-btn-secondary" onClick={() => setActiveNav('reports')}>
+            <button className="hod-btn-secondary" onClick={() => { setActiveNav('reports'); setMobileOpen(false) }}>
               <FileText size={15} /> Reports
             </button>
-            <button className="hod-btn-primary" onClick={() => setActiveNav('analytics')}>
+            <button className="hod-btn-primary" onClick={() => { setActiveNav('analytics'); setMobileOpen(false) }}>
               <BarChart2 size={15} /> View Analytics
             </button>
             <div className="hod-avatar">

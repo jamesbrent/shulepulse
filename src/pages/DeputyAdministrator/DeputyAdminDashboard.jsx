@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, GraduationCap, Calendar,
   ClipboardList, ShieldAlert, LogOut, ChevronRight,
   BookOpen, Search, AlertTriangle, CheckCircle, Clock,
-  UserCheck, FileText, BarChart2, X, MessageSquare, Award, Bell
+  UserCheck, FileText, BarChart2, X, MessageSquare, Award, Bell, Menu
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -26,6 +26,7 @@ export default function DeputyAdminDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const [activeNav, setActiveNav] = useState('dashboard')
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [stats, setStats] = useState({
     totalStudents: 0,
     disciplineCases: 0,
@@ -168,7 +169,7 @@ export default function DeputyAdminDashboard() {
           <div className="da-card">
             <div className="da-card-header">
               <h3>Recent Discipline Cases</h3>
-              <button className="da-view-all" onClick={() => setActiveNav('discipline')}>
+              <button className="da-view-all" onClick={() => { setActiveNav('discipline'); setMobileOpen(false) }}>
                 View all <ChevronRight size={14} />
               </button>
             </div>
@@ -208,7 +209,18 @@ export default function DeputyAdminDashboard() {
 
   return (
     <div className="da-root">
-      <aside className="da-sidebar">
+      <button className="da-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && <div className="da-mobile-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`da-sidebar ${mobileOpen ? 'open' : ''}`}>
+        {mobileOpen && (
+          <button className="da-mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        )}
         <div className="da-sidebar-brand">
           {school?.logo_url ? (
             <img src={school.logo_url} alt={school.name || 'Logo'} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }} />
@@ -229,7 +241,7 @@ export default function DeputyAdminDashboard() {
             <button
               key={item.key}
               className={`da-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.key)}
+              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
             >
               <span className="da-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
