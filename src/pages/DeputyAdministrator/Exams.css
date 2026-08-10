@@ -1,0 +1,288 @@
+/* ═══════════════════════════════════════════════════
+   Examination Monitoring — Deputy Admin
+   ═══════════════════════════════════════════════════ */
+
+/* ── Shared Buttons (for Modal component) ── */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: #2563eb; color: #fff;
+  border: none; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: #f1f5f9; color: #374151;
+  border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.btn-secondary:hover { background: #e2e8f0; }
+
+.btn-danger {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: #dc2626; color: #fff;
+  border: none; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.btn-danger:hover { background: #b91c1c; }
+.btn-danger:disabled { background: #fca5a5; cursor: not-allowed; }
+
+/* ── Tabs ── */
+.exam-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+.exam-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.exam-tab:hover {
+  color: #334155;
+}
+.exam-tab--active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+.exam-tab-badge {
+  background: #dc2626;
+  color: #fff;
+  border-radius: 99px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* ── Grade Distribution ── */
+.exam-grade-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.exam-grade-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px 12px;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+.exam-grade-card:hover {
+  border-color: #cbd5e1;
+}
+.exam-grade-letter {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.exam-grade-count {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 4px 0 2px;
+}
+.exam-grade-pct {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 0 8px;
+}
+.exam-grade-bar {
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.exam-grade-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s;
+}
+
+/* ── Pending Cards ── */
+.exam-pending-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.exam-pending-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.exam-pending-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.exam-pending-subject {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.exam-pending-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.exam-pending-subject h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.exam-pending-subject p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #64748b;
+}
+.exam-pending-status {
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.exam-pending-stats {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: #64748b;
+  margin: 10px 0;
+}
+.exam-pending-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.exam-pending-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 4px 0 10px;
+}
+.exam-pending-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+/* ── Back Link ── */
+.exam-back-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0;
+}
+.exam-back-link:hover {
+  text-decoration: underline;
+}
+.exam-back-meta {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* ── Detail View ── */
+.exam-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.exam-detail-info h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.exam-detail-info p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+.exam-detail-actions {
+  display: flex;
+  gap: 8px;
+}
+.exam-detail-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* ── Empty States ── */
+.exam-empty {
+  text-align: center;
+  padding: 48px 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+.exam-empty svg {
+  margin-bottom: 8px;
+}
+.exam-empty p {
+  color: #64748b;
+  font-size: 14px;
+  margin: 4px 0 0;
+}
+.exam-empty-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .exam-grade-row {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+}
+@media (max-width: 768px) {
+  .exam-grade-row {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+  .exam-grade-letter { font-size: 20px; }
+  .exam-grade-count { font-size: 16px; }
+  .exam-grade-card { padding: 12px 6px; }
+  .exam-pending-grid {
+    grid-template-columns: 1fr;
+  }
+}

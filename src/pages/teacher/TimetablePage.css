@@ -1,0 +1,264 @@
+/* ═══════════════════════════════════════════════════
+   Timetable Page — Teacher Weekly Schedule
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  --tt-surf: #FFFFFF;
+  --tt-border: #E5E7EB;
+  --tt-text: #0F172A;
+  --tt-text-sec: #64748B;
+  --tt-text-muted: #94A3B8;
+  --tt-blue: #2563EB;
+  --tt-radius: 16px;
+  --tt-radius-sm: 10px;
+  --tt-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+}
+
+.tt-dash {
+  display: flex; flex-direction: column; gap: 24px;
+}
+
+/* ── Summary Cards (4 in a row) ── */
+.tt-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.tt-stat {
+  background: var(--tt-surf);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-sm);
+  padding: 16px 18px;
+  box-shadow: var(--tt-shadow);
+  display: flex; align-items: center; gap: 14px;
+}
+.tt-stat-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.tt-stat-icon--blue { background: #EFF6FF; color: var(--tt-blue); }
+.tt-stat-icon--purple { background: #F5F3FF; color: #7C3AED; }
+.tt-stat-icon--cyan { background: #ECFEFF; color: #0891B2; }
+.tt-stat-icon--green { background: #DCFCE7; color: #16A34A; }
+.tt-stat-body { display: flex; flex-direction: column; }
+.tt-stat-value {
+  font-size: 24px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.1; margin: 0;
+}
+.tt-stat-label { font-size: 12px; color: var(--tt-text-sec); margin: 2px 0 0; }
+
+/* ── Next Lesson Callout ── */
+.tt-next-lesson {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--tt-surf);
+  border: 1px solid var(--tt-border);
+  border-left: 4px solid var(--tt-blue);
+  border-radius: var(--tt-radius-sm);
+  padding: 11px 16px;
+  box-shadow: var(--tt-shadow);
+}
+.tt-next-lesson-label {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--tt-text-sec); white-space: nowrap;
+}
+.tt-next-lesson-body {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.tt-next-subj { font-size: 14px; font-weight: 700; color: var(--tt-text); }
+.tt-next-sep { color: #CBD5E1; font-size: 12px; }
+.tt-next-class { font-size: 12px; font-weight: 600; color: #475569; }
+.tt-next-time { font-size: 12px; color: var(--tt-text-muted); }
+
+/* ── Empty state ── */
+.tt-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 48px; color: var(--tt-text-muted); font-size: 14px; text-align: center;
+  background: var(--tt-surf); border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+}
+.tt-empty p { margin: 8px 0 4px; font-size: 15px; color: var(--tt-text-sec); }
+
+/* ── Grid Wrapper ── */
+.tt-grid-wrap {
+  background: var(--tt-surf);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  box-shadow: var(--tt-shadow);
+  overflow: hidden;
+}
+.tt-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; border-bottom: 1px solid var(--tt-border);
+}
+.tt-toolbar-spacer { flex: 1; }
+
+/* ── Buttons ── */
+.tt-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border: none; border-radius: 8px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.tt-btn--dark { background: #0F172A; color: #fff; }
+.tt-btn--dark:hover { background: #1E293B; }
+
+/* Mobile day nav */
+.tt-day-nav {
+  display: flex; align-items: center; gap: 6px;
+}
+.tt-day-nav button {
+  width: 28px; height: 28px;
+  border: 1px solid var(--tt-border); border-radius: 6px;
+  background: var(--tt-surf); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--tt-text-sec); transition: all 0.12s;
+}
+.tt-day-nav button:hover:not(:disabled) { background: #F1F5F9; }
+.tt-day-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
+.tt-day-nav-label {
+  font-size: 13px; font-weight: 700; color: var(--tt-text);
+  min-width: 80px; text-align: center;
+}
+
+/* ── Scroll ── */
+.tt-scroll {
+  overflow-x: auto; padding: 0 4px 4px;
+}
+
+/* ── Grid Table ── */
+.tt-table {
+  width: 100%; border-collapse: collapse;
+  border: 2px solid #CBD5E1;
+  min-width: 680px; margin-top: 8px;
+}
+.tt-th {
+  border: 1px solid #CBD5E1; padding: 7px 4px;
+  text-align: center; vertical-align: middle;
+  font-size: 10px; font-weight: 700;
+  background: #F8FAFC; color: #475569; white-space: nowrap;
+}
+.tt-th-day {
+  width: 48px; font-size: 11px; background: #F1F5F9;
+}
+.tt-th-lesson {
+  min-width: 68px; padding: 10px 6px;
+}
+.tt-th-break {
+  width: 30px; background: #F8FAFC; padding: 10px 2px;
+}
+.tt-time-lbl {
+  display: block; font-size: 10px; font-weight: 700;
+}
+.tt-break-time-lbl {
+  display: block; font-size: 8px; color: var(--tt-text-muted);
+}
+
+/* ── Body rows ── */
+.tt-row:nth-child(even) { background: #FAFBFC; }
+.tt-row--today .tt-td-day { background: #EFF6FF; }
+
+/* Data cells */
+.tt-td {
+  border: 1px solid #CBD5E1; padding: 0; text-align: center; vertical-align: middle;
+}
+.tt-td-day {
+  font-size: 13px; font-weight: 800; color: var(--tt-text);
+  background: #F1F5F9; width: 48px; padding: 4px;
+  letter-spacing: 0.04em;
+}
+.tt-today-dot {
+  display: inline-block; width: 5px; height: 5px;
+  background: var(--tt-blue); border-radius: 50%; margin-left: 3px; vertical-align: super;
+}
+.tt-td-cell { height: 58px; }
+.tt-td-break {
+  background: #F8FAFC; width: 30px; padding: 0;
+}
+.tt-break-lbl {
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  font-size: 9px; font-weight: 700; color: var(--tt-text-sec);
+  text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;
+}
+
+/* ── Lesson Cards inside cells ── */
+.tt-cell {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 58px; padding: 3px 4px; gap: 2px;
+}
+.tt-cell-subj {
+  font-size: 13px; font-weight: 700; color: var(--tt-text);
+  line-height: 1.2; letter-spacing: 0.01em;
+}
+.tt-cell-class {
+  font-size: 9px; font-weight: 600;
+  background: #E2E8F0; color: #475569;
+  padding: 1px 6px; border-radius: 4px;
+  display: inline-flex; align-items: center; gap: 3px;
+  letter-spacing: 0.04em;
+}
+.tt-cell-stream {
+  font-size: 9px; color: var(--tt-text-sec);
+}
+.tt-cell-dash {
+  font-size: 14px; color: #CBD5E1;
+}
+
+/* ── Print helpers ── */
+.tt-print-area { width: 100%; }
+.tt-print-school { display: none; }
+.tt-print-heading {
+  text-align: center; font-size: 15px; font-weight: 700;
+  color: var(--tt-text); margin-bottom: 8px;
+}
+.tt-print-footer { display: none; }
+
+/* ── Loading ── */
+.tt-load {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: 80px 0; color: var(--tt-text-muted); font-size: 14px;
+}
+.tt-spin {
+  width: 28px; height: 28px;
+  border: 3px solid #E2E8F0; border-top-color: var(--tt-blue);
+  border-radius: 50%; animation: tt-spin 0.6s linear infinite;
+}
+@keyframes tt-spin { to { transform: rotate(360deg); } }
+
+/* ── Today's Lessons Section ── */
+.tt-today {
+  border-top: 1px solid var(--tt-border); padding: 16px 20px;
+}
+.tt-today-hdr {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; color: var(--tt-text-sec);
+  margin-bottom: 10px;
+}
+.tt-today-list {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.tt-today-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--tt-border);
+  border-left: 3px solid var(--tt-blue);
+  border-radius: 8px;
+  background: #FAFBFC;
+  font-size: 12px;
+  transition: background 0.12s;
+}
+.tt-today-item:hover { background: #F1F5F9; }
+.tt-today-time {
+  font-size: 11px; font-weight: 600; color: var(--tt-text-sec); white-space: nowrap;
+}
+.tt-today-subj { font-weight: 700; color: var(--tt-text); }
+.tt-today-cls { font-size: 11px; color: var(--tt-text-sec); }
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .tt-summary { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .tt-summary { grid-template-columns: repeat(2, 1fr); }
+  .tt-today-list { flex-direction: column; }
+}

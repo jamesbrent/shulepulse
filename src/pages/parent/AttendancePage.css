@@ -1,0 +1,120 @@
+.attendance-page { padding: 0; display: flex; flex-direction: column; gap: 20px; }
+
+.att-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.att-sum-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.att-sum-card.green svg { color: #16a34a; }
+.att-sum-card.red svg { color: #dc2626; }
+.att-sum-card.amber svg { color: #ca8a04; }
+.att-sum-card.blue svg { color: #2563eb; }
+.asc-label { font-size: 12px; color: #64748b; margin: 0 0 4px; }
+.asc-value { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0; }
+.att-rate-track {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 4px; background: #f1f5f9;
+}
+.att-rate-fill { height: 100%; background: #2563eb; transition: width 0.4s; }
+
+.att-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.date-nav { display: flex; align-items: center; gap: 4px; }
+.date-nav-btn {
+  width: 32px; height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #64748b;
+  transition: all 0.15s;
+}
+.date-nav-btn:hover { background: #f1f5f9; color: #1e293b; }
+.date-input {
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  outline: none;
+  cursor: pointer;
+}
+.date-input:focus { border-color: #2563eb; }
+
+.att-date-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: #64748b; margin: 0;
+}
+.att-today-badge {
+  background: #dcfce7; color: #16a34a;
+  font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
+  margin-left: 4px;
+}
+
+.att-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+.att-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.att-table thead { background: #f8fafc; }
+.att-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px; font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 1px solid #e2e8f0;
+}
+.att-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+.att-table tbody tr:hover { background: #f8fafc; }
+.att-table tbody tr:last-child td { border-bottom: none; }
+
+.att-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  text-transform: capitalize;
+}
+.att-badge.present { background: #dcfce7; color: #16a34a; }
+.att-badge.absent { background: #fee2e2; color: #dc2626; }
+.att-badge.late { background: #fef9c3; color: #ca8a04; }
+
+.text-muted { color: #94a3b8; font-size: 13px; }
+.student-name-cell { display: flex; align-items: center; gap: 10px; }
+.student-avatar-sm {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #eff6ff; color: #2563eb;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; text-transform: uppercase;
+}
+
+.empty-att {
+  text-align: center; padding: 60px 20px;
+  color: #94a3b8;
+  border: 2px dashed #e2e8f0; border-radius: 12px;
+}
+.empty-att p { margin: 12px 0 6px; font-size: 15px; color: #64748b; }
+.empty-att span { font-size: 13px; }
+
+.loading-state {
+  text-align: center;
+  padding: 60px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+@media (max-width: 1024px) { .att-summary { grid-template-columns: repeat(2, 1fr); } }

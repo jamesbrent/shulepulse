@@ -1,0 +1,167 @@
+/* ─── Settings Page ───────────────────────────────────────── */
+.settings-page { padding: 0; display: flex; flex-direction: column; gap: 20px; }
+
+/* ─── Tab Nav ─────────────────────────────────────────────── */
+.settings-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+  width: fit-content;
+}
+.settings-tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 16px;
+  border: none; border-radius: 8px;
+  background: transparent; color: #64748b;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.settings-tab:hover { color: #1e293b; }
+.settings-tab.active {
+  background: white;
+  color: #1e293b;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* ─── Feedback Banners ────────────────────────────────────── */
+.settings-success {
+  display: flex; align-items: center; gap: 8px;
+  background: #dcfce7; color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; font-weight: 500;
+}
+.form-error {
+  background: #fef2f2; color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 13px;
+}
+
+/* ─── Settings Card ───────────────────────────────────────── */
+.settings-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.settings-card-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px;
+}
+.settings-card-header svg { color: #2563eb; }
+.settings-card-header h3 {
+  font-size: 16px; font-weight: 700;
+  color: #0f172a; margin: 0;
+}
+.settings-card-desc {
+  font-size: 13px; color: #64748b;
+  margin: -12px 0 20px;
+  line-height: 1.5;
+}
+
+/* ─── Form Shared ─────────────────────────────────────────── */
+.form-section-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: #94a3b8; margin: 20px 0 10px;
+}
+.form-section-label:first-of-type { margin-top: 0; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-field.full { grid-column: 1 / -1; }
+.form-field label { font-size: 13px; font-weight: 500; color: #374151; }
+.form-field input,
+.form-field select {
+  padding: 9px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px; color: #1e293b;
+  outline: none; background: white;
+  transition: border-color 0.15s;
+}
+.form-field input:focus,
+.form-field select:focus { border-color: #2563eb; }
+
+/* ─── Settings Actions ────────────────────────────────────── */
+.settings-actions {
+  display: flex; justify-content: flex-end;
+  margin-top: 24px; padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px;
+  background: #2563eb; color: white;
+  border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+
+/* ─── Notifications ───────────────────────────────────────── */
+.notif-list { display: flex; flex-direction: column; gap: 0; }
+.notif-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.notif-row:last-child { border-bottom: none; }
+.notif-info { flex: 1; }
+.notif-label { font-size: 14px; font-weight: 500; color: #1e293b; margin: 0 0 3px; }
+.notif-desc  { font-size: 12px; color: #64748b; margin: 0; }
+
+/* Toggle Switch */
+.toggle { position: relative; display: inline-block; flex-shrink: 0; cursor: pointer; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  display: block;
+  width: 44px; height: 24px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  transition: background 0.2s;
+  position: relative;
+}
+.toggle input:checked + .toggle-track { background: #2563eb; }
+.toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
+
+/* ─── Password Fields ─────────────────────────────────────── */
+.pwd-grid { max-width: 420px; }
+.pwd-wrap { position: relative; display: flex; align-items: center; }
+.pwd-wrap input { width: 100%; padding-right: 40px; }
+.pwd-eye {
+  position: absolute; right: 10px;
+  background: none; border: none;
+  color: #94a3b8; cursor: pointer;
+  display: flex; align-items: center;
+  padding: 0;
+}
+.pwd-eye:hover { color: #1e293b; }
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .settings-tabs { width: 100%; }
+  .settings-tab  { flex: 1; justify-content: center; }
+  .form-grid     { grid-template-columns: 1fr; }
+  .form-field.full { grid-column: 1; }
+}

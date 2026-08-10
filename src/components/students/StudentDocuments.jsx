@@ -1,0 +1,82 @@
+import { useState, useEffect } from 'react'
+import { Upload, FileText, X, Download, Trash2 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+
+export function StudentDocuments({ studentId }) {
+  const [docs, setDocs] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (studentId) fetchDocuments()
+  }, [studentId])
+
+  const fetchDocuments = async () => {
+    const { data } = await supabase
+      .from('student_documents')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false })
+    setDocs(data || [])
+    setLoading(false)
+  }
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    const path = `students/${studentId}/${Date.now()}_${file.name}`
+    const { error: uploadErr } = await supabase.storage.from('documents').upload(path, file)
+    if (uploadErr) { setUploading(false); return }
+    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
+    await supabase.from('student_documents').insert({
+      student_id: studentId,
+      name: file.name,
+      file_path: path,
+      file_url: publicUrl,
+      file_type: file.type,
+      file_size: file.size,
+    })
+    setUploading(false)
+    fetchDocuments()
+  }
+
+  const handleDelete = async (doc) => {
+    if (!confirm('Delete this document?')) return
+    await supabase.storage.from('documents').remove([doc.file_path])
+    await supabase.from('student_documents').delete().eq('id', doc.id)
+    fetchDocuments()
+  }
+
+  if (loading) return <div className="loading-state">Loading documents...</div>
+
+  return (
+    <div className="student-documents">
+      <div className="doc-upload-area">
+        <label className="doc-upload-btn">
+          <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload Document'}
+          <input type="file" onChange={handleUpload} hidden disabled={uploading} />
+        </label>
+      </div>
+      {docs.length === 0 ? (
+        <p className="empty-state-text">No documents uploaded yet.</p>
+      ) : (
+        <div className="doc-list">
+          {docs.map(doc => (
+            <div key={doc.id} className="doc-item">
+              <FileText size={16} />
+              <span className="doc-name">{doc.name}</span>
+              <span className="doc-size">{(doc.file_size / 1024).toFixed(0)} KB</span>
+              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="doc-download">
+                <Download size={14} />
+              </a>
+              <button className="doc-delete" onClick={() => handleDelete(doc)}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

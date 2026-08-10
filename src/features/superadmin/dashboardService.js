@@ -1,0 +1,88 @@
+import { supabase } from '../../lib/supabase'
+import { getPlanPrice } from './subscriptionService'
+
+export async function fetchDashboardStats() {
+  const [
+    { count: totalSchools },
+    { count: activeSchools },
+    { count: trialSchools },
+    { count: totalStudents },
+    { count: activeStudents },
+    { count: totalTeachers },
+    { count: totalParents },
+    { count: totalProfiles },
+    { data: revenueData },
+    { data: schoolsByPlan },
+    { data: signups },
+    { data: revenueByMonth },
+  ] = await Promise.all([
+    supabase.from('schools').select('*', { count: 'exact', head: true }),
+    supabase.from('schools').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('schools').select('*', { count: 'exact', head: true }).eq('status', 'trial'),
+    supabase.from('students').select('*', { count: 'exact', head: true }),
+    supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('teachers').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'parent'),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('fee_payments').select('amount'),
+    supabase.from('schools').select('plan'),
+    supabase.from('schools').select('created_at').order('created_at', { ascending: true }),
+    supabase.rpc('get_monthly_revenue'),
+  ])
+
+  const totalRevenue = (revenueData || []).reduce((sum, r) => sum + (r.amount || 0), 0)
+  const planCounts = { basic: 0, pro: 0, enterprise: 0 }
+  ;(schoolsByPlan || []).forEach((s) => {
+    if (planCounts[s.plan] !== undefined) planCounts[s.plan]++
+  })
+  const mrr = (planCounts.basic * getPlanPrice('basic')) + (planCounts.pro * getPlanPrice('pro')) + (planCounts.enterprise * getPlanPrice('enterprise'))
+
+  const schoolGrowthMap = {}
+  ;(signups || []).forEach((s) => {
+    if (!s.created_at) return
+    const m = new Date(s.created_at).toLocaleDateString('en-KE', { month: 'short', year: '2-digit' })
+    schoolGrowthMap[m] = (schoolGrowthMap[m] || 0) + 1
+  })
+  const schoolGrowth = Object.entries(schoolGrowthMap).map(([month, count]) => ({ month, count }))
+
+  const monthlyRevenue = (revenueByMonth || []).map((r) => ({
+    month: r.month,
+    amount: r.amount || 0,
+  }))
+
+  return {
+    totalSchools: totalSchools || 0,
+    activeSchools: activeSchools || 0,
+    trialSchools: trialSchools || 0,
+    totalStudents: totalStudents || 0,
+    activeStudents: activeStudents || 0,
+    totalTeachers: totalTeachers || 0,
+    totalParents: totalParents || 0,
+    totalProfiles: totalProfiles || 0,
+    totalRevenue,
+    mrr,
+    planCounts,
+    schoolGrowth,
+    monthlyRevenue,
+  }
+}
+
+export async function fetchSubscriptionBreakdown() {
+  const { data } = await supabase.from('schools').select('plan')
+  const counts = { basic: 0, pro: 0, enterprise: 0 }
+  ;(data || []).forEach((s) => {
+    if (counts[s.plan] !== undefined) counts[s.plan]++
+  })
+  return Object.entries(counts).map(([name, value]) => ({ name, value }))
+}
+
+export async function fetchActiveUserStats() {
+  const { data } = await supabase.from('profiles').select('created_at').order('created_at', { ascending: true })
+  const map = {}
+  ;(data || []).forEach((p) => {
+    if (!p.created_at) return
+    const m = new Date(p.created_at).toLocaleDateString('en-KE', { month: 'short', year: '2-digit' })
+    map[m] = (map[m] || 0) + 1
+  })
+  return Object.entries(map).map(([month, count]) => ({ month, users: count }))
+}

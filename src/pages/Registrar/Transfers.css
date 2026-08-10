@@ -1,0 +1,26 @@
+.reg-transfers { padding: 0; }
+.reg-transfers .reg-card { padding: 20px; }
+.reg-transfers .reg-card-header h3 { font-size: 16px; font-weight: 600; color: #0f172a; margin: 0; }
+.reg-transfers .reg-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.reg-transfers .reg-form-field { display: flex; flex-direction: column; gap: 5px; }
+.reg-transfers .reg-form-field.full { grid-column: 1 / -1; }
+.reg-transfers .reg-form-field label { font-size: 13px; font-weight: 500; color: #374151; }
+.reg-transfers .reg-form-field input, .reg-transfers .reg-form-field select {
+  padding: 9px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  background: white;
+}
+.reg-transfers .reg-form-field input:focus, .reg-transfers .reg-form-field select:focus { border-color: #2563eb; }
+.reg-transfers .reg-form-field input:disabled { background: #f8fafc; color: #94a3b8; }
+.reg-transfers .reg-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}

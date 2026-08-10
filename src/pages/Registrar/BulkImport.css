@@ -1,0 +1,25 @@
+.reg-bulk-import { padding: 0; }
+.reg-import-dropzone {
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #f8fafc;
+}
+.reg-import-dropzone:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+.reg-spin {
+  animation: reg-spin 1s linear infinite;
+}
+@keyframes reg-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.reg-bulk-import .reg-card { padding: 20px; }
+.reg-bulk-import .reg-card h3 { font-size: 16px; font-weight: 600; color: #0f172a; margin: 0; }
+.reg-btn-primary.small { padding: 6px 14px; font-size: 13px; }
+.reg-btn-secondary.small { padding: 6px 14px; font-size: 13px; }

@@ -1,0 +1,127 @@
+.audit-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.audit-filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.audit-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #64748b;
+}
+
+.audit-filter-group select {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: #374151;
+  background: transparent;
+}
+
+.audit-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #94a3b8;
+  flex: 1;
+  max-width: 320px;
+}
+
+.audit-search input {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  flex: 1;
+}
+
+.audit-table-wrap {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.audit-table th {
+  text-align: left;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.audit-table td {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #374151;
+  border-bottom: 1px solid #f8fafc;
+  vertical-align: middle;
+}
+
+.audit-table tr:last-child td { border-bottom: none; }
+
+.audit-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.audit-school {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.audit-admin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audit-details code {
+  font-size: 11px;
+  background: #f8fafc;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #475569;
+  word-break: break-all;
+}
+
+.audit-action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.text-muted { color: #94a3b8; }

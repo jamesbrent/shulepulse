@@ -1,0 +1,749 @@
+/* ═══════════════════════════════════════════════════════════════════
+   BURSAR — Fee Management Page · Enterprise Finance
+   ═══════════════════════════════════════════════════════════════════ */
+
+.pay-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: #F8FAFC;
+  min-height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   1. HEADER
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0;
+}
+.pay-header-left h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+.pay-header-sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #64748B;
+}
+.pay-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   2. STICKY FINANCE TOOLBAR
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03);
+  backdrop-filter: blur(8px);
+}
+.pay-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pay-toolbar-sep {
+  width: 1px;
+  height: 24px;
+  background: #E5E7EB;
+  flex-shrink: 0;
+}
+.pay-toolbar label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.pay-filter-select {
+  padding: 6px 10px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0F172A;
+  background: #FFFFFF;
+  cursor: pointer;
+  outline: none;
+  min-width: 90px;
+  transition: border-color 0.15s;
+}
+.pay-filter-select:focus { border-color: #2563EB; }
+.pay-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pay-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+.pay-search-input {
+  padding: 6px 10px 6px 32px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  width: 200px;
+  outline: none;
+  color: #0F172A;
+  transition: border-color 0.15s;
+}
+.pay-search-input:focus { border-color: #2563EB; }
+.pay-reset-btn {
+  padding: 5px 10px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pay-reset-btn:hover { background: #F1F5F9; color: #0F172A; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   3. KPI CARDS — 4 equal-width
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.pay-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  height: 120px;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.pay-kpi-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-color: #D1D5DB;
+}
+.pay-kpi-icon-wrap {
+  width: 72px;
+  min-width: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pay-kpi-icon-wrap svg { width: 24px; height: 24px; }
+.pay-kpi-card.blue .pay-kpi-icon-wrap  { background: #EFF6FF; color: #2563EB; }
+.pay-kpi-card.green .pay-kpi-icon-wrap { background: #F0FDF4; color: #16A34A; }
+.pay-kpi-card.amber .pay-kpi-icon-wrap { background: #FFFBEB; color: #F59E0B; }
+.pay-kpi-card.purple .pay-kpi-icon-wrap { background: #F5F3FF; color: #7C3AED; }
+.pay-kpi-card.red .pay-kpi-icon-wrap   { background: #FEF2F2; color: #EF4444; }
+.pay-kpi-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px 16px 14px 0;
+  gap: 4px;
+}
+.pay-kpi-label {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.pay-kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.pay-kpi-trend {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.pay-kpi-trend.up   { background: #DCFCE7; color: #16A34A; }
+.pay-kpi-trend.down { background: #FEE2E2; color: #DC2626; }
+.pay-kpi-trend.flat { background: #F1F5F9; color: #64748B; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   4. PAYMENT STATUS SUMMARY — Segmented bar
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-status-bar {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.pay-status-bar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+  white-space: nowrap;
+}
+.pay-status-segments {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  flex: 1;
+  max-width: 420px;
+}
+.pay-status-segment {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.pay-status-segment.paid    { background: #F0FDF4; color: #16A34A; }
+.pay-status-segment.partial { background: #FFFBEB; color: #D97706; }
+.pay-status-segment.pending { background: #FEF2F2; color: #DC2626; }
+.pay-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pay-status-segment.paid .pay-status-dot    { background: #16A34A; }
+.pay-status-segment.partial .pay-status-dot { background: #D97706; }
+.pay-status-segment.pending .pay-status-dot { background: #DC2626; }
+.pay-status-seg-label {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.pay-status-seg-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   5. PAYMENT TABLE
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-table-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pay-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.pay-table-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0F172A;
+}
+.pay-table-head span {
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 400;
+}
+.pay-table-head-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── 6. Table Behavior ── */
+.pay-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.pay-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 1000px;
+}
+.pay-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #F8FAFC;
+}
+.pay-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #E5E7EB;
+  white-space: nowrap;
+  background: #F8FAFC;
+}
+.pay-table th.pay-th-right {
+  text-align: right;
+}
+.pay-table th.pay-th-actions {
+  text-align: center;
+  width: 140px;
+}
+.pay-table td {
+  padding: 0 16px;
+  border-bottom: 1px solid #F1F5F9;
+  color: #0F172A;
+  vertical-align: middle;
+  white-space: nowrap;
+  height: 64px;
+}
+.pay-table tbody tr {
+  transition: background 0.12s;
+}
+.pay-table tbody tr:hover { background: #F8FAFC; }
+.pay-table tbody tr:nth-child(even) { background: #FAFBFC; }
+.pay-table tbody tr:nth-child(even):hover { background: #F1F5F9; }
+.pay-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Student Cell ── */
+.pay-student-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pay-student-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #EFF6FF;
+  color: #2563EB;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+.pay-student-name {
+  font-weight: 600;
+  color: #0F172A;
+  font-size: 13px;
+}
+.pay-student-adm {
+  font-size: 11px;
+  color: #94A3B8;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* ── Amount (right-aligned) ── */
+.pay-amount {
+  font-weight: 700;
+  color: #0F172A;
+  font-size: 14px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Method Chips ── */
+.pay-method-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.pay-method-chip.mpesa        { background: #DCFCE7; color: #16A34A; }
+.pay-method-chip.bank         { background: #DBEAFE; color: #2563EB; }
+.pay-method-chip.cash         { background: #F1F5F9; color: #475569; }
+.pay-method-chip.mobile_money { background: #DCFCE7; color: #16A34A; }
+.pay-method-chip.cheque       { background: #FEF3C7; color: #D97706; }
+.pay-method-chip.waiver       { background: #FEF3C7; color: #D97706; }
+.pay-method-chip.default      { background: #F1F5F9; color: #475569; }
+
+/* ── Status Pills ── */
+.pay-status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.pay-status-pill.completed { background: #DCFCE7; color: #16A34A; }
+.pay-status-pill.pending   { background: #FEF3C7; color: #D97706; }
+.pay-status-pill.failed    { background: #FEE2E2; color: #DC2626; }
+.pay-status-pill.reversed  { background: #F1F5F9; color: #64748B; }
+
+/* ── Class Tag ── */
+.pay-class-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #F1F5F9;
+  color: #475569;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Receipt Monospace ── */
+.pay-mono {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: #64748B;
+}
+
+/* ── Actions Column ── */
+.pay-actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.pay-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pay-action-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+.pay-action-btn.danger:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   3-DOT CONTEXT MENU
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 200px;
+  padding: 6px;
+  animation: payMenuIn 0.12s ease-out;
+}
+@keyframes payMenuIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pay-context-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  color: #374151;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.pay-context-item:hover { background: #F1F5F9; }
+.pay-context-item svg { width: 15px; height: 15px; color: #64748B; flex-shrink: 0; }
+.pay-context-item.danger { color: #DC2626; }
+.pay-context-item.danger svg { color: #DC2626; }
+.pay-context-sep {
+  height: 1px;
+  background: #E5E7EB;
+  margin: 4px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 64px 24px;
+  min-height: 300px;
+}
+.pay-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: #F1F5F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.pay-empty-icon svg { width: 32px; height: 32px; color: #94A3B8; }
+.pay-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0 0 6px;
+}
+.pay-empty-desc {
+  font-size: 14px;
+  color: #94A3B8;
+  margin: 0 0 24px;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAGINATION — bottom-right aligned
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid #E5E7EB;
+  font-size: 13px;
+  color: #64748B;
+}
+.pay-pagination-btns {
+  display: flex;
+  gap: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: #2563EB;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.pay-btn-primary:hover { background: #1D4ED8; box-shadow: 0 2px 6px rgba(37,99,235,0.25); }
+.pay-btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
+
+.pay-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: #FFFFFF;
+  color: #374151;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.pay-btn-outline:hover { background: #F8FAFC; border-color: #CBD5E1; }
+.pay-btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pay-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  color: #64748B;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pay-btn-ghost:hover { background: #F1F5F9; color: #0F172A; }
+.pay-btn-ghost svg { width: 14px; height: 14px; }
+
+/* ── Utilities ── */
+.pay-loading {
+  text-align: center;
+  padding: 80px;
+  color: #94A3B8;
+  font-size: 14px;
+  background: #F8FAFC;
+}
+.pay-muted { color: #64748B; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.pay-modal {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.pay-modal-sm { max-width: 440px; }
+.pay-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #E5E7EB;
+  flex-shrink: 0;
+}
+.pay-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0F172A;
+}
+.pay-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #94A3B8;
+  transition: all 0.15s;
+}
+.pay-modal-close:hover { background: #F1F5F9; color: #1E293B; }
+.pay-modal-body {
+  padding: 22px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.pay-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 22px;
+  border-top: 1px solid #E5E7EB;
+  flex-shrink: 0;
+}
+.pay-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 13px;
+}
+.pay-detail-row:last-child { border-bottom: none; }
+.pay-detail-label { color: #64748B; font-weight: 500; }
+.pay-detail-value { color: #0F172A; font-weight: 600; text-align: right; max-width: 60%; }
+
+/* ── Toast ── */
+.pay-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  animation: paySlideUp 0.3s ease;
+}
+.pay-toast.success { background: #0F172A; color: #4ADE80; }
+.pay-toast.error { background: #DC2626; color: #FFFFFF; }
+@keyframes paySlideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .pay-kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 1024px) {
+  .pay-header { flex-direction: column; align-items: flex-start; }
+  .pay-header-right { width: 100%; justify-content: flex-end; }
+  .pay-toolbar { flex-direction: column; align-items: stretch; }
+  .pay-toolbar-group { flex-wrap: wrap; }
+  .pay-search-input { width: 100%; }
+  .pay-status-bar { flex-direction: column; align-items: flex-start; }
+  .pay-status-segments { max-width: 100%; }
+}
+@media (max-width: 640px) {
+  .pay-kpi-row { grid-template-columns: 1fr; }
+  .pay-kpi-card { height: auto; }
+  .pay-kpi-icon-wrap { width: 56px; min-width: 56px; }
+  .pay-table-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
