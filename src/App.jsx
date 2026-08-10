@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import ProtectedRoute from './components/ProtectedRoute'
 import BrandingProvider from './features/branding/BrandingProvider'
+import { basePath } from './lib/paths'
 
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
@@ -26,7 +27,7 @@ export default function App() {
   }, [])
 
   return (
-    <BrowserRouter basename="/shulepulse">
+    <BrowserRouter basename={basePath()}>
       <BrandingProvider>
       <Routes>
         {/* Public */}
