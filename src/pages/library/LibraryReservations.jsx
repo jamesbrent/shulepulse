@@ -22,7 +22,7 @@ export default function LibraryReservations({ schoolId }) {
     setLoading(true)
     const [resRes, booksRes, membersRes] = await Promise.all([
       supabase.from('library_reservations')
-        .select('*, books(title, author, available_copies), members(full_name, member_type, member_code)')
+        .select('*, books:library_books(title, author, available_copies), members:library_members(full_name, member_type, member_code)')
         .eq('school_id', schoolId)
         .order('reserved_at', { ascending: false })
         .limit(100),

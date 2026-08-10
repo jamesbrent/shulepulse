@@ -53,17 +53,17 @@ export default function MyLibrary({ schoolId, name, email, role }) {
 
     const [loansRes, resRes, booksRes, catsRes, rulesRes] = await Promise.all([
       supabase.from('library_loans')
-        .select('*, books(title, author)')
+        .select('*, books:library_books(title, author)')
         .eq('member_id', m.id)
         .order('created_at', { ascending: false })
         .limit(50),
       supabase.from('library_reservations')
-        .select('*, books(title, author)')
+        .select('*, books:library_books(title, author)')
         .eq('member_id', m.id)
         .order('reserved_at', { ascending: false })
         .limit(20),
       supabase.from('library_books')
-        .select('*, categories(name)')
+        .select('*, categories:library_categories(name)')
         .eq('school_id', schoolId)
         .order('title'),
       supabase.from('library_categories').select('*').eq('school_id', schoolId).order('name'),

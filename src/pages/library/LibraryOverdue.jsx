@@ -17,7 +17,7 @@ export default function LibraryOverdue({ schoolId }) {
     const today = new Date().toISOString().slice(0, 10)
     const { data } = await supabase
       .from('library_loans')
-      .select('*, books(title, author), members(full_name, member_type, member_code)')
+      .select('*, books:library_books(title, author), members:library_members(full_name, member_type, member_code)')
       .eq('school_id', schoolId)
       .or(`status.eq.overdue,and(status.eq.issued,due_date.lt.${today})`)
       .order('due_date', { ascending: true })

@@ -32,7 +32,7 @@ export default function LibraryOverview({ schoolId, onNavigate }) {
       supabase.from('library_reservations').select('id').eq('school_id', schoolId).eq('status', 'pending'),
       supabase.from('library_members').select('id').eq('school_id', schoolId).eq('status', 'active'),
       supabase.from('library_loans')
-        .select('*, books(title, author), members(full_name, member_type)')
+        .select('*, books:library_books(title, author), members:library_members(full_name, member_type)')
         .eq('school_id', schoolId)
         .order('created_at', { ascending: false })
         .limit(6),
@@ -53,7 +53,7 @@ export default function LibraryOverview({ schoolId, onNavigate }) {
 
     const { data: loans } = await supabase
       .from('library_loans')
-      .select('book_id, books(title)')
+      .select('book_id, books:library_books(title)')
       .eq('school_id', schoolId)
       .eq('status', 'returned')
       .limit(300)

@@ -18,7 +18,7 @@ export default function LibraryCatalogue({ schoolId }) {
     setLoading(true)
     const [booksRes, catsRes] = await Promise.all([
       supabase.from('library_books')
-        .select('*, categories(name), shelves(name)')
+        .select('*, categories:library_categories(name), shelves:library_shelves(name)')
         .eq('school_id', schoolId)
         .order('title'),
       supabase.from('library_categories').select('*').eq('school_id', schoolId).order('name'),

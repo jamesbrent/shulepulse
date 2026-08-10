@@ -29,7 +29,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
     setLoading(true)
     const [loansRes, membersRes, booksRes, rulesRes] = await Promise.all([
       supabase.from('library_loans')
-        .select('*, books(title, author, available_copies), members(full_name, member_type, member_code)')
+        .select('*, books:library_books(title, author, available_copies), members:library_members(full_name, member_type, member_code)')
         .eq('school_id', schoolId)
         .order('created_at', { ascending: false })
         .limit(200),

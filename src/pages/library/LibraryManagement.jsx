@@ -32,7 +32,7 @@ export default function LibraryManagement({ schoolId }) {
   const fetchAll = async () => {
     setLoading(true)
     const [b, c, s, r] = await Promise.all([
-      supabase.from('library_books').select('*, categories(name), shelves(name)').eq('school_id', schoolId).order('title'),
+      supabase.from('library_books').select('*, categories:library_categories(name), shelves:library_shelves(name)').eq('school_id', schoolId).order('title'),
       supabase.from('library_categories').select('*').eq('school_id', schoolId).order('name'),
       supabase.from('library_shelves').select('*').eq('school_id', schoolId).order('name'),
       fetchRules(schoolId),
@@ -60,12 +60,12 @@ export default function LibraryManagement({ schoolId }) {
       total_copies: Number(bookForm.total_copies) || 1,
     }
     if (bookForm.id) {
-      const { data, error } = await supabase.from('library_books').update(payload).eq('id', bookForm.id).select('*, categories(name), shelves(name)').single()
+      const { data, error } = await supabase.from('library_books').update(payload).eq('id', bookForm.id).select('*, categories:library_categories(name), shelves:library_shelves(name)').single()
       if (error) { setBookErr(error.message); setSaving(false); return }
       setBooks(prev => prev.map(x => x.id === data.id ? data : x))
     } else {
       payload.available_copies = Number(bookForm.total_copies) || 1
-      const { data, error } = await supabase.from('library_books').insert(payload).select('*, categories(name), shelves(name)').single()
+      const { data, error } = await supabase.from('library_books').insert(payload).select('*, categories:library_categories(name), shelves:library_shelves(name)').single()
       if (error) { setBookErr(error.message); setSaving(false); return }
       setBooks(prev => [data, ...prev])
     }

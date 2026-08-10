@@ -25,12 +25,12 @@ export default function LibraryReports({ schoolId }) {
   const fetchAll = async () => {
     const [books, members, loans] = await Promise.all([
       supabase.from('library_books')
-        .select('title, author, isbn, subject, total_copies, available_copies, categories(name)')
+        .select('title, author, isbn, subject, total_copies, available_copies, categories:library_categories(name)')
         .eq('school_id', schoolId).order('title'),
       supabase.from('library_members')
         .select('*').eq('school_id', schoolId).order('full_name'),
       supabase.from('library_loans')
-        .select('*, books(title), members(full_name, member_type)')
+        .select('*, books:library_books(title), members:library_members(full_name, member_type)')
         .eq('school_id', schoolId).order('created_at', { ascending: false }).limit(500),
     ])
     setData({
