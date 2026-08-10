@@ -165,7 +165,7 @@ export default function CBCCompetency({ profile, mode }) {
     const subNames = subs?.map(s => s.name) || []
     setAllClasses(classNames)
     setTeacherClasses(classNames)
-    setTeacherSubjects(subs || [])
+    setTeacherSubjects(subNames)
     setSubjectsList(subs || [])
     setSchoolData(school)
 
