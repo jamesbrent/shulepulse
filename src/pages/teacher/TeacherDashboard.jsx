@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, ClipboardList, BarChart2, Calendar,
   Bell, LogOut, Save, CheckCircle, XCircle, MessageSquare,
-  BookOpen, Award, Menu, X
+  BookOpen, Award, Menu, X, Library
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -24,6 +24,7 @@ import CBCCompetency from './CBCCompetency'
 import './CBCCompetency.css'
 import Comments from './Comments'
 import './Comments.css'
+import MyLibrary from '../library/MyLibrary'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
@@ -180,6 +181,7 @@ export default function TeacherDashboard() {
     { key: 'marks', label: 'Marks Entry', icon: <BarChart2 size={18} /> },
     { key: 'cbc', label: 'CBC Competency', icon: <Award size={18} /> },
     { key: 'comments', label: 'Comments', icon: <MessageSquare size={18} /> },
+    { key: 'library', label: 'Library', icon: <Library size={18} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
     { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
   ]
@@ -193,6 +195,7 @@ export default function TeacherDashboard() {
     marks: 'Marks Entry',
     cbc: 'CBC Competency',
     comments: 'Comments',
+    library: 'Library',
     notices: 'Notices',
     support: 'Support',
   }
@@ -213,6 +216,8 @@ export default function TeacherDashboard() {
         return <CBCCompetency profile={profile} />
       case 'comments':
         return <Comments profile={profile} />
+      case 'library':
+        return <MyLibrary schoolId={profile?.school_id} name={profile?.full_name} email={profile?.email} role="teacher" />
       case 'notices':
         return <NoticesPage profile={profile} />
       case 'support':

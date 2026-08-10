@@ -17,6 +17,7 @@ const ROLE_META = {
   class_teacher:        { label: 'Class Teacher',     color: '#dc2626', route: '/class-teacher' },
   parent:               { label: 'Parent',            color: '#0891b2', route: '/parent' },
   student:              { label: 'Student',           color: '#d97706', route: '/student' },
+  librarian:            { label: 'Library',            color: '#16a34a', route: '/library' },
 }
 
 export default function RoleSwitcher() {

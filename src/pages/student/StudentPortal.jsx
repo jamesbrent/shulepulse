@@ -666,34 +666,12 @@ export default function StudentPortal() {
     if (loading) return <div className="sp-loading-spinner" />
     return (
       <div className="sp-page">
-        <div className="sp-card">
-          <div className="sp-card-header">
-            <span className="sp-badge">{libraryBooks.length} books</span>
-          </div>
-          {libraryBooks.length === 0 ? (
-            <div className="sp-empty-state">
-              <BookMarked size={40} color="#94a3b8" />
-              <p>Library catalog coming soon</p>
-            </div>
-          ) : (
-            <div className="sp-library-grid">
-              {libraryBooks.map(b => (
-                <div key={b.id} className="sp-book-card">
-                  <div className="sp-book-cover">
-                    <BookMarked size={28} />
-                  </div>
-                  <div className="sp-book-info">
-                    <p className="sp-book-title">{b.title}</p>
-                    <p className="sp-book-author">{b.author || 'Unknown'}</p>
-                    <span className={`sp-book-status ${b.available ? 'available' : 'borrowed'}`}>
-                      {b.available ? 'Available' : 'Borrowed'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MyLibrary
+          schoolId={profile?.school_id}
+          name={student?.full_name || profile?.full_name}
+          email={profile?.email || student?.email}
+          role="student"
+        />
       </div>
     )
   }

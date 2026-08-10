@@ -40,6 +40,7 @@ export default function Login() {
     else if (role === 'teacher') window.location.href = basePath('/teacher')
     else if (role === 'parent') window.location.href = basePath('/parent')
     else if (role === 'student') window.location.href = basePath('/student')
+    else if (role === 'librarian') window.location.href = basePath('/library')
     else window.location.href = basePath('/admin')
   }
 

@@ -13,6 +13,7 @@ const ROLE_ROUTES = {
   class_teacher: '/class-teacher',
   parent: '/parent',
   student: '/student',
+  librarian: '/library',
 }
 
 function hasRole(profile, role) {

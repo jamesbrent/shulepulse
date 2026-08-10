@@ -18,6 +18,7 @@ import ClassTeacherDashboard from './pages/ClassTeacher/ClassTeacherDashboard'
 import StudentPortal from './pages/student/StudentPortal'
 import ParentPortal from './pages/parent/ParentPortal'
 import SuperadminDashboard from './pages/superadmin/SuperadminDashboard'
+import LibrarianDashboard from './pages/library/LibrarianDashboard'
 
 export default function App() {
   const init = useAuthStore((s) => s.init)
@@ -84,6 +85,11 @@ export default function App() {
         <Route path="/student" element={
           <ProtectedRoute allowedRoles={['student']}>
             <StudentPortal />
+          </ProtectedRoute>
+        } />
+        <Route path="/library" element={
+          <ProtectedRoute allowedRoles={['librarian']}>
+            <LibrarianDashboard />
           </ProtectedRoute>
         } />
 
