@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import {
   Award, Save, CheckCircle, Users, Search, BarChart3,
   TrendingUp, FileText, BookOpen, ChevronDown, ChevronRight,
@@ -156,12 +156,12 @@ export default function CBCCompetency({ profile, mode }) {
     if (!sid) { setLoading(false); return }
 
     const [{ data: cls }, { data: subs }, { data: school }] = await Promise.all([
-      supabase.from('classes').select('name').eq('school_id', sid).order('name'),
+      supabase.from('classes').select('class_name').eq('school_id', sid).order('class_name'),
       supabase.from('subjects').select('id, name').eq('school_id', sid).order('name'),
       supabase.from('schools').select('current_term, current_year, name, logo_url, address, phone, email, motto').eq('id', sid).single(),
     ])
 
-    const classNames = cls?.map(c => c.name) || []
+    const classNames = cls?.map(c => c.class_name) || []
     const subNames = subs?.map(s => s.name) || []
     setAllClasses(classNames)
     setTeacherClasses(classNames)
@@ -615,8 +615,8 @@ export default function CBCCompetency({ profile, mode }) {
                   const bColor = CBC_BAND_COLORS[c.band]
                   const isExpanded = expandedClass === c.name
                   return (
-                    <>
-                      <tr key={c.name} onClick={() => setExpandedClass(prev => prev === c.name ? null : c.name)} style={{ cursor: 'pointer' }}>
+                    <Fragment key={c.name}>
+                      <tr onClick={() => setExpandedClass(prev => prev === c.name ? null : c.name)} style={{ cursor: 'pointer' }}>
                         <td style={{ fontWeight: 600 }}>{c.name}</td>
                         <td style={{ textAlign: 'center' }}>{c.students}</td>
                         <td style={{ textAlign: 'center', fontWeight: 700, color: bColor?.color }}>{c.meanPoints}/8</td>
@@ -713,7 +713,7 @@ export default function CBCCompetency({ profile, mode }) {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   )
                 })}
               </tbody>

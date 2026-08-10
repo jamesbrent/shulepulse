@@ -458,15 +458,6 @@ export default function MarksApproval() {
         </div>
       </Modal>
 
-      {/* ── Page Header ── */}
-      <div className="ma-header">
-        <div>
-          <h1 className="ma-title">Marks Approval</h1>
-          <p className="ma-subtitle">Verify, moderate, and approve examination results for all classes.</p>
-        </div>
-        <span className="ma-term-badge">{currentTerm} {currentYear}</span>
-      </div>
-
       {/* ── KPI Cards ── */}
       <div className="ma-kpi-row">
         <div className="ma-kpi-card">

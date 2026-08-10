@@ -951,22 +951,9 @@ export default function StudentsPage() {
 
   return (
     <div className="students-page">
-      {/* Header */}
-      <div className="sp-header">
-        <div>
-          <h2>Students</h2>
-        </div>
-        <div className="sp-header-actions">
-          <button className="sp-btn-primary" onClick={openAddModal}>
-            <Plus size={15} /> Add Student
-          </button>
-        </div>
-      </div>
-
       {/* Toolbar */}
       <div className="sp-toolbar">
         <div className="sp-toolbar-left">
-          <span className="sp-toolbar-title">Student Records</span>
           <span className="sp-count-badge green">{activeCount} active</span>
           <span className="sp-count-badge gray">{totalCount} total</span>
         </div>

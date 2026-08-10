@@ -53,13 +53,13 @@ export default function CBCCompetency() {
     setSchoolId(sid)
 
     const [{ data: cls }, { data: subs }, { count: sCount }, { data: school }] = await Promise.all([
-      supabase.from('classes').select('name').eq('school_id', sid).order('name'),
+      supabase.from('classes').select('class_name').eq('school_id', sid).order('class_name'),
       supabase.from('subjects').select('id, name').eq('school_id', sid).order('name'),
       supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_id', sid).eq('status', 'active'),
       supabase.from('schools').select('current_term, current_year').eq('id', sid).single(),
     ])
 
-    setClasses(cls?.map(c => c.name) || [])
+    setClasses(cls?.map(c => c.class_name) || [])
     setSubjects(subs || [])
     setTotalStudents(sCount || 0)
 
