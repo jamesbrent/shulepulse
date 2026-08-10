@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { basePath } from '../lib/paths'
 import './Login.css'
 
 export default function Login() {
@@ -33,13 +34,13 @@ export default function Login() {
 
     const role = profile?.role || data.user?.user_metadata?.role
 
-    if (role === 'superadmin') window.location.href = '/superadmin'
-    else if (role === 'admin') window.location.href = '/admin'
-    else if (role === 'class_teacher') window.location.href = '/class-teacher'
-    else if (role === 'teacher') window.location.href = '/teacher'
-    else if (role === 'parent') window.location.href = '/parent'
-    else if (role === 'student') window.location.href = '/student'
-    else window.location.href = '/admin'
+    if (role === 'superadmin') window.location.href = basePath('/superadmin')
+    else if (role === 'admin') window.location.href = basePath('/admin')
+    else if (role === 'class_teacher') window.location.href = basePath('/class-teacher')
+    else if (role === 'teacher') window.location.href = basePath('/teacher')
+    else if (role === 'parent') window.location.href = basePath('/parent')
+    else if (role === 'student') window.location.href = basePath('/student')
+    else window.location.href = basePath('/admin')
   }
 
   return (
@@ -110,7 +111,7 @@ export default function Login() {
               </div>
             </div>
             <div className="login-forgot">
-              <a href="/forgot-password">Forgot password?</a>
+              <a href={basePath('/forgot-password')}>Forgot password?</a>
             </div>
             <button type="submit" className="login-btn" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign in'}

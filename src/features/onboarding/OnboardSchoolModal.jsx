@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, School, CreditCard, UserCheck, Check, ChevronLeft, ChevronRight, Building2, MapPin, Globe, Phone, Mail, Palette, ShieldCheck, LogOut, Loader } from 'lucide-react'
 import { onboardSchool } from './onboardingService'
 import { fetchCounties, fetchSchoolTypes, fetchPlans } from './onboardingData'
+import { basePath } from '../../lib/paths'
 import './OnboardSchoolModal.css'
 
 const STEPS = ['School Details', 'Plan & Branding', 'Admin Account', 'Confirm']
@@ -99,7 +100,7 @@ export default function OnboardSchoolModal({ onClose }) {
       await onboardSchool({ school, admin })
       setDone(true)
       setTimeout(() => {
-        window.location.href = '/'
+        window.location.href = basePath('/')
       }, 3000)
     } catch (err) {
       setError(err.message)
@@ -109,7 +110,7 @@ export default function OnboardSchoolModal({ onClose }) {
   }
 
   const handleDone = () => {
-    window.location.href = '/'
+    window.location.href = basePath('/')
   }
 
   if (loadingRefs) {

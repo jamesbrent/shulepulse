@@ -5,6 +5,7 @@ import {
   Phone, Mail, UserCheck, BookOpen, Bell
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import ClassAttendance from './ClassAttendance'
@@ -125,7 +126,7 @@ export default function ClassTeacherDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = basePath('/')
   }
 
   const pageTitles = {

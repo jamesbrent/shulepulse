@@ -6,6 +6,7 @@ import {
   UserCheck, FileText, BarChart2, X, MessageSquare, Award, Bell
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import './DeputyAdminDashboard.css'
@@ -102,7 +103,7 @@ export default function DeputyAdminDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = basePath('/')
   }
 
   const pageTitles = {

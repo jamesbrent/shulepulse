@@ -11,6 +11,7 @@ import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
+import { basePath } from '../../lib/paths'
 import './SuperadminDashboard.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import SchoolsPage from './SchoolsPage'
@@ -77,7 +78,7 @@ export default function SuperadminDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = basePath('/')
   }
 
   const handleExport = () => {

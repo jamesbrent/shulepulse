@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { basePath } from '../lib/paths'
 import './Login.css'
 
 export default function ForgotPassword() {
@@ -14,7 +15,7 @@ export default function ForgotPassword() {
     setError('')
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/reset-password',
+      redirectTo: window.location.origin + basePath('/reset-password'),
     })
 
     if (error) {
@@ -51,7 +52,7 @@ export default function ForgotPassword() {
               <p style={{ color: '#64748b', fontSize: 14 }}>
                 We sent a password reset link to <strong>{email}</strong>
               </p>
-              <a href="/" style={{ display: 'inline-block', marginTop: 20, color: '#2563eb', fontWeight: 500 }}>
+              <a href={basePath('/')} style={{ display: 'inline-block', marginTop: 20, color: '#2563eb', fontWeight: 500 }}>
                 Back to login
               </a>
             </div>
@@ -71,7 +72,7 @@ export default function ForgotPassword() {
                 {loading ? 'Sending...' : 'Send reset link'}
               </button>
               <div style={{ textAlign: 'center', marginTop: 16 }}>
-                <a href="/" style={{ color: '#64748b', fontSize: 14 }}>Back to login</a>
+                <a href={basePath('/')} style={{ color: '#64748b', fontSize: 14 }}>Back to login</a>
               </div>
             </form>
           )}

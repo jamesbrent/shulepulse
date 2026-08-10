@@ -3,7 +3,7 @@ import { Printer, X, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { groupGradesBySubject, getCBEGrade, gradeDisplay } from '../../components/students/ReportCard'
 
-const SHULEPULSE_LOGO = '/favicon.svg'
+const SHULEPULSE_LOGO = import.meta.env.BASE_URL + 'favicon.svg'
 const TERM_NUM = { 'Term 1': '1', 'Term 2': '2', 'Term 3': '3' }
 
 const TR_CSS = `

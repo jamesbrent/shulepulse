@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { basePath } from '../lib/paths'
 import './Login.css'
 
 export default function ResetPassword() {
@@ -68,7 +69,7 @@ export default function ResetPassword() {
               Invalid or expired reset link. Please request a new one.
             </p>
             <div style={{ textAlign: 'center' }}>
-              <a href="/forgot-password" style={{ color: '#2563eb', fontWeight: 500 }}>
+              <a href={basePath('/forgot-password')} style={{ color: '#2563eb', fontWeight: 500 }}>
                 Request new reset link
               </a>
             </div>
@@ -102,7 +103,7 @@ export default function ResetPassword() {
               <p style={{ color: '#64748b', fontSize: 14 }}>
                 Your password has been changed successfully.
               </p>
-              <a href="/" style={{ display: 'inline-block', marginTop: 20, color: '#2563eb', fontWeight: 500 }}>
+              <a href={basePath('/')} style={{ display: 'inline-block', marginTop: 20, color: '#2563eb', fontWeight: 500 }}>
                 Sign in with new password
               </a>
             </div>

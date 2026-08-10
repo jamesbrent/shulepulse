@@ -12,6 +12,7 @@ import {
   Menu, X, CreditCard, Shield, Lock
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { basePath } from '../../lib/paths'
 import './StudentPortal.css'
 import GradesPage from './GradesPage'
 import FeeStatementPage from './FeeStatementPage'
@@ -222,7 +223,7 @@ export default function StudentPortal() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = basePath('/')
   }
 
   const getGradeColor = (g) => {

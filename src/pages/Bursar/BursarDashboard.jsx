@@ -4,6 +4,7 @@ import {
   BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
@@ -114,7 +115,7 @@ export default function BursarDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = basePath('/')
   }
 
   const pageTitles = {

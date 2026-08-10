@@ -5,6 +5,7 @@ import {
   BookOpen, Award
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { basePath } from '../../lib/paths'
 import './TeacherDashboard.css'
 import AttendancePage from './AttendancePage'
 import './AttendancePage.css'
@@ -166,7 +167,7 @@ export default function TeacherDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = basePath('/')
   }
 
   const navItems = [

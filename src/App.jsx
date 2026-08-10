@@ -26,7 +26,7 @@ export default function App() {
   }, [])
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/shulepulse">
       <BrandingProvider>
       <Routes>
         {/* Public */}

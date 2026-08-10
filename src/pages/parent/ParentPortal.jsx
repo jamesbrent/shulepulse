@@ -12,6 +12,7 @@ const WhatsAppIcon = ({ size = 16 }) => (
   </svg>
 )
 import { supabase } from '../../lib/supabase'
+import { basePath } from '../../lib/paths'
 import './ParentPortal.css'
 import './AcademicResultsPage.css'
 import './AttendancePage.css'
@@ -64,7 +65,7 @@ export default function ParentPortal() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = basePath('/')
   }
 
   const navItems = [

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { supabase } from '../lib/supabase'
+import { basePath } from '../lib/paths'
 import { Shield, ChevronDown, LogOut } from 'lucide-react'
 import './RoleSwitcher.css'
 
@@ -45,7 +46,7 @@ export default function RoleSwitcher() {
       .eq('id', profile.id)
     if (error) { console.error('Role switch failed:', error); return }
     setOpen(false)
-    window.location.href = ROLE_META[newRole]?.route || '/'
+    window.location.href = basePath(ROLE_META[newRole]?.route || '/')
   }
 
   const otherRoles = roles.filter(r => r !== profile?.role)
