@@ -25,9 +25,9 @@ import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import LibraryContent from '../library/LibraryContent'
-import './BursarDashboard.css'
+import './FinanceDashboard.css'
 
-export default function BursarDashboard() {
+export default function FinanceDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
@@ -122,7 +122,7 @@ export default function BursarDashboard() {
   }
 
   const pageTitles = {
-    dashboard: 'Bursar Dashboard',
+    dashboard: 'Finance Dashboard',
     fees: 'Fee Structures',
     payments: 'Payments',
     receipts: 'Receipts',

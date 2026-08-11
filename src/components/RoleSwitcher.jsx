@@ -10,7 +10,7 @@ const ROLE_META = {
   superadmin:            { label: 'Super Admin',      color: '#0f172a', route: '/superadmin' },
   admin:                { label: 'Admin',             color: '#2563eb', route: '/admin' },
   deputy_administrator: { label: 'Deputy Admin',      color: '#2563eb', route: '/deputy-admin' },
-  bursar:               { label: 'Bursar',            color: '#16a34a', route: '/bursar' },
+  bursar:               { label: 'Finance',           color: '#16a34a', route: '/bursar' },
   registrar:            { label: 'Registrar',         color: '#ca8a04', route: '/registrar' },
   hod:                  { label: 'HOD',               color: '#7c3aed', route: '/hod' },
   teacher:              { label: 'Teacher',           color: '#64748b', route: '/teacher' },

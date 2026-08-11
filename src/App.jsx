@@ -10,7 +10,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import DeputyAdminDashboard from './pages/DeputyAdministrator/DeputyAdminDashboard'
-import BursarDashboard from './pages/Bursar/BursarDashboard'
+import FinanceDashboard from './pages/Finance/FinanceDashboard'
 import RegistrarDashboard from './pages/Registrar/RegistrarDashboard'
 import HODDashboard from './pages/HOD/HODDashboard'
 import TeacherDashboard from './pages/teacher/TeacherDashboard'
@@ -54,7 +54,7 @@ export default function App() {
         } />
         <Route path="/bursar" element={
           <ProtectedRoute allowedRoles={['bursar']}>
-            <BursarDashboard />
+            <FinanceDashboard />
           </ProtectedRoute>
         } />
         <Route path="/registrar" element={
