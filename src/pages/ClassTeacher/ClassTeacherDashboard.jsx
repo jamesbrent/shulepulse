@@ -19,6 +19,7 @@ import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
+import ClassTeacherLibrary from '../library/ClassTeacherLibrary'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import './ParentCommunication.css'
 import './ClassTeacherDashboard.css'
@@ -122,6 +123,7 @@ export default function ClassTeacherDashboard() {
     { key: 'comments', label: 'Class Comments', icon: <MessageSquare size={18} /> },
     { key: 'communication', label: 'Parent Communication', icon: <Phone size={18} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
     { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
   ]
 
@@ -137,6 +139,7 @@ export default function ClassTeacherDashboard() {
     comments: 'Class Comments',
     communication: 'Parent Communication',
     notices: 'Notices & Announcements',
+    library: 'Library',
     support: 'Support Tickets',
   }
 
@@ -154,6 +157,8 @@ export default function ClassTeacherDashboard() {
         return <ParentCommunication {...sharedProps} />
       case 'notices':
         return <NoticesPage profile={authProfile} />
+      case 'library':
+        return <ClassTeacherLibrary schoolId={teacherData?.school_id ?? school?.id} classes={getAssignedClasses(teacherData || {})} />
       case 'support':
         return <SchoolSupportPage />
       default:

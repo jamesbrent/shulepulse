@@ -3,7 +3,7 @@ import { Clock, CheckCircle2, Search } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { memberTypeLabel, fmtDate, daysOverdue } from '../../lib/library'
 
-export default function LibraryOverdue({ schoolId }) {
+export default function LibraryOverdue({ schoolId, onOpenMember }) {
   const [loans, setLoans] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -17,7 +17,7 @@ export default function LibraryOverdue({ schoolId }) {
     const today = new Date().toISOString().slice(0, 10)
     const { data } = await supabase
       .from('library_loans')
-      .select('*, books:library_books(title, author), members:library_members(full_name, member_type, member_code)')
+      .select('*, books:library_books(title, author), members:library_members(id, full_name, member_type, member_code)')
       .eq('school_id', schoolId)
       .or(`status.eq.overdue,and(status.eq.issued,due_date.lt.${today})`)
       .order('due_date', { ascending: true })
@@ -90,10 +90,14 @@ export default function LibraryOverdue({ schoolId }) {
                     <tr key={l.id}>
                       <td style={{ fontWeight: 600 }}>{l.books?.title || '—'}</td>
                       <td>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        <button
+                          className="member-link"
+                          onClick={() => onOpenMember(l.members.id)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                        >
                           <span className="lib-avatar-sm">{(l.members?.full_name || '?')[0]}</span>
-                          {l.members?.full_name || '—'}
-                        </span>
+                          <span style={{ fontWeight: 600, color: '#0f172a' }}>{l.members?.full_name || '—'}</span>
+                        </button>
                       </td>
                       <td>{memberTypeLabel(l.members?.member_type)}</td>
                       <td>{fmtDate(l.due_date)}</td>

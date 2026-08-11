@@ -46,6 +46,7 @@ import './Alumni.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
+import LibraryContent from '../library/LibraryContent'
 
 import ExamSetup from '../HOD/ExamSetup'
 import MarksApproval from '../HOD/MarksApproval'
@@ -85,6 +86,7 @@ const NAV_GROUPS = [
       { key: 'teacher_review', label: 'Teacher Review', icon: <Star size={14} /> },
       { key: 'cbc_competency', label: 'CBC Competency', icon: <Award size={14} /> },
       { key: 'timetable', label: 'Timetable', icon: <Calendar size={14} /> },
+      { key: 'library', label: 'Library', icon: <BookOpen size={14} /> },
     ],
   },
   {

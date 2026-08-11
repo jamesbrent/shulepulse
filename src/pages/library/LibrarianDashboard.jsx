@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, BookOpen, ArrowLeftRight, Users, Clock,
-  BookMarked, Settings, BarChart3, LogOut, Menu, X, BookPlus
+  BookMarked, Settings, BarChart3, LogOut, Menu, X, BookPlus,
+  Receipt
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -19,6 +20,8 @@ import LibraryOverdue from './LibraryOverdue'
 import LibraryReservations from './LibraryReservations'
 import LibraryManagement from './LibraryManagement'
 import LibraryReports from './LibraryReports'
+import LibraryFines from './LibraryFines'
+import MemberProfile from './MemberProfile'
 
 export default function LibrarianDashboard() {
   const { profile: authProfile } = useAuthStore()
@@ -27,6 +30,7 @@ export default function LibrarianDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [schoolId, setSchoolId] = useState(null)
+  const [profileMemberId, setProfileMemberId] = useState(null)
 
   useEffect(() => {
     getSchoolId().then(setSchoolId)
@@ -39,6 +43,7 @@ export default function LibrarianDashboard() {
     { key: 'members', label: 'Members', icon: <Users size={18} /> },
     { key: 'overdue', label: 'Overdue', icon: <Clock size={18} /> },
     { key: 'reservations', label: 'Reservations', icon: <BookMarked size={18} /> },
+    { key: 'fines', label: 'Fines', icon: <Receipt size={18} /> },
     { key: 'management', label: 'Management', icon: <Settings size={18} /> },
     { key: 'reports', label: 'Reports', icon: <BarChart3 size={18} /> },
   ]
@@ -55,19 +60,32 @@ export default function LibrarianDashboard() {
     members: 'Library Members',
     overdue: 'Overdue Books',
     reservations: 'Reservations',
+    fines: 'Fines & Payments',
     management: 'Library Management',
     reports: 'Library Reports',
   }
 
   const renderContent = () => {
     if (!schoolId) return <div className="lib-loading" />
+    if (profileMemberId) {
+      return (
+        <MemberProfile
+          schoolId={schoolId}
+          memberId={profileMemberId}
+          school={school}
+          onNavigate={setActiveNav}
+          onBack={() => setProfileMemberId(null)}
+        />
+      )
+    }
     switch (activeNav) {
       case 'dashboard':    return <LibraryOverview schoolId={schoolId} onNavigate={setActiveNav} />
       case 'catalogue':    return <LibraryCatalogue schoolId={schoolId} onNavigate={setActiveNav} />
-      case 'borrow':       return <LibraryBorrowReturn schoolId={schoolId} />
-      case 'members':      return <LibraryMembers schoolId={schoolId} />
-      case 'overdue':      return <LibraryOverdue schoolId={schoolId} />
+      case 'borrow':       return <LibraryBorrowReturn schoolId={schoolId} onOpenMember={setProfileMemberId} />
+      case 'members':      return <LibraryMembers schoolId={schoolId} onOpenMember={setProfileMemberId} />
+      case 'overdue':      return <LibraryOverdue schoolId={schoolId} onOpenMember={setProfileMemberId} />
       case 'reservations': return <LibraryReservations schoolId={schoolId} />
+      case 'fines':        return <LibraryFines schoolId={schoolId} term={currentTerm} year={currentYear} onOpenMember={setProfileMemberId} />
       case 'management':   return <LibraryManagement schoolId={schoolId} />
       case 'reports':      return <LibraryReports schoolId={schoolId} />
       default:             return <LibraryOverview schoolId={schoolId} onNavigate={setActiveNav} />

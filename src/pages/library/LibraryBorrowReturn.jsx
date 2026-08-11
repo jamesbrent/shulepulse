@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
-  ArrowLeftRight, Plus, RefreshCw, AlertTriangle, CheckCircle2, X, History
+  ArrowLeftRight, Plus, RefreshCw, AlertTriangle, CheckCircle2, X, History, Search
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import {
   memberTypeLabel, fetchRules, ruleForType, fmtDate, daysOverdue, daysBetween, syncLibraryMembers
 } from '../../lib/library'
 
-export default function LibraryBorrowReturn({ schoolId }) {
+export default function LibraryBorrowReturn({ schoolId, onOpenMember }) {
   const [loans, setLoans] = useState([])
   const [members, setMembers] = useState([])
   const [books, setBooks] = useState([])
@@ -15,6 +15,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
   const [rules, setRules] = useState([])
   const [loading, setLoading] = useState(true)
   const [subTab, setSubTab] = useState('active')
+  const [search, setSearch] = useState('')
 
   const [showIssue, setShowIssue] = useState(false)
   const [issueMember, setIssueMember] = useState('')
@@ -30,7 +31,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
     await syncLibraryMembers(schoolId)
     const [loansRes, membersRes, booksRes, rulesRes, copiesRes] = await Promise.all([
       supabase.from('library_loans')
-        .select('*, books:library_books(title, author, available_copies), members:library_members(full_name, member_type, member_code), copy:library_book_copies(copy_code)')
+        .select('*, books:library_books(title, author, available_copies), members:library_members(id, full_name, member_type, member_code), copy:library_book_copies(copy_code)')
         .eq('school_id', schoolId)
         .order('created_at', { ascending: false })
         .limit(200),
@@ -229,6 +230,24 @@ export default function LibraryBorrowReturn({ schoolId }) {
   const lostLoans = loans.filter(l => l.status === 'lost')
   const damagedLoans = loans.filter(l => l.status === 'damaged')
 
+  const matchesSearch = (l) => {
+    const q = search.trim().toLowerCase()
+    if (!q) return true
+    return (
+      l.books?.title?.toLowerCase().includes(q) ||
+      l.books?.author?.toLowerCase().includes(q) ||
+      l.members?.full_name?.toLowerCase().includes(q) ||
+      l.members?.member_code?.toLowerCase().includes(q) ||
+      l.copy?.copy_code?.toLowerCase().includes(q)
+    )
+  }
+
+  const filteredActive = activeLoans.filter(matchesSearch)
+  const filteredReturned = returnedLoans.filter(matchesSearch)
+  const filteredRenewed = renewedLoans.filter(matchesSearch)
+  const filteredLost = lostLoans.filter(matchesSearch)
+  const filteredDamaged = damagedLoans.filter(matchesSearch)
+
   const closedStatusColor = (status) =>
     status === 'returned'
       ? { bg: '#dcfce7', color: '#16a34a' }
@@ -308,7 +327,14 @@ export default function LibraryBorrowReturn({ schoolId }) {
   return (
     <div>
       <div className="lib-toolbar">
-        <div style={{ flex: 1 }} />
+        <div className="lib-search" style={{ flex: 1, maxWidth: 420 }}>
+          <Search size={15} color="#94a3b8" />
+          <input
+            placeholder="Search by book, author, member, or copy code..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
         <button className="lib-btn lib-btn-blue" onClick={openIssue}>
           <Plus size={15} /> Issue Book
         </button>
@@ -336,12 +362,12 @@ export default function LibraryBorrowReturn({ schoolId }) {
       <div className="lib-card">
         <div className="lib-card-header">
           <div>
-            <h2>Active Loans ({activeLoans.length})</h2>
+            <h2>Active Loans ({filteredActive.length})</h2>
             <p>Books currently out on loan</p>
           </div>
         </div>
 
-        {activeLoans.length === 0 ? (
+        {filteredActive.length === 0 ? (
           <div className="lib-empty">
             <ArrowLeftRight size={36} color="#cbd5e1" />
             <p>No active loans</p>
@@ -362,7 +388,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
                 </tr>
               </thead>
               <tbody>
-                {activeLoans.map(l => {
+                {filteredActive.map(l => {
                   const od = daysOverdue(l)
                   const overdue = l.status === 'overdue' || od > 0
                   return (
@@ -376,10 +402,14 @@ export default function LibraryBorrowReturn({ schoolId }) {
                         )}
                       </td>
                       <td>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        <button
+                          className="member-link"
+                          onClick={() => onOpenMember(l.members.id)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                        >
                           <span className="lib-avatar-sm">{(l.members?.full_name || '?')[0]}</span>
-                          {l.members?.full_name || '—'}
-                        </span>
+                          <span style={{ fontWeight: 600, color: '#0f172a' }}>{l.members?.full_name || '—'}</span>
+                        </button>
                       </td>
                       <td>{memberTypeLabel(l.members?.member_type)}</td>
                       <td>{fmtDate(l.due_date)}</td>
@@ -427,15 +457,15 @@ export default function LibraryBorrowReturn({ schoolId }) {
       <div className="lib-card">
         <div className="lib-card-header">
           <div>
-            <h2>Returned Books ({returnedLoans.length})</h2>
+            <h2>Returned Books ({filteredReturned.length})</h2>
             <p>Books that have been returned to the library</p>
           </div>
           <History size={16} color="#94a3b8" />
         </div>
 
-        {returnedLoans.length === 0
+        {filteredReturned.length === 0
           ? renderEmpty(<History size={36} color="#cbd5e1" />, 'No returned books yet', 'Returned loans will appear here')
-          : renderClosedTable(returnedLoans)}
+          : renderClosedTable(filteredReturned)}
       </div>
       )}
 
@@ -443,13 +473,13 @@ export default function LibraryBorrowReturn({ schoolId }) {
       <div className="lib-card">
         <div className="lib-card-header">
           <div>
-            <h2>Renewed Loans ({renewedLoans.length})</h2>
+            <h2>Renewed Loans ({filteredRenewed.length})</h2>
             <p>Active loans that have been renewed one or more times</p>
           </div>
           <RefreshCw size={16} color="#94a3b8" />
         </div>
 
-        {renewedLoans.length === 0 ? (
+        {filteredRenewed.length === 0 ? (
           renderEmpty(<RefreshCw size={36} color="#cbd5e1" />, 'No renewals yet', 'Renewed loans will appear here')
         ) : (
           <div className="lib-table-wrap">
@@ -465,7 +495,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
                 </tr>
               </thead>
               <tbody>
-                {renewedLoans.map(l => (
+                {filteredRenewed.map(l => (
                   <tr key={l.id}>
                     <td style={{ fontWeight: 600 }}>
                       {l.books?.title || '—'}
@@ -506,15 +536,15 @@ export default function LibraryBorrowReturn({ schoolId }) {
       <div className="lib-card">
         <div className="lib-card-header">
           <div>
-            <h2>Lost Books ({lostLoans.length})</h2>
+            <h2>Lost Books ({filteredLost.length})</h2>
             <p>Loans marked as lost</p>
           </div>
           <AlertTriangle size={16} color="#94a3b8" />
         </div>
 
-        {lostLoans.length === 0
+        {filteredLost.length === 0
           ? renderEmpty(<AlertTriangle size={36} color="#cbd5e1" />, 'No lost books', 'Books marked lost will appear here')
-          : renderClosedTable(lostLoans, l => (
+          : renderClosedTable(filteredLost, l => (
               <button className="lib-btn lib-btn-green" onClick={() => foundBook(l)} title="Book was found">
                 <CheckCircle2 size={14} /> Mark Found
               </button>
@@ -526,15 +556,15 @@ export default function LibraryBorrowReturn({ schoolId }) {
       <div className="lib-card">
         <div className="lib-card-header">
           <div>
-            <h2>Damaged Books ({damagedLoans.length})</h2>
+            <h2>Damaged Books ({filteredDamaged.length})</h2>
             <p>Loans marked as damaged</p>
           </div>
           <AlertTriangle size={16} color="#94a3b8" />
         </div>
 
-        {damagedLoans.length === 0
+        {filteredDamaged.length === 0
           ? renderEmpty(<AlertTriangle size={36} color="#cbd5e1" />, 'No damaged books', 'Books marked damaged will appear here')
-          : renderClosedTable(damagedLoans)}
+          : renderClosedTable(filteredDamaged)}
       </div>
       )}
 

@@ -5,7 +5,7 @@ import {
   RefreshCw, Printer, Clock, AlertCircle,
   CheckCircle, UserX, Database, TrendingUp, TrendingDown,
   Phone, IdCard, Bell, Activity, ExternalLink, MessageSquare,
-  Menu, X
+  Menu, X, BookOpen
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -37,6 +37,7 @@ import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
+import LibraryContent from '../library/LibraryContent'
 
 export default function RegistrarDashboard() {
   const { profile: authProfile } = useAuthStore()
@@ -189,6 +190,7 @@ export default function RegistrarDashboard() {
     { key: 'bulk-import', label: 'Bulk Import', icon: <Upload size={18} /> },
     { key: 'archives', label: 'Archives & Alumni', icon: <Archive size={18} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
     { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
   ]
 
@@ -210,6 +212,7 @@ export default function RegistrarDashboard() {
     'bulk-import': 'Bulk Import',
     archives: 'Archives & Alumni',
     notices: 'Notices & Announcements',
+    library: 'Library',
     support: 'Support Tickets',
   }
 
@@ -225,6 +228,7 @@ export default function RegistrarDashboard() {
       case 'bulk-import': return <BulkImport />
       case 'archives': return <ArchivesAlumni />
       case 'notices': return <NoticesPage profile={authProfile} />
+      case 'library': return <LibraryContent schoolId={authProfile?.school_id} school={school} />
       case 'support': return <SchoolSupportPage />
       default: return renderDashboard()
     }

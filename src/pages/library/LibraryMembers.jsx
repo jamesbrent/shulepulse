@@ -3,7 +3,7 @@ import { Plus, Search, Users, X, UserPlus, RefreshCw } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { memberTypeLabel, fetchRules, ruleForType, syncLibraryMembers } from '../../lib/library'
 
-export default function LibraryMembers({ schoolId }) {
+export default function LibraryMembers({ schoolId, onOpenMember }) {
   const [members, setMembers] = useState([])
   const [search, setSearch] = useState('')
   const [rules, setRules] = useState([])
@@ -128,13 +128,17 @@ export default function LibraryMembers({ schoolId }) {
                   return (
                     <tr key={m.id}>
                       <td>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        <button
+                          className="member-link"
+                          onClick={() => onOpenMember(m.id)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                        >
                           <span className="lib-avatar-sm">{(m.full_name || '?')[0]}</span>
                           <span>
-                            <span style={{ display: 'block', fontWeight: 600 }}>{m.full_name}</span>
+                            <span style={{ display: 'block', fontWeight: 600, color: '#0f172a' }}>{m.full_name}</span>
                             <span className="text-muted" style={{ fontSize: 11, color: '#94a3b8' }}>{m.id.slice(0, 8)}</span>
                           </span>
-                        </span>
+                        </button>
                       </td>
                       <td>{m.member_code || '—'}</td>
                       <td>{memberTypeLabel(m.member_type)}</td>
@@ -148,6 +152,9 @@ export default function LibraryMembers({ schoolId }) {
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button className="lib-btn" onClick={() => onOpenMember(m.id)}>
+                            View Profile
+                          </button>
                           <button className="lib-btn" onClick={() => toggleStatus(m)}>
                             {m.status === 'active' ? 'Suspend' : 'Activate'}
                           </button>

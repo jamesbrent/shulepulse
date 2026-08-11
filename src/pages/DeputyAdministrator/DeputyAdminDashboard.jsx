@@ -21,6 +21,7 @@ import SupportTicket from './SupportTicket'
 import CBCCompetency from './CBCCompetency'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
+import LibraryContent from '../library/LibraryContent'
 
 export default function DeputyAdminDashboard() {
   const { profile: authProfile } = useAuthStore()
@@ -100,6 +101,7 @@ export default function DeputyAdminDashboard() {
     { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
     { key: 'cbc', label: 'CBC Competency', icon: <Award size={18} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
   ]
 
   const handleLogout = async () => {
@@ -118,6 +120,7 @@ export default function DeputyAdminDashboard() {
     support: 'Support Tickets',
     notices: 'Notices & Announcements',
     cbc: 'CBC Competency',
+    library: 'Library',
   }
 
   const renderContent = () => {
@@ -140,6 +143,8 @@ export default function DeputyAdminDashboard() {
         return <CBCCompetency />
       case 'notices':
         return <NoticesPage profile={authProfile} />
+      case 'library':
+        return <LibraryContent schoolId={authProfile?.school_id} school={school} />
       default:
         return renderDashboard()
     }

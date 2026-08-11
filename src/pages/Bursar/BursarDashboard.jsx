@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, DollarSign, CreditCard, Receipt, FileText,
-  BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare, Menu, X
+  BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare, Menu, X, BookOpen
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -24,6 +24,7 @@ import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
+import LibraryContent from '../library/LibraryContent'
 import './BursarDashboard.css'
 
 export default function BursarDashboard() {
@@ -111,6 +112,7 @@ export default function BursarDashboard() {
     { key: 'statements', label: 'Statements', icon: <FileText size={18} /> },
     { key: 'reports', label: 'Reports', icon: <BarChart3 size={18} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
     { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
   ]
 
@@ -127,6 +129,7 @@ export default function BursarDashboard() {
     statements: 'Statements',
     reports: 'Reports',
     notices: 'Notices & Announcements',
+    library: 'Library',
     support: 'Support Tickets',
   }
 
@@ -138,6 +141,7 @@ export default function BursarDashboard() {
       case 'statements': return <StatementsPage />
       case 'reports': return <ReportsPage />
       case 'notices': return <NoticesPage profile={authProfile} />
+      case 'library': return <LibraryContent schoolId={authProfile?.school_id} school={school} />
       case 'support': return <SchoolSupportPage />
       default: return renderDashboard()
     }

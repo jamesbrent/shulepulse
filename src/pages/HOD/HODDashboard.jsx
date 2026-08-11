@@ -22,6 +22,7 @@ import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
+import LibraryContent from '../library/LibraryContent'
 
 export default function HODDashboard() {
   const { profile: authProfile } = useAuthStore()
@@ -108,6 +109,7 @@ export default function HODDashboard() {
     { key: 'reports', label: 'Reports & Results', icon: <FileBarChart size={18} /> },
     { key: 'teacher_review', label: 'Teacher Review', icon: <GraduationCap size={18} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
     { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
   ]
 
@@ -126,6 +128,7 @@ export default function HODDashboard() {
     teacher_review: 'Teacher Performance Review',
     dept_exams: 'Departmental Examinations',
     notices: 'Notices & Announcements',
+    library: 'Library',
     support: 'Support Tickets',
   }
 
@@ -147,6 +150,8 @@ export default function HODDashboard() {
         return <DeptExams />
       case 'notices':
         return <NoticesPage profile={authProfile} />
+      case 'library':
+        return <LibraryContent schoolId={authProfile?.school_id} school={school} />
       case 'support':
         return <SchoolSupportPage />
       default:
