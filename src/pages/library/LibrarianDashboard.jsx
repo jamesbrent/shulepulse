@@ -63,7 +63,7 @@ export default function LibrarianDashboard() {
     if (!schoolId) return <div className="lib-loading" />
     switch (activeNav) {
       case 'dashboard':    return <LibraryOverview schoolId={schoolId} onNavigate={setActiveNav} />
-      case 'catalogue':    return <LibraryCatalogue schoolId={schoolId} />
+      case 'catalogue':    return <LibraryCatalogue schoolId={schoolId} onNavigate={setActiveNav} />
       case 'borrow':       return <LibraryBorrowReturn schoolId={schoolId} />
       case 'members':      return <LibraryMembers schoolId={schoolId} />
       case 'overdue':      return <LibraryOverdue schoolId={schoolId} />

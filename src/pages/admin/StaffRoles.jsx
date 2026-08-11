@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   Shield, Search, CheckCircle, XCircle, AlertTriangle,
   ChevronRight, UserCheck, GraduationCap, BookOpen, Users,
-  UserPlus, Mail, Key, X, DollarSign
+  UserPlus, Mail, Key, X, DollarSign, Library
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
@@ -16,6 +16,7 @@ const ROLE_OPTIONS = [
   { value: 'bursar',           label: 'Bursar / Finance Officer',    icon: <DollarSign size={16} /> },
   { value: 'registrar',        label: 'Registrar / Admissions',      icon: <UserCheck size={16} /> },
   { value: 'class_teacher',    label: 'Class Teacher',               icon: <Users size={16} /> },
+  { value: 'librarian',        label: 'Librarian',                   icon: <Library size={16} /> },
 ]
 
 function generatePassword() {
@@ -39,6 +40,7 @@ const ROLE_BADGE = {
   class_teacher:        { label: 'Class Teacher',        color: '#dc2626', bg: '#fef2f2' },
   teacher:              { label: 'Teacher',               color: '#64748b', bg: '#f1f5f9' },
   admin:                { label: 'Admin',                 color: '#0f172a', bg: '#e2e8f0' },
+  librarian:            { label: 'Librarian',             color: '#0e7490', bg: '#cffafe' },
 }
 
 export default function StaffRoles() {

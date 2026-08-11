@@ -203,7 +203,7 @@
 }
 .lib-card-header p { font-size: 12px; color: #64748b; margin: 2px 0 0; }
 
-.lib-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.lib-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
 .lib-stat-card {
   background: #fff;
   border: 1px solid #e2e8f0;

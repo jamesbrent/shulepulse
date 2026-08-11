@@ -71,6 +71,53 @@ export async function currentBorrowedCount(memberId) {
   return count || 0
 }
 
+export const COPY_STATUS = {
+  available: { label: 'Available', color: '#16a34a', bg: '#dcfce7' },
+  borrowed:  { label: 'Borrowed',  color: '#2563eb', bg: '#dbeafe' },
+  lost:      { label: 'Lost',      color: '#9333ea', bg: '#f3e8ff' },
+  damaged:   { label: 'Damaged',   color: '#ca8a04', bg: '#fef3c7' },
+  withdrawn: { label: 'Withdrawn', color: '#64748b', bg: '#f1f5f9' },
+}
+
+export async function getLibrarySettings(schoolId) {
+  let data
+  const { data: row } = await supabase
+    .from('library_settings')
+    .select('*')
+    .eq('school_id', schoolId)
+    .maybeSingle()
+  data = row
+  if (!data) {
+    try {
+      const { data: created } = await supabase
+        .from('library_settings')
+        .insert({ school_id: schoolId })
+        .select()
+        .single()
+      data = created
+    } catch (e) {
+      // Ignore — a concurrent insert may have won the race.
+    }
+    if (!data) {
+      const { data: refetched } = await supabase
+        .from('library_settings').select('*').eq('school_id', schoolId).maybeSingle()
+      data = refetched
+    }
+  }
+  return data
+}
+
+export async function generateCopyCodes(schoolId, count) {
+  if (!count || count <= 0) return []
+  const settings = await getLibrarySettings(schoolId)
+  const prefix = settings?.code_prefix || 'LIB'
+  const { data } = await supabase.rpc('next_book_copy_codes', {
+    p_prefix: prefix,
+    p_count: count,
+  })
+  return data || []
+}
+
 const ROLE_TO_MEMBER_TYPE = {
   student: 'student',
   teacher: 'teacher',
@@ -97,11 +144,17 @@ export async function memberCodeForUser(schoolId, email, role) {
     return s?.admission_number ? `STD/${s.admission_number}` : null
   }
   if (role === 'teacher' || role === 'class_teacher') {
-    const { data: t } = await supabase
-      .from('teachers')
-      .select('staff_number, teacher_code, employee_number')
-      .eq('school_id', schoolId).eq('email', email)
-      .maybeSingle()
+    let t = null
+    try {
+      const { data } = await supabase
+        .from('teachers')
+        .select('*')
+        .eq('school_id', schoolId).eq('email', email)
+        .maybeSingle()
+      t = data
+    } catch (e) {
+      t = null
+    }
     const code = t?.staff_number || t?.teacher_code || t?.employee_number
     return code ? `TCH/${code}` : null
   }
@@ -110,7 +163,18 @@ export async function memberCodeForUser(schoolId, email, role) {
 
 export async function syncLibraryMembers(schoolId) {
   if (!schoolId) return
-  const [profilesRes, studentsRes, teachersRes] = await Promise.all([
+
+  let teachersRes
+  try {
+    teachersRes = await supabase
+      .from('teachers')
+      .select('*')
+      .eq('school_id', schoolId)
+  } catch (e) {
+    teachersRes = { data: [] }
+  }
+
+  const [profilesRes, studentsRes] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, email, full_name, role')
@@ -120,14 +184,19 @@ export async function syncLibraryMembers(schoolId) {
       .from('students')
       .select('email, admission_number')
       .eq('school_id', schoolId).eq('status', 'active'),
-    supabase
-      .from('teachers')
-      .select('email, staff_number, teacher_code, employee_number')
-      .eq('school_id', schoolId),
   ])
 
   const students = new Map((studentsRes.data || []).map(s => [s.email, s]))
-  const teachers = new Map((teachersRes.data || []).map(t => [t.email, t]))
+  const teachers = new Map((teachersRes?.data || []).map(t => [t.email, t]))
+
+  const { data: existingMembers } = await supabase
+    .from('library_members')
+    .select('profile_id, member_code')
+    .eq('school_id', schoolId)
+  const existing = existingMembers || []
+  const profileRows = new Map(existing.filter(m => m.profile_id).map(m => [m.profile_id, m]))
+  const takenCodes = new Set(existing.map(m => m.member_code).filter(Boolean))
+  const batchCodes = new Set()
 
   const rows = (profilesRes.data || []).map(p => {
     const type = memberTypeForRole(p.role)
@@ -137,6 +206,14 @@ export async function syncLibraryMembers(schoolId) {
     if (type === 'teacher' && teachers.has(p.email)) {
       const t = teachers.get(p.email)
       code = `TCH/${t.staff_number || t.teacher_code || t.employee_number}`
+    }
+    // The code must be unique per school (UNIQUE school_id, member_code) and
+    // unique within this batch too — otherwise the upsert 409s.
+    if (code) {
+      const holder = profileRows.get(p.id)
+      if (takenCodes.has(code) && holder?.member_code !== code) code = null
+      if (code && batchCodes.has(code)) code = null
+      if (code) batchCodes.add(code)
     }
     return {
       school_id: schoolId,
@@ -149,8 +226,14 @@ export async function syncLibraryMembers(schoolId) {
   }).filter(Boolean)
 
   if (rows.length) {
-    await supabase
+    const { error } = await supabase
       .from('library_members')
       .upsert(rows, { onConflict: 'school_id,profile_id' })
+    if (error && error.code === '23505') {
+      // Rare concurrent race — retry once.
+      await supabase
+        .from('library_members')
+        .upsert(rows, { onConflict: 'school_id,profile_id' })
+    }
   }
 }

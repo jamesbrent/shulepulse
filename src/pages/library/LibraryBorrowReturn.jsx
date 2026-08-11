@@ -1,55 +1,71 @@
 import { useState, useEffect } from 'react'
 import {
-  ArrowLeftRight, Plus, RefreshCw, AlertTriangle, CheckCircle2, X
+  ArrowLeftRight, Plus, RefreshCw, AlertTriangle, CheckCircle2, X, History
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import {
-  memberTypeLabel, fetchRules, ruleForType, fmtDate, daysOverdue, syncLibraryMembers
+  memberTypeLabel, fetchRules, ruleForType, fmtDate, daysOverdue, daysBetween, syncLibraryMembers
 } from '../../lib/library'
 
 export default function LibraryBorrowReturn({ schoolId }) {
   const [loans, setLoans] = useState([])
   const [members, setMembers] = useState([])
   const [books, setBooks] = useState([])
+  const [copies, setCopies] = useState([])
   const [rules, setRules] = useState([])
   const [loading, setLoading] = useState(true)
+  const [subTab, setSubTab] = useState('active')
 
   const [showIssue, setShowIssue] = useState(false)
   const [issueMember, setIssueMember] = useState('')
   const [issueBook, setIssueBook] = useState('')
+  const [issueCopy, setIssueCopy] = useState('')
+  const [bookCopies, setBookCopies] = useState([])
   const [issueDue, setIssueDue] = useState('')
   const [issueError, setIssueError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    fetchAll()
-  }, [schoolId])
-
   const fetchAll = async () => {
     setLoading(true)
     await syncLibraryMembers(schoolId)
-    const [loansRes, membersRes, booksRes, rulesRes] = await Promise.all([
+    const [loansRes, membersRes, booksRes, rulesRes, copiesRes] = await Promise.all([
       supabase.from('library_loans')
-        .select('*, books:library_books(title, author, available_copies), members:library_members(full_name, member_type, member_code)')
+        .select('*, books:library_books(title, author, available_copies), members:library_members(full_name, member_type, member_code), copy:library_book_copies(copy_code)')
         .eq('school_id', schoolId)
         .order('created_at', { ascending: false })
         .limit(200),
       supabase.from('library_members').select('*').eq('school_id', schoolId).eq('status', 'active').order('full_name'),
       supabase.from('library_books').select('*').eq('school_id', schoolId).gt('available_copies', 0).order('title'),
       fetchRules(schoolId),
+      supabase.from('library_book_copies').select('*').eq('school_id', schoolId).order('copy_code'),
     ])
     setLoans(loansRes.data || [])
     setMembers(membersRes.data || [])
     setBooks(booksRes.data || [])
     setRules(rulesRes)
+    setCopies(copiesRes.data || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchAll()
+  }, [schoolId])
 
   const openIssue = () => {
     setShowIssue(true)
     setIssueError('')
     setIssueBook('')
+    setIssueCopy('')
+    setBookCopies([])
     setIssueDue('')
+  }
+
+  const onBookChange = (id) => {
+    setIssueBook(id)
+    setIssueCopy('')
+    const avail = copies.filter(c => c.book_id === id && c.status === 'available')
+    setBookCopies(avail)
+    if (avail.length === 1) setIssueCopy(avail[0].id)
   }
 
   const onMemberChange = (id) => {
@@ -65,6 +81,10 @@ export default function LibraryBorrowReturn({ schoolId }) {
     setIssueError('')
     if (!issueMember || !issueBook || !issueDue) {
       setIssueError('Select a member, a book, and a due date')
+      return
+    }
+    if (bookCopies.length > 0 && !issueCopy) {
+      setIssueError('Select which copy of this book to issue')
       return
     }
     setSaving(true)
@@ -94,6 +114,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
     const { data: loan, error: loanErr } = await supabase.from('library_loans').insert({
       school_id: schoolId,
       book_id: issueBook,
+      copy_id: issueCopy || null,
       member_id: issueMember,
       issued_by: user?.id || null,
       due_date: issueDue,
@@ -105,15 +126,30 @@ export default function LibraryBorrowReturn({ schoolId }) {
       .update({ available_copies: book.available_copies - 1 })
       .eq('id', issueBook)
 
+    if (issueCopy) {
+      await supabase.from('library_book_copies')
+        .update({ status: 'borrowed' })
+        .eq('id', issueCopy)
+    }
+
     await supabase.from('library_reservations')
       .update({ status: 'fulfilled', notified_at: new Date().toISOString() })
       .eq('book_id', issueBook).eq('member_id', issueMember).eq('status', 'pending')
 
+    const copyObj = issueCopy ? copies.find(c => c.id === issueCopy) : null
     setLoans(prev => {
-      const rich = { ...loan, books: books.find(b => b.id === issueBook), members: member }
+      const rich = {
+        ...loan,
+        books: books.find(b => b.id === issueBook),
+        members: member,
+        copy: copyObj ? { copy_code: copyObj.copy_code } : null,
+      }
       return [rich, ...prev]
     })
     setBooks(prev => prev.map(b => b.id === issueBook ? { ...b, available_copies: b.available_copies - 1 } : b))
+    if (issueCopy) {
+      setCopies(prev => prev.map(c => c.id === issueCopy ? { ...c, status: 'borrowed' } : c))
+    }
     setShowIssue(false)
     setSaving(false)
   }
@@ -122,6 +158,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
     const { data: book } = await supabase.from('library_books').select('available_copies').eq('id', loan.book_id).single()
     await supabase.from('library_loans').update({ status: 'returned', returned_at: new Date().toISOString() }).eq('id', loan.id)
     if (book) await supabase.from('library_books').update({ available_copies: book.available_copies + 1 }).eq('id', loan.book_id)
+    if (loan.copy_id) await supabase.from('library_book_copies').update({ status: 'available' }).eq('id', loan.copy_id)
 
     const { data: firstRes } = await supabase.from('library_reservations')
       .select('id').eq('book_id', loan.book_id).eq('status', 'pending').order('reserved_at').limit(1)
@@ -131,6 +168,7 @@ export default function LibraryBorrowReturn({ schoolId }) {
 
     setLoans(prev => prev.map(l => l.id === loan.id ? { ...l, status: 'returned', returned_at: new Date().toISOString() } : l))
     setBooks(prev => prev.map(b => b.id === loan.book_id ? { ...b, available_copies: (b.available_copies || 0) + 1 } : b))
+    if (loan.copy_id) setCopies(prev => prev.map(c => c.id === loan.copy_id ? { ...c, status: 'available' } : c))
   }
 
   const renewLoan = async (loan) => {
@@ -160,10 +198,110 @@ export default function LibraryBorrowReturn({ schoolId }) {
         total_copies: newTotal,
       }).eq('id', loan.book_id)
     }
+    if (loan.copy_id) {
+      await supabase.from('library_book_copies').update({ status }).eq('id', loan.copy_id)
+      setCopies(prev => prev.map(c => c.id === loan.copy_id ? { ...c, status } : c))
+    }
     setLoans(prev => prev.map(l => l.id === loan.id ? { ...l, status, returned_at: new Date().toISOString() } : l))
   }
 
+  const foundBook = async (loan) => {
+    if (!window.confirm('Mark this book as found and return it to stock?')) return
+    await supabase.from('library_loans').update({ status: 'returned', returned_at: new Date().toISOString() }).eq('id', loan.id)
+    const { data: book } = await supabase.from('library_books').select('available_copies, total_copies').eq('id', loan.book_id).single()
+    if (book) {
+      const newTotal = book.total_copies + 1
+      await supabase.from('library_books').update({
+        available_copies: Math.min(book.available_copies + 1, newTotal),
+        total_copies: newTotal,
+      }).eq('id', loan.book_id)
+    }
+    if (loan.copy_id) {
+      await supabase.from('library_book_copies').update({ status: 'available' }).eq('id', loan.copy_id)
+      setCopies(prev => prev.map(c => c.id === loan.copy_id ? { ...c, status: 'available' } : c))
+    }
+    setLoans(prev => prev.map(l => l.id === loan.id ? { ...l, status: 'returned', returned_at: new Date().toISOString() } : l))
+  }
+
   const activeLoans = loans.filter(l => ['issued', 'overdue'].includes(l.status))
+  const returnedLoans = loans.filter(l => l.status === 'returned')
+  const renewedLoans = loans.filter(l => (l.renewed_count || 0) > 0)
+  const lostLoans = loans.filter(l => l.status === 'lost')
+  const damagedLoans = loans.filter(l => l.status === 'damaged')
+
+  const closedStatusColor = (status) =>
+    status === 'returned'
+      ? { bg: '#dcfce7', color: '#16a34a' }
+      : status === 'lost'
+        ? { bg: '#fee2e2', color: '#dc2626' }
+        : { bg: '#fef3c7', color: '#b45309' }
+
+  const renderClosedTable = (rows, renderActions) => (
+    <div className="lib-table-wrap">
+      <table className="lib-table">
+        <thead>
+          <tr>
+            <th>Book</th>
+            <th>Member</th>
+            <th>Type</th>
+            <th>Issued</th>
+            <th>Returned</th>
+            <th>Days Out</th>
+            <th>Status</th>
+            {renderActions && <th style={{ textAlign: 'right' }}>Actions</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(l => {
+            const daysOut = daysBetween(l.issued_at, l.returned_at || new Date().toISOString())
+            const statusColor = closedStatusColor(l.status)
+            return (
+              <tr key={l.id}>
+                <td style={{ fontWeight: 600 }}>
+                  {l.books?.title || '—'}
+                  {l.copy?.copy_code && (
+                    <span style={{ display: 'block', fontFamily: 'monospace', fontSize: 11, color: '#64748b' }}>
+                      {l.copy.copy_code}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <span className="lib-avatar-sm">{(l.members?.full_name || '?')[0]}</span>
+                    {l.members?.full_name || '—'}
+                  </span>
+                </td>
+                <td>{memberTypeLabel(l.members?.member_type)}</td>
+                <td>{fmtDate(l.issued_at)}</td>
+                <td>{l.returned_at ? fmtDate(l.returned_at) : '—'}</td>
+                <td>{daysOut >= 0 ? `${daysOut} days` : '—'}</td>
+                <td>
+                  <span className="lib-badge" style={{ background: statusColor.bg, color: statusColor.color }}>
+                    {l.status}
+                  </span>
+                </td>
+                {renderActions && (
+                  <td>
+                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                      {renderActions(l)}
+                    </div>
+                  </td>
+                )}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+
+  const renderEmpty = (icon, title, hint) => (
+    <div className="lib-empty">
+      {icon}
+      <p>{title}</p>
+      <span>{hint}</span>
+    </div>
+  )
 
   if (loading) return <div className="lib-loading">Loading loans...</div>
 
@@ -176,6 +314,25 @@ export default function LibraryBorrowReturn({ schoolId }) {
         </button>
       </div>
 
+      <div className="lib-tabs">
+        <button className={`lib-tab ${subTab === 'active' ? 'active' : ''}`} onClick={() => setSubTab('active')}>
+          Active ({activeLoans.length})
+        </button>
+        <button className={`lib-tab ${subTab === 'returned' ? 'active' : ''}`} onClick={() => setSubTab('returned')}>
+          Returned ({returnedLoans.length})
+        </button>
+        <button className={`lib-tab ${subTab === 'renewed' ? 'active' : ''}`} onClick={() => setSubTab('renewed')}>
+          Renewed ({renewedLoans.length})
+        </button>
+        <button className={`lib-tab ${subTab === 'lost' ? 'active' : ''}`} onClick={() => setSubTab('lost')}>
+          Lost ({lostLoans.length})
+        </button>
+        <button className={`lib-tab ${subTab === 'damaged' ? 'active' : ''}`} onClick={() => setSubTab('damaged')}>
+          Damaged ({damagedLoans.length})
+        </button>
+      </div>
+
+      {subTab === 'active' && (
       <div className="lib-card">
         <div className="lib-card-header">
           <div>
@@ -210,7 +367,14 @@ export default function LibraryBorrowReturn({ schoolId }) {
                   const overdue = l.status === 'overdue' || od > 0
                   return (
                     <tr key={l.id}>
-                      <td style={{ fontWeight: 600 }}>{l.books?.title || '—'}</td>
+                      <td style={{ fontWeight: 600 }}>
+                        {l.books?.title || '—'}
+                        {l.copy?.copy_code && (
+                          <span style={{ display: 'block', fontFamily: 'monospace', fontSize: 11, color: '#64748b' }}>
+                            {l.copy.copy_code}
+                          </span>
+                        )}
+                      </td>
                       <td>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                           <span className="lib-avatar-sm">{(l.members?.full_name || '?')[0]}</span>
@@ -257,6 +421,122 @@ export default function LibraryBorrowReturn({ schoolId }) {
           </div>
         )}
       </div>
+      )}
+
+      {subTab === 'returned' && (
+      <div className="lib-card">
+        <div className="lib-card-header">
+          <div>
+            <h2>Returned Books ({returnedLoans.length})</h2>
+            <p>Books that have been returned to the library</p>
+          </div>
+          <History size={16} color="#94a3b8" />
+        </div>
+
+        {returnedLoans.length === 0
+          ? renderEmpty(<History size={36} color="#cbd5e1" />, 'No returned books yet', 'Returned loans will appear here')
+          : renderClosedTable(returnedLoans)}
+      </div>
+      )}
+
+      {subTab === 'renewed' && (
+      <div className="lib-card">
+        <div className="lib-card-header">
+          <div>
+            <h2>Renewed Loans ({renewedLoans.length})</h2>
+            <p>Active loans that have been renewed one or more times</p>
+          </div>
+          <RefreshCw size={16} color="#94a3b8" />
+        </div>
+
+        {renewedLoans.length === 0 ? (
+          renderEmpty(<RefreshCw size={36} color="#cbd5e1" />, 'No renewals yet', 'Renewed loans will appear here')
+        ) : (
+          <div className="lib-table-wrap">
+            <table className="lib-table">
+              <thead>
+                <tr>
+                  <th>Book</th>
+                  <th>Member</th>
+                  <th>Type</th>
+                  <th>Due Date</th>
+                  <th>Renewals</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {renewedLoans.map(l => (
+                  <tr key={l.id}>
+                    <td style={{ fontWeight: 600 }}>
+                      {l.books?.title || '—'}
+                      {l.copy?.copy_code && (
+                        <span style={{ display: 'block', fontFamily: 'monospace', fontSize: 11, color: '#64748b' }}>
+                          {l.copy.copy_code}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        <span className="lib-avatar-sm">{(l.members?.full_name || '?')[0]}</span>
+                        {l.members?.full_name || '—'}
+                      </span>
+                    </td>
+                    <td>{memberTypeLabel(l.members?.member_type)}</td>
+                    <td>{fmtDate(l.due_date)}</td>
+                    <td>
+                      <span className="lib-badge" style={{ background: '#dbeafe', color: '#2563eb' }}>
+                        {l.renewed_count || 0}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="lib-badge" style={{ background: l.status === 'overdue' ? '#fee2e2' : '#dbeafe', color: l.status === 'overdue' ? '#dc2626' : '#2563eb' }}>
+                        {l.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      )}
+
+      {subTab === 'lost' && (
+      <div className="lib-card">
+        <div className="lib-card-header">
+          <div>
+            <h2>Lost Books ({lostLoans.length})</h2>
+            <p>Loans marked as lost</p>
+          </div>
+          <AlertTriangle size={16} color="#94a3b8" />
+        </div>
+
+        {lostLoans.length === 0
+          ? renderEmpty(<AlertTriangle size={36} color="#cbd5e1" />, 'No lost books', 'Books marked lost will appear here')
+          : renderClosedTable(lostLoans, l => (
+              <button className="lib-btn lib-btn-green" onClick={() => foundBook(l)} title="Book was found">
+                <CheckCircle2 size={14} /> Mark Found
+              </button>
+            ))}
+      </div>
+      )}
+
+      {subTab === 'damaged' && (
+      <div className="lib-card">
+        <div className="lib-card-header">
+          <div>
+            <h2>Damaged Books ({damagedLoans.length})</h2>
+            <p>Loans marked as damaged</p>
+          </div>
+          <AlertTriangle size={16} color="#94a3b8" />
+        </div>
+
+        {damagedLoans.length === 0
+          ? renderEmpty(<AlertTriangle size={36} color="#cbd5e1" />, 'No damaged books', 'Books marked damaged will appear here')
+          : renderClosedTable(damagedLoans)}
+      </div>
+      )}
 
       {showIssue && (
         <div className="lib-modal-backdrop" onClick={() => !saving && setShowIssue(false)}>
@@ -282,12 +562,24 @@ export default function LibraryBorrowReturn({ schoolId }) {
               </select>
 
               <label className="lib-label">Book</label>
-              <select className="lib-select" style={{ width: '100%', marginBottom: 14 }} value={issueBook} onChange={e => setIssueBook(e.target.value)}>
+              <select className="lib-select" style={{ width: '100%', marginBottom: 14 }} value={issueBook} onChange={e => onBookChange(e.target.value)}>
                 <option value="">Select book...</option>
                 {books.map(b => (
                   <option key={b.id} value={b.id}>{b.title}{b.available_copies > 0 ? ` (${b.available_copies} available)` : ' (none)'}</option>
                 ))}
               </select>
+
+              {bookCopies.length > 0 && (
+                <>
+                  <label className="lib-label">Copy</label>
+                  <select className="lib-select" style={{ width: '100%', marginBottom: 14 }} value={issueCopy} onChange={e => setIssueCopy(e.target.value)}>
+                    <option value="">Select copy...</option>
+                    {bookCopies.map(c => (
+                      <option key={c.id} value={c.id}>{c.copy_code}</option>
+                    ))}
+                  </select>
+                </>
+              )}
 
               <label className="lib-label">Due Date</label>
               <input type="date" className="lib-input" style={{ width: '100%' }} value={issueDue} onChange={e => setIssueDue(e.target.value)} />

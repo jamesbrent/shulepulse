@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, BookMarked, X } from 'lucide-react'
+import { Plus, Search, BookMarked, BookPlus, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { memberTypeLabel, fmtDate } from '../../lib/library'
+import { memberTypeLabel, fmtDate, fetchRules, ruleForType } from '../../lib/library'
 
 export default function LibraryReservations({ schoolId }) {
   const [reservations, setReservations] = useState([])
   const [books, setBooks] = useState([])
   const [members, setMembers] = useState([])
+  const [rules, setRules] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ book_id: '', member_id: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [issuingId, setIssuingId] = useState(null)
 
   useEffect(() => {
     fetchAll()
@@ -20,7 +22,7 @@ export default function LibraryReservations({ schoolId }) {
 
   const fetchAll = async () => {
     setLoading(true)
-    const [resRes, booksRes, membersRes] = await Promise.all([
+    const [resRes, booksRes, membersRes, rulesRes] = await Promise.all([
       supabase.from('library_reservations')
         .select('*, books:library_books(title, author, available_copies), members:library_members(full_name, member_type, member_code)')
         .eq('school_id', schoolId)
@@ -28,10 +30,12 @@ export default function LibraryReservations({ schoolId }) {
         .limit(100),
       supabase.from('library_books').select('*').eq('school_id', schoolId).order('title'),
       supabase.from('library_members').select('*').eq('school_id', schoolId).eq('status', 'active').order('full_name'),
+      fetchRules(schoolId),
     ])
     setReservations(resRes.data || [])
     setBooks(booksRes.data || [])
     setMembers(membersRes.data || [])
+    setRules(rulesRes)
     setLoading(false)
   }
 
@@ -76,6 +80,65 @@ export default function LibraryReservations({ schoolId }) {
     setReservations(prev => prev.map(x => x.id === r.id ? { ...x, status: 'cancelled', cancelled_at: new Date().toISOString() } : x))
   }
 
+  const issueReservation = async (r) => {
+    setError('')
+    setIssuingId(r.id)
+    const member = members.find(m => m.id === r.member_id)
+    const rule = ruleForType(rules, member?.member_type)
+    const maxBooks = rule?.books_allowed || member?.books_allowed || 3
+
+    const { count } = await supabase
+      .from('library_loans')
+      .select('*', { count: 'exact', head: true })
+      .eq('member_id', r.member_id)
+      .in('status', ['issued', 'overdue'])
+    if ((count || 0) >= maxBooks) {
+      setError(`${member?.full_name} has reached the limit of ${maxBooks} books`)
+      setIssuingId(null)
+      return
+    }
+
+    const { data: book } = await supabase.from('library_books').select('available_copies').eq('id', r.book_id).single()
+    if (!book || book.available_copies <= 0) {
+      setError('This book has no available copies right now')
+      setIssuingId(null)
+      return
+    }
+
+    const { data: availCopies } = await supabase
+      .from('library_book_copies')
+      .select('id')
+      .eq('school_id', schoolId).eq('book_id', r.book_id).eq('status', 'available')
+      .order('copy_code').limit(1)
+    const copyId = availCopies && availCopies[0]?.id
+
+    const { data: { user } } = await supabase.auth.getUser()
+    const due = new Date()
+    due.setDate(due.getDate() + (rule?.loan_days || 14))
+    const dueDate = due.toISOString().slice(0, 10)
+
+    const { error: loanErr } = await supabase.from('library_loans').insert({
+      school_id: schoolId,
+      book_id: r.book_id,
+      copy_id: copyId || null,
+      member_id: r.member_id,
+      issued_by: user?.id || null,
+      due_date: dueDate,
+      status: 'issued',
+    }).select().single()
+    if (loanErr) { setError(loanErr.message); setIssuingId(null); return }
+
+    await supabase.from('library_books').update({ available_copies: book.available_copies - 1 }).eq('id', r.book_id)
+    if (copyId) await supabase.from('library_book_copies').update({ status: 'borrowed' }).eq('id', copyId)
+    await supabase.from('library_reservations')
+      .update({ status: 'fulfilled', notified_at: new Date().toISOString() })
+      .eq('id', r.id)
+
+    setReservations(prev => prev.map(x => x.id === r.id ? { ...x, status: 'fulfilled', notified_at: new Date().toISOString() } : x))
+    setBooks(prev => prev.map(b => b.id === r.book_id ? { ...b, available_copies: book.available_copies - 1 } : b))
+    setIssuingId(null)
+  }
+
   const statusStyle = {
     pending: { background: '#dbeafe', color: '#2563eb' },
     available: { background: '#dcfce7', color: '#16a34a' },
@@ -105,6 +168,12 @@ export default function LibraryReservations({ schoolId }) {
           </div>
           <BookMarked size={16} color="#94a3b8" />
         </div>
+
+        {error && !showAdd && (
+          <div style={{ padding: '8px 14px', borderRadius: 8, background: '#fee2e2', color: '#991b1b', fontSize: 12, fontWeight: 500, marginBottom: 12 }}>
+            {error}
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div className="lib-empty">
@@ -143,9 +212,14 @@ export default function LibraryReservations({ schoolId }) {
                     <td>
                       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                         {['pending', 'available'].includes(r.status) && (
-                          <button className="lib-btn" onClick={() => cancel(r)}>
-                            <X size={14} /> Cancel
-                          </button>
+                          <>
+                            <button className="lib-btn lib-btn-blue" onClick={() => issueReservation(r)} disabled={issuingId === r.id} title="Issue this book to the member now">
+                              <BookPlus size={14} /> {issuingId === r.id ? 'Issuing...' : 'Issue'}
+                            </button>
+                            <button className="lib-btn" onClick={() => cancel(r)}>
+                              <X size={14} /> Cancel
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
