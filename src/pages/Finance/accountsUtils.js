@@ -38,6 +38,7 @@ export const DEFAULT_CHART = [
   { code: '2120', name: 'NHIF Payable',              type: 'liability', category: 'Statutory Payables' },
   { code: '2130', name: 'NSSF Payable',              type: 'liability', category: 'Statutory Payables' },
   { code: '2140', name: 'HELB Payable',              type: 'liability', category: 'Statutory Payables' },
+  { code: '2145', name: 'VAT Input (Receivable)',    type: 'asset',     category: 'Tax' },
   { code: '2115', name: 'SHIF Payable',              type: 'liability', category: 'Statutory Payables' },
   { code: '2116', name: 'Housing Levy Payable',      type: 'liability', category: 'Statutory Payables' },
   { code: '2117', name: 'NITA Payable',              type: 'liability', category: 'Statutory Payables' },

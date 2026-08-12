@@ -3,7 +3,7 @@ import {
   LayoutDashboard, DollarSign, CreditCard, Receipt, FileText,
   BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare, Menu, X,
   BookOpen, Columns3, Archive, Wallet, Banknote, Wrench, Scale,
-  GraduationCap, ChevronDown, Construction
+  GraduationCap, ChevronDown, Construction, Building2
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -28,6 +28,8 @@ import AssetsPage from './Assets'
 import './Assets.css'
 import PayrollPage from './Payroll'
 import './Payroll.css'
+import AccountsPayablePage from './AccountsPayable'
+import './AccountsPayable.css'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
@@ -78,6 +80,17 @@ const NAV_SECTIONS = [
           { key: 'payroll:payslips', label: 'Payslips', icon: <FileText size={15} />, page: 'payroll', tab: 'payslips' },
         ],
       },
+      {
+        key: 'accounts_payable', label: 'Accounts Payable', icon: <Receipt size={15} />,
+        items: [
+          { key: 'ap:dashboard', label: 'AP Dashboard', icon: <Columns3 size={15} />, page: 'accounts_payable', tab: 'dashboard' },
+          { key: 'ap:suppliers', label: 'Suppliers / Payees', icon: <Building2 size={15} />, page: 'accounts_payable', tab: 'suppliers' },
+          { key: 'ap:invoices', label: 'Invoices & Bills', icon: <Receipt size={15} />, page: 'accounts_payable', tab: 'invoices' },
+          { key: 'ap:payments', label: 'Payments', icon: <Banknote size={15} />, page: 'accounts_payable', tab: 'payments' },
+          { key: 'ap:vouchers', label: 'Vouchers', icon: <FileText size={15} />, page: 'accounts_payable', tab: 'vouchers' },
+          { key: 'ap:settings', label: 'AP Settings', icon: <Wrench size={15} />, page: 'accounts_payable', tab: 'settings' },
+        ],
+      },
     ],
   },
   {
@@ -109,7 +122,7 @@ const NAV_SECTIONS = [
   },
 ]
 
-const DEFAULT_OPEN = ['student_finance', 'accounting', 'assets', 'payroll', 'reports', 'system']
+const DEFAULT_OPEN = ['student_finance', 'accounting', 'assets', 'payroll', 'accounts_payable', 'reports', 'system']
 
 const ComingSoon = ({ title }) => (
   <div className="b-coming-soon">
@@ -224,6 +237,7 @@ export default function FinanceDashboard() {
       case 'accounting': return <AccountingPage initialTab={activeItem.tab} />
       case 'assets': return <AssetsPage initialTab={activeItem.tab} />
       case 'payroll': return <PayrollPage initialTab={activeItem.tab} />
+      case 'accounts_payable': return <AccountsPayablePage initialTab={activeItem.tab} />
       case 'reports': return <ReportsPage initialTab={activeItem.tab} />
       case 'notices': return <NoticesPage profile={authProfile} />
       case 'support': return <SchoolSupportPage />

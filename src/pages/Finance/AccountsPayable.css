@@ -1,0 +1,107 @@
+/* ─── Accounts Payable ────────────────────────────────────────────────────
+   Shares the prl-* design system (tabs, tables, modals, buttons, stats)
+   with Payroll, then adds the ap-* specifics below. */
+@import './Payroll.css';
+
+/* ─── Cards ──────────────────────────────────────────────────────────────── */
+.ap-card-title { margin: 0 0 12px; font-size: 13px; color: #1f2937; }
+
+/* ─── Ageing analysis ────────────────────────────────────────────────────── */
+.ap-ageing { display: flex; flex-direction: column; gap: 10px; }
+.ap-age-row { display: flex; align-items: center; gap: 12px; }
+.ap-age-label { width: 90px; font-size: 12px; color: #6b7280; font-weight: 500; }
+.ap-age-bar { flex: 1; height: 10px; border-radius: 999px; background: #f3f4f6; overflow: hidden; }
+.ap-age-bar > div { height: 100%; border-radius: 999px; }
+.ap-age-val { width: 110px; text-align: right; font-size: 12.5px; font-weight: 600; color: #1f2937; }
+
+/* ─── Line items table ───────────────────────────────────────────────────── */
+.ap-lines-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px 8px; }
+.ap-lines-head strong { font-size: 13px; color: #374151; }
+.ap-line-input {
+  border: 1px solid #d1d5db; border-radius: 7px; padding: 6px 8px; font-size: 12.5px;
+  width: 100%; min-width: 90px; background: #fff; color: #1f2937; outline: none;
+  transition: border-color .15s;
+}
+.ap-line-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .12); }
+
+/* ─── Invoice totals ─────────────────────────────────────────────────────── */
+.ap-totals { display: flex; justify-content: flex-end; align-items: center; gap: 22px; padding: 10px 18px 4px; }
+.ap-totals > div { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.ap-totals span { font-size: 11px; color: #6b7280; }
+.ap-totals strong { font-size: 14px; color: #1f2937; }
+.ap-totals-grand strong { font-size: 18px; color: #2563eb; }
+.ap-total-note { font-size: 13px; color: #6b7280; }
+.ap-total-note strong { color: #2563eb; }
+
+/* ─── Attachments ────────────────────────────────────────────────────────── */
+.ap-attachments { display: flex; flex-direction: column; gap: 8px; }
+.ap-att-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; }
+.ap-att-head .ap-btn-ghost { margin-left: auto; }
+.ap-btn-ghost {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 7px;
+  font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
+  background: transparent; color: #2563eb; transition: all .15s;
+}
+.ap-btn-ghost:hover { background: rgba(37, 99, 235, .08); }
+.ap-btn-danger-ghost {
+  display: inline-flex; align-items: center; justify-content: center; padding: 4px 6px; border-radius: 7px;
+  font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
+  background: transparent; color: #dc2626; transition: all .15s;
+}
+.ap-btn-danger-ghost:hover { background: rgba(220, 38, 38, .08); }
+.ap-att-list { display: flex; flex-direction: column; gap: 6px; }
+.ap-att-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
+  background: #f9fafb; border: 1px solid #eef2f7; font-size: 12.5px; color: #374151;
+}
+.ap-att-item a { color: #2563eb; text-decoration: none; font-weight: 600; }
+.ap-att-item a:hover { text-decoration: underline; }
+.ap-att-item span { margin-left: auto; color: #9ca3af; font-size: 11.5px; }
+
+/* ─── Inline links / badges ──────────────────────────────────────────────── */
+.ap-link {
+  background: none; border: none; padding: 0; cursor: pointer; color: #2563eb;
+  font-size: 13px; font-weight: 600; text-align: left;
+}
+.ap-link:hover { text-decoration: underline; }
+.ap-badge {
+  display: inline-block; padding: 3px 9px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; text-transform: capitalize; white-space: nowrap;
+}
+
+/* ─── Print sheet (voucher / statement) ──────────────────────────────────── */
+.ap-sheet {
+  margin: 0 18px 16px; padding: 22px 26px; background: #fff;
+  border: 1px solid #e5e7eb; border-radius: 12px; font-size: 12.5px; color: #1f2937;
+}
+.ap-sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 2px solid #1f2937; padding-bottom: 12px; margin-bottom: 14px; }
+.ap-sheet-head h2 { margin: 0; font-size: 18px; color: #2563eb; }
+.ap-sheet-head p { margin: 2px 0 0; font-size: 11px; color: #6b7280; }
+.ap-sheet-right { text-align: right; }
+.ap-sheet-right h3 { margin: 0; font-size: 15px; letter-spacing: .06em; color: #1f2937; }
+.ap-sheet-right p { margin: 3px 0 0; font-size: 11.5px; color: #374151; }
+.ap-sheet-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; }
+.ap-sheet-rows > div { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; border-bottom: 1px dashed #eef2f7; }
+.ap-sheet-rows span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: #9ca3af; }
+.ap-sheet-rows strong { font-size: 13px; color: #1f2937; }
+.ap-sheet-full { grid-column: 1 / -1; }
+.ap-sheet-signs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 22px; }
+.ap-sheet-signs > div { display: flex; flex-direction: column; gap: 4px; }
+.ap-sheet-signs span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: #9ca3af; }
+.ap-sheet-signs strong { font-size: 12px; color: #1f2937; }
+.ap-sign-line { height: 1px; background: #1f2937; margin-top: 22px; }
+
+/* ─── Statement table ────────────────────────────────────────────────────── */
+.ap-stmt { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.ap-stmt th { text-align: left; padding: 7px 8px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+.ap-stmt td { padding: 7px 8px; border-bottom: 1px solid #f3f4f6; }
+.ap-stmt-strong { font-weight: 700; color: #1f2937; }
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ap-age-row { flex-wrap: wrap; }
+  .ap-age-val { width: auto; }
+  .ap-sheet-rows { grid-template-columns: 1fr; }
+  .ap-sheet-signs { grid-template-columns: repeat(2, 1fr); }
+  .ap-totals { justify-content: space-between; flex-wrap: wrap; }
+}
