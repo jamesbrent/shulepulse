@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, DollarSign, CreditCard, Receipt, FileText,
-  BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare, Menu, X, BookOpen
+  BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare, Menu, X,
+  BookOpen, Columns3, Archive, Wallet, Banknote, Wrench, Scale,
+  GraduationCap, ChevronDown, Construction
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -20,18 +22,109 @@ import StatementsPage from './Statements'
 import './Statements.css'
 import ReportsPage from './Reports'
 import './Reports.css'
+import AccountingPage from './Accounting'
+import './Accounting.css'
+import AssetsPage from './Assets'
+import './Assets.css'
+import PayrollPage from './Payroll'
+import './Payroll.css'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
-import LibraryContent from '../library/LibraryContent'
 import './FinanceDashboard.css'
+
+const DASHBOARD_ITEM = { key: 'dashboard', label: 'Dashboard', page: 'dashboard' }
+
+// Sidebar structure — logical collapsible groups per finance team request.
+// `page` is the view to render; `tab` deep-links into the page's own tabs.
+// `page: 'coming-soon'` renders a placeholder for modules not yet built.
+const NAV_SECTIONS = [
+  {
+    label: 'FINANCE',
+    groups: [
+      {
+        key: 'student_finance', label: 'Student Finance', icon: <GraduationCap size={15} />,
+        items: [
+          { key: 'fees', label: 'Fees', icon: <DollarSign size={15} />, page: 'fees' },
+          { key: 'payments', label: 'Payments', icon: <CreditCard size={15} />, page: 'payments' },
+          { key: 'receipts', label: 'Receipts', icon: <Receipt size={15} />, page: 'receipts' },
+          { key: 'statements', label: 'Statements', icon: <FileText size={15} />, page: 'statements' },
+        ],
+      },
+      {
+        key: 'accounting', label: 'Accounting', icon: <Columns3 size={15} />,
+        items: [
+          { key: 'accounting:ledger', label: 'Transactions', icon: <BookOpen size={15} />, page: 'accounting', tab: 'ledger' },
+          { key: 'accounting:accounts', label: 'Chart of Accounts', icon: <Columns3 size={15} />, page: 'accounting', tab: 'accounts' },
+          { key: 'accounting:journal', label: 'Journals', icon: <BookOpen size={15} />, page: 'accounting', tab: 'journal' },
+          { key: 'accounting:expenses', label: 'Expenses', icon: <Receipt size={15} />, page: 'coming-soon' },
+          { key: 'accounting:bank', label: 'Bank Reconciliation', icon: <Scale size={15} />, page: 'coming-soon' },
+        ],
+      },
+      {
+        key: 'assets', label: 'Assets', icon: <Archive size={15} />,
+        items: [
+          { key: 'assets:register', label: 'Asset Register', icon: <Archive size={15} />, page: 'assets', tab: 'register' },
+          { key: 'assets:categories', label: 'Asset Categories', icon: <FileText size={15} />, page: 'assets', tab: 'categories' },
+          { key: 'assets:maintenance', label: 'Asset Maintenance', icon: <Wrench size={15} />, page: 'assets', tab: 'maintenance' },
+        ],
+      },
+      {
+        key: 'payroll', label: 'Payroll', icon: <Wallet size={15} />,
+        items: [
+          { key: 'payroll:runs', label: 'Payroll', icon: <Wallet size={15} />, page: 'payroll', tab: 'runs' },
+          { key: 'payroll:payments', label: 'Salary Payments', icon: <Banknote size={15} />, page: 'payroll', tab: 'payments' },
+          { key: 'payroll:payslips', label: 'Payslips', icon: <FileText size={15} />, page: 'payroll', tab: 'payslips' },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'REPORTING',
+    groups: [
+      {
+        key: 'reports', label: 'Reports', icon: <BarChart3 size={15} />,
+        items: [
+          { key: 'reports:financial', label: 'Financial Reports', icon: <BarChart3 size={15} />, page: 'coming-soon' },
+          { key: 'reports:fee', label: 'Fee Collection', icon: <DollarSign size={15} />, page: 'reports', tab: 'overview' },
+          { key: 'reports:expense', label: 'Expense Reports', icon: <Receipt size={15} />, page: 'coming-soon' },
+          { key: 'reports:payroll', label: 'Payroll Reports', icon: <Wallet size={15} />, page: 'coming-soon' },
+          { key: 'reports:asset', label: 'Asset Reports', icon: <Archive size={15} />, page: 'coming-soon' },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'SYSTEM',
+    groups: [
+      {
+        key: 'system', label: null,
+        items: [
+          { key: 'notices', label: 'Notices', icon: <Bell size={15} />, page: 'notices' },
+          { key: 'support', label: 'Support', icon: <MessageSquare size={15} />, page: 'support' },
+        ],
+      },
+    ],
+  },
+]
+
+const DEFAULT_OPEN = ['student_finance', 'accounting', 'assets', 'payroll', 'reports', 'system']
+
+const ComingSoon = ({ title }) => (
+  <div className="b-coming-soon">
+    <Construction size={42} />
+    <h3>{title}</h3>
+    <p>This module is under construction and will be available in an upcoming release.</p>
+  </div>
+)
 
 export default function FinanceDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
-  const [activeNav, setActiveNav] = useState('dashboard')
+  const [activeItem, setActiveItem] = useState(DASHBOARD_ITEM)
+  const [openGroups, setOpenGroups] = useState(new Set(DEFAULT_OPEN))
   const [openRecordPayment, setOpenRecordPayment] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [stats, setStats] = useState({
@@ -104,45 +197,37 @@ export default function FinanceDashboard() {
     return payments.map((p) => ({ ...p, staff_name: staffMap[p.received_by] || '—' }))
   }
 
-  const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'fees', label: 'Fees', icon: <DollarSign size={18} /> },
-    { key: 'payments', label: 'Payments', icon: <CreditCard size={18} /> },
-    { key: 'receipts', label: 'Receipts', icon: <Receipt size={18} /> },
-    { key: 'statements', label: 'Statements', icon: <FileText size={18} /> },
-    { key: 'reports', label: 'Reports', icon: <BarChart3 size={18} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
-    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
-  ]
+  const go = (item) => {
+    setActiveItem(item)
+    setMobileOpen(false)
+  }
+
+  const toggleGroup = (key) => {
+    const next = new Set(openGroups)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
+    setOpenGroups(next)
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     window.location.href = basePath('/')
   }
 
-  const pageTitles = {
-    dashboard: 'Finance Dashboard',
-    fees: 'Fee Structures',
-    payments: 'Payments',
-    receipts: 'Receipts',
-    statements: 'Statements',
-    reports: 'Reports',
-    notices: 'Notices & Announcements',
-    library: 'Library',
-    support: 'Support Tickets',
-  }
-
   const renderContent = () => {
-    switch (activeNav) {
+    const page = activeItem?.page || 'dashboard'
+    switch (page) {
       case 'fees': return <FeesPage />
       case 'payments': return <PaymentsPage showRecordPayment={openRecordPayment} onRecordPaymentClose={() => setOpenRecordPayment(false)} />
       case 'receipts': return <ReceiptsPage />
       case 'statements': return <StatementsPage />
-      case 'reports': return <ReportsPage />
+      case 'accounting': return <AccountingPage initialTab={activeItem.tab} />
+      case 'assets': return <AssetsPage initialTab={activeItem.tab} />
+      case 'payroll': return <PayrollPage initialTab={activeItem.tab} />
+      case 'reports': return <ReportsPage initialTab={activeItem.tab} />
       case 'notices': return <NoticesPage profile={authProfile} />
-      case 'library': return <LibraryContent schoolId={authProfile?.school_id} school={school} />
       case 'support': return <SchoolSupportPage />
+      case 'coming-soon': return <ComingSoon title={activeItem.label} />
       default: return renderDashboard()
     }
   }
@@ -171,7 +256,7 @@ export default function FinanceDashboard() {
           <div className="b-admin-card">
             <div className="b-card-header">
               <h3>Recent Payments</h3>
-              <button className="b-view-all" onClick={() => setActiveNav('payments')}>
+              <button className="b-view-all" onClick={() => go({ key: 'payments', label: 'Payments', page: 'payments' })}>
                 View all <ChevronRight size={14} />
               </button>
             </div>
@@ -215,6 +300,16 @@ export default function FinanceDashboard() {
     )
   }
 
+  const findItem = (key) => {
+    for (const section of NAV_SECTIONS) {
+      for (const group of section.groups) {
+        const found = group.items.find((i) => i.key === key)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
   return (
     <div className="b-root">
       <button className="b-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
@@ -244,18 +339,66 @@ export default function FinanceDashboard() {
             <p className="b-school-plan">{school?.plan || 'Basic'} Plan</p>
           </div>
         </div>
+
         <nav className="b-sidebar-nav">
-          {navItems.map((item) => (
-            <button
-              key={item.key}
-              className={`b-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
-            >
-              <span className="b-nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
+          <button
+            className={`b-nav-item b-nav-top ${activeItem.key === 'dashboard' ? 'active' : ''}`}
+            onClick={() => go(DASHBOARD_ITEM)}
+          >
+            <span className="b-nav-icon"><LayoutDashboard size={16} /></span>
+            <span>Dashboard</span>
+          </button>
+
+          {NAV_SECTIONS.map((section) => (
+            <div className="b-nav-section" key={section.label}>
+              <p className="b-nav-section-label">{section.label}</p>
+              {section.groups.map((group) => {
+                const open = openGroups.has(group.key)
+                const activeInGroup = group.items.some((i) => activeItem.key === i.key)
+                return (
+                  <div className="b-nav-group" key={group.key}>
+                    {group.label ? (
+                      <button
+                        className={`b-nav-group-head ${activeInGroup ? 'active' : ''}`}
+                        onClick={() => toggleGroup(group.key)}
+                      >
+                        <span className="b-nav-icon">{group.icon}</span>
+                        <span className="b-nav-group-label">{group.label}</span>
+                        <ChevronDown size={14} className={`b-nav-chevron ${open ? '' : 'collapsed'}`} />
+                      </button>
+                    ) : (
+                      group.items.map((item) => (
+                        <button
+                          key={item.key}
+                          className={`b-nav-item ${activeItem.key === item.key ? 'active' : ''}`}
+                          onClick={() => go(item)}
+                        >
+                          <span className="b-nav-icon">{item.icon}</span>
+                          <span>{item.label}</span>
+                        </button>
+                      ))
+                    )}
+                    {group.label && open && (
+                      <div className="b-nav-children">
+                        {group.items.map((item) => (
+                          <button
+                            key={item.key}
+                            className={`b-nav-item ${activeItem.key === item.key ? 'active' : ''}`}
+                            onClick={() => go(item)}
+                          >
+                            <span className="b-nav-icon">{item.icon}</span>
+                            <span>{item.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           ))}
         </nav>
+
         <RoleSwitcher />
         <div className="b-sidebar-footer">
           <button className="b-logout-btn" onClick={handleLogout}>
@@ -268,14 +411,14 @@ export default function FinanceDashboard() {
       <main className="b-main">
         <header className="b-header">
           <div>
-            <h1>{pageTitles[activeNav]}</h1>
+            <h1>{activeItem.key === 'dashboard' ? 'Finance Dashboard' : activeItem.label}</h1>
             <p>{currentTerm ? `${currentTerm}, ${currentYear}` : `${currentYear}`} · {school?.name || ''}</p>
           </div>
           <div className="b-header-actions">
-            <button className="b-btn-secondary" onClick={() => { setActiveNav('reports'); setMobileOpen(false) }}>
+            <button className="b-btn-secondary" onClick={() => go(findItem('reports:fee') || { key: 'reports:fee', label: 'Fee Collection', page: 'reports', tab: 'overview' })}>
               <Upload size={15} /> Export Report
             </button>
-            <button className="b-btn-primary" onClick={() => { setActiveNav('payments'); setOpenRecordPayment(true); setMobileOpen(false) }}>
+            <button className="b-btn-primary" onClick={() => { go(findItem('payments') || { key: 'payments', label: 'Payments', page: 'payments' }); setOpenRecordPayment(true) }}>
               <UserPlus size={15} /> Record Payment
             </button>
             <div className="b-admin-avatar">

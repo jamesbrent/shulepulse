@@ -11,7 +11,7 @@ import {
   Bell, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronLeft, Activity, ArrowUpRight, ArrowDownRight,
   Plus, Banknote, FileOutput, ClipboardCheck, Users2,
-  Printer, Send, Download,
+  Printer, Send, Download, Wallet,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -60,6 +60,9 @@ import '../../pages/HOD/HODDashboard.css'
 import CBCCompetency from '../teacher/CBCCompetency'
 import '../../pages/teacher/CBCCompetency.css'
 
+import PayrollPage from '../Finance/Payroll'
+import '../Finance/Payroll.css'
+
 const STORAGE_KEY = 'admin_sidebar_expanded'
 
 const NAV_GROUPS = [
@@ -95,6 +98,7 @@ const NAV_GROUPS = [
     icon: <DollarSign size={16} />,
     items: [
       { key: 'fees', label: 'Fees', icon: <DollarSign size={14} /> },
+      { key: 'payroll', label: 'Payroll', icon: <Wallet size={14} /> },
     ],
   },
   {
@@ -361,6 +365,7 @@ export default function AdminDashboard() {
     switch (activeNav) {
       case 'students':       return <StudentsPage />
       case 'fees':           return <FeesPage />
+      case 'payroll':        return <PayrollPage />
       case 'attendance':     return <AttendancePage />
       case 'grades':         return <GradesPage />
       case 'teachers':       return <TeachersPage />

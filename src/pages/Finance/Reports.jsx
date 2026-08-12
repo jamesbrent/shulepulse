@@ -9,7 +9,7 @@ import { useSchool } from '../admin/useSchool'
 import { fmt, fmtDate, downloadFile, TERMS, YEARS } from '../admin/fees/utils/feesHelpers'
 import './Reports.css'
 
-export default function ReportsPage() {
+export default function ReportsPage({ initialTab }) {
   const { profile } = useAuthStore()
   const { currentTerm, currentYear } = useSchool()
 
@@ -18,7 +18,7 @@ export default function ReportsPage() {
   const [year, setYear] = useState(String(currentYear || new Date().getFullYear()))
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState(initialTab || 'overview')
 
   const [payments, setPayments] = useState([])
   const [assessments, setAssessments] = useState([])
