@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Plus, Search, RefreshCw, Eye, Pencil, Trash2, Download,
-  X, TrendingDown, Wrench, User, FileText, Archive
+  X, TrendingDown, Wrench, User, FileText, Archive, Landmark, ShieldCheck, Power
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
@@ -10,8 +10,13 @@ import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
 import { writeAudit, postToJournal } from './accountsUtils'
 import {
   ASSET_STATUSES, assetStatus, calcNbv, monthlyDepreciation, nextAssetId,
-  addAssetEvent, loadAssetsData, formatPeriod, KRA_WEAR_AND_TEAR, kraTaxClass,
+  addAssetEvent, loadAssetsData, formatPeriod, kraTaxClass,
 } from './assetsUtils'
+import {
+  TAX_RULE_TYPES, TAX_METHODS, FINANCE_ROLES, methodLabel as taxMethodLabel,
+  ensureDefaultTaxRules, loadTaxData, activeRule, taxRuleLabel,
+  buildTaxSchedule, runTaxAllowances, taxVsAccounting,
+} from './taxUtils'
 import AssetProfile from './AssetProfile'
 import './Assets.css'
 
@@ -24,12 +29,19 @@ const blankAsset = () => ({
   depreciation_method: 'straight_line', depreciation_rate: 0, warranty_until: '',
   status: 'active', campus: '', building: '', department: '', room: '', specific_location: '',
   custodian_id: '', assigned_date: TODAY,
+  tax_class: '', investment_class: '',
 })
 
 const blankCategory = () => ({
   name: '', description: '', depreciation_method: 'straight_line',
   useful_life_months: 60, depreciation_rate: 0, residual_value: 0,
-  tax_class: '', first_year_allowance: 0,
+  tax_class: '',
+})
+
+const blankTaxRule = () => ({
+  rule_type: 'wear_tear', tax_class: '', description: '', asset_classification: '',
+  rate: 0, first_year_rate: 0, calc_method: 'reducing_balance',
+  effective_date: TODAY, expiry_date: '', source_reference: '', is_active: true,
 })
 
 export default function AssetsPage({ initialTab }) {
@@ -53,8 +65,23 @@ export default function AssetsPage({ initialTab }) {
   const [runLines, setRunLines] = useState([])
   const [documents, setDocuments] = useState([])
   const [staff, setStaff] = useState([])
+  const [taxRules, setTaxRules] = useState([])
+  const [taxSchedules, setTaxSchedules] = useState([])
 
   const staffMap = Object.fromEntries(staff.map((s) => [s.id, s.full_name]))
+  const isFinanceRole = (profile?.roles?.length
+    ? profile.roles
+    : [profile?.role])
+    .some((r) => FINANCE_ROLES.includes(r))
+
+  const [taxYear, setTaxYear] = useState(String(new Date().getFullYear()))
+  const [taxFilterCat, setTaxFilterCat] = useState('')
+  const [taxFilterClass, setTaxFilterClass] = useState('')
+  const [taxFilterDept, setTaxFilterDept] = useState('')
+  const [taxFilterLoc, setTaxFilterLoc] = useState('')
+  const [taxRuleModal, setTaxRuleModal] = useState(null)
+  const [taxRuleForm, setTaxRuleForm] = useState(blankTaxRule())
+  const [taxRunning, setTaxRunning] = useState(false)
 
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('')
@@ -96,12 +123,21 @@ export default function AssetsPage({ initialTab }) {
     setEvents(data.events); setCustody(data.custody); setLocations(data.locations)
     setMaintenance(data.maintenance); setRuns(data.runs); setRunLines(data.runLines)
     setDocuments(data.documents); setStaff(data.staff)
+    const tax = await loadTaxData(supabase, schoolId)
+    setTaxRules(tax.taxRules); setTaxSchedules(tax.taxSchedules)
     const { data: accData } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).order('code')
     setAccountOptions(accData || [])
     setLoading(false)
   }, [schoolId])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (!schoolId) return
+    ensureDefaultTaxRules(supabase, schoolId).then(() => {
+      if (!taxRules.length) load()
+    })
+  }, [schoolId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!toast) return
@@ -116,12 +152,17 @@ export default function AssetsPage({ initialTab }) {
 
   const setDeprAccountDefaults = useCallback(async () => {
     const accs = await fetchAccounts()
-    const expense = accs.find((a) => a.code === '5410')
+    // Prefer dedicated depreciation accounts if present
+    const expense = accs.find((a) => a.code === '6010')
+      || accs.find((a) => a.category === 'Depreciation' && a.type === 'expense')
       || accs.find((a) => a.type === 'expense' && /deprec/i.test(a.name))
       || accs.find((a) => a.type === 'expense')
-    const accumulated = accs.find((a) => a.code === '1290')
+
+    const accumulated = accs.find((a) => a.code === '1701')
+      || accs.find((a) => a.category === 'Accumulated Depreciation' && a.type === 'asset')
       || accs.find((a) => a.type === 'asset' && /accumulated/i.test(a.name))
       || accs.find((a) => a.type === 'asset')
+
     setDeprForm((f) => ({
       ...f,
       expense_account_id: expense?.id || '',
@@ -142,6 +183,7 @@ export default function AssetsPage({ initialTab }) {
       campus: asset.campus || '', building: asset.building || '', department: asset.department || '',
       room: asset.room || '', specific_location: asset.specific_location || '',
       custodian_id: asset.custodian_id || '', assigned_date: asset.assigned_date || TODAY,
+      tax_class: asset.tax_class || '', investment_class: asset.investment_class || '',
     } : blankAsset())
     setPhotoFile(null)
   }
@@ -167,6 +209,9 @@ export default function AssetsPage({ initialTab }) {
         description: assetForm.description || null, purchase_date: assetForm.purchase_date || null,
         supplier_id: assetForm.supplier_id || null, purchase_invoice_ref: assetForm.purchase_invoice_ref || null,
         purchase_cost: cost,
+        // Financial-accounting policy (independent of tax). New assets inherit
+        // the ACCOUNTING policy only from the category; tax_class never
+        // overrides method / rate / life / residual.
         residual_value: assetModal.isNew
           ? Number(policyCat?.residual_value ?? assetForm.residual_value) || 0
           : Number(assetForm.residual_value) || 0,
@@ -175,8 +220,11 @@ export default function AssetsPage({ initialTab }) {
           : Number(assetForm.useful_life_months) || 60,
         depreciation_method: policyCat?.depreciation_method || assetForm.depreciation_method || 'straight_line',
         depreciation_rate: Number(policyCat?.depreciation_rate ?? assetForm.depreciation_rate) || 0,
-        first_year_allowance: Number(policyCat?.first_year_allowance) || 0,
-        tax_class: policyCat?.tax_class || null,
+        // Kenyan tax classification — controls the tax capital-allowance
+        // schedule ONLY. It does not affect accounting depreciation.
+        tax_class: assetForm.tax_class || null,
+        investment_class: assetForm.investment_class || null,
+        first_year_allowance: assetModal.isNew ? 0 : Number(assetModal.asset.first_year_allowance || 0),
         warranty_until: assetForm.warranty_until || null, status: assetForm.status,
         campus: assetForm.campus || null, building: assetForm.building || null, department: assetForm.department || null,
         room: assetForm.room || null, specific_location: assetForm.specific_location || null,
@@ -252,7 +300,6 @@ export default function AssetsPage({ initialTab }) {
       depreciation_rate: Number(catForm.depreciation_rate) || 0,
       residual_value: Number(catForm.residual_value) || 0,
       useful_life_months: Number(catForm.useful_life_months) || 60,
-      first_year_allowance: catForm.first_year_allowance || 0,
     }
     const { error } = catModal.isNew
       ? await supabase.from('asset_categories').insert({ ...payload, school_id: schoolId })
@@ -262,11 +309,12 @@ export default function AssetsPage({ initialTab }) {
       return
     }
     if (!catModal.isNew) {
+      // Push the ACCOUNTING depreciation policy only. tax_class on a category
+      // is just a default for new assets — it must never override an asset's
+      // accounting method / rate / useful life / residual value.
       await supabase.from('fixed_assets').update({
-        tax_class: payload.tax_class || null,
         depreciation_method: payload.depreciation_method,
         depreciation_rate: payload.depreciation_rate,
-        first_year_allowance: payload.first_year_allowance,
         useful_life_months: payload.useful_life_months,
         residual_value: payload.residual_value,
       }).eq('school_id', schoolId).eq('category_id', catModal.cat.id)
@@ -422,6 +470,7 @@ export default function AssetsPage({ initialTab }) {
       }).select().single()
       if (runErr) throw runErr
 
+      // Insert detailed lines for the run
       const lineRows = preview.map((p) => {
         const accBefore = Number(p.asset.accumulated_depreciation || 0)
         return {
@@ -433,6 +482,7 @@ export default function AssetsPage({ initialTab }) {
       const { error: linesErr } = await supabase.from('asset_depreciation_lines').insert(lineRows)
       if (linesErr) throw linesErr
 
+      // Update each asset NBV and add events
       for (const p of preview) {
         const acc = Number(p.asset.accumulated_depreciation || 0) + p.amount
         await supabase.from('fixed_assets').update({
@@ -444,15 +494,64 @@ export default function AssetsPage({ initialTab }) {
         })
       }
 
+      // Map each asset to the appropriate accounts based on its category
+      const groups = {} // key -> { expenseAccountId, accAccountId, amount }
+      const findAccountByCode = (code) => accountOptions.find((a) => a.code === code)
+      for (const p of preview) {
+        const pc = categories.find((c) => c.id === p.asset.category_id)
+        const cname = (pc?.name || '').toLowerCase()
+        let expenseCode = '6060'
+        let accCode = '1706'
+        if (/build|land/i.test(cname)) { expenseCode = '6010'; accCode = '1701' }
+        else if (/motor|vehicle/i.test(cname)) { expenseCode = '6020'; accCode = '1702' }
+        else if (/furnitur|fitting/i.test(cname)) { expenseCode = '6030'; accCode = '1703' }
+        else if (/computer|it|ict|technology/i.test(cname)) { expenseCode = '6040'; accCode = '1704' }
+        else if (/school|equipment|lab|laboratory/i.test(cname)) { expenseCode = '6050'; accCode = '1705' }
+
+        const expenseAcc = findAccountByCode(expenseCode)
+        const accAcc = findAccountByCode(accCode)
+        const expenseId = expenseAcc ? expenseAcc.id : deprForm.expense_account_id
+        const accId = accAcc ? accAcc.id : deprForm.accumulated_account_id
+        const key = `${expenseId}|${accId}`
+        if (!groups[key]) groups[key] = { expenseId, accId, amount: 0, assets: [] }
+        groups[key].amount += p.amount
+        groups[key].assets.push(p.asset.id)
+      }
+
+      // Build journal lines aggregated by account pair
+      const journalLines = []
+      const accountIds = new Set()
+      Object.values(groups).forEach((g) => {
+        accountIds.add(g.expenseId); accountIds.add(g.accId)
+      })
+      const ids = [...accountIds].filter(Boolean)
+
+      // Validate accounts server-side: fetch their records and ensure correct types/categories
+      if (!ids.length) throw new Error('No valid accounts selected for posting.')
+      const { data: accRecords } = await supabase.from('chart_of_accounts').select('*').in('id', ids)
+      const accById = Object.fromEntries((accRecords || []).map((a) => [a.id, a]))
+
+      for (const g of Object.values(groups)) {
+        const exp = accById[g.expenseId]
+        const acc = accById[g.accId]
+        if (!exp || exp.type !== 'expense' || !(exp.category === 'Depreciation' || /^60\d0$/.test(exp.code))) {
+          throw new Error(`Invalid depreciation expense account selected: ${exp ? `${exp.code} — ${exp.name}` : g.expenseId}`)
+        }
+        if (!acc || acc.type !== 'asset' || !(acc.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(acc.code))) {
+          throw new Error(`Invalid accumulated depreciation account selected: ${acc ? `${acc.code} — ${acc.name}` : g.accId}`)
+        }
+        journalLines.push({ account_id: g.expenseId, debit: g.amount, credit: 0, notes: deprForm.period_label })
+        journalLines.push({ account_id: g.accId, debit: 0, credit: g.amount, notes: deprForm.period_label })
+      }
+
+      // Post the aggregated journal lines
       const je = await postToJournal(supabase, {
         schoolId, userId, entry_date: deprForm.run_date || TODAY,
         description: `Depreciation for ${deprForm.period_label} (${preview.length} assets)`,
         source: 'assets', reference_type: 'depreciation_run', reference_id: run.id,
-        lines: [
-          { account_id: deprForm.expense_account_id, debit: total, credit: 0, notes: deprForm.period_label },
-          { account_id: deprForm.accumulated_account_id, debit: 0, credit: total, notes: deprForm.period_label },
-        ],
+        lines: journalLines,
       })
+
       await supabase.from('asset_depreciation_runs').update({ journal_entry_id: je.id }).eq('id', run.id)
       await writeAudit(supabase, {
         schoolId, action: 'assets.depreciation_run',
@@ -510,6 +609,116 @@ export default function AssetsPage({ initialTab }) {
     }
   }
 
+  // ─── Tax: rules admin ──────────────────────────────────────────────────
+  const openTaxRuleModal = (rule = null) => {
+    setTaxRuleModal({ isNew: !rule, rule })
+    setTaxRuleForm(rule ? {
+      rule_type: rule.rule_type, tax_class: rule.tax_class, description: rule.description || '',
+      asset_classification: rule.asset_classification || '',
+      rate: rule.rate, first_year_rate: rule.first_year_rate || 0,
+      calc_method: rule.calc_method || 'reducing_balance',
+      effective_date: rule.effective_date, expiry_date: rule.expiry_date || '',
+      source_reference: rule.source_reference || '', is_active: rule.is_active,
+    } : blankTaxRule())
+  }
+
+  const saveTaxRule = async () => {
+    if (!taxRuleForm.tax_class.trim() || !taxRuleForm.effective_date) {
+      setToast({ type: 'error', msg: 'A class code and effective date are required.' }); return
+    }
+    if (Number(taxRuleForm.rate) < 0 || Number(taxRuleForm.first_year_rate) < 0) {
+      setToast({ type: 'error', msg: 'Rates cannot be negative.' }); return
+    }
+    setSaving(true)
+    const payload = {
+      ...taxRuleForm,
+      tax_class: taxRuleForm.tax_class.trim(),
+      rate: Number(taxRuleForm.rate) || 0,
+      first_year_rate: Number(taxRuleForm.first_year_rate) || 0,
+      expiry_date: taxRuleForm.expiry_date || null,
+      source_reference: taxRuleForm.source_reference || null,
+    }
+    const { error } = taxRuleModal.isNew
+      ? await supabase.from('tax_rules').insert({ ...payload, school_id: schoolId, created_by: userId })
+      : await supabase.from('tax_rules').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', taxRuleModal.rule.id)
+    if (error) {
+      setToast({ type: 'error', msg: error.message }); setSaving(false); return
+    }
+    await writeAudit(supabase, {
+      schoolId,
+      action: taxRuleModal.isNew ? 'assets.tax_rule_created' : 'assets.tax_rule_updated',
+      details: { tax_class: payload.tax_class, rule_type: payload.rule_type },
+    })
+    setSaving(false)
+    setTaxRuleModal(null)
+    setToast({ type: 'success', msg: taxRuleModal.isNew ? 'Tax rule created.' : 'Tax rule updated.' })
+    load()
+  }
+
+  const toggleTaxRule = async (rule) => {
+    const next = !rule.is_active
+    await supabase.from('tax_rules').update({ is_active: next, updated_at: new Date().toISOString() }).eq('id', rule.id)
+    await writeAudit(supabase, { schoolId, action: 'assets.tax_rule_toggled', details: { tax_class: rule.tax_class, active: next } })
+    setToast({ type: 'success', msg: `Rule ${rule.tax_class} ${next ? 'activated' : 'deactivated'}.` })
+    load()
+  }
+
+  // ─── Tax: schedules + reconciliation ───────────────────────────────────
+  const taxRows = buildTaxSchedule({ assets, taxRules, taxSchedules, yearOfIncome: Number(taxYear) })
+  const reconRows = taxVsAccounting({ assets, taxRules, taxSchedules, yearOfIncome: Number(taxYear) })
+
+  const filteredTaxRows = taxRows.filter((r) => {
+    const a = r.asset
+    const matchCat = !taxFilterCat || a.category_id === taxFilterCat
+    const matchClass = !taxFilterClass || a.tax_class === taxFilterClass
+    const matchDept = !taxFilterDept || a.department === taxFilterDept
+    const matchLoc = !taxFilterLoc || [a.campus, a.building, a.room, a.specific_location].some((x) => x === taxFilterLoc)
+    return matchCat && matchClass && matchDept && matchLoc
+  })
+
+  const handleRunTaxAllowances = async () => {
+    if (!isFinanceRole) { setToast({ type: 'error', msg: 'Only finance roles can run tax allowances.' }); return }
+    setTaxRunning(true)
+    try {
+      const count = await runTaxAllowances({
+        supabase, schoolId, userId, yearOfIncome: Number(taxYear), rows: taxRows,
+      })
+      await writeAudit(supabase, {
+        schoolId, action: 'assets.tax_allowances_run',
+        details: { year: Number(taxYear), assets: count },
+      })
+      setToast({ type: 'success', msg: count
+        ? `Tax allowances saved for ${count} asset${count === 1 ? '' : 's'} (year ${taxYear}).`
+        : 'No eligible assets (assign a KRA tax class first).' })
+      load()
+    } catch (e) {
+      setToast({ type: 'error', msg: e.message })
+    }
+    setTaxRunning(false)
+  }
+
+  const exportTaxCSV = () => {
+    const rows = [
+      ['Asset ID', 'Asset Name', 'Category', 'Acquisition Date', 'Cost', 'Tax Class', 'Opening Tax WDV', 'W&T Rate', 'Wear & Tear', 'Investment Rate', 'Investment Allowance', 'Total Allowance', 'Closing Tax WDV'],
+      ...filteredTaxRows.map((r) => [
+        r.asset.asset_id, r.asset.name,
+        categories.find((c) => c.id === r.asset.category_id)?.name || '',
+        r.asset.purchase_date || '', r.asset.purchase_cost, r.asset.tax_class,
+        r.opening_wtd, r.wear_tear_rate, r.wear_tear_allowance,
+        r.investment_rate, r.investment_allowance, r.total_allowance, r.closing_wtd,
+      ]),
+    ]
+    downloadFile(rows.map((x) => x.join(',')).join('\n'), `tax_allowances_${taxYear}.csv`, 'text/csv')
+  }
+
+  const exportReconCSV = () => {
+    const rows = [
+      ['Asset ID', 'Asset Name', 'Accounting NBV', 'Tax Written Down Value', 'Difference'],
+      ...reconRows.map((r) => [r.asset.asset_id, r.asset.name, calcNbv(r.asset), r.taxWtd, r.difference]),
+    ]
+    downloadFile(rows.map((x) => x.join(',')).join('\n'), `tax_vs_accounting_${taxYear}.csv`, 'text/csv')
+  }
+
   const exportRegisterCSV = () => {
     const rows = [
       ['Asset ID', 'Name', 'Serial No.', 'Category', 'Custodian', 'Location', 'Cost', 'Accumulated Depn', 'NBV', 'Status'],
@@ -550,6 +759,8 @@ export default function AssetsPage({ initialTab }) {
     { key: 'register', label: 'Asset Register', icon: <Archive size={14} /> },
     { key: 'categories', label: 'Categories', icon: <FileText size={14} /> },
     { key: 'depreciation', label: 'Depreciation', icon: <TrendingDown size={14} /> },
+    { key: 'tax', label: 'Tax & Capital Allowances', icon: <Landmark size={14} /> },
+    { key: 'taxrules', label: 'Tax Rules', icon: <ShieldCheck size={14} /> },
     { key: 'maintenance', label: 'Maintenance', icon: <Wrench size={14} /> },
     { key: 'transfers', label: 'Transfers & Custody', icon: <User size={14} /> },
   ]
@@ -722,6 +933,213 @@ export default function AssetsPage({ initialTab }) {
     </>
   )
 
+  const renderTax = () => (
+    <>
+      <div className="as-kpi-row">
+        <div className="as-kpi blue"><p className="as-kpi-label">Accounting NBV ({taxYear})</p><p className="as-kpi-value">{fmt(reconRows.reduce((s, r) => s + r.accountingNbv, 0))}</p></div>
+        <div className="as-kpi purple"><p className="as-kpi-label">Tax Written Down Value ({taxYear})</p><p className="as-kpi-value">{fmt(reconRows.reduce((s, r) => s + r.taxWtd, 0))}</p></div>
+        <div className="as-kpi amber"><p className="as-kpi-label">Wear & Tear + Investment</p><p className="as-kpi-value">{fmt(filteredTaxRows.reduce((s, r) => s + r.total_allowance, 0))}</p></div>
+        <div className="as-kpi green"><p className="as-kpi-label">Tax Schedule Rows</p><p className="as-kpi-value">{taxSchedules.filter((s) => s.year_of_income === Number(taxYear)).length}</p></div>
+      </div>
+
+      <div className="as-tax-banner">
+        <Landmark size={16} />
+        <div>
+          <strong>Tax capital allowances are NOT posted to the General Ledger.</strong>
+          <p>Accounting depreciation (Dr Depreciation Expense / Cr Accumulated Depreciation) is separate and unchanged. This schedule is a tax-computation item based on the applicable statutory rules for the selected year of income.</p>
+        </div>
+      </div>
+
+      <div className="as-toolbar">
+        <select className="as-select" value={taxYear} onChange={(e) => setTaxYear(e.target.value)}>
+          {[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1, new Date().getFullYear() + 2].map((y) => (
+            <option key={y} value={y}>Year of Income {y}</option>
+          ))}
+        </select>
+        <select className="as-select" value={taxFilterCat} onChange={(e) => setTaxFilterCat(e.target.value)}>
+          <option value="">All Categories</option>
+          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select className="as-select" value={taxFilterClass} onChange={(e) => setTaxFilterClass(e.target.value)}>
+          <option value="">All Tax Classes</option>
+          {[...new Set(taxRows.map((r) => r.asset.tax_class).filter(Boolean))].map((c) => (
+            <option key={c} value={c}>{taxRuleLabel(taxRules, c, 'wear_tear')}</option>
+          ))}
+        </select>
+        <select className="as-select" value={taxFilterDept} onChange={(e) => setTaxFilterDept(e.target.value)}>
+          <option value="">All Departments</option>
+          {[...new Set(assets.map((a) => a.department).filter(Boolean))].map((d) => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select className="as-select" value={taxFilterLoc} onChange={(e) => setTaxFilterLoc(e.target.value)}>
+          <option value="">All Locations</option>
+          {[...new Set(assets.map((a) => a.building).filter(Boolean))].map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <button className="as-btn-ghost" onClick={load}><RefreshCw size={14} /> Refresh</button>
+        <button className="as-btn-outline" onClick={exportTaxCSV}><Download size={14} /> Export</button>
+        <button className="as-btn-primary" disabled={!isFinanceRole || taxRunning} onClick={handleRunTaxAllowances}>
+          {taxRunning ? 'Saving…' : <><TrendingDown size={14} /> Run Tax Allowances ({taxYear})</>}
+        </button>
+      </div>
+
+      <div className="as-table-card">
+        <div className="as-table-head"><h3>Tax Capital Allowance Schedule <span>· year of income {taxYear} · {filteredTaxRows.length} assets</span></h3></div>
+        {filteredTaxRows.length === 0 ? (
+          <p className="as-empty">No assets with a KRA tax class for this year. Assign a Kenyan tax classification to an asset first.</p>
+        ) : (
+          <div className="as-table-wrap">
+            <table className="as-table">
+              <thead>
+                <tr>
+                  <th>Asset</th><th>Category</th><th>Tax Class</th>
+                  <th className="num">Cost</th>
+                  <th className="num">Opening WDV</th>
+                  <th className="num">W&amp;T Rate</th>
+                  <th className="num">Wear &amp; Tear</th>
+                  <th className="num">Inv. Rate</th>
+                  <th className="num">Investment</th>
+                  <th className="num">Total Allowance</th>
+                  <th className="num">Closing WDV</th>
+                  <th>Version</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTaxRows.map((r) => (
+                  <tr key={r.asset.id}>
+                    <td className="as-fw600">{r.asset.name} <span className="as-muted as-mono">{r.asset.asset_id}</span></td>
+                    <td>{categories.find((c) => c.id === r.asset.category_id)?.name || '—'}</td>
+                    <td>{taxRuleLabel(taxRules, r.asset.tax_class, 'wear_tear')}</td>
+                    <td className="num">{fmt(r.tax_basis)}</td>
+                    <td className="num">{fmt(r.opening_wtd)}</td>
+                    <td className="num">{r.wear_tear_rate || '—'}{r.wear_tear_rate ? '%' : ''}</td>
+                    <td className="num">{fmt(r.wear_tear_allowance)}</td>
+                    <td className="num">{r.investment_rate || '—'}{r.investment_rate ? '%' : ''}</td>
+                    <td className="num">{fmt(r.investment_allowance)}</td>
+                    <td className="num as-fw600">{fmt(r.total_allowance)}</td>
+                    <td className="num as-fw600 as-green">{fmt(r.closing_wtd)}</td>
+                    <td>{r.persisted
+                      ? <span className="as-status-badge" style={{ background: '#16a34a1a', color: '#16a34a' }}>Saved</span>
+                      : <span className="as-muted">Preview</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={4} className="as-fw600">Total</td>
+                  <td className="num as-fw600">{fmt(filteredTaxRows.reduce((s, r) => s + r.opening_wtd, 0))}</td>
+                  <td />
+                  <td className="num as-fw600">{fmt(filteredTaxRows.reduce((s, r) => s + r.wear_tear_allowance, 0))}</td>
+                  <td />
+                  <td className="num as-fw600">{fmt(filteredTaxRows.reduce((s, r) => s + r.investment_allowance, 0))}</td>
+                  <td className="num as-fw600">{fmt(filteredTaxRows.reduce((s, r) => s + r.total_allowance, 0))}</td>
+                  <td className="num as-fw600 as-green">{fmt(filteredTaxRows.reduce((s, r) => s + r.closing_wtd, 0))}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="as-table-card">
+        <div className="as-table-head">
+          <h3>Asset Tax vs Accounting Reconciliation <span>· {taxYear}</span></h3>
+          <button className="as-btn-outline" onClick={exportReconCSV}><Download size={14} /> Export</button>
+        </div>
+        <p className="as-tax-note">Accounting NBV and Tax WDV are legitimately different — accounting follows the depreciation policy, tax follows the statutory capital-allowance rules.</p>
+        {reconRows.length === 0 ? (
+          <p className="as-empty">Nothing to reconcile for this year.</p>
+        ) : (
+          <div className="as-table-wrap">
+            <table className="as-table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th className="num">Accounting NBV</th>
+                  <th className="num">Tax Written Down Value</th>
+                  <th className="num">Difference</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reconRows.map((r) => (
+                  <tr key={r.asset.id}>
+                    <td className="as-fw600">{r.asset.name} <span className="as-muted as-mono">{r.asset.asset_id}</span></td>
+                    <td className="num">{fmt(r.accountingNbv)}</td>
+                    <td className="num">{fmt(r.taxWtd)}</td>
+                    <td className={`num as-fw600 ${r.difference > 0 ? 'as-green' : 'as-red'}`}>{fmt(r.difference)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  )
+
+  const renderTaxRules = () => (
+    <>
+      <div className="as-toolbar">
+        <button className="as-btn-ghost" onClick={load}><RefreshCw size={14} /> Refresh</button>
+        {isFinanceRole && (
+          <button className="as-btn-primary" onClick={() => openTaxRuleModal()}><Plus size={14} /> Add Tax Rule</button>
+        )}
+      </div>
+      <div className="as-table-card">
+        <div className="as-table-head">
+          <h3>Statutory Tax Rules <span>· effective-date based · configurable</span></h3>
+        </div>
+        <p className="as-tax-note">
+          Kenyan statutory tax rates change when the Income Tax Act, Finance Act or KRA guidance is amended.
+          These rules are editable by authorised finance users and are versioned by effective date — a new rule only
+          applies from its effective date; previously computed tax schedules keep the rule version they used.
+        </p>
+        {taxRules.length === 0 ? (
+          <p className="as-empty">No tax rules yet. The system seeds the default statutory classes on first load.</p>
+        ) : (
+          <div className="as-table-wrap">
+            <table className="as-table">
+              <thead>
+                <tr>
+                  <th>Type</th><th>Class</th><th>Classification</th>
+                  <th className="num">Rate (p.a.)</th><th className="num">1st Year</th><th>Method</th>
+                  <th>Effective</th><th>Expiry</th><th>Source</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {taxRules.map((r) => (
+                  <tr key={r.id}>
+                    <td>{TAX_RULE_TYPES.find((t) => t.value === r.rule_type)?.label || r.rule_type}</td>
+                    <td className="as-mono as-fw600">{r.tax_class}</td>
+                    <td className="as-desc">{r.description || r.asset_classification || '—'}</td>
+                    <td className="num">{r.rate}{r.rate ? '%' : ''}</td>
+                    <td className="num">{r.first_year_rate ? `${r.first_year_rate}%` : '—'}</td>
+                    <td>{taxMethodLabel(r.calc_method)}</td>
+                    <td>{fmtDate(r.effective_date)}</td>
+                    <td>{r.expiry_date ? fmtDate(r.expiry_date) : <span className="as-muted">Open-ended</span>}</td>
+                    <td className="as-muted as-desc">{r.source_reference || '—'}</td>
+                    <td>
+                      <span className={`as-status-badge ${r.is_active ? '' : 'as-status-off'}`} style={{ background: r.is_active ? '#16a34a1a' : '#64748b1a', color: r.is_active ? '#16a34a' : '#64748b' }}>
+                        {r.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="as-actions-cell">
+                      {isFinanceRole && (
+                        <>
+                          <button className="as-icon-btn" title="Edit" onClick={() => openTaxRuleModal(r)}><Pencil size={14} /></button>
+                          <button className="as-icon-btn" title={r.is_active ? 'Deactivate' : 'Activate'} onClick={() => toggleTaxRule(r)}><Power size={14} /></button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  )
+
   const renderMaintenance = () => (
     <>
       <div className="as-toolbar">
@@ -810,37 +1228,18 @@ export default function AssetsPage({ initialTab }) {
             <div className="as-modal-body">
               <label className="as-label">Name *</label>
               <input className="as-input" value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} placeholder="e.g. Furniture & Fixtures" />
-              <label className="as-label">Tax Class (KRA Wear & Tear)</label>
-              <select
-                className="as-select"
-                value={catForm.tax_class}
-                onChange={(e) => {
-                  const k = kraTaxClass(e.target.value)
-                  setCatForm({
-                    ...catForm, tax_class: e.target.value,
-                    depreciation_method: k ? 'reducing_balance' : catForm.depreciation_method,
-                    depreciation_rate: k ? k.rate : catForm.depreciation_rate,
-                    first_year_allowance: k ? k.first_year_allowance : 0,
-                  })
-                }}
-              >
-                <option value="">Company policy (custom)</option>
-                {KRA_WEAR_AND_TEAR.map((k) => (
-                  <option key={k.value} value={k.value}>
-                    {k.label} — {k.rate}% p.a. RB{k.first_year_allowance ? ` (+${k.first_year_allowance}% 1st year)` : ''}
-                  </option>
+              <label className="as-label">Kenyan Tax Classification (KRA)</label>
+              <select className="as-select" value={catForm.tax_class} onChange={(e) => setCatForm({ ...catForm, tax_class: e.target.value })}>
+                <option value="">No default tax class</option>
+                {taxRules.filter((r) => r.rule_type === 'wear_tear').map((r) => (
+                  <option key={r.id} value={r.tax_class}>{r.description || r.tax_class} — {r.rate}% p.a.</option>
                 ))}
               </select>
-              {catForm.tax_class && (() => {
-                const k = kraTaxClass(catForm.tax_class)
-                return k ? (
-                  <p className="as-policy-hint">
-                    KRA policy: {k.rate}% p.a. reducing balance
-                    {k.first_year_allowance ? ` with a ${k.first_year_allowance}% first-year allowance` : ''} applied to this category's assets.
-                  </p>
-                ) : null
-              })()}
-              <label className="as-label">Depreciation Method</label>
+              <p className="as-tax-note">
+                Pre-fills the KRA tax class for NEW assets in this category only. It does NOT change accounting
+                depreciation — the depreciation policy below is independent.
+              </p>
+              <label className="as-label">Depreciation Method <span className="as-muted">(accounting)</span></label>
               <select className="as-select" value={catForm.depreciation_method} onChange={(e) => setCatForm({ ...catForm, depreciation_method: e.target.value })}>
                 <option value="straight_line">Straight-Line</option>
                 <option value="reducing_balance">Reducing Balance</option>
@@ -855,7 +1254,7 @@ export default function AssetsPage({ initialTab }) {
                   <input className="as-input" type="number" min="0" value={catForm.residual_value} onChange={(e) => setCatForm({ ...catForm, residual_value: e.target.value })} />
                 </div>
               </div>
-              <label className="as-label">Depreciation Rate % p.a.</label>
+              <label className="as-label">Depreciation Rate % p.a. <span className="as-muted">(accounting)</span></label>
               <input className="as-input" type="number" step="0.01" min="0" max="100" value={catForm.depreciation_rate} onChange={(e) => setCatForm({ ...catForm, depreciation_rate: e.target.value })} placeholder="Leave blank to auto-calculate" />
             </div>
             <div className="as-modal-foot">
@@ -1091,14 +1490,18 @@ export default function AssetsPage({ initialTab }) {
                         <label className="as-label">Depreciation Expense Account</label>
                         <select className="as-select" value={deprForm.expense_account_id} onChange={(e) => setDeprForm({ ...deprForm, expense_account_id: e.target.value })}>
                           <option value="">Select account</option>
-                          {accountOptions.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
+                          {accountOptions
+                            .filter((a) => a.type === 'expense' && (a.category === 'Depreciation' || /^60\d0$/.test(a.code)))
+                            .map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
                         </select>
                       </div>
                       <div>
                         <label className="as-label">Accumulated Depreciation Account</label>
                         <select className="as-select" value={deprForm.accumulated_account_id} onChange={(e) => setDeprForm({ ...deprForm, accumulated_account_id: e.target.value })}>
                           <option value="">Select account</option>
-                          {accountOptions.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
+                          {accountOptions
+                            .filter((a) => a.type === 'asset' && (a.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(a.code)))
+                            .map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
                         </select>
                       </div>
                     </div>

@@ -86,6 +86,20 @@ export const DEFAULT_CHART = [
   { code: '5350', name: 'Advertising & Marketing',   type: 'expense',   category: 'Administrative' },
   { code: '5360', name: 'General Expenses',          type: 'expense',   category: 'Administrative' },
   { code: '5410', name: 'Depreciation Expense',      type: 'expense',   category: 'Depreciation' },
+  // Dedicated depreciation expense accounts (preferred)
+  { code: '6010', name: 'Depreciation Expense — Buildings', type: 'expense', category: 'Depreciation' },
+  { code: '6020', name: 'Depreciation Expense — Motor Vehicles', type: 'expense', category: 'Depreciation' },
+  { code: '6030', name: 'Depreciation Expense — Furniture & Fittings', type: 'expense', category: 'Depreciation' },
+  { code: '6040', name: 'Depreciation Expense — Computers & ICT Equipment', type: 'expense', category: 'Depreciation' },
+  { code: '6050', name: 'Depreciation Expense — School Equipment', type: 'expense', category: 'Depreciation' },
+  { code: '6060', name: 'Depreciation Expense — Other Fixed Assets', type: 'expense', category: 'Depreciation' },
+  // Accumulated depreciation accounts (asset-type contra accounts)
+  { code: '1701', name: 'Accumulated Depreciation — Buildings', type: 'asset', category: 'Accumulated Depreciation' },
+  { code: '1702', name: 'Accumulated Depreciation — Motor Vehicles', type: 'asset', category: 'Accumulated Depreciation' },
+  { code: '1703', name: 'Accumulated Depreciation — Furniture & Fittings', type: 'asset', category: 'Accumulated Depreciation' },
+  { code: '1704', name: 'Accumulated Depreciation — Computers & ICT Equipment', type: 'asset', category: 'Accumulated Depreciation' },
+  { code: '1705', name: 'Accumulated Depreciation — School Equipment', type: 'asset', category: 'Accumulated Depreciation' },
+  { code: '1706', name: 'Accumulated Depreciation — Other Fixed Assets', type: 'asset', category: 'Accumulated Depreciation' },
 ]
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
