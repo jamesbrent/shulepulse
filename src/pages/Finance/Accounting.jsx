@@ -30,7 +30,7 @@ const emptyLine = () => ({ account_id: '', debit: '', credit: '', notes: '' })
 const blankEntry = () => ({ entry_date: TODAY, description: '', lines: [emptyLine(), emptyLine()] })
 const blankAccount = () => ({ code: '', name: '', type: 'asset', category: '', opening_balance: 0, description: '' })
 
-export default function AccountingPage({ initialTab }) {
+export default function AccountingPage({ initialTab, onOpenSource }) {
   const { profile } = useAuthStore()
   const { school } = useSchool()
   const schoolId = profile?.school_id
@@ -564,6 +564,9 @@ export default function AccountingPage({ initialTab }) {
                           <td className="acc-muted">{staffMap[e.created_by] || '—'}</td>
                           <td className="acc-actions-cell">
                             <button className="acc-icon-btn" title="View" onClick={() => setViewEntry(e)}><Eye size={14} /></button>
+                            {e.source === 'expenses' && e.reference_type === 'expense' && e.reference_id && onOpenSource && (
+                              <button className="acc-icon-btn" title="Open expense record" onClick={() => onOpenSource('expense', e.reference_id)}><Receipt size={14} /></button>
+                            )}
                             {e.status === 'draft' && (
                               <button className="acc-icon-btn" title="Post" onClick={() => setConfirmAction({ type: 'post', entry: e })}><CheckCircle size={14} /></button>
                             )}

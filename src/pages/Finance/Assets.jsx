@@ -7,17 +7,20 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
-import { writeAudit, postToJournal } from './accountsUtils'
+import { writeAudit, postToJournal, ensureAccounts, DEPRECIATION_ACCOUNT_CODES } from './accountsUtils'
 import {
   ASSET_STATUSES, assetStatus, calcNbv, monthlyDepreciation, nextAssetId,
-  addAssetEvent, loadAssetsData, formatPeriod, kraTaxClass,
+  addAssetEvent, loadAssetsData, formatPeriod, kraTaxClass, depreciationAccountsFor,
+  fixedAssetAccountCodeFor,
 } from './assetsUtils'
 import {
   TAX_RULE_TYPES, TAX_METHODS, FINANCE_ROLES, methodLabel as taxMethodLabel,
   ensureDefaultTaxRules, loadTaxData, taxRuleLabel,
   buildTaxSchedule, runTaxAllowances, taxVsAccounting,
 } from './taxUtils'
+import { nextSupplierNo, nextInvoiceNo, nextPaymentNo } from './apUtils'
 import AssetProfile from './AssetProfile'
+import AccountSelect from './AccountSelect'
 import './Assets.css'
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -29,7 +32,10 @@ const blankAsset = () => ({
   depreciation_method: 'straight_line', depreciation_rate: 0, warranty_until: '',
   status: 'active', campus: '', building: '', department: '', room: '', specific_location: '',
   custodian_id: '', assigned_date: TODAY,
-  tax_class: '', investment_class: '',
+  tax_class: '', investment_class: '', acquisition_source: 'supplier',
+  invoice_mode: 'create', existing_invoice_id: '', payment_status: 'unpaid',
+  payment_account_id: '', payment_amount: '',
+  gl_cash_account_id: '', gl_donation_account_id: '',
 })
 
 const blankCategory = () => ({
@@ -57,6 +63,9 @@ export default function AssetsPage({ initialTab }) {
   const [assets, setAssets] = useState([])
   const [categories, setCategories] = useState([])
   const [suppliers, setSuppliers] = useState([])
+  const [apInvoices, setApInvoices] = useState([])
+  const [showQuickSupplier, setShowQuickSupplier] = useState(false)
+  const [quickSupplier, setQuickSupplier] = useState({ name: '', phone: '', email: '', kra_pin: '' })
   const [events, setEvents] = useState([])
   const [custody, setCustody] = useState([])
   const [locations, setLocations] = useState([])
@@ -125,8 +134,15 @@ export default function AssetsPage({ initialTab }) {
     setDocuments(data.documents); setStaff(data.staff)
     const tax = await loadTaxData(supabase, schoolId)
     setTaxRules(tax.taxRules); setTaxSchedules(tax.taxSchedules)
+    // Lazily create the standard depreciation accounts if the chart is missing
+    // them (RLS restricts inserts to finance roles; everyone else just reads).
+    try {
+      await ensureAccounts(supabase, schoolId, DEPRECIATION_ACCOUNT_CODES)
+    } catch { /* non-finance role — migration 046 covers the seed */ }
     const { data: accData } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).order('code')
     setAccountOptions(accData || [])
+    const { data: invData } = await supabase.from('ap_invoices').select('*').eq('school_id', schoolId).order('invoice_date', { ascending: false })
+    setApInvoices(invData || [])
     setLoading(false)
   }, [schoolId])
 
@@ -152,23 +168,39 @@ export default function AssetsPage({ initialTab }) {
 
   const setDeprAccountDefaults = useCallback(async () => {
     const accs = await fetchAccounts()
-    // Prefer dedicated depreciation accounts if present
-    const expense = accs.find((a) => a.code === '6010')
-      || accs.find((a) => a.category === 'Depreciation' && a.type === 'expense')
-      || accs.find((a) => a.type === 'expense' && /deprec/i.test(a.name))
-      || accs.find((a) => a.type === 'expense')
-
-    const accumulated = accs.find((a) => a.code === '1701')
-      || accs.find((a) => a.category === 'Accumulated Depreciation' && a.type === 'asset')
-      || accs.find((a) => a.type === 'asset' && /accumulated/i.test(a.name))
-      || accs.find((a) => a.type === 'asset')
-
+    // Only ever default to dedicated depreciation accounts so the dropdowns
+    // stay strictly filtered and safe to post.
+    const validExpense = accs.filter((a) => a.type === 'expense' && (a.category === 'Depreciation' || /^60\d0$/.test(a.code)))
+    const validAccum = accs.filter((a) => a.type === 'asset' && (a.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(a.code)))
+    const expense = validExpense.find((a) => a.code === '6010') || validExpense[0] || null
+    const accumulated = validAccum.find((a) => a.code === '1701') || validAccum[0] || null
     setDeprForm((f) => ({
       ...f,
       expense_account_id: expense?.id || '',
       accumulated_account_id: accumulated?.id || '',
     }))
   }, [fetchAccounts])
+
+  const createDeprAccounts = async () => {
+    setSaving(true)
+    try {
+      await ensureAccounts(supabase, schoolId, DEPRECIATION_ACCOUNT_CODES)
+      const accs = await fetchAccounts()
+      setAccountOptions(accs)
+      const expense = accs.find((a) => a.code === '6010') || accs.find((a) => a.type === 'expense' && (a.category === 'Depreciation' || /^60\d0$/.test(a.code)))
+      const accumulated = accs.find((a) => a.code === '1701') || accs.find((a) => a.type === 'asset' && (a.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(a.code)))
+      setDeprForm((f) => ({
+        ...f,
+        expense_account_id: expense?.id || '',
+        accumulated_account_id: accumulated?.id || '',
+      }))
+      setToast({ type: 'success', msg: 'Depreciation accounts created. Choose the default accounts, then post.' })
+    } catch (e) {
+      setToast({ type: 'error', msg: `Could not create accounts: ${e.message || e}` })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const openAssetModal = (asset = null) => {
     setAssetModal({ isNew: !asset, asset })
@@ -184,6 +216,10 @@ export default function AssetsPage({ initialTab }) {
       room: asset.room || '', specific_location: asset.specific_location || '',
       custodian_id: asset.custodian_id || '', assigned_date: asset.assigned_date || TODAY,
       tax_class: asset.tax_class || '', investment_class: asset.investment_class || '',
+      acquisition_source: asset.acquisition_source || 'supplier',
+      invoice_mode: 'create', existing_invoice_id: '',
+      payment_status: asset.payment_status || 'unpaid', payment_account_id: '',
+      payment_amount: '', gl_cash_account_id: '', gl_donation_account_id: '',
     } : blankAsset())
     setPhotoFile(null)
   }
@@ -197,17 +233,135 @@ export default function AssetsPage({ initialTab }) {
   const saveAsset = async () => {
     if (!assetForm.name.trim()) { setToast({ type: 'error', msg: 'Asset name is required.' }); return }
     if (!assetForm.purchase_cost || Number(assetForm.purchase_cost) < 0) { setToast({ type: 'error', msg: 'Enter a valid purchase cost.' }); return }
+    if (assetModal.isNew && assetForm.acquisition_source === 'supplier' && !assetForm.supplier_id) { setToast({ type: 'error', msg: 'Select a supplier for supplier purchases.' }); return }
     setSaving(true)
     try {
       const cost = Number(assetForm.purchase_cost)
       const policyCat = categories.find((c) => c.id === assetForm.category_id)
+      let assetId = assetModal.asset?.asset_id
+      if (assetModal.isNew) assetId = await nextAssetId(supabase, schoolId)
+
+      // Integrated Accounts Payable workflow. Supplier purchases either link to
+      // an existing AP invoice or raise a new one (draft); the asset carries the
+      // real link (purchase_invoice_id). VAT is 0% — asset purchases are
+      // typically not subject to input VAT recovery. Runs BEFORE the asset
+      // insert so a failure here rolls back cleanly.
+      let apInvoiceNo = null
+      let apInvoiceId = null
+      let apPaymentNo = null
+      const isSupplierPurchase = assetModal.isNew && assetForm.acquisition_source === 'supplier'
+      if (isSupplierPurchase) {
+        if (!assetForm.supplier_id) throw new Error('Select a supplier for supplier purchases.')
+
+        if (assetForm.invoice_mode === 'existing') {
+          if (!assetForm.existing_invoice_id) throw new Error('Select the AP invoice to link, or switch to “Create new invoice”.')
+          const linked = apInvoices.find((i) => i.id === assetForm.existing_invoice_id)
+          if (!linked) throw new Error('The selected invoice could not be found.')
+          if (linked.supplier_id !== assetForm.supplier_id) throw new Error('The selected invoice does not belong to the chosen supplier.')
+          apInvoiceId = linked.id
+          apInvoiceNo = linked.invoice_no
+        } else {
+          const assetAccCode = fixedAssetAccountCodeFor({ asset_type: assetForm.asset_type }, policyCat?.name || '')
+          await ensureAccounts(supabase, schoolId, [assetAccCode])
+          const { data: accAcc } = await supabase.from('chart_of_accounts')
+            .select('id').eq('school_id', schoolId).eq('code', assetAccCode).single()
+          if (!accAcc) throw new Error(`Fixed asset account ${assetAccCode} is missing from the chart — add it or run “Create depreciation accounts”.`)
+
+          apInvoiceNo = await nextInvoiceNo(supabase, schoolId)
+          let dueDate = null
+          if (assetForm.purchase_date) {
+            const termsDays = parseInt((suppliers.find((s) => s.id === assetForm.supplier_id)?.payment_terms) || '', 10)
+            const days = Number.isFinite(termsDays) && termsDays > 0 ? termsDays : 30
+            const d = new Date(assetForm.purchase_date)
+            d.setDate(d.getDate() + days)
+            dueDate = d.toISOString().split('T')[0]
+          }
+          const { data: invRow, error: invErr } = await supabase.from('ap_invoices').insert({
+            school_id: schoolId, supplier_id: assetForm.supplier_id, invoice_no: apInvoiceNo,
+            supplier_ref: assetForm.purchase_invoice_ref || null,
+            invoice_date: assetForm.purchase_date || TODAY, due_date: dueDate,
+            description: `Asset acquisition — ${assetForm.name.trim()}`,
+            department: assetForm.department || null, cost_centre: null,
+            tax_treatment: 'none', vat_rate: 0,
+            subtotal: cost, taxable_amount: cost, vat_amount: 0, total_amount: cost,
+            notes: `Created from Fixed Assets — asset ${assetId}`, status: 'draft', created_by: userId,
+          }).select().single()
+          if (invErr) throw invErr
+          apInvoiceId = invRow.id
+          const { error: lineErr } = await supabase.from('ap_invoice_lines').insert({
+            school_id: schoolId, invoice_id: invRow.id, description: assetForm.name.trim(),
+            quantity: 1, unit_price: cost, discount_amount: 0, account_id: accAcc.id,
+            department: assetForm.department || null, cost_centre: null,
+          })
+          if (lineErr) throw lineErr
+
+          // Raise the payment against the new invoice so the paid portion shows
+          // instantly in AP. Fully Paid = the full invoice total (locked);
+          // Partially Paid = the actual amount paid (editable, below the total).
+          // Draft payments follow the normal AP approval/posting workflow —
+          // nothing is silently posted to the GL here.
+          if (assetForm.payment_status !== 'unpaid') {
+            if (!assetForm.payment_account_id) throw new Error('Select the payment account for this acquisition.')
+            const payAmount = assetForm.payment_status === 'fully_paid'
+              ? cost
+              : Math.round((Number(assetForm.payment_amount) || cost) * 100) / 100
+            if (!(payAmount > 0)) throw new Error('Enter a valid payment amount.')
+            if (assetForm.payment_status === 'partially_paid' && payAmount >= cost) throw new Error('Partially paid amount must be less than the invoice total.')
+            const payAcc = accountOptions.find((a) => a.id === assetForm.payment_account_id)
+            const methodMap = { 1010: 'cash', 1030: 'mobile' }
+            const paymentMethod = methodMap[payAcc?.code] || 'bank'
+            apPaymentNo = await nextPaymentNo(supabase, schoolId)
+            const { data: payRow, error: payErr } = await supabase.from('ap_payments').insert({
+              school_id: schoolId, payment_no: apPaymentNo, payment_type: 'invoice',
+              supplier_id: assetForm.supplier_id, amount: payAmount,
+              payment_date: assetForm.purchase_date || TODAY, payment_method: paymentMethod,
+              payment_account_id: assetForm.payment_account_id,
+              reference_no: `Asset ${assetId}`, description: `Payment for ${assetForm.name.trim()} (${assetId})`,
+              department: assetForm.department || null, cost_centre: null,
+              status: 'draft', created_by: userId,
+            }).select().single()
+            if (payErr) throw payErr
+            const { error: allocErr } = await supabase.from('ap_payment_allocations').insert({
+              school_id: schoolId, payment_id: payRow.id, invoice_id: invRow.id, amount: payAmount,
+            })
+            if (allocErr) throw allocErr
+          }
+        }
+      }
+
+      // Direct GL for acquisitions with no supplier invoice (cash/bank/donation).
+      // The supplier invoice is the source of truth for supplier purchases (it
+      // posts on approve→post), so NO entry is posted there. For these sources
+      // this is the single GL posting of the acquisition.
+      let glDrAcc = null
+      let glCrAccId = null
+      const isDirectGL = assetModal.isNew && ['cash', 'bank', 'donation'].includes(assetForm.acquisition_source)
+      if (isDirectGL) {
+        const assetAccCode = fixedAssetAccountCodeFor({ asset_type: assetForm.asset_type }, policyCat?.name || '')
+        await ensureAccounts(supabase, schoolId, [assetAccCode])
+        const { data: drAcc } = await supabase.from('chart_of_accounts')
+          .select('*').eq('school_id', schoolId).eq('code', assetAccCode).single()
+        if (!drAcc) throw new Error(`Fixed asset account ${assetAccCode} is missing from the chart — add it or run “Create depreciation accounts”.`)
+        glDrAcc = drAcc
+        glCrAccId = assetForm.acquisition_source === 'donation' ? assetForm.gl_donation_account_id : assetForm.gl_cash_account_id
+        if (!glCrAccId) throw new Error(assetForm.acquisition_source === 'donation'
+          ? 'Select the donation / grant / income account.'
+          : 'Select the bank / cash account.')
+      }
+
       const base = {
         school_id: schoolId,
         name: assetForm.name.trim(), category_id: assetForm.category_id || null,
         asset_type: assetForm.asset_type, serial_number: assetForm.serial_number || null,
         model: assetForm.model || null, manufacturer: assetForm.manufacturer || null,
         description: assetForm.description || null, purchase_date: assetForm.purchase_date || null,
-        supplier_id: assetForm.supplier_id || null, purchase_invoice_ref: assetForm.purchase_invoice_ref || null,
+        supplier_id: assetForm.supplier_id || null,
+        purchase_invoice_ref: apInvoiceNo || assetForm.purchase_invoice_ref || null,
+        purchase_invoice_id: assetModal.isNew ? apInvoiceId : assetModal.asset.purchase_invoice_id ?? null,
+        acquisition_source: assetForm.acquisition_source,
+        payment_status: assetModal.isNew
+          ? (isSupplierPurchase ? assetForm.payment_status : null)
+          : assetModal.asset.payment_status ?? null,
         purchase_cost: cost,
         // Financial-accounting policy (independent of tax). New assets inherit
         // the ACCOUNTING policy only from the category; tax_class never
@@ -233,9 +387,7 @@ export default function AssetsPage({ initialTab }) {
       }
 
       let newAsset
-      let assetId = assetModal.asset?.asset_id
       if (assetModal.isNew) {
-        assetId = await nextAssetId(supabase, schoolId)
         const { data, error } = await supabase.from('fixed_assets')
           .insert({ ...base, asset_id: assetId, created_by: userId }).select().single()
         if (error) throw error
@@ -245,6 +397,28 @@ export default function AssetsPage({ initialTab }) {
           .update(base).eq('id', assetModal.asset.id).select().single()
         if (error) throw error
         newAsset = data
+      }
+
+      // Post the acquisition entry for cash/bank/donation purchases (single GL
+      // posting — supplier purchases post via the approved invoice instead).
+      let glJournal = null
+      if (glDrAcc) {
+        const crAcc = accountOptions.find((a) => a.id === glCrAccId)
+        try {
+          glJournal = await postToJournal(supabase, {
+            schoolId, userId,
+            entry_date: assetForm.purchase_date || TODAY,
+            description: `Acquire ${newAsset.name} (${assetId}) — ${assetForm.acquisition_source}`,
+            source: 'fixed_assets', reference_type: 'fixed_asset', reference_id: newAsset.id,
+            lines: [
+              { account_id: glDrAcc.id, debit: cost, credit: 0, notes: `Fixed asset ${assetId}` },
+              { account_id: glCrAccId, debit: 0, credit: cost, notes: crAcc?.name || '' },
+            ],
+          })
+        } catch (e) {
+          await supabase.from('fixed_assets').delete().eq('id', newAsset.id)
+          throw e
+        }
       }
 
       if (photoFile) {
@@ -268,6 +442,40 @@ export default function AssetsPage({ initialTab }) {
         details: { asset_id: newAsset.asset_id, name: newAsset.name },
       })
 
+      if (apInvoiceNo) {
+        await addAssetEvent(supabase, {
+          schoolId, assetId: newAsset.id, eventType: 'invoice',
+          description: assetForm.invoice_mode === 'existing'
+            ? `Linked to AP invoice ${apInvoiceNo}`
+            : `AP invoice ${apInvoiceNo} raised for ${fmt(cost)} — review & post in Accounts Payable`,
+        })
+        await writeAudit(supabase, {
+          schoolId, action: 'assets.ap_invoice_created',
+          details: { asset_id: assetId, invoice_no: apInvoiceNo, total: cost },
+        })
+      }
+      if (apPaymentNo) {
+        await addAssetEvent(supabase, {
+          schoolId, assetId: newAsset.id, eventType: 'payment',
+          description: `AP payment ${apPaymentNo} draft raised for ${fmt(cost)} — approve & post in Accounts Payable`,
+        })
+        await writeAudit(supabase, {
+          schoolId, action: 'assets.ap_payment_created',
+          details: { asset_id: assetId, payment_no: apPaymentNo },
+        })
+      }
+      if (glJournal) {
+        const crAcc = accountOptions.find((a) => a.id === glCrAccId)
+        await addAssetEvent(supabase, {
+          schoolId, assetId: newAsset.id, eventType: 'gl_posted',
+          description: `Acquisition posted to GL — Dr ${glDrAcc.name} / Cr ${crAcc?.name || ''} (${fmt(cost)})`,
+        })
+        await writeAudit(supabase, {
+          schoolId, action: 'assets.gl_posted',
+          details: { asset_id: assetId, journal_id: glJournal.id, entry_date: assetForm.purchase_date || TODAY },
+        })
+      }
+
       if (assetModal.isNew && newAsset.custodian_id) {
         await supabase.from('asset_custody_history').insert({
           school_id: schoolId, asset_id: newAsset.id, custodian_id: newAsset.custodian_id,
@@ -279,9 +487,43 @@ export default function AssetsPage({ initialTab }) {
         })
       }
 
-      setToast({ type: 'success', msg: assetModal.isNew ? `Asset ${assetId} registered.` : 'Asset updated.' })
+      const linkedBits = [
+        apInvoiceNo ? `AP invoice ${apInvoiceNo}` : null,
+        apPaymentNo ? `payment ${apPaymentNo}` : null,
+        glJournal ? `posted to GL (${glJournal.entry_no})` : null,
+      ].filter(Boolean).join(' · ')
+      setToast({ type: 'success', msg: assetModal.isNew
+        ? `Asset ${assetId} registered${linkedBits ? ` · ${linkedBits} created.` : '.'}`
+        : 'Asset updated.' })
       setAssetModal(null)
       load()
+    } catch (e) {
+      setToast({ type: 'error', msg: e.message })
+    }
+    setSaving(false)
+  }
+
+  // Quick supplier registration inside the Acquire Asset modal. Writes to the
+  // global AP supplier master so the vendor is available everywhere.
+  const saveQuickSupplier = async () => {
+    if (!quickSupplier.name.trim()) { setToast({ type: 'error', msg: 'Supplier name is required.' }); return }
+    setSaving(true)
+    try {
+      const supplierNo = await nextSupplierNo(supabase, schoolId)
+      const { data, error } = await supabase.from('ap_suppliers').insert({
+        school_id: schoolId, supplier_no: supplierNo, name: quickSupplier.name.trim(),
+        supplier_type: 'supplier', phone: quickSupplier.phone || null, email: quickSupplier.email || null,
+        kra_pin: quickSupplier.kra_pin || null, active: true, created_by: userId,
+      }).select().single()
+      if (error) throw error
+      await writeAudit(supabase, {
+        schoolId, action: 'assets.supplier_created', details: { name: quickSupplier.name.trim(), supplier_no: supplierNo },
+      })
+      setSuppliers((prev) => [...prev, data])
+      setAssetForm((f) => ({ ...f, supplier_id: data.id }))
+      setQuickSupplier({ name: '', phone: '', email: '', kra_pin: '' })
+      setShowQuickSupplier(false)
+      setToast({ type: 'success', msg: `Supplier ${supplierNo} added and selected.` })
     } catch (e) {
       setToast({ type: 'error', msg: e.message })
     }
@@ -499,15 +741,7 @@ export default function AssetsPage({ initialTab }) {
       const findAccountByCode = (code) => accountOptions.find((a) => a.code === code)
       for (const p of preview) {
         const pc = categories.find((c) => c.id === p.asset.category_id)
-        const cname = (pc?.name || '').toLowerCase()
-        let expenseCode = '6060'
-        let accCode = '1706'
-        if (/build|land/i.test(cname)) { expenseCode = '6010'; accCode = '1701' }
-        else if (/motor|vehicle/i.test(cname)) { expenseCode = '6020'; accCode = '1702' }
-        else if (/furnitur|fitting/i.test(cname)) { expenseCode = '6030'; accCode = '1703' }
-        else if (/computer|it|ict|technology/i.test(cname)) { expenseCode = '6040'; accCode = '1704' }
-        else if (/school|equipment|lab|laboratory/i.test(cname)) { expenseCode = '6050'; accCode = '1705' }
-
+        const { expenseCode, accCode } = depreciationAccountsFor(p.asset, pc?.name)
         const expenseAcc = findAccountByCode(expenseCode)
         const accAcc = findAccountByCode(accCode)
         const expenseId = expenseAcc ? expenseAcc.id : deprForm.expense_account_id
@@ -1304,10 +1538,28 @@ export default function AssetsPage({ initialTab }) {
                 </div>
                 <div>
                   <label className="as-label">Supplier</label>
-                  <select className="as-select" value={assetForm.supplier_id} onChange={(e) => setAssetForm({ ...assetForm, supplier_id: e.target.value })}>
-                    <option value="">Select supplier</option>
-                    {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                  <div className="as-select-row">
+                    <select className="as-select" value={assetForm.supplier_id} onChange={(e) => setAssetForm({ ...assetForm, supplier_id: e.target.value })}>
+                      <option value="">Select supplier</option>
+                      {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    <button type="button" className="as-select-add" title="Add supplier" aria-label="Add supplier" aria-expanded={showQuickSupplier} onClick={() => { setShowQuickSupplier(!showQuickSupplier); if (!showQuickSupplier) setQuickSupplier({ name: '', phone: '', email: '', kra_pin: '' }) }}>
+                      <Plus size={15} />
+                    </button>
+                  </div>
+                  {showQuickSupplier && (
+                    <div className="as-quick-supplier">
+                      <input className="as-input" placeholder="Supplier name *" value={quickSupplier.name} onChange={(e) => setQuickSupplier({ ...quickSupplier, name: e.target.value })} />
+                      <div className="as-grid-2">
+                        <input className="as-input" placeholder="Phone" value={quickSupplier.phone} onChange={(e) => setQuickSupplier({ ...quickSupplier, phone: e.target.value })} />
+                        <input className="as-input" placeholder="KRA PIN" value={quickSupplier.kra_pin} onChange={(e) => setQuickSupplier({ ...quickSupplier, kra_pin: e.target.value })} />
+                      </div>
+                      <input className="as-input" placeholder="Email" value={quickSupplier.email} onChange={(e) => setQuickSupplier({ ...quickSupplier, email: e.target.value })} />
+                      <div className="as-quick-supplier-foot">
+                        <button className="as-btn-primary" disabled={saving} onClick={saveQuickSupplier}>{saving ? 'Saving…' : 'Save Supplier'}</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="as-label">Purchase Date *</label>
@@ -1339,6 +1591,137 @@ export default function AssetsPage({ initialTab }) {
                   </select>
                 </div>
               </div>
+              {assetModal.isNew && (
+                <div className="as-acq-block">
+                  <label className="as-label">Acquisition Source</label>
+                  <select className="as-select" value={assetForm.acquisition_source} onChange={(e) => setAssetForm((f) => ({ ...f, acquisition_source: e.target.value, invoice_mode: 'create', existing_invoice_id: '', payment_account_id: '', payment_amount: '' }))}>
+                    <option value="supplier">Supplier Purchase</option>
+                    <option value="cash">Cash Purchase</option>
+                    <option value="bank">Bank Purchase</option>
+                    <option value="donation">Donation</option>
+                    <option value="transfer">Transfer</option>
+                    <option value="other">Other</option>
+                  </select>
+
+                  {assetForm.acquisition_source === 'supplier' ? (
+                    <>
+                      <div className="as-grid-2">
+                        <div>
+                          <label className="as-label">Invoice</label>
+                          <select className="as-select" value={assetForm.invoice_mode} onChange={(e) => setAssetForm({ ...assetForm, invoice_mode: e.target.value, existing_invoice_id: '' })}>
+                            <option value="create">Create a new invoice</option>
+                            <option value="existing">Use an existing invoice</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="as-label">Payment Status</label>
+                          <select className="as-select" value={assetForm.payment_status} onChange={(e) => setAssetForm({ ...assetForm, payment_status: e.target.value, payment_account_id: '', payment_amount: e.target.value === 'unpaid' ? '' : assetForm.payment_amount })}>
+                            <option value="unpaid">Unpaid</option>
+                            <option value="partially_paid">Partially Paid</option>
+                            <option value="fully_paid">Fully Paid</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {assetForm.invoice_mode === 'existing' ? (
+                        <div>
+                          <label className="as-label">Link to AP Invoice</label>
+                          {(() => {
+                            const supplierInvoices = apInvoices.filter((i) => i.supplier_id === assetForm.supplier_id)
+                            if (!supplierInvoices.length) {
+                              return <p className="as-tax-note">No invoices for this supplier yet — choose “Create a new invoice”.</p>
+                            }
+                            return (
+                              <select className="as-select" value={assetForm.existing_invoice_id} onChange={(e) => setAssetForm({ ...assetForm, existing_invoice_id: e.target.value })}>
+                                <option value="">Select invoice…</option>
+                                {supplierInvoices.map((i) => (
+                                  <option key={i.id} value={i.id}>
+                                    {i.invoice_no} — {fmtDate(i.invoice_date)} — {fmt(i.total_amount)}
+                                    {['cancelled', 'rejected'].includes(i.status) ? ` (${i.status})` : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            )
+                          })()}
+                          <p className="as-tax-note">The asset links to this invoice — no new invoice is created. Payment for it is handled in Accounts Payable.</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div>
+                            <label className="as-label">Supplier Invoice Ref <span className="as-muted">(their invoice no.)</span></label>
+                            <input className="as-input" placeholder="e.g. INV-00452" value={assetForm.purchase_invoice_ref} onChange={(e) => setAssetForm({ ...assetForm, purchase_invoice_ref: e.target.value })} />
+                          </div>
+                          {assetForm.payment_status !== 'unpaid' && (
+                            <>
+                              <div className="as-grid-2">
+                                <div>
+                                  <label className="as-label">Payment Account</label>
+                                  <select className="as-select" value={assetForm.payment_account_id} onChange={(e) => setAssetForm({ ...assetForm, payment_account_id: e.target.value })}>
+                                    <option value="">Select account…</option>
+                                    {accountOptions.filter((a) => a.type === 'asset' && ['1010', '1020', '1030', '1040'].includes(a.code)).map((a) => (
+                                      <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="as-label">Amount Paid {assetForm.payment_status === 'fully_paid' && <span className="as-muted">(full)</span>}</label>
+                                  <input className="as-input" type="number" min="0" step="0.01"
+                                    value={assetForm.payment_status === 'fully_paid' ? assetForm.purchase_cost : assetForm.payment_amount}
+                                    disabled={assetForm.payment_status === 'fully_paid'}
+                                    onChange={(e) => setAssetForm({ ...assetForm, payment_amount: e.target.value })}
+                                    placeholder={fmt(assetForm.purchase_cost || 0)} />
+                                </div>
+                              </div>
+                              <p className="as-tax-note">{assetForm.payment_status === 'fully_paid'
+                                ? 'Payment equals the invoice total. A payment draft will be created and posted to the General Ledger only after it is approved in Accounts Payable.'
+                                : 'A payment draft for this amount will be created against the new invoice and posted to the General Ledger only after it is approved in Accounts Payable.'}</p>
+                            </>
+                          )}
+                          <p className="as-tax-note">An AP invoice draft will be created from the selected supplier for {fmt(assetForm.purchase_cost || 0)}. It will appear under Accounts Payable → Invoices for review, posting and payment. VAT is treated as 0% (asset purchases are typically not subject to input VAT recovery).</p>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="as-label">Invoice / Reference No. <span className="as-muted">(optional)</span></label>
+                        <input className="as-input" placeholder="e.g. INV-00452" value={assetForm.purchase_invoice_ref} onChange={(e) => setAssetForm({ ...assetForm, purchase_invoice_ref: e.target.value })} />
+                      </div>
+                      {(assetForm.acquisition_source === 'cash' || assetForm.acquisition_source === 'bank') ? (
+                        <>
+                          <div>
+                            <label className="as-label">Bank / Cash Account *</label>
+                            <select className="as-select" value={assetForm.gl_cash_account_id} onChange={(e) => setAssetForm({ ...assetForm, gl_cash_account_id: e.target.value })}>
+                              <option value="">Select account…</option>
+                              {accountOptions.filter((a) => a.type === 'asset' && ['1010', '1020', '1030', '1040'].includes(a.code)).map((a) => (
+                                <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <p className="as-tax-note">No AP invoice is created. The acquisition posts straight to the General Ledger: Dr Fixed Asset / Cr {assetForm.gl_cash_account_id ? accountOptions.find((a) => a.id === assetForm.gl_cash_account_id)?.name : 'Bank / Cash account'}.</p>
+                        </>
+                      ) : assetForm.acquisition_source === 'donation' ? (
+                        <>
+                          <div>
+                            <label className="as-label">Donation / Grant / Income Account *</label>
+                            <select className="as-select" value={assetForm.gl_donation_account_id} onChange={(e) => setAssetForm({ ...assetForm, gl_donation_account_id: e.target.value })}>
+                              <option value="">Select account…</option>
+                              {accountOptions.filter((a) => a.type === 'income').map((a) => (
+                                <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <p className="as-tax-note">No AP invoice is created. The donation posts straight to the General Ledger: Dr Fixed Asset / Cr {assetForm.gl_donation_account_id ? accountOptions.find((a) => a.id === assetForm.gl_donation_account_id)?.name : 'Donation / Grant / Income account'} per the school's accounting policy.</p>
+                        </>
+                      ) : (
+                        <p className="as-tax-note">{assetForm.acquisition_source === 'transfer'
+                          ? 'Transferred assets do not create an AP invoice or a GL entry — they are recorded in the register with the transfer reference.'
+                          : 'No AP invoice or GL entry will be created for this acquisition. Enter the reference for record-keeping only.'}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
               {(() => {
                 const pc = categories.find((c) => c.id === assetForm.category_id)
                 if (!pc) return null
@@ -1527,7 +1910,7 @@ export default function AssetsPage({ initialTab }) {
 
       {deprModal && (
         <div className="as-modal-overlay">
-          <div className="as-modal as-modal-sm">
+          <div className="as-modal as-modal-fit">
             <div className="as-modal-head">
               <h3>Run Depreciation</h3>
               <button className="as-icon-btn" onClick={() => setDeprModal(null)}><X size={16} /></button>
@@ -1538,7 +1921,7 @@ export default function AssetsPage({ initialTab }) {
                 const total = preview.reduce((s, p) => s + p.amount, 0)
                 return (
                   <>
-                    <div className="as-grid-2">
+                    <div className="as-grid-2 as-depr-dates">
                       <div>
                         <label className="as-label">Period Label</label>
                         <input className="as-input" value={deprForm.period_label} onChange={(e) => setDeprForm({ ...deprForm, period_label: e.target.value })} />
@@ -1548,26 +1931,31 @@ export default function AssetsPage({ initialTab }) {
                         <input className="as-input" type="date" value={deprForm.run_date} onChange={(e) => setDeprForm({ ...deprForm, run_date: e.target.value })} />
                       </div>
                     </div>
-                    <div className="as-grid-2">
+                    <div className="as-depr-accounts">
                       <div>
                         <label className="as-label">Depreciation Expense Account</label>
-                        <select className="as-select" value={deprForm.expense_account_id} onChange={(e) => setDeprForm({ ...deprForm, expense_account_id: e.target.value })}>
-                          <option value="">Select account</option>
-                          {accountOptions
-                            .filter((a) => a.type === 'expense' && (a.category === 'Depreciation' || /^60\d0$/.test(a.code)))
-                            .map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
-                        </select>
+                        <AccountSelect
+                          value={deprForm.expense_account_id}
+                          onChange={(id) => setDeprForm({ ...deprForm, expense_account_id: id })}
+                          options={accountOptions.filter((a) => a.type === 'expense' && (a.category === 'Depreciation' || /^60\d0$/.test(a.code)))}
+                        />
                       </div>
                       <div>
                         <label className="as-label">Accumulated Depreciation Account</label>
-                        <select className="as-select" value={deprForm.accumulated_account_id} onChange={(e) => setDeprForm({ ...deprForm, accumulated_account_id: e.target.value })}>
-                          <option value="">Select account</option>
-                          {accountOptions
-                            .filter((a) => a.type === 'asset' && (a.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(a.code)))
-                            .map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
-                        </select>
+                        <AccountSelect
+                          value={deprForm.accumulated_account_id}
+                          onChange={(id) => setDeprForm({ ...deprForm, accumulated_account_id: id })}
+                          options={accountOptions.filter((a) => a.type === 'asset' && (a.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(a.code)))}
+                        />
                       </div>
                     </div>
+                    {accountOptions.filter((a) => a.type === 'expense' && (a.category === 'Depreciation' || /^60\d0$/.test(a.code))).length === 0
+                      || accountOptions.filter((a) => a.type === 'asset' && (a.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(a.code))).length === 0 ? (
+                      <div className="as-depr-warn">
+                        <p>No depreciation accounts found. Click below to create the standard set (expense 6010–6060, accumulated 1701–1706) for this school, then pick your default accounts.</p>
+                        <button className="as-btn-outline" type="button" disabled={saving} onClick={createDeprAccounts}>{saving ? 'Creating…' : 'Create depreciation accounts'}</button>
+                      </div>
+                    ) : null}
                     <div className="as-depr-preview">
                       <p className="as-depr-preview-title">Preview</p>
                       {preview.length === 0 ? (
@@ -1575,7 +1963,7 @@ export default function AssetsPage({ initialTab }) {
                       ) : (
                         preview.slice(0, 6).map((p) => (
                           <div className="as-depr-line" key={p.asset.id}>
-                            <span>{p.asset.name}</span><span>{fmt(p.amount)}</span>
+                            <span className="as-depr-line-name">{p.asset.name}</span><span className="as-depr-line-amt">{fmt(p.amount)}</span>
                           </div>
                         ))
                       )}

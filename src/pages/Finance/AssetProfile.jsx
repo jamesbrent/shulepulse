@@ -21,6 +21,13 @@ export default function AssetProfile({
   const supplier = suppliers.find((s) => s.id === asset.supplier_id)
   const docLabel = (t) => DOCUMENT_TYPES.find((d) => d.value === t)?.label || t
   const methodLabel = (m) => DEPRECIATION_METHODS.find((d) => d.value === m)?.label || m
+  const acqLabel = (s) => ({
+    supplier: 'Supplier Purchase', cash: 'Cash Purchase', bank: 'Bank Purchase',
+    donation: 'Donation', transfer: 'Transfer', other: 'Other',
+  })[s] || '—'
+  const payLabel = (s) => ({
+    unpaid: 'Unpaid', partially_paid: 'Partially Paid', fully_paid: 'Fully Paid',
+  })[s] || '—'
 
   const assetEvents = events.filter((e) => e.asset_id === asset.id)
   const custodyHistory = custody.filter((c) => c.asset_id === asset.id)
@@ -162,7 +169,9 @@ export default function AssetProfile({
           <div className="as-info-grid">
             <div><span>Purchase Date</span><strong>{fmtDate(asset.purchase_date)}</strong></div>
             <div><span>Supplier</span><strong>{supplier?.name || '—'}</strong></div>
+            <div><span>Acquisition</span><strong>{acqLabel(asset.acquisition_source)}</strong></div>
             <div><span>Invoice Ref</span><strong className="as-mono">{asset.purchase_invoice_ref || '—'}</strong></div>
+            <div><span>Payment Status</span><strong>{asset.payment_status ? payLabel(asset.payment_status) : '—'}</strong></div>
             <div><span>Purchase Cost</span><strong>{fmt(asset.purchase_cost)}</strong></div>
             <div><span>Method</span><strong>{methodLabel(asset.depreciation_method)}</strong></div>
             <div><span>Accounting Rate</span><strong>{asset.depreciation_method === 'reducing_balance' ? `${asset.depreciation_rate || 0}% p.a.` : '—'}</strong></div>

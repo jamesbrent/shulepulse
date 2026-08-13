@@ -9,6 +9,7 @@
 // account are chosen from the chart by the accountant at entry time.
 
 import { ensureAccounts, postToJournal, writeAudit } from './accountsUtils'
+import { addAssetEvent } from './assetsUtils'
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ export const AP_DEFAULTS = [
   { item: 'vat_rate', value: { rate: 16 }, effective_from: '2026-01-01', notes: 'Value Added Tax on purchases (VAT Act 2013 as amended)' },
   {
     item: 'ap_defaults',
-    value: { ap_account: '2010', vat_input_account: '2145', bank_account: '1020', mobile_account: '1030', cash_account: '1010' },
+    value: { ap_account: '2010', vat_input_account: '2145', bank_account: '1020', mobile_account: '1030', cash_account: '1010', default_expense_account: '5360' },
     effective_from: '2026-01-01',
     notes: 'Default GL accounts used when posting AP invoices & payments',
   },
@@ -100,6 +101,7 @@ export async function getApConfig(supabase, schoolId) {
       bank_account: defaults.bank_account || '1020',
       mobile_account: defaults.mobile_account || '1030',
       cash_account: defaults.cash_account || '1010',
+      default_expense_account: defaults.default_expense_account || '5360',
     },
     _rows: rows,
   }
@@ -166,8 +168,9 @@ export function invoiceTotals(lines, { tax_treatment = 'exclusive', vat_rate = 0
 // ─── Data loading ──────────────────────────────────────────────────────────
 
 export async function loadApData(supabase, schoolId) {
-  const [cfg, accRes, supRes, invRes, lineRes, payRes, allocRes, attRes, profRes] = await Promise.all([
-    getApConfig(supabase, schoolId),
+  const cfg = await getApConfig(supabase, schoolId)
+  await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030', '1040'])
+  const [accRes, supRes, invRes, lineRes, payRes, allocRes, attRes, profRes] = await Promise.all([
     supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).order('code'),
     supabase.from('ap_suppliers').select('*').eq('school_id', schoolId).order('created_at', { ascending: true }),
     supabase.from('ap_invoices').select('*').eq('school_id', schoolId).order('invoice_date', { ascending: false }),
@@ -178,11 +181,13 @@ export async function loadApData(supabase, schoolId) {
     supabase.from('profiles').select('id, full_name, role').eq('school_id', schoolId),
   ])
   const accountOf = Object.fromEntries((accRes.data || []).map((a) => [a.id, a]))
+  const accountByCode = Object.fromEntries((accRes.data || []).map((a) => [a.code, a]))
   const nameOf = Object.fromEntries((profRes.data || []).map((p) => [p.id, p.full_name]))
   return {
     config: cfg,
     accounts: accRes.data || [],
     accountOf,
+    accountByCode,
     suppliers: supRes.data || [],
     invoices: invRes.data || [],
     invoiceLines: lineRes.data || [],
@@ -215,6 +220,30 @@ export function paidByInvoice(d) {
 export const invoiceOutstanding = (d, invoice) => {
   if (['cancelled', 'rejected'].includes(invoice.status)) return 0
   return Math.max(round2(toNum(invoice.total_amount) - toNum(paidByInvoice(d)[invoice.id] || 0)), 0)
+}
+
+// ─── Asset ↔ AP timeline sync ──────────────────────────────────────────────
+// AP lifecycle events are mirrored onto the linked Fixed Asset timeline so the
+// Asset History shows the full chain (acquired → invoice → approved → posted →
+// payment). These are best-effort: they must never break the AP workflow.
+
+export async function logInvoiceToAssets(supabase, { schoolId, invoiceId, eventType, description }) {
+  try {
+    const { data } = await supabase.from('fixed_assets').select('id').eq('school_id', schoolId).eq('purchase_invoice_id', invoiceId)
+    if (!data?.length) return
+    await Promise.all(data.map((a) => addAssetEvent(supabase, { schoolId, assetId: a.id, eventType, description })))
+  } catch { /* non-fatal timeline logging */ }
+}
+
+export async function logPaymentToAssets(supabase, { schoolId, paymentId, eventType, description }) {
+  try {
+    const { data: allocs } = await supabase.from('ap_payment_allocations').select('invoice_id').eq('payment_id', paymentId)
+    const invoiceIds = [...new Set((allocs || []).map((a) => a.invoice_id))]
+    if (!invoiceIds.length) return
+    const { data } = await supabase.from('fixed_assets').select('id').eq('school_id', schoolId).in('purchase_invoice_id', invoiceIds)
+    if (!data?.length) return
+    await Promise.all(data.map((a) => addAssetEvent(supabase, { schoolId, assetId: a.id, eventType, description })))
+  } catch { /* non-fatal timeline logging */ }
 }
 
 // ─── GL account resolution (chart-backed, no hard-coded ids) ───────────────

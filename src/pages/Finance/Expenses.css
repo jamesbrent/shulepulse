@@ -1,0 +1,70 @@
+/* ─── Direct Expenses ────────────────────────────────────────────────────
+   Reuses the prl-* design system (tabs, tables, modals, buttons, stats)
+   shared by Payroll / Accounts Payable, then adds the exp-* specifics. */
+@import './Payroll.css';
+
+/* ─── Payment method segmented control ──────────────────────────────────── */
+.exp-method { display: flex; gap: 8px; flex-wrap: wrap; }
+.exp-method button {
+  flex: 1 1 120px; border: 1px solid #d1d5db; background: #fff; color: #374151;
+  border-radius: 8px; padding: 8px 10px; font-size: 12.5px; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  transition: all .15s;
+}
+.exp-method button:hover { border-color: #2563eb; }
+.exp-method button.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+
+/* ─── Payment status summary strip inside the form ──────────────────────── */
+.exp-paystatus { display: flex; gap: 8px; flex-wrap: wrap; }
+.exp-paystatus button {
+  border: 1px solid #d1d5db; background: #fff; border-radius: 999px;
+  padding: 6px 12px; font-size: 12px; font-weight: 600; color: #374151; cursor: pointer;
+  transition: all .15s;
+}
+.exp-paystatus button.active { color: #fff; }
+.exp-paystatus button[data-v="unpaid"].active { background: #dc2626; border-color: #dc2626; }
+.exp-paystatus button[data-v="partially_paid"].active { background: #ca8a04; border-color: #ca8a04; }
+.exp-paystatus button[data-v="paid"].active { background: #16a34a; border-color: #16a34a; }
+
+/* ─── Payee type choice chips ───────────────────────────────────────────── */
+.exp-payee { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.exp-payee button {
+  border: 1px solid #d1d5db; background: #fff; color: #374151;
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  transition: all .15s;
+}
+.exp-payee button:hover { border-color: #2563eb; }
+.exp-payee button.active { background: #eef2ff; border-color: #2563eb; color: #2563eb; }
+
+/* ─── GL status indicator ───────────────────────────────────────────────── */
+.exp-gl { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.exp-gl.ok { color: #0f766e; }
+.exp-gl.no { color: #9ca3af; }
+.exp-gl.pending { color: #ca8a04; }
+
+/* ─── Balance / outstanding strip ───────────────────────────────────────── */
+.exp-balance {
+  display: flex; justify-content: flex-end; align-items: center; gap: 22px;
+  padding: 10px 18px 4px;
+}
+.exp-balance > div { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.exp-balance span { font-size: 11px; color: #6b7280; }
+.exp-balance strong { font-size: 14px; color: #1f2937; }
+.exp-balance-grand strong { font-size: 18px; color: #2563eb; }
+.exp-balance-ok strong { color: #16a34a; }
+.exp-balance-warn strong { color: #dc2626; }
+
+/* ─── Reports ───────────────────────────────────────────────────────────── */
+.exp-reports-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+.exp-report-card { display: flex; flex-direction: column; gap: 8px; }
+.exp-report-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.exp-report-head h4 { margin: 0; font-size: 13px; color: #1f2937; }
+.exp-report-note { font-size: 11.5px; color: #6b7280; margin: 0; }
+.exp-trend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
+.exp-trend-cell { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; text-align: center; background: #f9fafb; }
+.exp-trend-cell span { display: block; font-size: 10.5px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.exp-trend-cell strong { font-size: 12px; color: #1f2937; }
+.exp-trend-cell .bar { height: 4px; border-radius: 999px; background: #e5e7eb; margin-top: 6px; overflow: hidden; }
+.exp-trend-cell .bar > div { height: 100%; background: #2563eb; border-radius: 999px; }
+.exp-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }

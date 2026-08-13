@@ -30,6 +30,8 @@ import PayrollPage from './Payroll'
 import './Payroll.css'
 import AccountsPayablePage from './AccountsPayable'
 import './AccountsPayable.css'
+import ExpensesPage from './Expenses'
+import './Expenses.css'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
@@ -60,24 +62,20 @@ const NAV_SECTIONS = [
           { key: 'accounting:ledger', label: 'Transactions', icon: <BookOpen size={15} />, page: 'accounting', tab: 'ledger' },
           { key: 'accounting:accounts', label: 'Chart of Accounts', icon: <Columns3 size={15} />, page: 'accounting', tab: 'accounts' },
           { key: 'accounting:journal', label: 'Journals', icon: <BookOpen size={15} />, page: 'accounting', tab: 'journal' },
-          { key: 'accounting:expenses', label: 'Expenses', icon: <Receipt size={15} />, page: 'coming-soon' },
+          { key: 'accounting:expenses', label: 'Expenses', icon: <Receipt size={15} />, page: 'expenses', tab: 'dashboard' },
           { key: 'accounting:bank', label: 'Bank Reconciliation', icon: <Scale size={15} />, page: 'coming-soon' },
         ],
       },
       {
-        key: 'assets', label: 'Assets', icon: <Archive size={15} />,
+        key: 'assets', label: null,
         items: [
-          { key: 'assets:register', label: 'Asset Register', icon: <Archive size={15} />, page: 'assets', tab: 'register' },
-          { key: 'assets:categories', label: 'Asset Categories', icon: <FileText size={15} />, page: 'assets', tab: 'categories' },
-          { key: 'assets:maintenance', label: 'Asset Maintenance', icon: <Wrench size={15} />, page: 'assets', tab: 'maintenance' },
+          { key: 'assets', label: 'Assets', icon: <Archive size={15} />, page: 'assets' },
         ],
       },
       {
-        key: 'payroll', label: 'Payroll', icon: <Wallet size={15} />,
+        key: 'payroll', label: null,
         items: [
-          { key: 'payroll:runs', label: 'Payroll', icon: <Wallet size={15} />, page: 'payroll', tab: 'runs' },
-          { key: 'payroll:payments', label: 'Salary Payments', icon: <Banknote size={15} />, page: 'payroll', tab: 'payments' },
-          { key: 'payroll:payslips', label: 'Payslips', icon: <FileText size={15} />, page: 'payroll', tab: 'payslips' },
+          { key: 'payroll', label: 'Payroll', icon: <Wallet size={15} />, page: 'payroll' },
         ],
       },
       {
@@ -101,7 +99,7 @@ const NAV_SECTIONS = [
         items: [
           { key: 'reports:financial', label: 'Financial Reports', icon: <BarChart3 size={15} />, page: 'coming-soon' },
           { key: 'reports:fee', label: 'Fee Collection', icon: <DollarSign size={15} />, page: 'reports', tab: 'overview' },
-          { key: 'reports:expense', label: 'Expense Reports', icon: <Receipt size={15} />, page: 'coming-soon' },
+          { key: 'reports:expense', label: 'Expense Reports', icon: <Receipt size={15} />, page: 'expenses', tab: 'reports' },
           { key: 'reports:payroll', label: 'Payroll Reports', icon: <Wallet size={15} />, page: 'coming-soon' },
           { key: 'reports:asset', label: 'Asset Reports', icon: <Archive size={15} />, page: 'coming-soon' },
         ],
@@ -139,6 +137,7 @@ export default function FinanceDashboard() {
   const [activeItem, setActiveItem] = useState(DASHBOARD_ITEM)
   const [openGroups, setOpenGroups] = useState(new Set(DEFAULT_OPEN))
   const [openRecordPayment, setOpenRecordPayment] = useState(false)
+  const [openExpenseId, setOpenExpenseId] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [stats, setStats] = useState({
     totalCollected: 0,
@@ -234,10 +233,11 @@ export default function FinanceDashboard() {
       case 'payments': return <PaymentsPage showRecordPayment={openRecordPayment} onRecordPaymentClose={() => setOpenRecordPayment(false)} />
       case 'receipts': return <ReceiptsPage />
       case 'statements': return <StatementsPage />
-      case 'accounting': return <AccountingPage initialTab={activeItem.tab} />
+      case 'accounting': return <AccountingPage initialTab={activeItem.tab} onOpenSource={(type, id) => { if (type === 'expense') { go(findItem('accounting:expenses') || { key: 'accounting:expenses', label: 'Expenses', page: 'expenses', tab: 'dashboard' }); setOpenExpenseId(id) } }} />
       case 'assets': return <AssetsPage initialTab={activeItem.tab} />
       case 'payroll': return <PayrollPage initialTab={activeItem.tab} />
       case 'accounts_payable': return <AccountsPayablePage initialTab={activeItem.tab} />
+      case 'expenses': return <ExpensesPage initialTab={activeItem.tab} openExpenseId={openExpenseId} onOpenExpenseDone={() => setOpenExpenseId(null)} />
       case 'reports': return <ReportsPage initialTab={activeItem.tab} />
       case 'notices': return <NoticesPage profile={authProfile} />
       case 'support': return <SchoolSupportPage />

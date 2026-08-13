@@ -49,6 +49,53 @@ export const kraTaxClass = (code) => {
 
 export const assetStatus = (status) => ASSET_STATUSES.find((s) => s.value === status) || ASSET_STATUSES[0]
 
+// Map an asset to its dedicated depreciation accounts (expense + accumulated).
+// Driven by the asset type and/or category name; falls back to the "Other"
+// accounts. These codes must exist in the chart (see ensureAccounts and
+// migration 046) — the Run Depreciation dropdowns stay strictly filtered.
+export const depreciationAccountsFor = (asset, categoryName = '') => {
+  const cname = String(categoryName || '').toLowerCase()
+  const atype = String(asset?.asset_type || '').toLowerCase()
+  let expenseCode = '6060'
+  let accCode = '1706'
+  if (/build|land/.test(cname) || atype === 'building' || atype === 'land') {
+    expenseCode = '6010'; accCode = '1701'
+  } else if (/motor|vehicle/.test(cname) || atype === 'vehicle') {
+    expenseCode = '6020'; accCode = '1702'
+  } else if (/furnitur|fitting/.test(cname) || atype === 'furniture') {
+    expenseCode = '6030'; accCode = '1703'
+  } else if (/computer|it|ict|technology/.test(cname) || atype === 'computer') {
+    expenseCode = '6040'; accCode = '1704'
+  } else if (/school|equipment|lab|laboratory/.test(cname) || atype === 'equipment') {
+    expenseCode = '6050'; accCode = '1705'
+  }
+  return { expenseCode, accCode }
+}
+
+// Map an asset to its Fixed Assets GL account (the debit side when the
+// acquisition is bought on credit and raises an AP invoice). Mirrors the
+// depreciation mapping above so the balance sheet classification agrees with
+// the expense/accumulated split. Falls back to Office Equipment (1280).
+export const ASSET_ACCOUNT_CODES = ['1210', '1220', '1230', '1240', '1250', '1280']
+
+export const fixedAssetAccountCodeFor = (asset, categoryName = '') => {
+  const cname = String(categoryName || '').toLowerCase()
+  const atype = String(asset?.asset_type || '').toLowerCase()
+  let code = '1280'
+  if (/build|land/.test(cname) || atype === 'building' || atype === 'land') {
+    code = '1210'
+  } else if (/furnitur|fitting/.test(cname) || atype === 'furniture') {
+    code = '1220'
+  } else if (/motor|vehicle/.test(cname) || atype === 'vehicle') {
+    code = '1230'
+  } else if (/computer|it|ict|technology/.test(cname) || atype === 'computer') {
+    code = '1240'
+  } else if (/school|equipment|lab|laboratory/.test(cname) || atype === 'equipment') {
+    code = '1250'
+  }
+  return code
+}
+
 // NOTE: Kenyan tax capital allowances no longer live here. KRA tax classes,
 // wear & tear rates and investment allowances are configured in the `tax_rules`
 // table and computed in ./taxUtils.js. This module is FINANCIAL ACCOUNTING
@@ -120,7 +167,7 @@ export async function loadAssetsData(supabase, schoolId) {
     await Promise.all([
       supabase.from('fixed_assets').select('*').eq('school_id', schoolId).order('created_at', { ascending: false }),
       supabase.from('asset_categories').select('*').eq('school_id', schoolId).order('name'),
-      supabase.from('suppliers').select('*').eq('school_id', schoolId).order('name'),
+      supabase.from('ap_suppliers').select('*').eq('school_id', schoolId).order('name'),
       supabase.from('asset_events').select('*, profiles!performed_by(full_name)').eq('school_id', schoolId).order('occurred_at', { ascending: false }),
       supabase.from('asset_custody_history').select('*, profiles!custodian_id(full_name)').eq('school_id', schoolId).order('created_at', { ascending: false }),
       supabase.from('asset_location_history').select('*').eq('school_id', schoolId).order('created_at', { ascending: false }),

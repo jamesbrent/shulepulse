@@ -113,6 +113,163 @@
 
 .as-select:focus { border-color: #2563eb; }
 
+/* ── Reusable modal form system ──
+   Native <select>s have an intrinsic min-width driven by their longest option
+   text (e.g. "Machinery — Hospital equipment"). Left unconstrained they force
+   their grid column wider than the modal. Inside modals we hard-limit every
+   input/select to the width of its grid column so nothing overflows.          */
+
+.as-modal .as-input,
+.as-modal .as-select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.as-modal .as-input { min-width: 0; }
+
+/* Select + attached action button (e.g. Supplier + "add") */
+.as-select-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.as-select-row .as-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.as-select-add {
+  flex: 0 0 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #2563eb;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.as-select-add:hover { background: #eff6ff; border-color: #2563eb; }
+.as-select-add:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+
+/* Inline quick-creation card (Add Supplier) */
+.as-quick-supplier {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.as-quick-supplier .as-grid-2 { gap: 8px; }
+.as-quick-supplier-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+/* ── Custom account dropdown (portaled to body — never clipped by the modal) ── */
+
+.as-accsel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.as-accsel:hover { border-color: #94a3b8; }
+.as-accsel:focus,
+.as-accsel-open { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+
+.as-accsel-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.as-accsel-ph { color: #94a3b8; }
+
+.as-accsel-caret {
+  flex-shrink: 0;
+  color: #64748b;
+  transition: transform 0.15s ease;
+}
+.as-accsel-open .as-accsel-caret { transform: rotate(180deg); }
+
+.as-accsel-menu {
+  position: fixed;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  overflow-y: auto;
+}
+
+.as-accsel-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  overflow: hidden;
+}
+.as-accsel-opt.as-accsel-active { background: #eff6ff; }
+.as-accsel-opt.as-accsel-selected { color: #1d4ed8; }
+
+.as-accsel-code {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+.as-accsel-selected .as-accsel-code { color: #2563eb; }
+
+.as-accsel-name {
+  min-width: 0;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.as-accsel-empty {
+  padding: 10px;
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: center;
+}
+
 .as-btn-primary,
 .as-btn-outline,
 .as-btn-ghost,
@@ -259,10 +416,34 @@
   width: 100%;
   max-width: 480px;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Run Depreciation: responsive width that never exceeds the viewport.
+   Constrain height to the viewport too; body scrolls vertically while the
+   header/footer stay put. Portaled account dropdowns are never clipped. */
+.as-modal-fit {
+  width: min(90vw, 600px);
+  max-width: 600px;
+  max-height: calc(100vh - 96px);
+  overflow: hidden;
+}
+.as-modal-fit .as-modal-body {
+  overflow-y: auto;
+  overflow-x: clip;
+  min-width: 0;
 }
 
 .as-modal-sm { max-width: 460px; }
-.as-modal-lg { max-width: 640px; }
+.as-modal-lg {
+  width: min(95vw, 700px);
+  max-width: 700px;
+  box-sizing: border-box;
+}
 
 .as-modal-head {
   display: flex;
@@ -270,11 +451,17 @@
   justify-content: space-between;
   padding: 14px 18px;
   border-bottom: 1px solid var(--border, #e2e8f0);
+  flex-shrink: 0;
 }
 
 .as-modal-head h3 { font-size: 15px; margin: 0; }
 
-.as-modal-body { padding: 18px; }
+.as-modal-body {
+  padding: 18px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
 .as-modal-foot {
   display: flex;
@@ -282,6 +469,7 @@
   gap: 10px;
   padding: 14px 18px;
   border-top: 1px solid var(--border, #e2e8f0);
+  flex-shrink: 0;
 }
 
 .as-label {
@@ -296,6 +484,7 @@
 
 .as-input {
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid #cbd5e1;
@@ -319,11 +508,52 @@
   font-size: 12px;
 }
 
+/* Acquire Asset — acquisition source (supplier purchase links to AP). */
+.as-acq-block {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  min-width: 0;
+  max-width: 100%;
+}
+.as-acq-block > .as-grid-2 { align-items: end; }
+.as-acq-block .as-label { margin: 0 0 5px; }
+.as-acq-block .as-select,
+.as-acq-block .as-input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.as-acq-block .as-tax-note { margin: 0; }
+
 .as-grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
+.as-grid-2 > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Run Depreciation layout: account fields stack full-width below the dates
+   row so long account names never push the modal wider. */
+.as-depr-dates { margin-bottom: 4px; }
+
+.as-depr-accounts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.as-depr-accounts .as-label { margin: 0 0 5px; }
 
 /* ── Tax capital allowances ── */
 
@@ -353,14 +583,17 @@
 
 .as-tax-section-title {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  margin: 16px 0 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin: 18px 0 10px;
   padding-bottom: 6px;
   border-bottom: 1px solid #e2e8f0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
+.as-tax-section-title .as-muted { line-height: 1.45; }
 .as-tax-section-label {
   font-size: 12px;
   font-weight: 700;
@@ -384,6 +617,8 @@
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 8px;
   padding: 10px 12px;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .as-depr-preview-title {
@@ -397,20 +632,41 @@
 .as-depr-line {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
   font-size: 12px;
   color: #475569;
   padding: 3px 0;
 }
+.as-depr-line-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.as-depr-line-amt { flex-shrink: 0; font-variant-numeric: tabular-nums; }
 
 .as-depr-total {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   font-size: 13px;
   font-weight: 700;
   border-top: 1px dashed #cbd5e1;
   margin-top: 6px;
   padding-top: 6px;
 }
+
+.as-depr-warn {
+  margin-top: 12px;
+  border: 1px solid #fbbf24;
+  background: #fffbeb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: #92400e;
+}
+.as-depr-warn p { margin: 0 0 8px; }
 
 /* ── Toast ── */
 
@@ -631,8 +887,23 @@
 
 .as-timeline-by { color: #94a3b8; font-size: 11px; }
 
-@media (max-width: 640px) {
-  .as-grid-2 { grid-template-columns: 1fr; }
+@media (max-width: 650px) {
+  .as-grid-2 { grid-template-columns: 1fr; gap: 14px; }
   .as-profile-nbv { text-align: left; width: 100%; }
   .as-info-grid { grid-template-columns: 1fr; }
+  .as-modal-overlay { padding: 20px 12px; align-items: flex-start; }
+  .as-modal,
+  .as-modal-sm,
+  .as-modal-lg,
+  .as-modal-fit { width: 100%; max-width: 100%; border-radius: 10px; }
+  .as-modal-fit { max-height: calc(100vh - 40px); }
+  .as-modal-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .as-modal-foot .as-btn-outline,
+  .as-modal-foot .as-btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
 }

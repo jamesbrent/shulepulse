@@ -102,6 +102,69 @@ export const DEFAULT_CHART = [
   { code: '1706', name: 'Accumulated Depreciation — Other Fixed Assets', type: 'asset', category: 'Accumulated Depreciation' },
 ]
 
+// Codes of the dedicated depreciation accounts (expense + accumulated) used
+// by the Fixed Assets module. These are lazily ensured per school so the Run
+// Depreciation dropdowns and auto-mapping always have correct accounts.
+export const DEPRECIATION_ACCOUNT_CODES = [
+  '6010', '6020', '6030', '6040', '6050', '6060',
+  '1701', '1702', '1703', '1704', '1705', '1706',
+]
+
+// ─── AP / purchase line account filtering ───────────────────────────────────
+// Only accounts that can legitimately be DEBITED by an AP invoice / expense
+// line are selectable in the supplier-invoice and payment forms. The selector
+// is type+category based, not "every chart record":
+//   Allowed   → Expense, Fixed Asset, Inventory/Stock, other purchase accounts
+//   Blocked   → Accumulated Depreciation, Depreciation Expense, Bank/Cash,
+//               Accounts Payable (control), Payroll & Statutory payables,
+//               Salary/Wages expense accounts, Receivables, VAT (tax) accounts.
+// VAT Input is posted automatically by the invoice tax logic — it is never a
+// line account.
+
+const AP_DEBIT_BLOCKED_CATEGORIES = [
+  'Cash & Bank',
+  'Accounts Receivable',
+  'Accounts Payable',
+  'Statutory Payables',
+  'Payroll Payables',
+  'Deposits',
+  'Tax',
+  'Depreciation',
+  'Accumulated Depreciation',
+  'Salaries & Wages',
+]
+
+// Codes whose category alone can't identify them (e.g. the generic 1290
+// "Accumulated Depreciation" record lives in the "Fixed Assets" category).
+const AP_DEBIT_BLOCKED_CODES = ['1290']
+
+export const isApDebitAccount = (a) => {
+  if (!a) return false
+  if (!['expense', 'asset'].includes(a.type)) return false
+  if (AP_DEBIT_BLOCKED_CODES.includes(a.code)) return false
+  const cat = (a.category || '').toLowerCase()
+  if (AP_DEBIT_BLOCKED_CATEGORIES.some((c) => cat.includes(c.toLowerCase()))) return false
+  const name = (a.name || '').toLowerCase()
+  if (name.includes('accumulated depreciation')) return false
+  if (name.includes('depreciation expense')) return false
+  return true
+}
+
+// Debit-side accounts for AP invoice / expense lines, sorted by code.
+export const apDebitAccounts = (accounts) => (accounts || []).filter(isApDebitAccount)
+
+// Options for the line-account select. Valid debit accounts are always listed;
+// already-selected accounts that no longer pass the filter (e.g. a legacy line
+// pointing at a now-blocked account) are included too so the select never
+// renders blank while being edited — new picks stay restricted.
+export const apDebitAccountOptions = (accounts, selectedIds = []) => {
+  const list = accounts || []
+  const base = apDebitAccounts(list)
+  const selected = new Set((selectedIds || []).filter(Boolean))
+  const extra = list.filter((a) => selected.has(a.id) && !isApDebitAccount(a))
+  return [...extra, ...base]
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 export const typeColor = (type) => {

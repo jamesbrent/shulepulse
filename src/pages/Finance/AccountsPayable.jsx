@@ -9,14 +9,14 @@ import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
-import { writeAudit } from './accountsUtils'
+import { writeAudit, apDebitAccountOptions, ensureAccounts } from './accountsUtils'
 import {
   AP_SUPPLIER_TYPES, AP_INVOICE_STATUSES, AP_PAYMENT_STATUSES, AP_PAYMENT_METHODS,
   apStatus, invoiceTotals, loadApData, nextSupplierNo, nextInvoiceNo, nextPaymentNo,
   voucherNo, supplierOf, invoiceLinesOf, attachmentsOf, invoiceOutstanding,
   effectivePaymentIds, postInvoiceJournal, postPaymentJournal, reverseJournalEntry,
   recomputeInvoicePaid, saveApConfig, decideApConfig, uploadAttachment, deleteAttachment,
-  attachmentPublicUrl, apSummary, buildSupplierStatement,
+  attachmentPublicUrl, apSummary, buildSupplierStatement, logInvoiceToAssets, logPaymentToAssets,
 } from './apUtils'
 import { generatePaymentVoucherPdf } from './generatePaymentVoucherPdf'
 import './AccountsPayable.css'
@@ -32,9 +32,10 @@ const blankSupplier = () => ({
 const blankInvoice = () => ({
   supplier_id: '', invoice_no: '', supplier_ref: '', invoice_date: TODAY, due_date: '',
   description: '', department: '', cost_centre: '', tax_treatment: 'exclusive', vat_rate: '', notes: '',
+  account_id: '',
 })
 
-const blankLine = () => ({ description: '', quantity: '1', unit_price: '', discount_amount: '0', account_id: '' })
+const blankLine = () => ({ description: '', quantity: '1', unit_price: '', discount_amount: '0' })
 
 const blankPayment = () => ({
   payment_type: 'invoice', supplier_id: '', payee_name: '', payee_type: '',
@@ -144,10 +145,11 @@ export default function AccountsPayablePage({ initialTab }) {
       invoice_date: inv.invoice_date, due_date: inv.due_date || '', description: inv.description,
       department: inv.department || '', cost_centre: inv.cost_centre || '',
       tax_treatment: inv.tax_treatment, vat_rate: inv.vat_rate, notes: inv.notes || '',
+      account_id: invoiceLinesOf(d, inv.id)[0]?.account_id || '',
     } : blankInvoice())
     setInvoiceLines(inv ? invoiceLinesOf(d, inv.id).map((l) => ({
       description: l.description, quantity: l.quantity, unit_price: l.unit_price,
-      discount_amount: l.discount_amount, account_id: l.account_id,
+      discount_amount: l.discount_amount,
     })) : [blankLine()])
     setInvoiceModal(true)
   }
@@ -163,15 +165,22 @@ export default function AccountsPayablePage({ initialTab }) {
       .map((l) => ({ ...l, quantity: Number(l.quantity) || 0, unit_price: Number(l.unit_price) || 0, discount_amount: Number(l.discount_amount) || 0 }))
       .filter((l) => l.description && (l.quantity > 0 || l.unit_price > 0))
     if (!cleaned.length) return showToast('Add at least one line item', false)
-    if (cleaned.some((l) => !l.account_id)) return showToast('Every line needs an expense / asset account', false)
+    const defaultCode = d?.config?.defaults?.default_expense_account || '5360'
+    await ensureAccounts(supabase, schoolId, [defaultCode])
+    const { data: defaultAcc } = await supabase.from('chart_of_accounts')
+      .select('id').eq('school_id', schoolId).eq('code', defaultCode).single()
+    const lineAccountId = invoiceForm.account_id || defaultAcc?.id || ''
+    if (!lineAccountId) return showToast('Set the default expense / asset account in Accounts Payable → Settings', false)
     if (totals.total_amount <= 0) return showToast('Invoice total must be positive', false)
     setSaving(true)
     try {
       let invoiceId = editInvoiceId
       if (editInvoiceId) {
         const wasRejected = (d.invoices || []).some((i) => i.id === editInvoiceId && i.status === 'rejected')
+        const rest = { ...invoiceForm }
+        delete rest.account_id
         const { error } = await supabase.from('ap_invoices').update({
-          ...invoiceForm, vat_rate: Number(invoiceForm.vat_rate) || 0,
+          ...rest, vat_rate: Number(invoiceForm.vat_rate) || 0,
           ...(wasRejected ? { status: 'draft', rejection_reason: null, rejected_by: null, rejected_at: null } : {}),
           updated_at: new Date().toISOString(),
         }).eq('id', editInvoiceId)
@@ -192,7 +201,7 @@ export default function AccountsPayablePage({ initialTab }) {
         invoiceId = inv.id
       }
       const { error: lineErr } = await supabase.from('ap_invoice_lines').insert(
-        cleaned.map((l) => ({ school_id: schoolId, invoice_id: invoiceId, description: l.description, quantity: l.quantity, unit_price: l.unit_price, discount_amount: l.discount_amount, account_id: l.account_id, department: l.department || invoiceForm.department, cost_centre: l.cost_centre || invoiceForm.cost_centre }))
+        cleaned.map((l) => ({ school_id: schoolId, invoice_id: invoiceId, description: l.description, quantity: l.quantity, unit_price: l.unit_price, discount_amount: l.discount_amount, account_id: lineAccountId, department: l.department || invoiceForm.department, cost_centre: l.cost_centre || invoiceForm.cost_centre }))
       )
       if (lineErr) throw lineErr
       setInvoiceModal(false)
@@ -219,6 +228,11 @@ export default function AccountsPayablePage({ initialTab }) {
       if (error) throw error
       showToast(`Invoice ${inv.invoice_no} → ${to.replace(/_/g, ' ')}`)
       await writeAudit(supabase, { schoolId, action: `ap_invoice_${to}`, details: { invoice_id: inv.id, invoice_no: inv.invoice_no } })
+      if (to === 'approved') {
+        await logInvoiceToAssets(supabase, { schoolId, invoiceId: inv.id, eventType: 'invoice_approved', description: `AP invoice ${inv.invoice_no} approved` })
+      } else if (to === 'posted') {
+        await logInvoiceToAssets(supabase, { schoolId, invoiceId: inv.id, eventType: 'invoice_posted', description: `AP invoice ${inv.invoice_no} posted to the General Ledger` })
+      }
       load()
     } catch (e) { showToast(e.message, false) }
   }
@@ -243,7 +257,7 @@ export default function AccountsPayablePage({ initialTab }) {
       ...blankPayment(),
       payment_type: 'invoice',
       supplier_id: presetSupplierId || '',
-      payment_account_id: d?.accountOf?.[defaultAccount?.bank_account]?.id || '',
+      payment_account_id: d?.accountByCode?.[defaultAccount?.bank_account]?.id || '',
     })
     setAllocLines([])
     setPaymentModal(true)
@@ -254,7 +268,7 @@ export default function AccountsPayablePage({ initialTab }) {
     setPaymentForm({
       ...blankPayment(),
       payment_type: 'direct',
-      payment_account_id: d?.accountOf?.[defaultAccount?.bank_account]?.id || '',
+      payment_account_id: d?.accountByCode?.[defaultAccount?.bank_account]?.id || '',
     })
     setAllocLines([])
     setPaymentModal(true)
@@ -280,6 +294,7 @@ export default function AccountsPayablePage({ initialTab }) {
       if (!isInvoice && !paymentForm.expense_account_id) return showToast('Select the expense account to charge', false)
       const payeeOk = isInvoice ? paymentForm.supplier_id : (paymentForm.supplier_id || paymentForm.payee_name)
       if (!payeeOk) return showToast('Select / enter the payee', false)
+      if (!paymentForm.payment_account_id) return showToast('Select the bank / cash / M-Pesa account to pay from', false)
       setSaving(true)
       const paymentNo = await nextPaymentNo(supabase, schoolId)
       const { data: pay, error } = await supabase.from('ap_payments').insert({
@@ -330,6 +345,9 @@ export default function AccountsPayablePage({ initialTab }) {
       }
       showToast(`Payment ${pay.payment_no} → ${to.replace(/_/g, ' ')}`)
       await writeAudit(supabase, { schoolId, action: `ap_payment_${to}`, details: { payment_id: pay.id, payment_no: pay.payment_no } })
+      if (to === 'posted') {
+        await logPaymentToAssets(supabase, { schoolId, paymentId: pay.id, eventType: 'payment_made', description: `Payment ${pay.payment_no} made — payable settled` })
+      }
       load()
     } catch (e) { showToast(e.message, false) }
   }
@@ -968,8 +986,8 @@ export default function AccountsPayablePage({ initialTab }) {
               <button className="prl-btn-ghost" onClick={() => setInvoiceLines([...invoiceLines, blankLine()])}><Plus size={13} /> Add line</button>
             </div>
             <div className="prl-card" style={{ margin: '0 18px 6px', borderRadius: 10 }}>
-              <table className="prl-table" style={{ minWidth: 700 }}>
-                <thead><tr><th>Description</th><th style={{ width: 60 }}>Qty</th><th style={{ width: 90 }}>Unit Price</th><th style={{ width: 90 }}>Discount</th><th>Expense / Asset Account</th><th style={{ width: 90 }}>Amount</th><th></th></tr></thead>
+              <table className="prl-table" style={{ minWidth: 620 }}>
+                <thead><tr><th>Description</th><th style={{ width: 60 }}>Qty</th><th style={{ width: 90 }}>Unit Price</th><th style={{ width: 90 }}>Discount</th><th style={{ width: 90 }}>Amount</th><th></th></tr></thead>
                 <tbody>
                   {invoiceLines.map((l, i) => {
                     const amt = Math.max(Number(l.quantity || 0) * Number(l.unit_price || 0) - Number(l.discount_amount || 0), 0)
@@ -979,18 +997,12 @@ export default function AccountsPayablePage({ initialTab }) {
                         <td><input className="ap-line-input" type="number" min="0" value={l.quantity} onChange={(e) => setInvoiceLines(invoiceLines.map((x, j) => j === i ? { ...x, quantity: e.target.value } : x))} /></td>
                         <td><input className="ap-line-input" type="number" min="0" value={l.unit_price} onChange={(e) => setInvoiceLines(invoiceLines.map((x, j) => j === i ? { ...x, unit_price: e.target.value } : x))} /></td>
                         <td><input className="ap-line-input" type="number" min="0" value={l.discount_amount} onChange={(e) => setInvoiceLines(invoiceLines.map((x, j) => j === i ? { ...x, discount_amount: e.target.value } : x))} /></td>
-                        <td>
-                          <select className="ap-line-input" value={l.account_id} onChange={(e) => setInvoiceLines(invoiceLines.map((x, j) => j === i ? { ...x, account_id: e.target.value } : x))}>
-                            <option value="">Select account...</option>
-                            {(d?.accounts || []).filter((a) => ['expense', 'asset'].includes(a.type)).map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
-                          </select>
-                        </td>
                         <td style={{ fontWeight: 600 }}>{fmt(amt)}</td>
                         <td><button className="prl-btn-danger-ghost" onClick={() => setInvoiceLines(invoiceLines.filter((_, j) => j !== i))}><Trash2 size={13} /></button></td>
                       </tr>
                     )
                   })}
-                  {invoiceLines.length === 0 && <tr><td colSpan={7} className="prl-norows">No lines — add one.</td></tr>}
+                  {invoiceLines.length === 0 && <tr><td colSpan={6} className="prl-norows">No lines — add one.</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -1067,7 +1079,7 @@ export default function AccountsPayablePage({ initialTab }) {
                   <label className="prl-field prl-field-full"><span>Expense Account Charged *</span>
                     <select value={paymentForm.expense_account_id} onChange={(e) => setPaymentForm({ ...paymentForm, expense_account_id: e.target.value })}>
                       <option value="">Select expense account...</option>
-                      {(d?.accounts || []).filter((a) => ['expense', 'asset'].includes(a.type)).map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
+                      {(apDebitAccountOptions(d?.accounts, [paymentForm.expense_account_id])).map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
                     </select>
                   </label>
                   <label className="prl-field prl-field-full"><span>Amount (KSh) *</span><input type="number" min="0" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} /></label>
@@ -1078,7 +1090,7 @@ export default function AccountsPayablePage({ initialTab }) {
                 <select value={paymentForm.payment_method} onChange={(e) => {
                   const def = d?.config?.defaults
                   const code = { bank: def?.bank_account, mobile: def?.mobile_account, cash: def?.cash_account, cheque: def?.bank_account }[e.target.value]
-                  setPaymentForm({ ...paymentForm, payment_method: e.target.value, payment_account_id: d?.accountOf?.[code]?.id || paymentForm.payment_account_id })
+                  setPaymentForm({ ...paymentForm, payment_method: e.target.value, payment_account_id: d?.accountByCode?.[code]?.id || paymentForm.payment_account_id })
                 }}>
                   {AP_PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
@@ -1116,7 +1128,7 @@ export default function AccountsPayablePage({ initialTab }) {
                 <label className="prl-field prl-field-full"><span>VAT Rate (%)</span><input type="number" step="0.01" value={configItem.value.rate} onChange={(e) => setConfigItem({ ...configItem, value: { ...configItem.value, rate: Number(e.target.value) } })} /></label>
               ) : (
                 <>
-                  {[['ap_account', 'Accounts Payable (control)'], ['vat_input_account', 'VAT Input Account'], ['bank_account', 'Bank Account (default)'], ['mobile_account', 'Mobile Money Account (default)'], ['cash_account', 'Cash Account (default)']].map(([k, label]) => (
+                  {[['ap_account', 'Accounts Payable (control)'], ['vat_input_account', 'VAT Input Account'], ['bank_account', 'Bank Account (default)'], ['mobile_account', 'Mobile Money Account (default)'], ['cash_account', 'Cash Account (default)'], ['default_expense_account', 'Default Expense / Asset Account (invoice lines)']].map(([k, label]) => (
                     <label className="prl-field prl-field-full" key={k}>
                       <span>{label}</span>
                       <select value={configItem.value[k]} onChange={(e) => setConfigItem({ ...configItem, value: { ...configItem.value, [k]: e.target.value } })}>
@@ -1165,6 +1177,7 @@ export default function AccountsPayablePage({ initialTab }) {
                   <div className="prl-detail-item"><span>Invoice Date</span><strong>{fmtDate(inv.invoice_date)}</strong></div>
                   <div className="prl-detail-item"><span>Due Date</span><strong>{inv.due_date ? fmtDate(inv.due_date) : '—'}</strong></div>
                   <div className="prl-detail-item"><span>Tax Treatment</span><strong className="prl-cap">{inv.tax_treatment} @ {inv.vat_rate}%</strong></div>
+                  <div className="prl-detail-item"><span>Account Charged</span><strong>{accountName(lines[0]?.account_id)}</strong></div>
                 </div>
                 <div className="prl-detail-card">
                   <h4>Totals</h4>
@@ -1187,7 +1200,7 @@ export default function AccountsPayablePage({ initialTab }) {
               <div className="prl-card" style={{ margin: '0 18px 12px' }}>
                 <h4 className="ap-card-title">Line Items</h4>
                 <table className="prl-table" style={{ minWidth: 520 }}>
-                  <thead><tr><th>Description</th><th>Qty</th><th>Price</th><th>Discount</th><th>Account</th><th>Amount</th></tr></thead>
+                  <thead><tr><th>Description</th><th>Qty</th><th>Price</th><th>Discount</th><th>Amount</th></tr></thead>
                   <tbody>
                     {lines.map((l, i) => (
                       <tr key={i}>
@@ -1195,7 +1208,6 @@ export default function AccountsPayablePage({ initialTab }) {
                         <td>{l.quantity}</td>
                         <td>{fmt(l.unit_price)}</td>
                         <td>{fmt(l.discount_amount)}</td>
-                        <td>{accountName(l.account_id)}</td>
                         <td style={{ fontWeight: 600 }}>{fmt(Math.max(Number(l.quantity) * Number(l.unit_price) - Number(l.discount_amount), 0))}</td>
                       </tr>
                     ))}
