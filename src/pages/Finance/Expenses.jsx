@@ -7,7 +7,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
-import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
+import { fmt, fmtDate, fmtDateTime, downloadFile } from '../admin/fees/utils/feesHelpers'
 import { writeAudit, apDebitAccountOptions } from './accountsUtils'
 import { reverseJournalEntry } from './apUtils'
 import {
@@ -1016,13 +1016,13 @@ export default function ExpensesPage({ initialTab, openExpenseId, onOpenExpenseD
                 </div>
                 <div className="prl-detail-card">
                   <h4>Approval Trail</h4>
-                  <div className="prl-detail-item"><span>Created</span><strong>{d?.nameOf[exp.created_by] || '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Submitted</span><strong>{exp.submitted_at ? `${d?.nameOf[exp.submitted_by] || ''}`.trim() || '—' : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Reviewed</span><strong>{exp.reviewed_at ? `${d?.nameOf[exp.reviewed_by] || ''}`.trim() || '—' : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Approved</span><strong>{exp.approved_at ? `${d?.nameOf[exp.approved_by] || ''}`.trim() || '—' : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Paid</span><strong>{exp.paid_at ? `${d?.nameOf[exp.paid_by] || ''}`.trim() || '—' : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Rejected</span><strong style={exp.rejected_at ? { color: '#dc2626' } : undefined}>{exp.rejected_at ? `${d?.nameOf[exp.rejected_by] || ''}${exp.rejection_reason ? ` — ${exp.rejection_reason}` : ''}`.trim() : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Posted</span><strong>{exp.posted_at ? `${d?.nameOf[exp.posted_by] || ''}`.trim() || '—' : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Created</span><strong>{d?.nameOf[exp.created_by] || '—'}{exp.created_at ? ` · ${fmtDateTime(exp.created_at)}` : ''}</strong></div>
+                  <div className="prl-detail-item"><span>Submitted</span><strong>{exp.submitted_at ? `${d?.nameOf[exp.submitted_by] || '—'} · ${fmtDateTime(exp.submitted_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Reviewed</span><strong>{exp.reviewed_at ? `${d?.nameOf[exp.reviewed_by] || '—'} · ${fmtDateTime(exp.reviewed_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Approved</span><strong>{exp.approved_at ? `${d?.nameOf[exp.approved_by] || '—'} · ${fmtDateTime(exp.approved_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Paid</span><strong>{exp.paid_at ? `${d?.nameOf[exp.paid_by] || '—'} · ${fmtDateTime(exp.paid_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Rejected</span><strong style={exp.rejected_at ? { color: '#dc2626' } : undefined}>{exp.rejected_at ? `${d?.nameOf[exp.rejected_by] || '—'} · ${fmtDateTime(exp.rejected_at)}${exp.rejection_reason ? ` — ${exp.rejection_reason}` : ''}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Posted</span><strong>{exp.posted_at ? `${d?.nameOf[exp.posted_by] || '—'} · ${fmtDateTime(exp.posted_at)}` : '—'}</strong></div>
                 </div>
               </div>
               <div className="prl-card" style={{ margin: '0 18px 12px' }}>
@@ -1049,7 +1049,7 @@ export default function ExpensesPage({ initialTab, openExpenseId, onOpenExpenseD
                 {exp.journal_entry_id && (
                   <>
                     <div className="prl-detail-item"><span>Journal Entry</span><strong className="prl-mono">{jeNos[exp.journal_entry_id] || exp.journal_entry_id}</strong></div>
-                    <div className="prl-detail-item"><span>Posted</span><strong>{exp.posted_at ? fmtDate(exp.posted_at) : '—'}</strong></div>
+                    <div className="prl-detail-item"><span>Posted</span><strong>{exp.posted_at ? fmtDateTime(exp.posted_at) : '—'}</strong></div>
                   </>
                 )}
                 {exp.settlement_journal_id && (

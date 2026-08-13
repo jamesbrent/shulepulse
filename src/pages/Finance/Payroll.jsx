@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
-import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
+import { fmt, fmtDateTime, downloadFile } from '../admin/fees/utils/feesHelpers'
 import { postToJournal, writeAudit } from './accountsUtils'
 import {
   computeEmployeePay, loadPayrollData, nextEmployeeNo, nextRunNo, nextRequestNo,
@@ -619,7 +619,7 @@ export default function PayrollPage({ initialTab }) {
                           <strong>{run.run_label}</strong>
                           <span className="prl-badge" style={{ background: `${st.color}1a`, color: st.color }}>{st.label}</span>
                         </div>
-                        <p className="prl-run-meta">{run.run_no} · created {fmtDate(run.created_at)} · {t.count} employees</p>
+                        <p className="prl-run-meta">{run.run_no} · created {fmtDateTime(run.created_at)} · {t.count} employees</p>
                       </div>
                       <div className="prl-run-totals">
                         <span>Gross <strong>{fmt(t.gross)}</strong></span>

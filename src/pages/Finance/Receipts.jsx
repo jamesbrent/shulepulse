@@ -3,7 +3,7 @@ import { Search, Download, Printer, CheckCircle, AlertCircle } from 'lucide-reac
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
-import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
+import { fmt, fmtDateTime, downloadFile } from '../admin/fees/utils/feesHelpers'
 import { generateReceiptPdf } from '../admin/fees/utils/generateReceiptPdf'
 
 export default function ReceiptsPage() {
@@ -183,7 +183,7 @@ export default function ReceiptsPage() {
                       {r.payment_type || r.payment_method || '—'}
                     </td>
                     <td className="b-monospace">{r.reference || r.mpesa_code || '—'}</td>
-                    <td className="b-text-muted">{fmtDate(r.created_at)}</td>
+                    <td className="b-text-muted">{fmtDateTime(r.created_at)}</td>
                     <td>
                       <button
                         className="b-btn-ghost"

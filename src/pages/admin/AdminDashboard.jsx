@@ -11,7 +11,7 @@ import {
   Bell, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronLeft, Activity, ArrowUpRight, ArrowDownRight,
   Plus, Banknote, FileOutput, ClipboardCheck, Users2,
-  Printer, Send, Download, Wallet,
+  Printer, Send, Download, Wallet, Landmark,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -66,6 +66,23 @@ import '../Finance/Payroll.css'
 import AccountsPayablePage from '../Finance/AccountsPayable'
 import '../Finance/AccountsPayable.css'
 
+import FinancePaymentsPage from '../Finance/Payments'
+import '../Finance/Payments.css'
+import ReceiptsPage from '../Finance/Receipts'
+import '../Finance/Receipts.css'
+import StatementsPage from '../Finance/Statements'
+import '../Finance/Statements.css'
+import AccountingPage from '../Finance/Accounting'
+import '../Finance/Accounting.css'
+import ExpensesPage from '../Finance/Expenses'
+import '../Finance/Expenses.css'
+import CashBankPage from '../Finance/CashBank'
+import '../Finance/CashBank.css'
+import AssetsPage from '../Finance/Assets'
+import '../Finance/Assets.css'
+import FinanceReportsPage from '../Finance/Reports'
+import '../Finance/Reports.css'
+
 const STORAGE_KEY = 'admin_sidebar_expanded'
 
 const NAV_GROUPS = [
@@ -101,8 +118,16 @@ const NAV_GROUPS = [
     icon: <DollarSign size={16} />,
     items: [
       { key: 'fees', label: 'Fees', icon: <DollarSign size={14} /> },
+      { key: 'payments', label: 'Payments', icon: <CreditCard size={14} /> },
+      { key: 'receipts', label: 'Receipts', icon: <Receipt size={14} /> },
+      { key: 'statements', label: 'Statements', icon: <FileText size={14} /> },
+      { key: 'accounting', label: 'Accounting', icon: <BookOpen size={14} /> },
+      { key: 'expenses', label: 'Expenses', icon: <Receipt size={14} /> },
+      { key: 'cash_bank', label: 'Cash & Bank', icon: <Landmark size={14} /> },
+      { key: 'assets', label: 'Assets', icon: <Archive size={14} /> },
       { key: 'payroll', label: 'Payroll', icon: <Wallet size={14} /> },
       { key: 'ap', label: 'Accounts Payable', icon: <Receipt size={14} /> },
+      { key: 'finance_reports', label: 'Finance Reports', icon: <BarChart2 size={14} /> },
     ],
   },
   {
@@ -159,6 +184,14 @@ const pageTitles = {
   reports: 'Reports & Results',
   teacher_review: 'Teacher Review',
   cbc_competency: 'CBC Competency',
+  payments: 'Payments',
+  receipts: 'Receipts',
+  statements: 'Statements',
+  accounting: 'Accounting',
+  expenses: 'Expenses',
+  cash_bank: 'Cash & Bank',
+  assets: 'Assets',
+  finance_reports: 'Finance Reports',
 }
 
 const QUICK_ACTIONS = [
@@ -388,8 +421,16 @@ export default function AdminDashboard() {
     switch (activeNav) {
       case 'students':       return <StudentsPage />
       case 'fees':           return <FeesPage />
+      case 'payments':       return <FinancePaymentsPage />
+      case 'receipts':       return <ReceiptsPage />
+      case 'statements':     return <StatementsPage />
+      case 'accounting':     return <AccountingPage />
+      case 'expenses':       return <ExpensesPage />
+      case 'cash_bank':      return <CashBankPage />
+      case 'assets':         return <AssetsPage />
       case 'payroll':        return <PayrollPage />
       case 'ap':             return <AccountsPayablePage />
+      case 'finance_reports': return <FinanceReportsPage />
       case 'attendance':     return <AttendancePage />
       case 'grades':         return <GradesPage />
       case 'teachers':       return <TeachersPage />

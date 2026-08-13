@@ -2,7 +2,7 @@ import {
   ArrowLeft, Wrench, Coins, TrendingDown, Trash2, Pencil,
   Paperclip, FileText, MapPin, User, History, Camera, Landmark
 } from 'lucide-react'
-import { fmt, fmtDate } from '../admin/fees/utils/feesHelpers'
+import { fmt, fmtDate, fmtDateTime } from '../admin/fees/utils/feesHelpers'
 import { assetStatus, DEPRECIATION_METHODS, calcNbv, monthlyDepreciation, DOCUMENT_TYPES, kraTaxClass } from './assetsUtils'
 import { computeAssetSchedule, activeRule } from './taxUtils'
 
@@ -307,7 +307,7 @@ export default function AssetProfile({
                 <div className="as-timeline-body">
                   <div className="as-timeline-head">
                     <strong style={{ textTransform: 'capitalize' }}>{e.event_type.replace(/_/g, ' ')}</strong>
-                    <span className="as-timeline-date">{fmtDate(e.occurred_at)}</span>
+                    <span className="as-timeline-date">{fmtDateTime(e.occurred_at)}</span>
                   </div>
                   {e.description && <p>{e.description}</p>}
                   <small className="as-timeline-by">by {e.profiles?.full_name || '—'}</small>

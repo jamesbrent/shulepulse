@@ -116,18 +116,38 @@ export async function generatePaymentVoucherPdf({ school, payment, supplier, sig
 
   leftY = Math.max(leftY, rightY) + 6
 
-  // ── Payee block ──────────────────────────────────────────────────────────
+  // ── Payee block (2×2 grid: Payee | Payee Type / KRA PIN | Account) ───────
+  const payeeTop = leftY
+  const payeeBoxH = 38
   doc.setFillColor(...LIGHT_BG)
-  doc.rect(MARGIN, leftY, CONTENT_W, 30, 'F')
+  doc.rect(MARGIN, payeeTop, CONTENT_W, payeeBoxH, 'F')
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(8)
   doc.setTextColor(...PRIMARY)
-  doc.text('PAYEE DETAILS', MARGIN + 4, leftY + 6)
-  leftY = fieldRow(doc, 'Payee', payee, MARGIN + 4, leftY + 11, 20)
-  leftY = fieldRow(doc, 'Payee Type', payeeType, MARGIN + 4, leftY, 20)
-  leftY = fieldRow(doc, 'KRA PIN', supplier?.kra_pin, MARGIN + 4, leftY, 20)
-  leftY = fieldRow(doc, 'Account', accountName, MARGIN + CONTENT_W * 0.52, leftY - 15, 20)
-  leftY += 2
+  doc.text('PAYEE DETAILS', MARGIN + 4, payeeTop + 6)
+
+  const halfW = CONTENT_W / 2
+  const midX = MARGIN + halfW
+  const labelW = 24
+  const drawField = (label, value, x, y) => {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(...TEXT_MUTED)
+    doc.text(label + ':', x, y)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(...TEXT_DARK)
+    const lines = doc.splitTextToSize(safe(value), halfW - labelW - 6)
+    doc.text(lines, x + labelW, y)
+    return (lines.length || 1) * 4.6
+  }
+  let py = payeeTop + 13
+  const row1H = Math.max(drawField('Payee', payee, MARGIN + 4, py), drawField('Payee Type', payeeType, midX + 4, py))
+  py += row1H
+  const row2H = Math.max(drawField('KRA PIN', supplier?.kra_pin, MARGIN + 4, py), drawField('Account', accountName, midX + 4, py))
+  py += row2H
+
+  leftY = payeeTop + payeeBoxH + 2
 
   // ── Amount block ─────────────────────────────────────────────────────────
   const amtY = leftY
@@ -139,8 +159,14 @@ export async function generatePaymentVoucherPdf({ school, payment, supplier, sig
   doc.setTextColor(...RED)
   doc.text(fmtKES(amount), MARGIN + CONTENT_W - 4, amtY + 6, { align: 'right' })
 
+  doc.setFont('helvetica', 'italic')
+  doc.setFontSize(9)
+  doc.setTextColor(...TEXT_DARK)
+  const words = numberToWords(amount)
+  const wordLines = doc.splitTextToSize(words, CONTENT_W - 8)
+  const wordsBoxH = Math.max(12, wordLines.length * 4.4 + 5)
   doc.setFillColor(...LIGHT_BG)
-  doc.rect(MARGIN, amtY + 10, CONTENT_W, 12, 'F')
+  doc.rect(MARGIN, amtY + 10, CONTENT_W, wordsBoxH, 'F')
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(8)
   doc.setTextColor(...PRIMARY)
@@ -148,9 +174,9 @@ export async function generatePaymentVoucherPdf({ school, payment, supplier, sig
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(9)
   doc.setTextColor(...TEXT_DARK)
-  doc.text(numberToWords(amount), MARGIN + 4, amtY + 21, { maxWidth: CONTENT_W - 8 })
+  doc.text(wordLines, MARGIN + 4, amtY + 21)
 
-  leftY = amtY + 26
+  leftY = amtY + 10 + wordsBoxH + 2
 
   // ── Description / invoices ───────────────────────────────────────────────
   leftY += 4

@@ -18,7 +18,7 @@ import {
   ensureDefaultTaxRules, loadTaxData, taxRuleLabel,
   buildTaxSchedule, runTaxAllowances, taxVsAccounting,
 } from './taxUtils'
-import { nextSupplierNo, nextInvoiceNo, nextPaymentNo } from './apUtils'
+import { nextSupplierNo, nextInvoiceNo, nextPaymentNo, postInvoiceJournal, postPaymentJournal, recomputeInvoicePaid } from './apUtils'
 import AssetProfile from './AssetProfile'
 import AccountSelect from './AccountSelect'
 import './Assets.css'
@@ -295,11 +295,30 @@ export default function AssetsPage({ initialTab }) {
           })
           if (lineErr) throw lineErr
 
+          const apSupplierName = suppliers.find((s) => s.id === assetForm.supplier_id)?.name || 'Supplier'
+
+          // Post the invoice straight to the GL so the acquisition appears as an
+          // already payment-pending bill (outstanding payable) in Accounts
+          // Payable — no manual draft → submit → review → approve → post steps.
+          const invJe = await postInvoiceJournal(supabase, {
+            schoolId, userId,
+            invoice: invRow,
+            lines: [{ account_id: accAcc.id, description: assetForm.name.trim(), quantity: 1, unit_price: cost, discount_amount: 0 }],
+            supplierName: apSupplierName,
+            entryDate: assetForm.purchase_date || TODAY,
+          })
+          const { error: invPostErr } = await supabase.from('ap_invoices').update({
+            status: 'posted', journal_entry_id: invJe.id, posted_by: userId,
+            posted_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+          }).eq('id', invRow.id)
+          if (invPostErr) throw invPostErr
+
           // Raise the payment against the new invoice so the paid portion shows
           // instantly in AP. Fully Paid = the full invoice total (locked);
           // Partially Paid = the actual amount paid (editable, below the total).
-          // Draft payments follow the normal AP approval/posting workflow —
-          // nothing is silently posted to the GL here.
+          // The payment is posted to the GL immediately so the bill shows
+          // settled — it follows the normal AP posting rules, just without the
+          // manual submit → review → approve → post steps.
           if (assetForm.payment_status !== 'unpaid') {
             if (!assetForm.payment_account_id) throw new Error('Select the payment account for this acquisition.')
             const payAmount = assetForm.payment_status === 'fully_paid'
@@ -325,14 +344,25 @@ export default function AssetsPage({ initialTab }) {
               school_id: schoolId, payment_id: payRow.id, invoice_id: invRow.id, amount: payAmount,
             })
             if (allocErr) throw allocErr
+
+            const payJe = await postPaymentJournal(supabase, {
+              schoolId, userId, payment: payRow, payeeName: apSupplierName,
+              entryDate: assetForm.purchase_date || TODAY,
+            })
+            const { error: payPostErr } = await supabase.from('ap_payments').update({
+              status: 'posted', journal_entry_id: payJe.id, posted_by: userId,
+              posted_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+            }).eq('id', payRow.id)
+            if (payPostErr) throw payPostErr
+            await recomputeInvoicePaid(supabase, { schoolId, invoiceId: invRow.id })
           }
         }
       }
 
       // Direct GL for acquisitions with no supplier invoice (cash/bank/donation).
       // The supplier invoice is the source of truth for supplier purchases (it
-      // posts on approve→post), so NO entry is posted there. For these sources
-      // this is the single GL posting of the acquisition.
+      // posts automatically to the GL at acquisition), so NO entry is posted
+      // here. For these sources this is the single GL posting of the acquisition.
       let glDrAcc = null
       let glCrAccId = null
       const isDirectGL = assetModal.isNew && ['cash', 'bank', 'donation'].includes(assetForm.acquisition_source)
@@ -447,21 +477,21 @@ export default function AssetsPage({ initialTab }) {
           schoolId, assetId: newAsset.id, eventType: 'invoice',
           description: assetForm.invoice_mode === 'existing'
             ? `Linked to AP invoice ${apInvoiceNo}`
-            : `AP invoice ${apInvoiceNo} raised for ${fmt(cost)} — review & post in Accounts Payable`,
+            : `AP invoice ${apInvoiceNo} raised & posted to GL for ${fmt(cost)}${apPaymentNo ? ` — settled by payment ${apPaymentNo}` : ' — payment pending in Accounts Payable'}`,
         })
         await writeAudit(supabase, {
           schoolId, action: 'assets.ap_invoice_created',
-          details: { asset_id: assetId, invoice_no: apInvoiceNo, total: cost },
+          details: { asset_id: assetId, invoice_no: apInvoiceNo, total: cost, posted: true },
         })
       }
       if (apPaymentNo) {
         await addAssetEvent(supabase, {
           schoolId, assetId: newAsset.id, eventType: 'payment',
-          description: `AP payment ${apPaymentNo} draft raised for ${fmt(cost)} — approve & post in Accounts Payable`,
+          description: `AP payment ${apPaymentNo} raised & posted for ${fmt(cost)} — bill settled`,
         })
         await writeAudit(supabase, {
           schoolId, action: 'assets.ap_payment_created',
-          details: { asset_id: assetId, payment_no: apPaymentNo },
+          details: { asset_id: assetId, payment_no: apPaymentNo, posted: true },
         })
       }
       if (glJournal) {
@@ -488,8 +518,8 @@ export default function AssetsPage({ initialTab }) {
       }
 
       const linkedBits = [
-        apInvoiceNo ? `AP invoice ${apInvoiceNo}` : null,
-        apPaymentNo ? `payment ${apPaymentNo}` : null,
+        apInvoiceNo ? `AP invoice ${apInvoiceNo} posted (${apPaymentNo ? 'settled' : 'payment pending'})` : null,
+        apPaymentNo ? `payment ${apPaymentNo} posted` : null,
         glJournal ? `posted to GL (${glJournal.entry_no})` : null,
       ].filter(Boolean).join(' · ')
       setToast({ type: 'success', msg: assetModal.isNew

@@ -7,7 +7,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
-import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
+import { fmt, fmtDate, fmtDateTime, downloadFile } from '../admin/fees/utils/feesHelpers'
 import {
   ACCOUNT_TYPES, DEFAULT_CHART, isDebitNormal, typeColor,
   accountBalance, netPosting, balanceError, nextJournalNumber, writeAudit,
@@ -1056,7 +1056,7 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
               {viewEntry.posted_by && (
                 <div className="acc-detail-row">
                   <span className="acc-detail-label">Posted By</span>
-                  <span>{staffMap[viewEntry.posted_by] || '—'} · {fmtDate(viewEntry.posted_at)}</span>
+                  <span>{staffMap[viewEntry.posted_by] || '—'} · {fmtDateTime(viewEntry.posted_at)}</span>
                 </div>
               )}
               <div className="acc-table-wrap" style={{ marginTop: 14 }}>

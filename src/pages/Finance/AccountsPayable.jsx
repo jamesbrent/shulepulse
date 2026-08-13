@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
-import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
+import { fmt, fmtDate, fmtDateTime, downloadFile } from '../admin/fees/utils/feesHelpers'
 import { writeAudit, apDebitAccountOptions, ensureAccounts } from './accountsUtils'
 import {
   AP_SUPPLIER_TYPES, AP_INVOICE_STATUSES, AP_PAYMENT_STATUSES, AP_PAYMENT_METHODS,
@@ -1189,12 +1189,12 @@ export default function AccountsPayablePage({ initialTab }) {
                 </div>
                 <div className="prl-detail-card">
                   <h4>Approval Trail</h4>
-                  <div className="prl-detail-item"><span>Created</span><strong>{d?.nameOf[inv.created_by] || '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Submitted</span><strong>{inv.submitted_at ? d?.nameOf[inv.submitted_by] : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Reviewed</span><strong>{inv.reviewed_at ? d?.nameOf[inv.reviewed_by] : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Approved</span><strong>{inv.approved_at ? d?.nameOf[inv.approved_by] : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Rejected</span><strong style={inv.rejected_at ? { color: '#dc2626' } : undefined}>{inv.rejected_at ? `${d?.nameOf[inv.rejected_by] || '—'}${inv.rejection_reason ? ` — ${inv.rejection_reason}` : ''}` : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Posted</span><strong>{inv.posted_at ? d?.nameOf[inv.posted_by] : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Created</span><strong>{d?.nameOf[inv.created_by] || '—'}{inv.created_at ? ` · ${fmtDateTime(inv.created_at)}` : ''}</strong></div>
+                  <div className="prl-detail-item"><span>Submitted</span><strong>{inv.submitted_at ? `${d?.nameOf[inv.submitted_by] || '—'} · ${fmtDateTime(inv.submitted_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Reviewed</span><strong>{inv.reviewed_at ? `${d?.nameOf[inv.reviewed_by] || '—'} · ${fmtDateTime(inv.reviewed_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Approved</span><strong>{inv.approved_at ? `${d?.nameOf[inv.approved_by] || '—'} · ${fmtDateTime(inv.approved_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Rejected</span><strong style={inv.rejected_at ? { color: '#dc2626' } : undefined}>{inv.rejected_at ? `${d?.nameOf[inv.rejected_by] || '—'} · ${fmtDateTime(inv.rejected_at)}${inv.rejection_reason ? ` — ${inv.rejection_reason}` : ''}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Posted</span><strong>{inv.posted_at ? `${d?.nameOf[inv.posted_by] || '—'} · ${fmtDateTime(inv.posted_at)}` : '—'}</strong></div>
                 </div>
               </div>
               <div className="prl-card" style={{ margin: '0 18px 12px' }}>
@@ -1266,12 +1266,12 @@ export default function AccountsPayablePage({ initialTab }) {
                 </div>
                 <div className="prl-detail-card">
                   <h4>Approval Trail</h4>
-                  <div className="prl-detail-item"><span>Prepared</span><strong>{d?.nameOf[p.created_by] || '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Reviewed</span><strong>{p.reviewed_at ? d?.nameOf[p.reviewed_by] : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Approved</span><strong>{p.approved_at ? d?.nameOf[p.approved_by] : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Rejected</span><strong style={p.rejected_at ? { color: '#dc2626' } : undefined}>{p.rejected_at ? `${d?.nameOf[p.rejected_by] || '—'}${p.rejection_reason ? ` — ${p.rejection_reason}` : ''}` : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Processed</span><strong>{p.processed_at ? d?.nameOf[p.processed_by] : '—'}</strong></div>
-                  <div className="prl-detail-item"><span>Paid</span><strong>{p.paid_at ? d?.nameOf[p.paid_by] : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Prepared</span><strong>{d?.nameOf[p.created_by] || '—'}{p.created_at ? ` · ${fmtDateTime(p.created_at)}` : ''}</strong></div>
+                  <div className="prl-detail-item"><span>Reviewed</span><strong>{p.reviewed_at ? `${d?.nameOf[p.reviewed_by] || '—'} · ${fmtDateTime(p.reviewed_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Approved</span><strong>{p.approved_at ? `${d?.nameOf[p.approved_by] || '—'} · ${fmtDateTime(p.approved_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Rejected</span><strong style={p.rejected_at ? { color: '#dc2626' } : undefined}>{p.rejected_at ? `${d?.nameOf[p.rejected_by] || '—'} · ${fmtDateTime(p.rejected_at)}${p.rejection_reason ? ` — ${p.rejection_reason}` : ''}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Processed</span><strong>{p.processed_at ? `${d?.nameOf[p.processed_by] || '—'} · ${fmtDateTime(p.processed_at)}` : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Paid</span><strong>{p.paid_at ? `${d?.nameOf[p.paid_by] || '—'} · ${fmtDateTime(p.paid_at)}` : '—'}</strong></div>
                 </div>
               </div>
               {invs.length > 0 && (
