@@ -41,7 +41,7 @@ const blankAsset = () => ({
 const blankCategory = () => ({
   name: '', description: '', depreciation_method: 'straight_line',
   useful_life_months: 60, depreciation_rate: 0, residual_value: 0,
-  tax_class: '',
+  tax_class: '', expense_account_id: '', accumulated_account_id: '',
 })
 
 const blankTaxRule = () => ({
@@ -114,6 +114,8 @@ export default function AssetsPage({ initialTab }) {
     description: '', cost: 0, service_provider: '', status: 'completed', next_service_date: '',
   })
   const [deprModal, setDeprModal] = useState(null)
+  const [viewRun, setViewRun] = useState(null)
+  const [viewRunLines, setViewRunLines] = useState([])
   const [deprForm, setDeprForm] = useState({
     period_label: formatPeriod(TODAY), run_date: TODAY, expense_account_id: '', accumulated_account_id: '',
   })
@@ -141,6 +143,27 @@ export default function AssetsPage({ initialTab }) {
     } catch { /* non-finance role — migration 046 covers the seed */ }
     const { data: accData } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).order('code')
     setAccountOptions(accData || [])
+    // Backfill per-class GL account pairs (spec: asset_classes.expense_account_id
+    // / accumulated_account_id) from the standard depreciation codes whenever a
+    // class has no pair yet. Non-finance roles can't write — they still resolve
+    // the per-class accounts at run time, so this is best-effort.
+    try {
+      const needsPair = (data.categories || []).filter((c) => !c.expense_account_id || !c.accumulated_account_id)
+      if (needsPair.length) {
+        const updated = []
+        for (const c of needsPair) {
+          const { expenseCode, accCode } = depreciationAccountsFor({}, c.name)
+          const exp = (accData || []).find((a) => a.code === expenseCode)
+          const acc = (accData || []).find((a) => a.code === accCode)
+          if (!exp || !acc) { updated.push(c); continue }
+          const { data: row } = await supabase.from('asset_categories').update({
+            expense_account_id: exp.id, accumulated_account_id: acc.id,
+          }).eq('id', c.id).select().single()
+          updated.push(row || c)
+        }
+        setCategories((prev) => prev.map((old) => updated.find((u) => u.id === old.id) || old))
+      }
+    } catch { /* non-finance role — migration 054 covers the seed */ }
     const { data: invData } = await supabase.from('ap_invoices').select('*').eq('school_id', schoolId).order('invoice_date', { ascending: false })
     setApInvoices(invData || [])
     setLoading(false)
@@ -572,6 +595,8 @@ export default function AssetsPage({ initialTab }) {
       depreciation_rate: Number(catForm.depreciation_rate) || 0,
       residual_value: Number(catForm.residual_value) || 0,
       useful_life_months: Number(catForm.useful_life_months) || 60,
+      expense_account_id: catForm.expense_account_id || null,
+      accumulated_account_id: catForm.accumulated_account_id || null,
     }
     const { error } = catModal.isNew
       ? await supabase.from('asset_categories').insert({ ...payload, school_id: schoolId })
@@ -721,16 +746,61 @@ export default function AssetsPage({ initialTab }) {
     return targets.map((a) => ({ asset: a, amount: monthlyDepreciation(a) })).filter((p) => p.amount > 0)
   }
 
+  const findAccountByCode = (code) => accountOptions.find((a) => a.code === code)
+
+  // Resolve the GL account pair for one asset's class. Uses the account IDs
+  // stored on the class (asset_categories); falls back to the standard codes
+  // derived from the class name so existing schools keep working unchanged.
+  const resolveClassAccounts = (asset, pc) => {
+    if (pc?.expense_account_id && pc?.accumulated_account_id) {
+      return { expenseId: pc.expense_account_id, accId: pc.accumulated_account_id, className: pc.name }
+    }
+    const { expenseCode, accCode } = depreciationAccountsFor(asset, pc?.name)
+    const exp = findAccountByCode(expenseCode)
+    const acc = findAccountByCode(accCode)
+    if (exp && acc) return { expenseId: exp.id, accId: acc.id, className: pc?.name || 'Uncategorised', derived: true }
+    return null
+  }
+
+  // Per-class totals for a run preview / post — ONE Dr/Cr pair per class, the
+  // exact table shown in the run modal and the journal entry report.
+  const deprClassTotals = (preview) => {
+    const groups = {}
+    for (const p of preview) {
+      const pc = categories.find((c) => c.id === p.asset.category_id)
+      const resolved = resolveClassAccounts(p.asset, pc)
+      const expenseId = resolved?.expenseId || deprForm.expense_account_id
+      const accId = resolved?.accId || deprForm.accumulated_account_id
+      const key = expenseId && accId ? `${expenseId}|${accId}` : 'unset'
+      if (!groups[key]) {
+        groups[key] = { className: resolved?.className || pc?.name || 'Uncategorised', expenseId, accId, amount: 0, assets: 0 }
+      }
+      groups[key].amount += p.amount
+      groups[key].assets += 1
+    }
+    return Object.values(groups)
+  }
+
   const openDeprModal = (assetIds = null) => {
     setDeprModal({ assetIds })
     setDeprForm((f) => ({ ...f, period_label: formatPeriod(TODAY), run_date: TODAY }))
     setDeprAccountDefaults()
   }
 
+  // Journal Entry Report for a run: the exact posted lines (one Dr/Cr pair per
+  // asset class), straight from the journal entry.
+  const openRunView = async (run) => {
+    setViewRun(run)
+    setViewRunLines([])
+    if (!run?.journal_entry_id) return
+    const { data } = await supabase.from('journal_entry_lines')
+      .select('*, chart_of_accounts(code, name, type)')
+      .eq('journal_entry_id', run.journal_entry_id)
+      .order('id')
+    setViewRunLines(data || [])
+  }
+
   const runDepreciation = async () => {
-    if (!deprForm.expense_account_id || !deprForm.accumulated_account_id) {
-      setToast({ type: 'error', msg: 'Set the depreciation expense and accumulated depreciation accounts.' }); return
-    }
     const preview = previewDepreciation(deprModal.assetIds)
     if (!preview.length) { setToast({ type: 'error', msg: 'No assets are due for depreciation this period.' }); return }
     setSaving(true)
@@ -749,6 +819,7 @@ export default function AssetsPage({ initialTab }) {
           run_id: run.id, asset_id: p.asset.id, school_id: schoolId, period_label: deprForm.period_label,
           depreciation_amount: p.amount, accumulated_before: accBefore,
           accumulated_after: accBefore + p.amount, nbv_before: calcNbv(p.asset), nbv_after: calcNbv(p.asset) - p.amount,
+          posted: true,
         }
       })
       const { error: linesErr } = await supabase.from('asset_depreciation_lines').insert(lineRows)
@@ -766,20 +837,25 @@ export default function AssetsPage({ initialTab }) {
         })
       }
 
-      // Map each asset to the appropriate accounts based on its category
-      const groups = {} // key -> { expenseAccountId, accAccountId, amount }
-      const findAccountByCode = (code) => accountOptions.find((a) => a.code === code)
+      // Map each asset to the appropriate accounts based on its class. Uses the
+      // account pair stored on the class (asset_categories), falling back to the
+      // standard codes derived from the class name. A class with no resolvable
+      // expense account blocks the whole run (spec rule: never guess accounts).
+      const groups = {}
+      const unsetClasses = new Set()
       for (const p of preview) {
         const pc = categories.find((c) => c.id === p.asset.category_id)
-        const { expenseCode, accCode } = depreciationAccountsFor(p.asset, pc?.name)
-        const expenseAcc = findAccountByCode(expenseCode)
-        const accAcc = findAccountByCode(accCode)
-        const expenseId = expenseAcc ? expenseAcc.id : deprForm.expense_account_id
-        const accId = accAcc ? accAcc.id : deprForm.accumulated_account_id
+        const resolved = resolveClassAccounts(p.asset, pc)
+        const expenseId = resolved?.expenseId || deprForm.expense_account_id
+        const accId = resolved?.accId || deprForm.accumulated_account_id
+        if (!expenseId || !accId) { unsetClasses.add(resolved?.className || pc?.name || 'Uncategorised'); continue }
         const key = `${expenseId}|${accId}`
         if (!groups[key]) groups[key] = { expenseId, accId, amount: 0, assets: [] }
         groups[key].amount += p.amount
         groups[key].assets.push(p.asset.id)
+      }
+      if (unsetClasses.size) {
+        throw new Error(`Set the depreciation accounts for: ${[...unsetClasses].join(', ')}. Nothing was posted.`)
       }
 
       // Build journal lines aggregated by account pair
@@ -1076,6 +1152,7 @@ export default function AssetsPage({ initialTab }) {
                   <th>Custodian</th>
                   <th>Location</th>
                   <th className="num">Purchase Cost</th>
+                  <th className="num">Acc. Dep</th>
                   <th className="num">NBV</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -1091,6 +1168,7 @@ export default function AssetsPage({ initialTab }) {
                     <td>{staffMap[a.custodian_id] || <span className="as-muted">Unassigned</span>}</td>
                     <td className="as-muted">{[a.building, a.room].filter(Boolean).join(', ') || '—'}</td>
                     <td className="num">{fmt(a.purchase_cost)}</td>
+                    <td className="num">{fmt(a.accumulated_depreciation)}</td>
                     <td className="num as-fw600 as-green">{fmt(calcNbv(a))}</td>
                     <td>{statusBadge(a.status)}</td>
                     <td className="as-actions-cell">
@@ -1132,6 +1210,8 @@ export default function AssetsPage({ initialTab }) {
                   <th className="num">Useful Life</th>
                   <th className="num">Rate (p.a.)</th>
                   <th className="num">Residual</th>
+                  <th>Dep. Expense Acct</th>
+                  <th>Accum. Dep Acct</th>
                   <th>Assets</th>
                   <th>Actions</th>
                 </tr>
@@ -1145,6 +1225,8 @@ export default function AssetsPage({ initialTab }) {
                     <td className="num">{c.useful_life_months} mo</td>
                     <td className="num">{c.depreciation_rate || '—'}{c.first_year_allowance ? ` (+${c.first_year_allowance}% FYA)` : ''}</td>
                     <td className="num">{fmt(c.residual_value)}</td>
+                    <td className="as-mono">{accountOptions.find((a) => a.id === c.expense_account_id)?.code || '—'}</td>
+                    <td className="as-mono">{accountOptions.find((a) => a.id === c.accumulated_account_id)?.code || '—'}</td>
                     <td>{assets.filter((a) => a.category_id === c.id).length}</td>
                     <td className="as-actions-cell">
                       <button className="as-icon-btn" title="Edit" onClick={() => openCategoryModal(c)}><Pencil size={14} /></button>
@@ -1173,7 +1255,7 @@ export default function AssetsPage({ initialTab }) {
           <div className="as-table-wrap">
             <table className="as-table">
               <thead>
-                <tr><th>Period</th><th>Run Date</th><th>Assets</th><th className="num">Total</th><th>Journal Entry</th><th>Run By</th></tr>
+                <tr><th>Period</th><th>Run Date</th><th>Assets</th><th className="num">Total</th><th>Journal Entry</th><th>Run By</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {runs.map((r) => {
@@ -1186,6 +1268,9 @@ export default function AssetsPage({ initialTab }) {
                       <td className="num as-fw600">{fmt(r.total_depreciation)}</td>
                       <td className="as-mono">{r.journal_entries?.entry_no || '—'}</td>
                       <td>{staffMap[r.created_by] || '—'}</td>
+                      <td className="as-actions-cell">
+                        <button className="as-icon-btn" title="Journal entry report" onClick={() => openRunView(r)}><FileText size={14} /></button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -1520,6 +1605,30 @@ export default function AssetsPage({ initialTab }) {
               </div>
               <label className="as-label">Depreciation Rate % p.a. <span className="as-muted">(accounting)</span></label>
               <input className="as-input" type="number" step="0.01" min="0" max="100" value={catForm.depreciation_rate} onChange={(e) => setCatForm({ ...catForm, depreciation_rate: e.target.value })} placeholder="Leave blank to auto-calculate" />
+              <div className="as-grid-2 as-cat-accounts">
+                <div>
+                  <label className="as-label">Depreciation Expense Account</label>
+                  <AccountSelect
+                    value={catForm.expense_account_id}
+                    onChange={(id) => setCatForm({ ...catForm, expense_account_id: id })}
+                    options={accountOptions.filter((a) => a.type === 'expense' && (a.category === 'Depreciation' || /^60\d0$/.test(a.code)))}
+                  />
+                </div>
+                <div>
+                  <label className="as-label">Accumulated Depreciation Account</label>
+                  <AccountSelect
+                    value={catForm.accumulated_account_id}
+                    onChange={(id) => setCatForm({ ...catForm, accumulated_account_id: id })}
+                    options={accountOptions.filter((a) => a.type === 'asset' && (a.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(a.code)))}
+                  />
+                </div>
+              </div>
+              <p className="as-tax-note">
+                One GL pair per asset class. Each Depreciation Run debits the class's
+                Depreciation Expense account and credits its Accumulated Depreciation
+                account — the asset cost account is never credited. If either is missing
+                the run is blocked until you set it.
+              </p>
             </div>
             <div className="as-modal-foot">
               <button className="as-btn-outline" onClick={() => setCatModal(false)}>Cancel</button>
@@ -1963,7 +2072,7 @@ export default function AssetsPage({ initialTab }) {
                     </div>
                     <div className="as-depr-accounts">
                       <div>
-                        <label className="as-label">Depreciation Expense Account</label>
+                        <label className="as-label">Default Depreciation Expense Account <span className="as-muted">(uncategorised assets)</span></label>
                         <AccountSelect
                           value={deprForm.expense_account_id}
                           onChange={(id) => setDeprForm({ ...deprForm, expense_account_id: id })}
@@ -1971,7 +2080,7 @@ export default function AssetsPage({ initialTab }) {
                         />
                       </div>
                       <div>
-                        <label className="as-label">Accumulated Depreciation Account</label>
+                        <label className="as-label">Default Accumulated Depreciation Account <span className="as-muted">(uncategorised assets)</span></label>
                         <AccountSelect
                           value={deprForm.accumulated_account_id}
                           onChange={(id) => setDeprForm({ ...deprForm, accumulated_account_id: id })}
@@ -1982,24 +2091,58 @@ export default function AssetsPage({ initialTab }) {
                     {accountOptions.filter((a) => a.type === 'expense' && (a.category === 'Depreciation' || /^60\d0$/.test(a.code))).length === 0
                       || accountOptions.filter((a) => a.type === 'asset' && (a.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(a.code))).length === 0 ? (
                       <div className="as-depr-warn">
-                        <p>No depreciation accounts found. Click below to create the standard set (expense 6010–6060, accumulated 1701–1706) for this school, then pick your default accounts.</p>
+                        <p>No depreciation accounts found. Click below to create the standard set (expense 6010–6060, accumulated 1701–1706) for this school, then set each class's accounts.</p>
                         <button className="as-btn-outline" type="button" disabled={saving} onClick={createDeprAccounts}>{saving ? 'Creating…' : 'Create depreciation accounts'}</button>
                       </div>
                     ) : null}
-                    <div className="as-depr-preview">
-                      <p className="as-depr-preview-title">Preview</p>
-                      {preview.length === 0 ? (
-                        <p className="as-muted">No assets due for depreciation.</p>
-                      ) : (
-                        preview.slice(0, 6).map((p) => (
-                          <div className="as-depr-line" key={p.asset.id}>
-                            <span className="as-depr-line-name">{p.asset.name}</span><span className="as-depr-line-amt">{fmt(p.amount)}</span>
-                          </div>
-                        ))
-                      )}
-                      {preview.length > 6 && <p className="as-muted">+{preview.length - 6} more…</p>}
-                      <div className="as-depr-total"><span>Total ({preview.length} assets)</span><span>{fmt(total)}</span></div>
-                    </div>
+                    {(() => {
+                      const totals = deprClassTotals(preview)
+                      const missing = totals.filter((g) => !g.expenseId || !g.accId)
+                      return (
+                        <div className="as-depr-preview">
+                          <p className="as-depr-preview-title">Journal entry preview <span className="as-muted">· one Dr/Cr pair per asset class</span></p>
+                          {preview.length === 0 ? (
+                            <p className="as-muted">No assets due for depreciation.</p>
+                          ) : (
+                            <div className="as-table-wrap">
+                              <table className="as-table as-depr-class-table">
+                                <thead>
+                                  <tr>
+                                    <th>Asset Class</th>
+                                    <th className="num">Assets</th>
+                                    <th className="num">Amount</th>
+                                    <th>Debit Account</th>
+                                    <th>Credit Account</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {totals.map((g) => {
+                                    const exp = accountOptions.find((a) => a.id === g.expenseId)
+                                    const acc = accountOptions.find((a) => a.id === g.accId)
+                                    const ok = !!(g.expenseId && g.accId && exp && acc)
+                                    return (
+                                      <tr key={`${g.expenseId}|${g.accId}`}>
+                                        <td className="as-fw600">{g.className}</td>
+                                        <td className="num">{g.assets}</td>
+                                        <td className="num as-fw600">{fmt(g.amount)}</td>
+                                        <td className="as-mono">{ok ? `Dr. ${exp.code} — ${exp.name}` : <span style={{ color: '#dc2626' }}>Missing</span>}</td>
+                                        <td className="as-mono">{ok ? `Cr. ${acc.code} — ${acc.name}` : <span style={{ color: '#dc2626' }}>Missing</span>}</td>
+                                      </tr>
+                                    )
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                          {missing.length > 0 && (
+                            <div className="as-depr-warn" style={{ marginTop: 10 }}>
+                              <p>Set the depreciation accounts for: {missing.map((g) => g.className).join(', ')} — depreciation cannot be posted until then.</p>
+                            </div>
+                          )}
+                          <div className="as-depr-total"><span>Total ({preview.length} assets)</span><span>{fmt(total)}</span></div>
+                        </div>
+                      )
+                    })()}
                   </>
                 )
               })()}
@@ -2106,6 +2249,49 @@ export default function AssetsPage({ initialTab }) {
             <div className="as-modal-foot">
               <button className="as-btn-outline" onClick={() => setTaxRuleModal(null)}>Cancel</button>
               <button className="as-btn-primary" disabled={saving} onClick={saveTaxRule}>{saving ? 'Saving…' : 'Save Rule'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewRun && (
+        <div className="as-modal-overlay">
+          <div className="as-modal as-modal-fit">
+            <div className="as-modal-head">
+              <h3>Journal Entry Report</h3>
+              <button className="as-icon-btn" onClick={() => setViewRun(null)}><X size={16} /></button>
+            </div>
+            <div className="as-modal-body">
+              <p className="as-fw600">{viewRun.period_label} <span className="as-muted">· run {fmtDate(viewRun.run_date)} · {viewRunLines.length} GL lines</span></p>
+              {viewRunLines.length === 0 ? (
+                <p className="as-muted">No GL lines found for this run.</p>
+              ) : (
+                <div className="as-table-wrap">
+                  <table className="as-table as-depr-class-table">
+                    <thead>
+                      <tr>
+                        <th>Account</th>
+                        <th>Notes</th>
+                        <th className="num">Debit</th>
+                        <th className="num">Credit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewRunLines.map((l) => (
+                        <tr key={l.id}>
+                          <td className="as-mono">{l.chart_of_accounts ? `${l.chart_of_accounts.code} — ${l.chart_of_accounts.name}` : l.account_id}</td>
+                          <td>{l.notes || '—'}</td>
+                          <td className="num as-fw600">{l.debit > 0 ? fmt(l.debit) : ''}</td>
+                          <td className="num as-fw600">{l.credit > 0 ? fmt(l.credit) : ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className="as-modal-foot">
+              <button className="as-btn-outline" onClick={() => setViewRun(null)}>Close</button>
             </div>
           </div>
         </div>
