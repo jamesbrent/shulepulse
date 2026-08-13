@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, ClipboardList, BarChart3, MessageSquare,
   Users, LogOut, Calendar, TrendingUp, CheckCircle, XCircle, Clock,
-  Phone, Mail, UserCheck, BookOpen, Bell, Menu, X
+  Phone, Mail, UserCheck, BookOpen, Bell, Menu, X, PencilLine
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -10,6 +10,8 @@ import { useAuthStore } from '../../store/authStore'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import ClassAttendance from './ClassAttendance'
 import './ClassAttendance.css'
+import MarksEntry from '../teacher/MarksEntry'
+import '../teacher/MarksEntry.css'
 import PerformanceTracker from './PerformanceTracker'
 import './PerformanceTracker.css'
 import ClassComments from './ClassComments'
@@ -119,6 +121,7 @@ export default function ClassTeacherDashboard() {
   const navItems = [
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
     { key: 'attendance', label: 'Class Attendance', icon: <ClipboardList size={16} /> },
+    { key: 'marks', label: 'Marks Entry', icon: <PencilLine size={16} /> },
     { key: 'performance', label: 'Performance Tracker', icon: <BarChart3 size={16} /> },
     { key: 'comments', label: 'Class Comments', icon: <MessageSquare size={16} /> },
     { key: 'communication', label: 'Parent Communication', icon: <Phone size={16} /> },
@@ -135,6 +138,7 @@ export default function ClassTeacherDashboard() {
   const pageTitles = {
     dashboard: 'Class Teacher Dashboard',
     attendance: 'Class Attendance',
+    marks: 'Marks Entry',
     performance: 'Performance Tracker',
     comments: 'Class Comments',
     communication: 'Parent Communication',
@@ -149,6 +153,8 @@ export default function ClassTeacherDashboard() {
     switch (activeNav) {
       case 'attendance':
         return <ClassAttendance {...sharedProps} />
+      case 'marks':
+        return <MarksEntry profile={authProfile} />
       case 'performance':
         return <PerformanceTracker {...sharedProps} />
       case 'comments':
@@ -211,6 +217,10 @@ export default function ClassTeacherDashboard() {
               <button className="ct-quick-action-btn" onClick={() => { setActiveNav('attendance'); setMobileOpen(false) }}>
                 <ClipboardList size={20} />
                 <span>Mark Attendance</span>
+              </button>
+              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('marks'); setMobileOpen(false) }}>
+                <PencilLine size={20} />
+                <span>Enter Marks</span>
               </button>
               <button className="ct-quick-action-btn" onClick={() => { setActiveNav('performance'); setMobileOpen(false) }}>
                 <BarChart3 size={20} />
