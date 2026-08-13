@@ -781,6 +781,13 @@ export default function AssetsPage({ initialTab }) {
     return Object.values(groups)
   }
 
+  // Depreciation year-to-date for an asset (current calendar year), used by the
+  // Asset Register report. There is no fiscal-year concept, so "year" is the
+  // calendar year of each run's period label (e.g. "Mar 2026").
+  const deprYtd = (assetId) => runLines
+    .filter((l) => l.asset_id === assetId && String(l.period_label).endsWith(` ${new Date().getFullYear()}`))
+    .reduce((s, l) => s + l.depreciation_amount, 0)
+
   const openDeprModal = (assetIds = null) => {
     setDeprModal({ assetIds })
     setDeprForm((f) => ({ ...f, period_label: formatPeriod(TODAY), run_date: TODAY }))
@@ -1061,12 +1068,12 @@ export default function AssetsPage({ initialTab }) {
 
   const exportRegisterCSV = () => {
     const rows = [
-      ['Asset ID', 'Name', 'Serial No.', 'Category', 'Custodian', 'Location', 'Cost', 'Accumulated Depn', 'NBV', 'Status'],
+      ['Asset ID', 'Name', 'Serial No.', 'Category', 'Custodian', 'Location', 'Cost', 'Dep YTD', 'Accumulated Depn', 'NBV', 'Status'],
       ...filteredAssets.map((a) => [
         a.asset_id, a.name, a.serial_number || '',
         categories.find((c) => c.id === a.category_id)?.name || '',
         staffMap[a.custodian_id] || '', [a.building, a.room].filter(Boolean).join(', '),
-        a.purchase_cost, a.accumulated_depreciation, calcNbv(a), a.status,
+        a.purchase_cost, deprYtd(a.id), a.accumulated_depreciation, calcNbv(a), a.status,
       ]),
     ]
     downloadFile(rows.map((r) => r.join(',')).join('\n'), 'asset_register.csv', 'text/csv')
@@ -1152,6 +1159,7 @@ export default function AssetsPage({ initialTab }) {
                   <th>Custodian</th>
                   <th>Location</th>
                   <th className="num">Purchase Cost</th>
+                  <th className="num">Dep. YTD</th>
                   <th className="num">Acc. Dep</th>
                   <th className="num">NBV</th>
                   <th>Status</th>
@@ -1168,6 +1176,7 @@ export default function AssetsPage({ initialTab }) {
                     <td>{staffMap[a.custodian_id] || <span className="as-muted">Unassigned</span>}</td>
                     <td className="as-muted">{[a.building, a.room].filter(Boolean).join(', ') || '—'}</td>
                     <td className="num">{fmt(a.purchase_cost)}</td>
+                    <td className="num">{fmt(deprYtd(a.id))}</td>
                     <td className="num">{fmt(a.accumulated_depreciation)}</td>
                     <td className="num as-fw600 as-green">{fmt(calcNbv(a))}</td>
                     <td>{statusBadge(a.status)}</td>
