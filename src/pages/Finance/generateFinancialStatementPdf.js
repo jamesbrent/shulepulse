@@ -3,6 +3,8 @@
 // Financial Position, Cash Flow Statement and Statement of Changes in Equity.
 // Inputs are the plain data structures produced by financialStatementsUtils,
 // so the PDF always mirrors exactly what the General Ledger produced on screen.
+//
+// Styled black & white to match the Trial Balance printout.
 
 import { jsPDF } from 'jspdf'
 import { applyPlugin } from 'jspdf-autotable'
@@ -16,15 +18,14 @@ const MARGIN = 16
 const CONTENT_W = PAGE_W - MARGIN * 2
 const CENTER = PAGE_W / 2
 
-const PRIMARY = [37, 99, 235]
 const CHARCOAL = [15, 23, 42]
 const TEXT_DARK = [15, 23, 42]
 const TEXT_MUTED = [100, 116, 139]
 const BORDER = [226, 232, 240]
-const BG = [248, 250, 252]
+const HEAD_BG = [241, 245, 249]   // f1f5f9 — table header (as Trial Balance)
+const SEC_BG = [238, 242, 247]    // eef2f7 — section strip (as Trial Balance)
+const TOTAL_BG = [248, 250, 252]  // f8fafc — total foot rows (as Trial Balance)
 const WHITE = [255, 255, 255]
-const RED = [185, 28, 28]
-const GREEN = [5, 150, 105]
 
 const fmtKES = (n) => {
   const v = Number(n) || 0
@@ -59,67 +60,84 @@ export async function generateFinancialStatementPdf({ school, title, periodLabel
     doc.text(`Page ${pageNumber}`, PAGE_W - MARGIN, PAGE_H - 3.5, { align: 'right' })
   }
 
-  // ── Accent bar + header ──────────────────────────────────────────────────
-  doc.setFillColor(...PRIMARY)
-  doc.rect(0, 0, PAGE_W * 0.62, 9, 'F')
+  // ── Header ────────────────────────────────────────────────────────────────
   doc.setFillColor(...CHARCOAL)
-  doc.rect(PAGE_W * 0.62, 0, PAGE_W - PAGE_W * 0.62, 9, 'F')
+  doc.rect(0, 0, PAGE_W, 9, 'F')
 
-  let y = 22
-  if (logo && logo.dataUrl) {
+  // Logo on the left, school name + contact to its RIGHT so nothing collides.
+  const hasLogo = Boolean(logo && logo.dataUrl)
+  const aspect = logo?.aspectRatio || 1
+  const rawH = 20 / aspect
+  const scale = rawH > 22 ? 22 / rawH : 1
+  const logoW = 20 * scale
+  const logoH = rawH * scale
+  const textX = hasLogo ? MARGIN + logoW + 8 : MARGIN
+  const nameY = hasLogo ? 31 : 25
+  const contactY = nameY + 5
+  const maxTextW = CENTER - textX - 8
+
+  if (hasLogo) {
     try {
-      doc.addImage(logo.dataUrl, 'PNG', MARGIN, 22, 22, 22 * (1 / logo.aspectRatio))
-      y = 30
+      doc.addImage(logo.dataUrl, 'PNG', MARGIN, nameY - 12, logoW, logoH)
     } catch { /* ignore */ }
   }
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
   doc.setTextColor(...TEXT_DARK)
-  doc.text(schoolName, MARGIN, y - 4)
+  doc.text(schoolName, textX, nameY, { maxWidth: maxTextW })
   if (contact) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     doc.setTextColor(...TEXT_MUTED)
-    doc.text(contact, MARGIN, y + 2, { maxWidth: CONTENT_W * 0.6 })
+    doc.text(contact, textX, contactY, { maxWidth: maxTextW })
   }
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
-  doc.setTextColor(...PRIMARY)
-  doc.text(title, CENTER, 40, { align: 'center' })
+  doc.setTextColor(...TEXT_DARK)
+  doc.text(title, CENTER, 46, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.setTextColor(...TEXT_DARK)
-  doc.text(periodLabel, CENTER, 47, { align: 'center' })
+  doc.text(periodLabel, CENTER, 53, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
   doc.setTextColor(...TEXT_MUTED)
-  doc.text(`Currency: Kenya Shillings (KES)`, MARGIN, 54)
-  doc.text(fmtLong(new Date().toISOString()), PAGE_W - MARGIN, 54, { align: 'right' })
+  doc.text(`Currency: Kenya Shillings (KES)`, MARGIN, 60)
+  doc.text(fmtLong(new Date().toISOString()), PAGE_W - MARGIN, 60, { align: 'right' })
 
   doc.setDrawColor(...BORDER)
   doc.setLineWidth(0.4)
-  doc.line(MARGIN, 57, PAGE_W - MARGIN, 57)
+  doc.line(MARGIN, 63, PAGE_W - MARGIN, 63)
   doc.setLineWidth(0.2)
-  y = 64
+  let y = 70
 
   const amtStyle = { halign: 'right', fontStyle: 'bold' }
 
   // ── Sections ─────────────────────────────────────────────────────────────
   for (const section of sections || []) {
     if (!section) continue
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(9)
-    doc.setTextColor(...PRIMARY)
-    doc.text(section.heading, MARGIN, y)
-    y += 3
+
+    // Section strip — light gray band like the Trial Balance section rows.
+    doc.autoTable({
+      startY: y,
+      margin: { left: MARGIN, right: MARGIN },
+      theme: 'plain',
+      head: [],
+      body: [[
+        { content: section.heading, styles: { fillColor: SEC_BG, textColor: TEXT_DARK, fontStyle: 'bold', fontSize: 8.5, cellPadding: 3.2 } },
+      ]],
+      columnStyles: { 0: { cellWidth: CONTENT_W } },
+      didDrawPage: (data) => drawFooter(data.pageNumber),
+    })
+    y = doc.lastAutoTable.finalY + 2
 
     const head = (section.cols || ['Code', 'Account', 'Amount (KES)']).map((c) => ({
       content: c,
-      styles: { fillColor: PRIMARY, textColor: WHITE, fontStyle: 'bold', fontSize: 8, halign: isLast(section.cols, section.cols.indexOf(c)) ? 'right' : 'left' },
+      styles: { fillColor: HEAD_BG, textColor: TEXT_DARK, fontStyle: 'bold', fontSize: 8, halign: isLast(section.cols, section.cols.indexOf(c)) ? 'right' : 'left' },
     }))
 
     const body = (section.rows || []).map((r) =>
@@ -132,8 +150,8 @@ export async function generateFinancialStatementPdf({ school, title, periodLabel
     const hasTotal = section.total != null && section.totalLabel
     const foot = hasTotal
       ? [[
-          { content: section.totalLabel, colSpan: section.cols.length - 1, styles: { fillColor: BG, fontStyle: 'bold', fontSize: 8, textColor: TEXT_DARK } },
-          { content: fmtKES(section.total), styles: { fillColor: BG, fontStyle: 'bold', fontSize: 8, textColor: section.total < 0 ? RED : TEXT_DARK, ...amtStyle } },
+          { content: section.totalLabel, colSpan: section.cols.length - 1, styles: { fillColor: TOTAL_BG, fontStyle: 'bold', fontSize: 8, textColor: TEXT_DARK } },
+          { content: fmtKES(section.total), styles: { fillColor: TOTAL_BG, fontStyle: 'bold', fontSize: 8, textColor: TEXT_DARK, ...amtStyle } },
         ]]
       : []
 
@@ -161,8 +179,8 @@ export async function generateFinancialStatementPdf({ school, title, periodLabel
       theme: 'plain',
       head: [],
       body: [[
-        { content: item.label, styles: { fillColor: emphasized ? CHARCOAL : BG, textColor: emphasized ? WHITE : TEXT_DARK, fontStyle: 'bold', fontSize: 9.5, cellPadding: 3, halign: 'left' } },
-        { content: value, styles: { fillColor: emphasized ? CHARCOAL : BG, textColor: emphasized ? WHITE : (item.value < 0 ? RED : GREEN), fontStyle: 'bold', fontSize: 9.5, cellPadding: 3, halign: 'right' } },
+        { content: item.label, styles: { fillColor: emphasized ? CHARCOAL : HEAD_BG, textColor: emphasized ? WHITE : TEXT_DARK, fontStyle: 'bold', fontSize: 9.5, cellPadding: 3, halign: 'left' } },
+        { content: value, styles: { fillColor: emphasized ? CHARCOAL : HEAD_BG, textColor: emphasized ? WHITE : TEXT_DARK, fontStyle: 'bold', fontSize: 9.5, cellPadding: 3, halign: 'right' } },
       ]],
       styles: { lineColor: BORDER, lineWidth: 0.2, valign: 'middle' },
       columnStyles: { 0: { cellWidth: CONTENT_W - 38 }, 1: { cellWidth: 38 } },
