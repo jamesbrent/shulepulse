@@ -47,22 +47,28 @@ export default function FinancialStatementsPage() {
   const [asAt, setAsAt] = useState(todayISO())
 
   const load = useCallback(async () => {
-    if (!schoolId) return
+    if (!schoolId) return false
     setLoading(true)
-    const { accounts: accs, lines: lns } = await loadLedgerData(supabase, schoolId)
-    setAccounts(accs)
-    setLines(lns)
-    setLoading(false)
+    try {
+      const { accounts: accs, lines: lns } = await loadLedgerData(supabase, schoolId)
+      setAccounts(accs)
+      setLines(lns)
+      return true
+    } catch {
+      return false
+    } finally {
+      setLoading(false)
+    }
   }, [schoolId])
 
   useEffect(() => {
     if (!schoolId) return
     let alive = true
     ;(async () => {
-      const { accounts: accs, lines: lns } = await loadLedgerData(supabase, schoolId)
+      const res = await loadLedgerData(supabase, schoolId).catch(() => ({ accounts: [], lines: [] }))
       if (!alive) return
-      setAccounts(accs)
-      setLines(lns)
+      setAccounts(res.accounts || [])
+      setLines(res.lines || [])
       setLoading(false)
     })()
     return () => { alive = false }
@@ -76,8 +82,10 @@ export default function FinancialStatementsPage() {
 
   const generate = async () => {
     setToast({ type: 'info', msg: 'Generating report from the General Ledger…' })
-    await load()
-    setToast({ type: 'success', msg: 'Report generated from the General Ledger.' })
+    const ok = await load()
+    setToast(ok
+      ? { type: 'success', msg: 'Report generated from the General Ledger.' }
+      : { type: 'error', msg: 'Could not load ledger data — check your connection and try again.' })
   }
 
   const applyPreset = (key) => {
@@ -324,13 +332,13 @@ export default function FinancialStatementsPage() {
   }
 
   const renderSection = (s) => (
-    <div className="acc-table-card fs-card" key={s.heading}>
-      <div className="fs-section-title">{s.heading}</div>
+    <div className="acc-table-card fst-card" key={s.heading}>
+      <div className="fst-section-title">{s.heading}</div>
       {s.rows.length === 0 ? (
         <p className="acc-empty">No activity for this section in the selected period.</p>
       ) : (
         <div className="acc-table-wrap">
-          <table className="acc-table fs-table">
+          <table className="acc-table fst-table">
             <thead>
               <tr>{s.cols.map((c) => <th key={c}>{c}</th>)}</tr>
             </thead>
@@ -362,9 +370,9 @@ export default function FinancialStatementsPage() {
   if (loading) return <div className="loading-state">Loading financial data from the General Ledger...</div>
 
   return (
-    <div className="acc-page fs-page">
+    <div className="acc-page fst-page">
       {toast && (
-        <div className={`fs-toast ${toast.type}`}>
+        <div className={`fst-toast ${toast.type}`}>
           {toast.type === 'success' ? <CheckCircle size={15} /> : <AlertTriangle size={15} />} {toast.msg}
         </div>
       )}
@@ -379,7 +387,7 @@ export default function FinancialStatementsPage() {
       </div>
 
       {/* ── Filter bar ── */}
-      <div className="acc-tb-filters fs-filters">
+      <div className="acc-tb-filters fst-filters">
         {tab === 'position' ? (
           <label className="acc-tb-field">
             <span>As At</span>
@@ -397,7 +405,7 @@ export default function FinancialStatementsPage() {
             </label>
           </>
         )}
-        <div className="fs-presets">
+        <div className="fst-presets">
           {tab !== 'position' && (
             <>
               <button className="acc-tb-mode-btn" onClick={() => applyPreset('this_month')}>This Month</button>
@@ -412,7 +420,7 @@ export default function FinancialStatementsPage() {
       </div>
 
       {/* ── KPI row ── */}
-      <div className="acc-kpi-row fs-kpis">
+      <div className="acc-kpi-row fst-kpis">
         {kpis[tab].map((k) => (
           <div className="acc-kpi" key={k.label}>
             <p className="acc-kpi-label">{k.label}</p>
@@ -422,12 +430,12 @@ export default function FinancialStatementsPage() {
       </div>
 
       {/* ── Report header + actions ── */}
-      <div className="fs-head">
+      <div className="fst-head">
         <div>
-          <h3 className="fs-title">{school?.name || 'School'} — {spec.title}</h3>
-          <p className="fs-period">{spec.periodLabel}</p>
+          <h3 className="fst-title">{school?.name || 'School'} — {spec.title}</h3>
+          <p className="fst-period">{spec.periodLabel}</p>
         </div>
-        <div className="fs-actions">
+        <div className="fst-actions">
           <button className="acc-btn-ghost" onClick={onPrint}><Printer size={14} /> Print</button>
           <button className="acc-btn-outline" onClick={onPdf}><Download size={14} /> Export PDF</button>
           <button className="acc-btn-outline" onClick={onExcel}><FileText size={14} /> Export Excel</button>
@@ -454,16 +462,16 @@ export default function FinancialStatementsPage() {
       {spec.sections.map(renderSection)}
 
       {/* ── Summary rows ── */}
-      <div className="fs-summary">
+      <div className="fst-summary">
         {spec.summary.map((item) => (
-          <div className={`fs-summary-row ${item.emphasize ? 'emphasize' : ''}`} key={item.label}>
-            <span className="fs-summary-label">{item.label}</span>
-            <span className={`fs-summary-value ${item.value < 0 ? 'red' : ''}`}>{fmtAmt(item.value)}</span>
+          <div className={`fst-summary-row ${item.emphasize ? 'emphasize' : ''}`} key={item.label}>
+            <span className="fst-summary-label">{item.label}</span>
+            <span className={`fst-summary-value ${item.value < 0 ? 'red' : ''}`}>{fmtAmt(item.value)}</span>
           </div>
         ))}
       </div>
 
-      <p className="fs-note"><Columns3 size={12} /> {spec.note}</p>
+      <p className="fst-note"><Columns3 size={12} /> {spec.note}</p>
     </div>
   )
 }

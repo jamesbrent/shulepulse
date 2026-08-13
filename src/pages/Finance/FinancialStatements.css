@@ -1,56 +1,56 @@
 /* Financial Statements — shared with Accounting.css (acc-* layout tokens) */
 
-.fs-page { position: relative; }
+.fst-page { position: relative; }
 
-.fs-toast {
+.fst-toast {
   position: fixed; top: 18px; right: 18px; z-index: 200;
   display: flex; align-items: center; gap: 9px;
   padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
-  animation: fsToastIn 0.2s ease;
+  animation: fstToastIn 0.2s ease;
 }
-.fs-toast.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-.fs-toast.info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
-.fs-toast.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-@keyframes fsToastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.fst-toast.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.fst-toast.info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.fst-toast.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+@keyframes fstToastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-.fs-filters { align-items: flex-end; }
-.fs-presets { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fst-filters { align-items: flex-end; }
+.fst-presets { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-.fs-kpis { margin-bottom: 14px; }
+.fst-kpis { margin-bottom: 14px; }
 
-.fs-head {
+.fst-head {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 14px; flex-wrap: wrap; margin: 18px 0 12px;
 }
-.fs-title { margin: 0; font-size: 16px; color: #0f172a; }
-.fs-period { margin: 3px 0 0; font-size: 12.5px; color: #64748b; }
-.fs-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.fst-title { margin: 0; font-size: 16px; color: #0f172a; }
+.fst-period { margin: 3px 0 0; font-size: 12.5px; color: #64748b; }
+.fst-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-.fs-card { margin-bottom: 14px; }
-.fs-section-title {
+.fst-card { margin-bottom: 14px; }
+.fst-section-title {
   padding: 12px 16px; font-size: 12px; font-weight: 700;
   letter-spacing: 0.06em; color: #2563eb; text-transform: uppercase;
   background: #eff6ff; border-bottom: 1px solid #e2e8f0;
 }
-.fs-table { min-width: 560px; }
-.fs-table th, .fs-table td { text-align: left; }
-.fs-table .num { text-align: right; }
+.fst-table { min-width: 560px; }
+.fst-table th, .fst-table td { text-align: left; }
+.fst-table .num { text-align: right; }
 
-.fs-summary { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.fs-summary-row {
+.fst-summary { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.fst-summary-row {
   display: flex; align-items: center; justify-content: space-between;
   background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
   padding: 12px 16px;
 }
-.fs-summary-row.emphasize { background: #0f172a; border-color: #0f172a; }
-.fs-summary-label { font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em; color: #334155; text-transform: uppercase; }
-.fs-summary-row.emphasize .fs-summary-label { color: #fff; }
-.fs-summary-value { font-size: 15px; font-weight: 700; color: #047857; font-variant-numeric: tabular-nums; }
-.fs-summary-value.red { color: #dc2626; }
-.fs-summary-row.emphasize .fs-summary-value { color: #fff; }
+.fst-summary-row.emphasize { background: #0f172a; border-color: #0f172a; }
+.fst-summary-label { font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em; color: #334155; text-transform: uppercase; }
+.fst-summary-row.emphasize .fst-summary-label { color: #fff; }
+.fst-summary-value { font-size: 15px; font-weight: 700; color: #047857; font-variant-numeric: tabular-nums; }
+.fst-summary-value.red { color: #dc2626; }
+.fst-summary-row.emphasize .fst-summary-value { color: #fff; }
 
-.fs-note {
+.fst-note {
   display: flex; align-items: flex-start; gap: 7px;
   margin: 14px 0 0; padding: 10px 14px;
   background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px;
