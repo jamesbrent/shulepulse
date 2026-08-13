@@ -1260,7 +1260,7 @@ export default function AccountsPayablePage({ initialTab }) {
                 </div>
                 <div className="prl-detail-card">
                   <h4>Accounts</h4>
-                  <div className="prl-detail-item"><span>Debit</span><strong>{p.payment_type === 'direct' ? accountName(p.expense_account_id) : accountName(d?.config?.defaults?.ap_account ? d.accountOf?.[d.config.defaults.ap_account]?.id : p.payment_account_id)}</strong></div>
+                  <div className="prl-detail-item"><span>Debit</span><strong>{p.payment_type === 'direct' ? accountName(p.expense_account_id) : accountName(d?.config?.defaults?.ap_account ? d.accountByCode?.[d.config.defaults.ap_account]?.id : p.payment_account_id)}</strong></div>
                   <div className="prl-detail-item"><span>Disbursed from</span><strong>{accountName(p.payment_account_id)}</strong></div>
                   <div className="prl-detail-item"><span>Amount</span><strong style={{ color: '#16a34a' }}>{fmt(p.amount)}</strong></div>
                 </div>

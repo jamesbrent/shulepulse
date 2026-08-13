@@ -13,6 +13,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { fmt, fmtDate, fmtDateTime, downloadFile, TERMS, YEARS } from '../admin/fees/utils/feesHelpers'
 import { generateReceiptPdf } from '../admin/fees/utils/generateReceiptPdf'
+import { postFeePaymentToGL, reverseJournal } from './cashBankUtils'
 import './Payments.css'
 
 const METHODS = ['all', 'mpesa', 'bank', 'cash', 'mobile_money', 'cheque']
@@ -183,6 +184,22 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
       reference_id: payData.id,
     })
 
+    try {
+      await postFeePaymentToGL(supabase, {
+        schoolId: profile.school_id,
+        userId: profile.id,
+        payment: { ...payData, student: payForm.student, student_name: payForm.student.full_name },
+        method: payForm.payment_type,
+      })
+    } catch (glErr) {
+      setToast({ type: 'error', msg: `Payment recorded but GL posting failed: ${glErr.message}` })
+      setSaving(false)
+      setShowPayModal(false)
+      setPayForm(BLANK_PAY(currentTerm, currentYear))
+      load()
+      return
+    }
+
     setSaving(false)
     setShowPayModal(false)
     setPayForm(BLANK_PAY(currentTerm, currentYear))
@@ -309,6 +326,16 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
     if (error) {
       setToast({ type: 'error', msg: 'Failed to reverse payment.' })
     } else {
+      if (payment.journal_entry_id) {
+        try {
+          const { data: je } = await supabase.from('journal_entries').select('*').eq('id', payment.journal_entry_id).single()
+          if (je && je.status === 'posted') {
+            await reverseJournal(supabase, { schoolId: profile.school_id, userId: profile.id, entry: je })
+          }
+        } catch {
+          setToast({ type: 'error', msg: 'Payment reversed but GL reversal failed.' })
+        }
+      }
       setToast({ type: 'success', msg: 'Payment reversed successfully.' })
       setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, cheque_status: 'reversed' } : p))
     }

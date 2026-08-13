@@ -1,0 +1,16 @@
+/* ─── Cash & Bank / Treasury ─────────────────────────────────────────── */
+
+.cb-card-title { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #374151; }
+
+.cb-link {
+  background: none; border: none; padding: 0; font-size: 13px; font-weight: 600;
+  color: #2563eb; cursor: pointer; text-align: left;
+}
+.cb-link:hover { text-decoration: underline; }
+
+.cb-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; text-transform: capitalize; white-space: nowrap;
+}
+
+.cb-stmt-kpi { display: flex; gap: 8px; flex-wrap: wrap; }

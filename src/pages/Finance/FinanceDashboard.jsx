@@ -3,7 +3,7 @@ import {
   LayoutDashboard, DollarSign, CreditCard, Receipt, FileText,
   BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare, Menu, X,
   BookOpen, Columns3, Archive, Wallet, Banknote, Wrench, Scale,
-  GraduationCap, ChevronDown, Construction, Building2
+  GraduationCap, ChevronDown, Construction, Building2, Landmark, ArrowLeftRight
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -32,6 +32,9 @@ import AccountsPayablePage from './AccountsPayable'
 import './AccountsPayable.css'
 import ExpensesPage from './Expenses'
 import './Expenses.css'
+import CashBankPage from './CashBank'
+import './CashBank.css'
+import { computeAccountBalances, cashSummary } from './cashBankUtils'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
@@ -63,7 +66,15 @@ const NAV_SECTIONS = [
           { key: 'accounting:accounts', label: 'Chart of Accounts', icon: <Columns3 size={15} />, page: 'accounting', tab: 'accounts' },
           { key: 'accounting:journal', label: 'Journals', icon: <BookOpen size={15} />, page: 'accounting', tab: 'journal' },
           { key: 'accounting:expenses', label: 'Expenses', icon: <Receipt size={15} />, page: 'expenses', tab: 'dashboard' },
-          { key: 'accounting:bank', label: 'Bank Reconciliation', icon: <Scale size={15} />, page: 'coming-soon' },
+          { key: 'accounting:bank', label: 'Bank Reconciliation', icon: <Scale size={15} />, page: 'cash_bank', tab: 'reconciliation' },
+        ],
+      },
+      {
+        key: 'treasury', label: 'Cash & Bank', icon: <Landmark size={15} />,
+        items: [
+          { key: 'treasury:dashboard', label: 'Cash & Bank Dashboard', icon: <Landmark size={15} />, page: 'cash_bank', tab: 'dashboard' },
+          { key: 'treasury:transfers', label: 'Transfers', icon: <ArrowLeftRight size={15} />, page: 'cash_bank', tab: 'transfers' },
+          { key: 'treasury:reconciliation', label: 'Reconciliation', icon: <Scale size={15} />, page: 'cash_bank', tab: 'reconciliation' },
         ],
       },
       {
@@ -146,6 +157,7 @@ export default function FinanceDashboard() {
     totalTransactions: 0,
   })
   const [recentPayments, setRecentPayments] = useState([])
+  const [cashStats, setCashStats] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -187,6 +199,21 @@ export default function FinanceDashboard() {
     })
 
     const enriched = await enrichWithStaffNames(recentRes.data || [])
+
+    const [accRes, lineRes] = await Promise.all([
+      supabase
+        .from('chart_of_accounts')
+        .select('*')
+        .eq('school_id', schoolId)
+        .eq('type', 'asset'),
+      supabase
+        .from('journal_entry_lines')
+        .select('*, journal_entries!inner(status, entry_date)')
+        .order('created_at', { ascending: true }),
+    ])
+    const cashAccounts = (accRes.data || []).filter((a) => (a.category || '').toLowerCase() === 'cash & bank')
+    const postedLines = (lineRes.data || []).filter((l) => l.journal_entries?.status === 'posted')
+    setCashStats(cashSummary(computeAccountBalances(cashAccounts, postedLines)))
 
     setStats({
       totalCollected: totalPaid,
@@ -237,6 +264,7 @@ export default function FinanceDashboard() {
       case 'assets': return <AssetsPage initialTab={activeItem.tab} />
       case 'payroll': return <PayrollPage initialTab={activeItem.tab} />
       case 'accounts_payable': return <AccountsPayablePage initialTab={activeItem.tab} />
+      case 'cash_bank': return <CashBankPage initialTab={activeItem.tab} />
       case 'expenses': return <ExpensesPage initialTab={activeItem.tab} openExpenseId={openExpenseId} onOpenExpenseDone={() => setOpenExpenseId(null)} />
       case 'reports': return <ReportsPage initialTab={activeItem.tab} />
       case 'notices': return <NoticesPage profile={authProfile} />
@@ -265,6 +293,32 @@ export default function FinanceDashboard() {
             </div>
           ))}
         </div>
+
+        {cashStats && (
+          <div className="b-admin-card" style={{ marginBottom: 16 }}>
+            <div className="b-card-header">
+              <h3>Cash &amp; Bank Positions</h3>
+              <button className="b-view-all" onClick={() => go({ key: 'treasury:dashboard', label: 'Cash & Bank Dashboard', page: 'cash_bank', tab: 'dashboard' })}>
+                Manage <ChevronRight size={14} />
+              </button>
+            </div>
+            <div className="cb-stmt-kpi" style={{ gap: 12 }}>
+              {[
+                { label: 'Cash', value: fmt(cashStats.cash), color: '#16a34a' },
+                { label: 'Bank', value: fmt(cashStats.bank), color: '#2563eb' },
+                { label: 'Mobile Money', value: fmt(cashStats.mobileMoney), color: '#7c3aed' },
+                { label: 'Fixed Deposits', value: fmt(cashStats.fixedDeposit), color: '#d97706' },
+                { label: 'Total Cash & Bank', value: fmt(cashStats.total), color: '#0f172a' },
+                { label: 'Available Funds', value: fmt(cashStats.available), color: '#047857' },
+              ].map((s) => (
+                <div className="b-stat-card" key={s.label} style={{ flex: '1 1 150px' }}>
+                  <p className="b-stat-label">{s.label}</p>
+                  <p className="b-stat-value" style={{ color: s.color, fontSize: 18 }}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="b-admin-grid">
           <div className="b-admin-card">
