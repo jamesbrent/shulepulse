@@ -132,7 +132,7 @@ const NAV_SECTIONS = [
   },
 ]
 
-const DEFAULT_OPEN = []
+const DEFAULT_OPEN = null
 
 const ComingSoon = ({ title }) => (
   <div className="b-coming-soon">
@@ -147,7 +147,7 @@ export default function FinanceDashboard() {
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
   const [activeItem, setActiveItem] = useState(DASHBOARD_ITEM)
-  const [openGroups, setOpenGroups] = useState(new Set(DEFAULT_OPEN))
+  const [openGroup, setOpenGroup] = useState(DEFAULT_OPEN)
   const [openRecordPayment, setOpenRecordPayment] = useState(false)
   const [openExpenseId, setOpenExpenseId] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -241,16 +241,25 @@ export default function FinanceDashboard() {
     return payments.map((p) => ({ ...p, staff_name: staffMap[p.received_by] || '—' }))
   }
 
+  // Which sidebar group holds a given item (for auto-expanding on navigation).
+  const groupOfItem = (key) => {
+    for (const section of NAV_SECTIONS) {
+      for (const group of section.groups) {
+        if (group.items.some((i) => i.key === key)) return group
+      }
+    }
+    return null
+  }
+
   const go = (item) => {
     setActiveItem(item)
     setMobileOpen(false)
+    const group = groupOfItem(item.key)
+    if (group) setOpenGroup(group.key)
   }
 
   const toggleGroup = (key) => {
-    const next = new Set(openGroups)
-    if (next.has(key)) next.delete(key)
-    else next.add(key)
-    setOpenGroups(next)
+    setOpenGroup((prev) => (prev === key ? null : key))
   }
 
   const handleLogout = async () => {
@@ -426,7 +435,7 @@ export default function FinanceDashboard() {
             <div className="b-nav-section" key={section.label}>
               <p className="b-nav-section-label">{section.label}</p>
               {section.groups.map((group) => {
-                const open = openGroups.has(group.key)
+                const open = openGroup === group.key
                 const activeInGroup = group.items.some((i) => activeItem.key === i.key)
                 return (
                   <div className="b-nav-group" key={group.key}>
