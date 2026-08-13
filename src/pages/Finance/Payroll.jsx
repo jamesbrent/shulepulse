@@ -112,7 +112,7 @@ export default function PayrollPage({ initialTab }) {
         .eq('school_id', schoolId)
       const { data: reqRes } = await supabase
         .from('payroll_payment_requests')
-        .select('*, payroll_runs(run_label)')
+        .select('*, payroll_runs(run_label, journal_entry_id)')
         .eq('school_id', schoolId)
         .order('created_at', { ascending: false })
       const { data: coaRes } = await supabase
@@ -362,12 +362,13 @@ export default function PayrollPage({ initialTab }) {
 
   const postRun = async (run) => {
     try {
-      if (run.journal_entry_id || run.status === 'posted') return showToast('Run already posted to the GL', false)
+      if (run.journal_entry_id) return showToast('Run already posted to the GL', false)
       const { data: lines } = await supabase.from('payroll_lines').select('*').eq('run_id', run.id)
       if (!lines?.length) return showToast('Nothing to post — calculate the run first', false)
       const je = await postPayrollJournal(supabase, { schoolId, userId, runId: run.id, entryDate: TODAY, lines })
+      const nextStatus = run.status === 'paid' ? 'paid' : 'posted'
       const { error } = await supabase.from('payroll_runs').update({
-        status: 'posted', journal_entry_id: je.id, posted_by: userId, posted_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        status: nextStatus, journal_entry_id: je.id, posted_by: userId, posted_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq('id', run.id)
       if (error) throw error
       showToast(`Journal ${je.entry_no} posted`)
@@ -403,6 +404,9 @@ export default function PayrollPage({ initialTab }) {
   }
 
   const advanceRequest = async (req, nextStatus, extra = {}) => {
+    if (nextStatus === 'approved' && !req.payroll_runs?.journal_entry_id) {
+      return showToast('Post the payroll run to the General Ledger before approving its payment', false)
+    }
     const { error } = await supabase.from('payroll_payment_requests').update({
       status: nextStatus, ...extra, updated_at: new Date().toISOString(),
     }).eq('id', req.id)
@@ -647,6 +651,7 @@ export default function PayrollPage({ initialTab }) {
                         )}
                         {run.status === 'approved' && <button className="prl-btn-primary" onClick={() => postRun(run)}>Post to GL</button>}
                         {run.status === 'posted' && <button className="prl-btn-primary" onClick={() => openPaymentModal(run)}>Initiate Payment</button>}
+                        {['posted', 'paid'].includes(run.status) && !run.journal_entry_id && <button className="prl-btn-primary" onClick={() => postRun(run)}>Post to GL</button>}
                         {run.status === 'paid' && <span className="prl-paid-note"><CheckCircle size={14} /> Paid</span>}
                         <button className="prl-btn-secondary" onClick={() => exportRun(run)}>CSV</button>
                         <button className="prl-btn-ghost" onClick={() => setSelectedRun(selectedRun?.id === run.id ? null : run)}>
@@ -654,6 +659,11 @@ export default function PayrollPage({ initialTab }) {
                         </button>
                       </div>
                     </div>
+                    {['posted', 'paid'].includes(run.status) && !run.journal_entry_id && (
+                      <div className="prl-run-warn">
+                        <AlertTriangle size={13} /> Not in the General Ledger — the payroll journal was never posted. Click <strong>Post to GL</strong> to book the payroll expense and liabilities.
+                      </div>
+                    )}
                     {selectedRun?.id === run.id && (
                       <div className="prl-run-detail">
                         <table className="prl-table">
