@@ -47,7 +47,6 @@ const isLast = (cols, i) => i === cols.length - 1
 export async function generateFinancialStatementPdf({ school, title, periodLabel, sections, summary = [], note }) {
   const doc = new jsPDF('portrait', 'mm', 'a4')
   const schoolName = school?.name || 'ShulePulse'
-  const contact = [school?.address, school?.phone, school?.email].filter(Boolean).join('  ·  ')
   const logo = await loadLogoBase64(school).catch(() => null)
 
   const drawFooter = (pageNumber) => {
@@ -64,50 +63,36 @@ export async function generateFinancialStatementPdf({ school, title, periodLabel
   doc.setFillColor(...CHARCOAL)
   doc.rect(0, 0, PAGE_W, 9, 'F')
 
-  // Logo on the left, school name + contact to its RIGHT so nothing collides.
-  const hasLogo = Boolean(logo && logo.dataUrl)
-  const aspect = logo?.aspectRatio || 1
-  const rawH = 20 / aspect
-  const scale = rawH > 22 ? 22 / rawH : 1
-  const logoW = 20 * scale
-  const logoH = rawH * scale
-  const textX = hasLogo ? MARGIN + logoW + 8 : MARGIN
-  const nameY = hasLogo ? 31 : 25
-  const contactY = nameY + 5
-  const maxTextW = CENTER - textX - 8
-
-  if (hasLogo) {
+  // School logo, top-left (kept small; the name below is centered so it never collides).
+  if (logo && logo.dataUrl) {
+    const aspect = logo.aspectRatio || 1
+    const rawH = 18 / aspect
+    const scale = rawH > 20 ? 20 / rawH : 1
     try {
-      doc.addImage(logo.dataUrl, 'PNG', MARGIN, nameY - 12, logoW, logoH)
+      doc.addImage(logo.dataUrl, 'PNG', MARGIN, 23, 18 * scale, rawH * scale)
     } catch { /* ignore */ }
   }
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
+  doc.setFontSize(14)
   doc.setTextColor(...TEXT_DARK)
-  doc.text(schoolName, textX, nameY, { maxWidth: maxTextW })
-  if (contact) {
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(8)
-    doc.setTextColor(...TEXT_MUTED)
-    doc.text(contact, textX, contactY, { maxWidth: maxTextW })
-  }
+  doc.text(schoolName, CENTER, 31, { align: 'center' })
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
   doc.setTextColor(...TEXT_DARK)
-  doc.text(title, CENTER, 46, { align: 'center' })
+  doc.text(title, CENTER, 40, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
-  doc.setTextColor(...TEXT_DARK)
-  doc.text(periodLabel, CENTER, 53, { align: 'center' })
+  doc.setTextColor(...TEXT_MUTED)
+  doc.text(periodLabel, CENTER, 48, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
   doc.setTextColor(...TEXT_MUTED)
-  doc.text(`Currency: Kenya Shillings (KES)`, MARGIN, 60)
-  doc.text(fmtLong(new Date().toISOString()), PAGE_W - MARGIN, 60, { align: 'right' })
+  doc.text(`Currency: Kenya Shillings (KES)`, MARGIN, 56)
+  doc.text(fmtLong(new Date().toISOString()), PAGE_W - MARGIN, 56, { align: 'right' })
 
   doc.setDrawColor(...BORDER)
   doc.setLineWidth(0.4)
