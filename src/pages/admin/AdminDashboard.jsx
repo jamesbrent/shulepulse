@@ -3,7 +3,7 @@ import './FeesPage.css'
 import { useState, useEffect, useCallback } from 'react'
 import {
   LayoutDashboard, Users, DollarSign, ClipboardList,
-  BarChart2, GraduationCap, Palette, Settings, LogOut,
+  BarChart2, BarChart3, GraduationCap, Palette, Settings, LogOut,
   Upload, UserPlus, UserCheck, ChevronRight, Calendar, MessageSquare, Shield, Archive,
   FileCheck, TrendingUp, FileText, Award, BookOpen, Star,
   ChevronDown, Menu, X, UserCircle, Receipt, CreditCard,
@@ -82,6 +82,8 @@ import AssetsPage from '../Finance/Assets'
 import '../Finance/Assets.css'
 import FinanceReportsPage from '../Finance/Reports'
 import '../Finance/Reports.css'
+import FinancialStatementsPage from '../Finance/FinancialStatements'
+import '../Finance/FinancialStatements.css'
 
 const STORAGE_KEY = 'admin_sidebar_expanded'
 
@@ -128,6 +130,7 @@ const NAV_GROUPS = [
       { key: 'payroll', label: 'Payroll', icon: <Wallet size={14} /> },
       { key: 'ap', label: 'Accounts Payable', icon: <Receipt size={14} /> },
       { key: 'finance_reports', label: 'Finance Reports', icon: <BarChart2 size={14} /> },
+      { key: 'financial_statements', label: 'Financial Statements', icon: <BarChart3 size={14} /> },
     ],
   },
   {
@@ -192,6 +195,7 @@ const pageTitles = {
   cash_bank: 'Cash & Bank',
   assets: 'Assets',
   finance_reports: 'Finance Reports',
+  financial_statements: 'Financial Statements',
 }
 
 const QUICK_ACTIONS = [
@@ -431,6 +435,7 @@ export default function AdminDashboard() {
       case 'payroll':        return <PayrollPage />
       case 'ap':             return <AccountsPayablePage />
       case 'finance_reports': return <FinanceReportsPage />
+      case 'financial_statements': return <FinancialStatementsPage />
       case 'attendance':     return <AttendancePage />
       case 'grades':         return <GradesPage />
       case 'teachers':       return <TeachersPage />

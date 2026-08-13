@@ -24,6 +24,8 @@ import ReportsPage from './Reports'
 import './Reports.css'
 import AccountingPage from './Accounting'
 import './Accounting.css'
+import FinancialStatementsPage from './FinancialStatements'
+import './FinancialStatements.css'
 import AssetsPage from './Assets'
 import './Assets.css'
 import PayrollPage from './Payroll'
@@ -109,7 +111,7 @@ const NAV_SECTIONS = [
       {
         key: 'reports', label: 'Reports', icon: <BarChart3 size={15} />,
         items: [
-          { key: 'reports:financial', label: 'Financial Reports', icon: <BarChart3 size={15} />, page: 'coming-soon' },
+          { key: 'reports:financial', label: 'Financial Statements', icon: <BarChart3 size={15} />, page: 'financial_statements' },
           { key: 'reports:fee', label: 'Fee Collection', icon: <DollarSign size={15} />, page: 'reports', tab: 'overview' },
           { key: 'reports:expense', label: 'Expense Reports', icon: <Receipt size={15} />, page: 'expenses', tab: 'reports' },
           { key: 'reports:payroll', label: 'Payroll Reports', icon: <Wallet size={15} />, page: 'coming-soon' },
@@ -281,6 +283,7 @@ export default function FinanceDashboard() {
       case 'cash_bank': return <CashBankPage initialTab={activeItem.tab} />
       case 'expenses': return <ExpensesPage initialTab={activeItem.tab} openExpenseId={openExpenseId} onOpenExpenseDone={() => setOpenExpenseId(null)} />
       case 'reports': return <ReportsPage initialTab={activeItem.tab} />
+      case 'financial_statements': return <FinancialStatementsPage />
       case 'notices': return <NoticesPage profile={authProfile} />
       case 'support': return <SchoolSupportPage />
       case 'coming-soon': return <ComingSoon title={activeItem.label} />
