@@ -362,6 +362,7 @@ export default function PayrollPage({ initialTab }) {
 
   const postRun = async (run) => {
     try {
+      if (run.journal_entry_id || run.status === 'posted') return showToast('Run already posted to the GL', false)
       const { data: lines } = await supabase.from('payroll_lines').select('*').eq('run_id', run.id)
       if (!lines?.length) return showToast('Nothing to post — calculate the run first', false)
       const je = await postPayrollJournal(supabase, { schoolId, userId, runId: run.id, entryDate: TODAY, lines })
@@ -415,6 +416,7 @@ export default function PayrollPage({ initialTab }) {
 
   const postRequest = async (req) => {
     try {
+      if (req.journal_entry_id || req.status === 'posted') return showToast('Payment already posted to the GL', false)
       const { map } = await resolveAccountMap(supabase, schoolId)
       const wagesId = map.net_pay
       const bankId = map.bank

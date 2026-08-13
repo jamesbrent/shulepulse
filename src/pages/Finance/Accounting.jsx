@@ -23,7 +23,7 @@ const STATUS_META = {
 }
 const SOURCE_META = {
   manual: 'Manual', fees: 'Fees', payroll: 'Payroll', assets: 'Assets',
-  ap: 'Accounts Payable', expenses: 'Expenses', refund: 'Refund', budget: 'Budget',
+  ap: 'Accounts Payable', expenses: 'Expenses', refund: 'Refund', budget: 'Budget', transfer: 'Transfer',
 }
 
 const emptyLine = () => ({ account_id: '', debit: '', credit: '', notes: '' })

@@ -412,6 +412,7 @@ export function suggestMatches(imported, glLines) {
 // ─── Fee payment → GL (so Treasury reflects student receipts) ─────────────
 // Dr <Bank/M-Pesa/Cash> | Cr <Student Fee Receivables>.
 export async function postFeePaymentToGL(supabase, { schoolId, userId, payment, method }) {
+  if (payment?.journal_entry_id) return null
   await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030', '1110'])
   const code = METHOD_ACCOUNT_CODE[method] || '1020'
   const { data: accs } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).in('code', [code, '1110'])
@@ -432,6 +433,35 @@ export async function postFeePaymentToGL(supabase, { schoolId, userId, payment, 
   })
   await supabase.from('fee_payments').update({ journal_entry_id: je.id }).eq('id', payment.id)
   await writeAudit(supabase, { schoolId, action: 'fee_payment_posted', details: { payment_id: payment.id, receipt: payment.receipt_number, amount, journal_id: je.id } })
+  return je
+}
+
+// ─── Fee assessment → GL (receivable accrual + fee income recognition) ────
+// Dr <Student Fee Receivables> | Cr <Fee Income> at billing time. Payments
+// later clear the receivable (see postFeePaymentToGL), so the receivable
+// always equals assessed − collected.
+export async function postFeeAssessmentToGL(supabase, { schoolId, userId, assessment, studentName }) {
+  if (assessment?.journal_entry_id) return null
+  await ensureAccounts(supabase, schoolId, ['1110', '4010'])
+  const { data: accs } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).in('code', ['1110', '4010'])
+  const recv = (accs || []).find((a) => a.code === '1110')
+  const income = (accs || []).find((a) => a.code === '4010')
+  if (!recv || !income) throw new Error('Receivable / fee income account missing from the chart')
+  const amount = toNum(assessment.amount_due)
+  const category = assessment.fee_structures?.fee_categories?.name || 'Fees'
+  const name = studentName || 'Student'
+  const je = await postToJournal(supabase, {
+    schoolId, userId,
+    entry_date: assessment.created_at ? assessment.created_at.split('T')[0] : today(),
+    description: `Fee assessment — ${category} — ${name}`.trim(),
+    source: 'fees', reference_type: 'fee_assessment', reference_id: assessment.id,
+    lines: [
+      { account_id: recv.id, debit: amount, credit: 0, notes: `Billed ${category} — ${name}` },
+      { account_id: income.id, debit: 0, credit: amount, notes: `Fee income — ${category}` },
+    ],
+  })
+  await supabase.from('fee_assessments').update({ journal_entry_id: je.id }).eq('id', assessment.id)
+  await writeAudit(supabase, { schoolId, action: 'fee_assessment_posted', details: { assessment_id: assessment.id, amount, journal_id: je.id } })
   return je
 }
 

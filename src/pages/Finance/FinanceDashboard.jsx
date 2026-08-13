@@ -306,8 +306,8 @@ export default function FinanceDashboard() {
               {[
                 { label: 'Cash', value: fmt(cashStats.cash), color: '#16a34a' },
                 { label: 'Bank', value: fmt(cashStats.bank), color: '#2563eb' },
-                { label: 'Mobile Money', value: fmt(cashStats.mobileMoney), color: '#7c3aed' },
-                { label: 'Fixed Deposits', value: fmt(cashStats.fixedDeposit), color: '#d97706' },
+                { label: 'Mobile Money', value: fmt(cashStats.mobile), color: '#7c3aed' },
+                { label: 'Fixed Deposits', value: fmt(cashStats.fixed), color: '#d97706' },
                 { label: 'Total Cash & Bank', value: fmt(cashStats.total), color: '#0f172a' },
                 { label: 'Available Funds', value: fmt(cashStats.available), color: '#047857' },
               ].map((s) => (

@@ -336,6 +336,20 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
           setToast({ type: 'error', msg: 'Payment reversed but GL reversal failed.' })
         }
       }
+      try {
+        if (payment.student_id && payment.term && payment.year) {
+          await supabase.from('student_ledger').insert({
+            school_id: profile.school_id,
+            student_id: payment.student_id,
+            entry_type: 'payment',
+            amount: -Number(payment.amount),
+            term: payment.term,
+            year: parseInt(payment.year),
+            description: `Reversal of payment ${payment.receipt_number || ''}`,
+            reference_id: payment.id,
+          })
+        }
+      } catch { /* ledger stays in sync via GL */ }
       setToast({ type: 'success', msg: 'Payment reversed successfully.' })
       setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, cheque_status: 'reversed' } : p))
     }

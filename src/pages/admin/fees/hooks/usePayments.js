@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
+import { useAuthStore } from '../../../../store/authStore'
+import { postFeeAssessmentToGL, postFeePaymentToGL } from '../../../Finance/cashBankUtils'
 
 export function usePayments(schoolId, term, year) {
+  const { profile } = useAuthStore()
   const [students,       setStudents]       = useState([])
   const [selected,       setSelected]       = useState(null)
   const [ledger,         setLedger]         = useState([])
@@ -147,6 +150,22 @@ export function usePayments(schoolId, term, year) {
           }))
 
           await supabase.from('student_ledger').insert(ledgerCharges)
+
+          // ── GL accrual: Dr Receivables | Cr Fee Income at billing time.
+          // Non-fatal — a finance role is required to write the ledger, so
+          // assessment generation must never fail because the GL is missing.
+          if (profile?.id) {
+            for (const a of inserted) {
+              try {
+                await postFeeAssessmentToGL(supabase, {
+                  schoolId,
+                  userId: profile.id,
+                  assessment: a,
+                  studentName: student.full_name,
+                })
+              } catch { /* GL unavailable for this role — backfill covers later */ }
+            }
+          }
 
           // Re-fetch fresh ledger now that charges exist
           const { data: freshLedger } = await supabase
@@ -332,6 +351,20 @@ export function usePayments(schoolId, term, year) {
 
     setSaving(false)
     const studentObj = studentOverride || selected
+
+    // ── GL posting: Dr <Cash/Bank/M-Pesa> | Cr <Receivables> so Treasury
+    // reflects every receipt. Non-fatal — requires a finance role.
+    if (!payData.journal_entry_id) {
+      try {
+        await postFeePaymentToGL(supabase, {
+          schoolId,
+          userId: profileId,
+          payment: { ...payData, student_name: studentObj?.full_name },
+          method: resolvedType,
+        })
+      } catch { /* GL unavailable for this role — backfill covers later */ }
+    }
+
     if (studentObj) await selectStudent(studentObj)
     return { ...payData, student: studentObj, receipt, receipt_number: receiptNumber }
   }

@@ -409,7 +409,7 @@ export default function AssetsPage({ initialTab }) {
             schoolId, userId,
             entry_date: assetForm.purchase_date || TODAY,
             description: `Acquire ${newAsset.name} (${assetId}) — ${assetForm.acquisition_source}`,
-            source: 'fixed_assets', reference_type: 'fixed_asset', reference_id: newAsset.id,
+            source: 'assets', reference_type: 'fixed_asset', reference_id: newAsset.id,
             lines: [
               { account_id: glDrAcc.id, debit: cost, credit: 0, notes: `Fixed asset ${assetId}` },
               { account_id: glCrAccId, debit: 0, credit: cost, notes: crAcc?.name || '' },
