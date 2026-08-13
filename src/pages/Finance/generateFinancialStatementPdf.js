@@ -63,13 +63,13 @@ export async function generateFinancialStatementPdf({ school, title, periodLabel
   doc.setFillColor(...CHARCOAL)
   doc.rect(0, 0, PAGE_W, 9, 'F')
 
-  // School logo, top-left (kept small; the name below is centered so it never collides).
+  // School logo, top-left (kept proportional; the name below is centered so it never collides).
   if (logo && logo.dataUrl) {
     const aspect = logo.aspectRatio || 1
-    const rawH = 18 / aspect
-    const scale = rawH > 20 ? 20 / rawH : 1
+    const rawH = 30 / aspect
+    const scale = rawH > 26 ? 26 / rawH : 1
     try {
-      doc.addImage(logo.dataUrl, 'PNG', MARGIN, 23, 18 * scale, rawH * scale)
+      doc.addImage(logo.dataUrl, 'PNG', MARGIN, 22, 30 * scale, rawH * scale)
     } catch { /* ignore */ }
   }
 
