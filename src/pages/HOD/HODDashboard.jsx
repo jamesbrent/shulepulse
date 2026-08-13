@@ -102,15 +102,15 @@ export default function HODDashboard() {
   }
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'exam_setup', label: 'Exam Setup', icon: <Settings size={18} /> },
-    { key: 'marks_approval', label: 'Marks Approval', icon: <ShieldCheck size={18} /> },
-    { key: 'analytics', label: 'Performance Analytics', icon: <BarChart2 size={18} /> },
-    { key: 'reports', label: 'Reports & Results', icon: <FileBarChart size={18} /> },
-    { key: 'teacher_review', label: 'Teacher Review', icon: <GraduationCap size={18} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
-    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'exam_setup', label: 'Exam Setup', icon: <Settings size={16} /> },
+    { key: 'marks_approval', label: 'Marks Approval', icon: <ShieldCheck size={16} /> },
+    { key: 'analytics', label: 'Performance Analytics', icon: <BarChart2 size={16} /> },
+    { key: 'reports', label: 'Reports & Results', icon: <FileBarChart size={16} /> },
+    { key: 'teacher_review', label: 'Teacher Review', icon: <GraduationCap size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
   ]
 
   const handleLogout = async () => {

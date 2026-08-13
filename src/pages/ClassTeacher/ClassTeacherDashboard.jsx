@@ -117,14 +117,14 @@ export default function ClassTeacherDashboard() {
   }
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'attendance', label: 'Class Attendance', icon: <ClipboardList size={18} /> },
-    { key: 'performance', label: 'Performance Tracker', icon: <BarChart3 size={18} /> },
-    { key: 'comments', label: 'Class Comments', icon: <MessageSquare size={18} /> },
-    { key: 'communication', label: 'Parent Communication', icon: <Phone size={18} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
-    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'attendance', label: 'Class Attendance', icon: <ClipboardList size={16} /> },
+    { key: 'performance', label: 'Performance Tracker', icon: <BarChart3 size={16} /> },
+    { key: 'comments', label: 'Class Comments', icon: <MessageSquare size={16} /> },
+    { key: 'communication', label: 'Parent Communication', icon: <Phone size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
   ]
 
   const handleLogout = async () => {

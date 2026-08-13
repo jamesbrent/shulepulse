@@ -37,15 +37,15 @@ export default function LibrarianDashboard() {
   }, [])
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'catalogue', label: 'Book Catalogue', icon: <BookOpen size={18} /> },
-    { key: 'borrow', label: 'Borrow / Return', icon: <ArrowLeftRight size={18} /> },
-    { key: 'members', label: 'Members', icon: <Users size={18} /> },
-    { key: 'overdue', label: 'Overdue', icon: <Clock size={18} /> },
-    { key: 'reservations', label: 'Reservations', icon: <BookMarked size={18} /> },
-    { key: 'fines', label: 'Fines', icon: <Receipt size={18} /> },
-    { key: 'management', label: 'Management', icon: <Settings size={18} /> },
-    { key: 'reports', label: 'Reports', icon: <BarChart3 size={18} /> },
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'catalogue', label: 'Book Catalogue', icon: <BookOpen size={16} /> },
+    { key: 'borrow', label: 'Borrow / Return', icon: <ArrowLeftRight size={16} /> },
+    { key: 'members', label: 'Members', icon: <Users size={16} /> },
+    { key: 'overdue', label: 'Overdue', icon: <Clock size={16} /> },
+    { key: 'reservations', label: 'Reservations', icon: <BookMarked size={16} /> },
+    { key: 'fines', label: 'Fines', icon: <Receipt size={16} /> },
+    { key: 'management', label: 'Management', icon: <Settings size={16} /> },
+    { key: 'reports', label: 'Reports', icon: <BarChart3 size={16} /> },
   ]
 
   const handleLogout = async () => {

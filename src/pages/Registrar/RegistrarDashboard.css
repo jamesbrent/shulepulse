@@ -69,6 +69,18 @@
 .reg-nav-item:hover { background: #1e293b; color: #f1f5f9; }
 .reg-nav-item.active { background: #2563eb; color: #fff; }
 .reg-nav-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* ── Compact sidebar (matches admin / finance sizing) ── */
+.reg-sidebar { padding: 14px 10px; }
+.reg-sidebar-brand { font-size: 14px; margin-bottom: 12px; padding: 0 10px; }
+.reg-sidebar-logo { width: 28px; height: 28px; border-radius: 7px; font-size: 11px; }
+.reg-sidebar-school { padding: 8px 10px; border-radius: 8px; margin-bottom: 14px; }
+.reg-school-avatar { width: 28px; height: 28px; font-size: 11px; }
+.reg-school-name { font-size: 11.5px; }
+.reg-school-plan { font-size: 10px; }
+.reg-sidebar-nav { gap: 1px; }
+.reg-nav-item { padding: 8px 12px; font-size: 13px; font-weight: 500; border-radius: 7px; }
+.reg-logout-btn { padding: 8px 12px; font-size: 13px; }
 .reg-sidebar-footer { padding-top: 16px; border-top: 1px solid #1e293b; }
 .reg-logout-btn {
   width: 100%; padding: 10px 12px; background: transparent; border: none;

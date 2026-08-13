@@ -179,19 +179,19 @@ export default function RegistrarDashboard() {
   const fetchSchoolId = async () => authProfile?.school_id
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'admissions', label: 'Admissions', icon: <UserPlus size={18} /> },
-    { key: 'students', label: 'Students', icon: <Users size={18} /> },
-    { key: 'guardians', label: 'Parents & Guardians', icon: <Shield size={18} /> },
-    { key: 'transfers', label: 'Transfers', icon: <ArrowRight size={18} /> },
-    { key: 'promotions', label: 'Promotions & Graduation', icon: <GraduationCap size={18} /> },
-    { key: 'documents', label: 'Documents & Certificates', icon: <FileText size={18} /> },
-    { key: 'alumni', label: 'Alumni Records', icon: <GraduationCap size={18} /> },
-    { key: 'bulk-import', label: 'Bulk Import', icon: <Upload size={18} /> },
-    { key: 'archives', label: 'Archives & Alumni', icon: <Archive size={18} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
-    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'admissions', label: 'Admissions', icon: <UserPlus size={16} /> },
+    { key: 'students', label: 'Students', icon: <Users size={16} /> },
+    { key: 'guardians', label: 'Parents & Guardians', icon: <Shield size={16} /> },
+    { key: 'transfers', label: 'Transfers', icon: <ArrowRight size={16} /> },
+    { key: 'promotions', label: 'Promotions & Graduation', icon: <GraduationCap size={16} /> },
+    { key: 'documents', label: 'Documents & Certificates', icon: <FileText size={16} /> },
+    { key: 'alumni', label: 'Alumni Records', icon: <GraduationCap size={16} /> },
+    { key: 'bulk-import', label: 'Bulk Import', icon: <Upload size={16} /> },
+    { key: 'archives', label: 'Archives & Alumni', icon: <Archive size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
   ]
 
   const handleLogout = async () => {

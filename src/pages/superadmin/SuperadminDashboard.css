@@ -87,6 +87,15 @@
   flex-shrink: 0;
 }
 
+/* ── Compact sidebar (matches admin / finance sizing) ── */
+.super-sidebar { padding: 14px 10px; }
+.sidebar-brand { font-size: 14px; margin-bottom: 12px; padding: 0 10px; }
+.sidebar-logo { width: 28px; height: 28px; border-radius: 7px; font-size: 11px; }
+.super-badge { padding: 5px 10px; font-size: 11px; margin-bottom: 14px; }
+.sidebar-nav { gap: 1px; }
+.nav-item { padding: 8px 12px; font-size: 13px; font-weight: 500; border-radius: 7px; }
+.logout-btn { padding: 8px 12px; font-size: 13px; }
+
 .sidebar-footer {
   padding-top: 16px;
   border-top: 1px solid #1e293b;

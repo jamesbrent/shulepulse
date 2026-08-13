@@ -119,6 +119,18 @@
   flex-shrink: 0;
 }
 
+/* ── Compact sidebar (matches admin / finance sizing) ── */
+.da-sidebar { padding: 14px 10px; }
+.da-sidebar-brand { font-size: 14px; margin-bottom: 12px; padding: 0 10px; }
+.da-sidebar-logo { width: 28px; height: 28px; border-radius: 7px; font-size: 11px; }
+.da-sidebar-school { padding: 8px 10px; border-radius: 8px; margin-bottom: 14px; }
+.da-school-avatar { width: 28px; height: 28px; font-size: 11px; }
+.da-school-name { font-size: 11.5px; }
+.da-school-role { font-size: 10px; }
+.da-sidebar-nav { gap: 1px; }
+.da-nav-item { padding: 8px 12px; font-size: 13px; font-weight: 500; border-radius: 7px; }
+.da-logout-btn { padding: 8px 12px; font-size: 13px; }
+
 .da-sidebar-footer {
   padding-top: 16px;
   border-top: 1px solid #1e293b;

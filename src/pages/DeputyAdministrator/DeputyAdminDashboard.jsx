@@ -91,17 +91,17 @@ export default function DeputyAdminDashboard() {
   }
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'students', label: 'Students', icon: <Users size={18} /> },
-    { key: 'teachers', label: 'Teachers', icon: <GraduationCap size={18} /> },
-    { key: 'timetable', label: 'Timetable', icon: <Calendar size={18} /> },
-    { key: 'attendance', label: 'Attendance', icon: <CheckCircle size={18} /> },
-    { key: 'exams', label: 'Exams', icon: <ClipboardList size={18} /> },
-    { key: 'discipline', label: 'Discipline', icon: <ShieldAlert size={18} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
-    { key: 'cbc', label: 'CBC Competency', icon: <Award size={18} /> },
-    { key: 'library', label: 'Library', icon: <BookOpen size={18} /> },
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'students', label: 'Students', icon: <Users size={16} /> },
+    { key: 'teachers', label: 'Teachers', icon: <GraduationCap size={16} /> },
+    { key: 'timetable', label: 'Timetable', icon: <Calendar size={16} /> },
+    { key: 'attendance', label: 'Attendance', icon: <CheckCircle size={16} /> },
+    { key: 'exams', label: 'Exams', icon: <ClipboardList size={16} /> },
+    { key: 'discipline', label: 'Discipline', icon: <ShieldAlert size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
+    { key: 'cbc', label: 'CBC Competency', icon: <Award size={16} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
   ]
 
   const handleLogout = async () => {

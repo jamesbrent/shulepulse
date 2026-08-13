@@ -173,17 +173,17 @@ export default function TeacherDashboard() {
   }
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'attendance', label: 'Attendance', icon: <ClipboardList size={18} /> },
-    { key: 'grades', label: 'Grades', icon: <BarChart2 size={18} /> },
-    { key: 'timetable', label: 'Timetable', icon: <Calendar size={18} /> },
-    { key: 'myclasses', label: 'My Classes', icon: <BookOpen size={18} /> },
-    { key: 'marks', label: 'Marks Entry', icon: <BarChart2 size={18} /> },
-    { key: 'cbc', label: 'CBC Competency', icon: <Award size={18} /> },
-    { key: 'comments', label: 'Comments', icon: <MessageSquare size={18} /> },
-    { key: 'library', label: 'Library', icon: <Library size={18} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={18} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'attendance', label: 'Attendance', icon: <ClipboardList size={16} /> },
+    { key: 'grades', label: 'Grades', icon: <BarChart2 size={16} /> },
+    { key: 'timetable', label: 'Timetable', icon: <Calendar size={16} /> },
+    { key: 'myclasses', label: 'My Classes', icon: <BookOpen size={16} /> },
+    { key: 'marks', label: 'Marks Entry', icon: <BarChart2 size={16} /> },
+    { key: 'cbc', label: 'CBC Competency', icon: <Award size={16} /> },
+    { key: 'comments', label: 'Comments', icon: <MessageSquare size={16} /> },
+    { key: 'library', label: 'Library', icon: <Library size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
   ]
 
   const pageTitles = {

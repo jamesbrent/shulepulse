@@ -126,14 +126,14 @@ export default function SuperadminDashboard() {
   )
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'schools', label: 'All Schools', icon: <School size={18} /> },
-    { key: 'billing', label: 'Billing', icon: <CreditCard size={18} /> },
-    { key: 'users', label: 'Users', icon: <Users size={18} /> },
-    { key: 'audit', label: 'Audit Logs', icon: <History size={18} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={18} /> },
-    { key: 'analytics', label: 'Payments', icon: <TrendingUp size={18} /> },
-    { key: 'settings', label: 'Platform Settings', icon: <Settings size={18} /> },
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'schools', label: 'All Schools', icon: <School size={16} /> },
+    { key: 'billing', label: 'Billing', icon: <CreditCard size={16} /> },
+    { key: 'users', label: 'Users', icon: <Users size={16} /> },
+    { key: 'audit', label: 'Audit Logs', icon: <History size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
+    { key: 'analytics', label: 'Payments', icon: <TrendingUp size={16} /> },
+    { key: 'settings', label: 'Platform Settings', icon: <Settings size={16} /> },
   ]
 
   const pageTitles = {
