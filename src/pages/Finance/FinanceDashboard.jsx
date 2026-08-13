@@ -35,6 +35,7 @@ import './Expenses.css'
 import CashBankPage from './CashBank'
 import './CashBank.css'
 import { computeAccountBalances, cashSummary } from './cashBankUtils'
+import { ensureAccounts } from './accountsUtils'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
@@ -175,6 +176,10 @@ export default function FinanceDashboard() {
 
     const schoolId = profile?.school_id
     if (!schoolId) { setLoading(false); return }
+
+    try {
+      await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030', '1040', '1110'])
+    } catch { /* non-fatal — positions fall back to existing accounts */ }
 
     const [ledgerRes, recentRes] = await Promise.all([
       supabase
