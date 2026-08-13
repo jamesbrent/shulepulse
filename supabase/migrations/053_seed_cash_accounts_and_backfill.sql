@@ -117,7 +117,7 @@ BEGIN
     v_entry_no := 'JE-' || SUBSTRING(v_year::TEXT FROM 3) || '-' || LPAD(v_seq::TEXT, 5, '0');
 
     INSERT INTO journal_entries
-      (school_id, v_entry_no, entry_date, description, source, reference_type, reference_id, status, posted_at)
+      (school_id, entry_no, entry_date, description, source, reference_type, reference_id, status, posted_at)
     VALUES
       (r.school_id, v_entry_no, r.created_at::date,
        'Fee assessment — ' || COALESCE(r.student_name, 'Student'),
