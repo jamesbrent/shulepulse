@@ -464,8 +464,8 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
       <style>
         * { box-sizing: border-box; }
         body { font-family: Arial, sans-serif; color: #0f172a; margin: 32px; }
-        h1 { margin: 0; font-size: 20px; }
-        .sub { color: #64748b; font-size: 12px; margin: 2px 0 20px; }
+        h1 { margin: 0; font-size: 20px; text-align: center; }
+        .sub { color: #64748b; font-size: 12px; margin: 4px 0 20px; text-align: center; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { background: #f1f5f9; text-align: left; padding: 8px 10px; border: 1px solid #e2e8f0; }
         td { padding: 7px 10px; border: 1px solid #e2e8f0; }
@@ -474,7 +474,7 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
         tfoot td { font-weight: 700; background: #f8fafc; }
         @media print { body { margin: 0; } }
       </style></head><body>
-      <h1>SHULEPULSE — TRIAL BALANCE</h1>
+      <h1>${school?.name || 'School'} — TRIAL BALANCE</h1>
       <div class="sub">${school?.name || 'School'} · ${trialPeriodLabel} · ${school?.plan || ''}</div>
       <table>
         <thead><tr><th>Code</th><th>Account</th><th class="num">Debit (KES)</th><th class="num">Credit (KES)</th></tr></thead>
@@ -834,8 +834,8 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
             <button className="acc-btn-outline" onClick={exportTrialCSV}><Download size={14} /> Export CSV</button>
           </div>
           <div className="acc-table-card">
-            <div className="acc-table-head">
-              <h3>Trial Balance <span>· {trialPeriodLabel}</span></h3>
+            <div className="acc-table-head acc-tb-head">
+              <h3>{school?.name || 'School'} — Trial Balance <span>· {trialPeriodLabel}</span></h3>
             </div>
             <div className="acc-table-wrap">
               <table className="acc-table">
