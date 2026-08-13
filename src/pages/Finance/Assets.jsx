@@ -107,7 +107,7 @@ export default function AssetsPage({ initialTab }) {
     campus: '', building: '', department: '', room: '', specific_location: '',
   })
   const [disposeModal, setDisposeModal] = useState(null)
-  const [disposeForm, setDisposeForm] = useState({ disposal_date: TODAY, disposal_reason: '', disposal_amount: 0 })
+  const [disposeForm, setDisposeForm] = useState({ disposal_date: TODAY, disposal_reason: '', disposal_amount: 0, gl_cash_account_id: '' })
   const [maintModal, setMaintModal] = useState(false)
   const [maintForm, setMaintForm] = useState({
     asset_id: '', maintenance_date: TODAY, maintenance_type: 'preventive',
@@ -684,30 +684,80 @@ export default function AssetsPage({ initialTab }) {
 
   const openDisposeModal = (asset) => {
     setDisposeModal(asset)
-    setDisposeForm({ disposal_date: TODAY, disposal_reason: '', disposal_amount: 0 })
+    setDisposeForm({ disposal_date: TODAY, disposal_reason: '', disposal_amount: 0, gl_cash_account_id: '' })
   }
 
   const saveDispose = async () => {
     if (!disposeForm.disposal_reason.trim()) { setToast({ type: 'error', msg: 'A disposal reason is required.' }); return }
+    const asset = disposeModal
+    const cost = Number(asset?.purchase_cost || 0)
+    const accDep = Number(asset?.accumulated_depreciation || 0)
+    const proceeds = Number(disposeForm.disposal_amount) || 0
+    if (proceeds > 0 && !disposeForm.gl_cash_account_id) { setToast({ type: 'error', msg: 'Select the bank / cash account for the disposal proceeds.' }); return }
     setSaving(true)
-    await supabase.from('fixed_assets').update({
-      status: 'disposed', disposal_date: disposeForm.disposal_date || TODAY,
-      disposal_reason: disposeForm.disposal_reason.trim(), disposal_amount: Number(disposeForm.disposal_amount) || 0,
-      custodian_id: null,
-    }).eq('id', disposeModal.id)
-    await supabase.from('asset_custody_history')
-      .update({ to_date: disposeForm.disposal_date || TODAY })
-      .eq('asset_id', disposeModal.id)
-      .is('to_date', null)
-    await addAssetEvent(supabase, {
-      schoolId, assetId: disposeModal.id, eventType: 'disposed',
-      description: `Disposed (${disposeForm.disposal_reason.trim()})${disposeForm.disposal_amount ? ` — proceeds ${fmt(disposeForm.disposal_amount)}` : ''}`,
-    })
-    await writeAudit(supabase, { schoolId, action: 'assets.disposed', details: { asset_id: disposeModal.asset_id } })
-    setSaving(false)
-    setDisposeModal(null)
-    setToast({ type: 'success', msg: 'Asset disposed.' })
-    load()
+    try {
+      let journal = null
+      // Post the disposal to the GL FIRST so the asset is never marked disposed
+      // without removing it from the balance sheet:
+      //   Dr Accumulated Depreciation (removed)
+      //   Dr Bank / Cash / M-Pesa (proceeds, if any)
+      //   Dr/Cr Gain or Loss on Disposal (balancing figure)
+      //   Cr Fixed Asset (cost removed)
+      if (cost > 0) {
+        const pc = categories.find((c) => c.id === asset?.category_id)
+        const catName = pc?.name || ''
+        const assetAccCode = fixedAssetAccountCodeFor(asset, catName)
+        const { accCode } = depreciationAccountsFor(asset, catName)
+        await ensureAccounts(supabase, schoolId, [assetAccCode, accCode, '5370', '4150'])
+        const { data: accs } = await supabase.from('chart_of_accounts')
+          .select('*').eq('school_id', schoolId).in('code', [assetAccCode, accCode, '5370', '4150'])
+        const accByCode = Object.fromEntries((accs || []).map((a) => [a.code, a]))
+        const fixedAssetAcc = accByCode[assetAccCode]
+        if (!fixedAssetAcc) throw new Error(`Fixed asset account ${assetAccCode} is missing from the chart.`)
+        const resolved = resolveClassAccounts(asset, pc)
+        const accDepAcc = resolved?.accId ? accountOptions.find((a) => a.id === resolved.accId) : accByCode[accCode]
+        if (!accDepAcc) throw new Error(`Accumulated depreciation account ${accCode} is missing from the chart.`)
+        const proceedsAcc = proceeds > 0 ? accountOptions.find((a) => a.id === disposeForm.gl_cash_account_id) : null
+        const lossAcc = accByCode['5370']
+        const gainAcc = accByCode['4150']
+        if (!lossAcc || !gainAcc) throw new Error('Gain / Loss on disposal accounts are missing from the chart.')
+        const balance = cost - accDep - proceeds
+        const lines = []
+        if (accDep > 0) lines.push({ account_id: accDepAcc.id, debit: accDep, credit: 0, notes: `Accumulated depreciation removed — ${asset.asset_id}` })
+        if (proceeds > 0 && proceedsAcc) lines.push({ account_id: proceedsAcc.id, debit: proceeds, credit: 0, notes: 'Disposal proceeds' })
+        lines.push({ account_id: fixedAssetAcc.id, debit: 0, credit: cost, notes: `Asset ${asset.asset_id} removed at cost` })
+        if (balance > 0.01) lines.push({ account_id: lossAcc.id, debit: balance, credit: 0, notes: 'Loss on disposal' })
+        else if (balance < -0.01) lines.push({ account_id: gainAcc.id, debit: 0, credit: -balance, notes: 'Gain on disposal' })
+        journal = await postToJournal(supabase, {
+          schoolId, userId,
+          entry_date: disposeForm.disposal_date || TODAY,
+          description: `Dispose ${asset.name} (${asset.asset_id})${proceeds ? ` — proceeds ${fmt(proceeds)}` : ''}`,
+          source: 'assets', reference_type: 'asset_disposal', reference_id: asset.id,
+          lines,
+        })
+      }
+      await supabase.from('fixed_assets').update({
+        status: 'disposed', disposal_date: disposeForm.disposal_date || TODAY,
+        disposal_reason: disposeForm.disposal_reason.trim(), disposal_amount: proceeds,
+        custodian_id: null,
+      }).eq('id', asset.id)
+      await supabase.from('asset_custody_history')
+        .update({ to_date: disposeForm.disposal_date || TODAY })
+        .eq('asset_id', asset.id)
+        .is('to_date', null)
+      await addAssetEvent(supabase, {
+        schoolId, assetId: asset.id, eventType: 'disposed',
+        description: `Disposed (${disposeForm.disposal_reason.trim()})${proceeds ? ` — proceeds ${fmt(proceeds)}` : ''}${journal ? ` · Journal ${journal.entry_no}` : ''}`,
+      })
+      await writeAudit(supabase, { schoolId, action: 'assets.disposed', details: { asset_id: asset.asset_id, name: asset.name, proceeds, journal_entry: journal?.entry_no || null } })
+      setSaving(false)
+      setDisposeModal(null)
+      setToast({ type: 'success', msg: journal ? `Asset disposed · Journal ${journal.entry_no}` : 'Asset disposed.' })
+      load()
+    } catch (e) {
+      setSaving(false)
+      setToast({ type: 'error', msg: e.message || 'Disposal failed. Nothing was changed.' })
+    }
   }
 
   const openMaintModal = (asset = null) => {
@@ -1987,6 +2037,17 @@ export default function AssetsPage({ initialTab }) {
               <input className="as-input" type="date" value={disposeForm.disposal_date} onChange={(e) => setDisposeForm({ ...disposeForm, disposal_date: e.target.value })} />
               <label className="as-label">Proceeds</label>
               <input className="as-input" type="number" min="0" step="0.01" value={disposeForm.disposal_amount} onChange={(e) => setDisposeForm({ ...disposeForm, disposal_amount: e.target.value })} />
+              {Number(disposeForm.disposal_amount) > 0 && (
+                <>
+                  <label className="as-label">Proceeds Bank / Cash Account *</label>
+                  <select className="as-select" value={disposeForm.gl_cash_account_id} onChange={(e) => setDisposeForm({ ...disposeForm, gl_cash_account_id: e.target.value })}>
+                    <option value="">Select account…</option>
+                    {accountOptions.filter((a) => a.type === 'asset' && ['1010', '1020', '1030', '1040'].includes(a.code)).map((a) => (
+                      <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
+                    ))}
+                  </select>
+                </>
+              )}
               <label className="as-label">Reason / Notes *</label>
               <textarea className="as-input" rows="3" value={disposeForm.disposal_reason} onChange={(e) => setDisposeForm({ ...disposeForm, disposal_reason: e.target.value })} />
             </div>

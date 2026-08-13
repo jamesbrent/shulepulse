@@ -63,6 +63,7 @@ export const DEFAULT_CHART = [
   { code: '4120', name: 'Interest Income',           type: 'income',    category: 'Other Income' },
   { code: '4130', name: 'Rental Income',             type: 'income',    category: 'Other Income' },
   { code: '4140', name: 'Miscellaneous Income',      type: 'income',    category: 'Other Income' },
+  { code: '4150', name: 'Gain on Disposal of Assets', type: 'income',   category: 'Other Income' },
   // Expenses
   { code: '5010', name: 'Teaching Staff Salaries',   type: 'expense',   category: 'Salaries & Wages' },
   { code: '5020', name: 'Non-Teaching Staff Salaries', type: 'expense', category: 'Salaries & Wages' },
@@ -85,6 +86,7 @@ export const DEFAULT_CHART = [
   { code: '5340', name: 'Bank Charges',              type: 'expense',   category: 'Administrative' },
   { code: '5350', name: 'Advertising & Marketing',   type: 'expense',   category: 'Administrative' },
   { code: '5360', name: 'General Expenses',          type: 'expense',   category: 'Administrative' },
+  { code: '5370', name: 'Loss on Disposal of Assets', type: 'expense',   category: 'Administrative' },
   { code: '5410', name: 'Depreciation Expense',      type: 'expense',   category: 'Depreciation' },
   // Dedicated depreciation expense accounts (preferred)
   { code: '6010', name: 'Depreciation Expense — Buildings', type: 'expense', category: 'Depreciation' },
