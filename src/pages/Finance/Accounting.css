@@ -90,6 +90,14 @@
 .acc-ledger-totals strong { font-size: 14px; font-weight: 700; color: #0f172a; }
 
 /* ── Trial balance ── */
+.acc-tb-filters { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 12px; }
+.acc-tb-field { display: flex; flex-direction: column; gap: 5px; }
+.acc-tb-field span { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+.acc-tb-field select, .acc-tb-field input { border: 1px solid #cbd5e1; border-radius: 9px; padding: 8px 10px; font-size: 13px; color: #0f172a; background: #fff; outline: none; }
+.acc-tb-field select:focus, .acc-tb-field input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+.acc-tb-mode { display: flex; gap: 4px; margin-left: auto; background: #eef2f7; padding: 4px; border-radius: 9px; }
+.acc-tb-mode-btn { border: none; background: transparent; padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; }
+.acc-tb-mode-btn.active { background: #fff; color: #2563eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
 .acc-tb-balance-bar { display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; }
 .acc-tb-balance-bar.ok { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
 .acc-tb-balance-bar.bad { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }

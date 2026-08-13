@@ -10,7 +10,7 @@ import { useSchool } from '../admin/useSchool'
 import { fmt, fmtDate, downloadFile } from '../admin/fees/utils/feesHelpers'
 import {
   ACCOUNT_TYPES, DEFAULT_CHART, isDebitNormal, typeColor,
-  accountBalance, balanceError, nextJournalNumber, writeAudit,
+  accountBalance, netPosting, balanceError, nextJournalNumber, writeAudit,
   loadLedgerData, postedLines, groupLinesByAccount,
 } from './accountsUtils'
 import './Accounting.css'
@@ -60,6 +60,12 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
 
   // ledger
   const [ledgerAccountId, setLedgerAccountId] = useState('')
+
+  // trial balance period filters
+  const [tbPeriod, setTbPeriod] = useState('all')      // all | this_month | last_month | this_quarter | last_quarter | this_year | last_year | custom
+  const [tbFrom, setTbFrom] = useState('')
+  const [tbTo, setTbTo] = useState('')
+  const [tbMode, setTbMode] = useState('ending')       // ending | movement
 
   const load = useCallback(async () => {
     if (!schoolId) return
@@ -303,9 +309,89 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
     .slice()
     .sort((a, b) => new Date(a.journal_entries?.entry_date) - new Date(b.journal_entries?.entry_date)) : []
 
-  // ─── Derived: trial balance ──────────────────────────────────────────────
+  // ─── Derived: trial balance (period-aware) ───────────────────────────────
+  const tbPeriodOptions = [
+    { value: 'all', label: 'All time' },
+    { value: 'this_month', label: 'This month' },
+    { value: 'last_month', label: 'Last month' },
+    { value: 'this_quarter', label: 'This quarter' },
+    { value: 'last_quarter', label: 'Last quarter' },
+    { value: 'this_year', label: 'This year' },
+    { value: 'last_year', label: 'Last year' },
+    { value: 'custom', label: 'Custom range' },
+  ]
+  const periodRange = useMemo(() => {
+    const now = new Date()
+    const y = now.getFullYear(), m = now.getMonth()
+    const prevM = m === 0 ? 11 : m - 1
+    const prevY = m === 0 ? y - 1 : y
+    const q = Math.floor(m / 3)
+    const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const toEnd = (d) => d ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59) : null
+    const fromStart = (d) => d ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0) : null
+    const qStart = (yy, qq) => new Date(yy, qq * 3, 1)
+    const qEnd = (yy, qq) => new Date(yy, qq * 3 + 3, 0)
+    switch (tbPeriod) {
+      case 'this_month':
+        return { start: fromStart(new Date(y, m, 1)), end: toEnd(new Date(y, m + 1, 0)), label: `${iso(new Date(y, m, 1))} to ${iso(new Date(y, m + 1, 0))}` }
+      case 'last_month':
+        return { start: fromStart(new Date(prevY, prevM, 1)), end: toEnd(new Date(prevY, prevM + 1, 0)), label: `${iso(new Date(prevY, prevM, 1))} to ${iso(new Date(prevY, prevM + 1, 0))}` }
+      case 'this_quarter':
+        return { start: fromStart(qStart(y, q)), end: toEnd(qEnd(y, q)), label: `${iso(qStart(y, q))} to ${iso(qEnd(y, q))}` }
+      case 'last_quarter': {
+        const qq = q === 0 ? 3 : q - 1
+        const yy = q === 0 ? y - 1 : y
+        return { start: fromStart(qStart(yy, qq)), end: toEnd(qEnd(yy, qq)), label: `${iso(qStart(yy, qq))} to ${iso(qEnd(yy, qq))}` }
+      }
+      case 'this_year':
+        return { start: fromStart(new Date(y, 0, 1)), end: toEnd(new Date(y, 11, 31)), label: String(y) }
+      case 'last_year':
+        return { start: fromStart(new Date(y - 1, 0, 1)), end: toEnd(new Date(y - 1, 11, 31)), label: String(y - 1) }
+      case 'custom': {
+        const s = tbFrom ? fromStart(new Date(`${tbFrom}T00:00:00`)) : null
+        const e = tbTo ? toEnd(new Date(`${tbTo}T00:00:00`)) : null
+        return { start: s, end: e, label: `${tbFrom || '…'} to ${tbTo || '…'}` }
+      }
+      default:
+        return { start: null, end: null, label: 'All time' }
+    }
+  }, [tbPeriod, tbFrom, tbTo])
+
+  const tbLines = useMemo(() => {
+    const posted = postedLines(lines)
+    if (tbPeriod === 'all') return posted
+    const { start, end } = periodRange
+    if (tbMode === 'ending') {
+      // ending balances = opening + every posting up to the period end
+      if (!end) return posted
+      return posted.filter((l) => {
+        const d = l.journal_entries?.entry_date ? new Date(l.journal_entries.entry_date) : null
+        return d && d <= end
+      })
+    }
+    // movement = only the postings that happened inside the period
+    return posted.filter((l) => {
+      const d = l.journal_entries?.entry_date ? new Date(l.journal_entries.entry_date) : null
+      if (!d) return true
+      if (start && d < start) return false
+      if (end && d > end) return false
+      return true
+    })
+  }, [lines, tbPeriod, tbMode, periodRange])
+
+  const tbByAccount = useMemo(() => groupLinesByAccount(tbLines), [tbLines])
+
+  const trialPeriodLabel = tbPeriod === 'all'
+    ? `All time — as at ${fmtDate(TODAY)}`
+    : tbMode === 'ending'
+      ? `Ending balances as at ${fmtDate(periodRange.end || TODAY)}`
+      : `Period movement (${periodRange.label})`
+
   const trialRows = accounts.map((a) => {
-    const bal = accountBalance(a, byAccount[a.id] || [])
+    const accLines = tbByAccount[a.id] || []
+    const bal = tbMode === 'movement'
+      ? (isDebitNormal(a.type) ? netPosting(accLines) : -netPosting(accLines))
+      : accountBalance(a, accLines)
     const debitNormal = isDebitNormal(a.type)
     const debit = debitNormal ? (bal >= 0 ? Math.abs(bal) : 0) : (bal < 0 ? Math.abs(bal) : 0)
     const credit = debitNormal ? (bal < 0 ? Math.abs(bal) : 0) : (bal >= 0 ? Math.abs(bal) : 0)
@@ -318,6 +404,7 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
   // ─── Exports ─────────────────────────────────────────────────────────────
   const exportTrialCSV = () => {
     const rows = [
+      [school?.name || 'School', 'Trial Balance', trialPeriodLabel],
       ['Code', 'Account', 'Type', 'Debit', 'Credit'],
       ...trialRows.map((r) => [r.code, r.name, r.type, r.debit ? r.debit.toFixed(2) : '', r.credit ? r.credit.toFixed(2) : '']),
       ['', 'Total', '', trialDebitTotal.toFixed(2), trialCreditTotal.toFixed(2)],
@@ -353,7 +440,7 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
         @media print { body { margin: 0; } }
       </style></head><body>
       <h1>Trial Balance</h1>
-      <div class="sub">${school?.name || 'School'} · As at ${fmtDate(TODAY)} · ${school?.plan || ''}</div>
+      <div class="sub">${school?.name || 'School'} · ${trialPeriodLabel} · ${school?.plan || ''}</div>
       <table>
         <thead><tr><th>Code</th><th>Account</th><th>Type</th><th class="num">Debit (KES)</th><th class="num">Credit (KES)</th></tr></thead>
         <tbody>${trialRows.map((r) => `<tr>
@@ -681,6 +768,30 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
       {/* ══════════════ TRIAL BALANCE ══════════════ */}
       {tab === 'trial' && (
         <>
+          <div className="acc-tb-filters">
+            <label className="acc-tb-field">
+              <span>Period</span>
+              <select value={tbPeriod} onChange={(e) => setTbPeriod(e.target.value)}>
+                {tbPeriodOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            {tbPeriod === 'custom' && (
+              <>
+                <label className="acc-tb-field">
+                  <span>From</span>
+                  <input type="date" value={tbFrom} onChange={(e) => setTbFrom(e.target.value)} />
+                </label>
+                <label className="acc-tb-field">
+                  <span>To</span>
+                  <input type="date" value={tbTo} onChange={(e) => setTbTo(e.target.value)} />
+                </label>
+              </>
+            )}
+            <div className="acc-tb-mode">
+              <button className={`acc-tb-mode-btn ${tbMode === 'ending' ? 'active' : ''}`} onClick={() => setTbMode('ending')}>Ending balance</button>
+              <button className={`acc-tb-mode-btn ${tbMode === 'movement' ? 'active' : ''}`} onClick={() => setTbMode('movement')}>Period movement</button>
+            </div>
+          </div>
           <div className={`acc-tb-balance-bar ${trialBalanced ? 'ok' : 'bad'}`}>
             {trialBalanced
               ? <><CheckCircle size={15} /> Trial balance is balanced — Debits {fmt(trialDebitTotal)} = Credits {fmt(trialCreditTotal)}</>
@@ -692,7 +803,7 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
           </div>
           <div className="acc-table-card">
             <div className="acc-table-head">
-              <h3>Trial Balance <span>· as at {fmtDate(TODAY)}</span></h3>
+              <h3>Trial Balance <span>· {trialPeriodLabel}</span></h3>
             </div>
             <div className="acc-table-wrap">
               <table className="acc-table">
