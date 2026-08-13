@@ -98,6 +98,7 @@
 .acc-tb-mode { display: flex; gap: 4px; margin-left: auto; background: #eef2f7; padding: 4px; border-radius: 9px; }
 .acc-tb-mode-btn { border: none; background: transparent; padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; }
 .acc-tb-mode-btn.active { background: #fff; color: #2563eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.acc-tb-section td { background: #eef2f7; font-weight: 700; font-size: 11px; letter-spacing: 0.06em; color: #334155; text-transform: uppercase; }
 .acc-tb-balance-bar { display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; }
 .acc-tb-balance-bar.ok { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
 .acc-tb-balance-bar.bad { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }

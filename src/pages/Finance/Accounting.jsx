@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import {
   Plus, Search, RefreshCw, Printer, Download, Eye,
   CheckCircle, RotateCcw, X, Pencil, Power, FileText, Scale,
@@ -401,14 +401,41 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
   const trialCreditTotal = trialRows.reduce((s, r) => s + r.credit, 0)
   const trialBalanced = Math.abs(trialDebitTotal - trialCreditTotal) < 0.01
 
+  // ─── Traditional presentation: group accounts into accounting sections ────
+  const isContraAsset = (a) => a.type === 'asset' && (
+    (a.category || '').toLowerCase() === 'accumulated depreciation'
+    || /accumulated depreciation/i.test(a.name || '')
+  )
+  const TRIAL_SECTIONS = [
+    { key: 'assets',       title: 'ASSETS',       match: (a) => a.type === 'asset' && !isContraAsset(a) },
+    { key: 'contra',       title: 'ACCUMULATED DEPRECIATION / CONTRA-ASSETS', match: (a) => isContraAsset(a) },
+    { key: 'liabilities',  title: 'LIABILITIES',  match: (a) => a.type === 'liability' },
+    { key: 'equity',       title: 'EQUITY / FUNDS', match: (a) => a.type === 'equity' },
+    { key: 'income',       title: 'INCOME / REVENUE', match: (a) => a.type === 'income' },
+    { key: 'expenses',     title: 'EXPENSES',     match: (a) => a.type === 'expense' },
+  ]
+  const trialSections = TRIAL_SECTIONS
+    .map((s) => ({
+      ...s,
+      rows: trialRows
+        .filter((r) => s.match(r))
+        .sort((x, y) => String(x.code).localeCompare(String(y.code), undefined, { numeric: true })),
+    }))
+    .filter((s) => s.rows.length > 0)
+
   // ─── Exports ─────────────────────────────────────────────────────────────
   const exportTrialCSV = () => {
     const rows = [
       [school?.name || 'School', 'Trial Balance', trialPeriodLabel],
-      ['Code', 'Account', 'Type', 'Debit', 'Credit'],
-      ...trialRows.map((r) => [r.code, r.name, r.type, r.debit ? r.debit.toFixed(2) : '', r.credit ? r.credit.toFixed(2) : '']),
-      ['', 'Total', '', trialDebitTotal.toFixed(2), trialCreditTotal.toFixed(2)],
+      ['Code', 'Account', 'Debit (KES)', 'Credit (KES)'],
     ]
+    for (const s of trialSections) {
+      rows.push([s.title, '', '', ''])
+      for (const r of s.rows) {
+        rows.push([r.code, r.name, r.debit ? r.debit.toFixed(2) : '', r.credit ? r.credit.toFixed(2) : ''])
+      }
+    }
+    rows.push(['TOTAL', '', trialDebitTotal.toFixed(2), trialCreditTotal.toFixed(2)])
     downloadFile(rows.map((r) => r.join(',')).join('\n'), 'trial_balance.csv', 'text/csv')
   }
 
@@ -426,28 +453,33 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
   const printTrialBalance = () => {
     const win = window.open('', '_blank')
     if (!win) return
+    const sectionRows = trialSections.map((s) =>
+      `<tr class="sec"><td colspan="4">${s.title}</td></tr>`
+      + s.rows.map((r) => `<tr>
+        <td>${r.code}</td><td>${r.name}</td>
+        <td class="num">${r.debit ? r.debit.toLocaleString() : ''}</td>
+        <td class="num">${r.credit ? r.credit.toLocaleString() : ''}</td></tr>`).join('')
+    ).join('')
     win.document.write(`<html><head><title>Trial Balance — ${school?.name || 'School'}</title>
       <style>
         * { box-sizing: border-box; }
         body { font-family: Arial, sans-serif; color: #0f172a; margin: 32px; }
-        h1 { margin: 0 0 4px; font-size: 20px; }
-        .sub { color: #64748b; font-size: 12px; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 20px; }
+        .sub { color: #64748b; font-size: 12px; margin: 2px 0 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { background: #f1f5f9; text-align: left; padding: 8px 10px; border: 1px solid #e2e8f0; }
         td { padding: 7px 10px; border: 1px solid #e2e8f0; }
+        tr.sec td { background: #eef2f7; font-weight: 700; letter-spacing: 0.03em; }
         .num { text-align: right; font-variant-numeric: tabular-nums; }
         tfoot td { font-weight: 700; background: #f8fafc; }
         @media print { body { margin: 0; } }
       </style></head><body>
-      <h1>Trial Balance</h1>
+      <h1>SHULEPULSE — TRIAL BALANCE</h1>
       <div class="sub">${school?.name || 'School'} · ${trialPeriodLabel} · ${school?.plan || ''}</div>
       <table>
-        <thead><tr><th>Code</th><th>Account</th><th>Type</th><th class="num">Debit (KES)</th><th class="num">Credit (KES)</th></tr></thead>
-        <tbody>${trialRows.map((r) => `<tr>
-          <td>${r.code}</td><td>${r.name}</td><td>${r.type}</td>
-          <td class="num">${r.debit ? r.debit.toLocaleString() : ''}</td>
-          <td class="num">${r.credit ? r.credit.toLocaleString() : ''}</td></tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="3">Total</td>
+        <thead><tr><th>Code</th><th>Account</th><th class="num">Debit (KES)</th><th class="num">Credit (KES)</th></tr></thead>
+        <tbody>${sectionRows}</tbody>
+        <tfoot><tr><td colspan="2">TOTAL</td>
           <td class="num">${trialDebitTotal.toLocaleString()}</td>
           <td class="num">${trialCreditTotal.toLocaleString()}</td></tr></tfoot>
       </table>
@@ -811,25 +843,30 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
                   <tr>
                     <th>Code</th>
                     <th>Account</th>
-                    <th>Type</th>
                     <th className="num">Debit (KES)</th>
                     <th className="num">Credit (KES)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {trialRows.map((r) => (
-                    <tr key={r.id}>
-                      <td className="acc-mono">{r.code}</td>
-                      <td className="acc-fw600">{r.name}</td>
-                      <td>{typeBadge(r.type)}</td>
-                      <td className="num">{r.debit ? r.debit.toLocaleString() : ''}</td>
-                      <td className="num">{r.credit ? r.credit.toLocaleString() : ''}</td>
-                    </tr>
+                  {trialSections.map((s) => (
+                    <Fragment key={s.key}>
+                      <tr className="acc-tb-section">
+                        <td colSpan={4}>{s.title}</td>
+                      </tr>
+                      {s.rows.map((r) => (
+                        <tr key={r.id}>
+                          <td className="acc-mono">{r.code}</td>
+                          <td className="acc-fw600">{r.name}</td>
+                          <td className="num">{r.debit ? r.debit.toLocaleString() : ''}</td>
+                          <td className="num">{r.credit ? r.credit.toLocaleString() : ''}</td>
+                        </tr>
+                      ))}
+                    </Fragment>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={3} className="acc-fw600">Total</td>
+                    <td colSpan={2} className="acc-fw600">TOTAL</td>
                     <td className="num acc-fw600 acc-text-green">{trialDebitTotal.toLocaleString()}</td>
                     <td className="num acc-fw600 acc-text-red">{trialCreditTotal.toLocaleString()}</td>
                   </tr>
