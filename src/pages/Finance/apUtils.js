@@ -30,6 +30,7 @@ export const AP_INVOICE_STATUSES = [
   { value: 'posted',        label: 'Posted',        color: '#0891b2' },
   { value: 'partially_paid',label: 'Partially Paid',color: '#ca8a04' },
   { value: 'paid',          label: 'Paid',          color: '#16a34a' },
+  { value: 'rejected',      label: 'Rejected',      color: '#dc2626' },
   { value: 'cancelled',     label: 'Cancelled',     color: '#dc2626' },
 ]
 
@@ -41,6 +42,7 @@ export const AP_PAYMENT_STATUSES = [
   { value: 'processing',    label: 'Processing',    color: '#0891b2' },
   { value: 'paid',          label: 'Paid',          color: '#16a34a' },
   { value: 'posted',        label: 'Posted',        color: '#0f766e' },
+  { value: 'rejected',      label: 'Rejected',      color: '#dc2626' },
   { value: 'cancelled',     label: 'Cancelled',     color: '#dc2626' },
 ]
 
@@ -211,7 +213,7 @@ export function paidByInvoice(d) {
 }
 
 export const invoiceOutstanding = (d, invoice) => {
-  if (['cancelled'].includes(invoice.status)) return 0
+  if (['cancelled', 'rejected'].includes(invoice.status)) return 0
   return Math.max(round2(toNum(invoice.total_amount) - toNum(paidByInvoice(d)[invoice.id] || 0)), 0)
 }
 

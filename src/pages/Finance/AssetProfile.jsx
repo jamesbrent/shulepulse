@@ -1,9 +1,10 @@
 import {
   ArrowLeft, Wrench, Coins, TrendingDown, Trash2, Pencil,
-  Paperclip, FileText, MapPin, User, History, Camera
+  Paperclip, FileText, MapPin, User, History, Camera, Landmark
 } from 'lucide-react'
 import { fmt, fmtDate } from '../admin/fees/utils/feesHelpers'
-import { assetStatus, DEPRECIATION_METHODS, calcNbv, DOCUMENT_TYPES, kraTaxClass } from './assetsUtils'
+import { assetStatus, DEPRECIATION_METHODS, calcNbv, monthlyDepreciation, DOCUMENT_TYPES, kraTaxClass } from './assetsUtils'
+import { computeAssetSchedule, activeRule } from './taxUtils'
 
 const statusBadge = (s) => {
   const meta = assetStatus(s)
@@ -13,6 +14,7 @@ const statusBadge = (s) => {
 export default function AssetProfile({
   asset, school, categories, suppliers, staffMap,
   events, custody, locations, maintenance, documents,
+  taxRules = [], taxSchedules = [], runLines = [],
   onBack, onAssign, onDispose, onMaintain, onDepreciate, onEdit, onUploadDoc, onViewDoc,
 }) {
   const cat = categories.find((c) => c.id === asset.category_id)
@@ -27,6 +29,21 @@ export default function AssetProfile({
   const docs = documents.filter((d) => d.asset_id === asset.id)
   const lastMaint = maintRecords[0]
 
+  // ── Tax: live schedule for the current year of income + historical rows ──
+  const yearOfIncome = new Date().getFullYear()
+  const taxPreview = computeAssetSchedule({ asset, taxRules, taxSchedules, yearOfIncome })
+  const taxHistory = (taxSchedules || [])
+    .filter((s) => s.asset_id === asset.id)
+    .sort((a, b) => b.year_of_income - a.year_of_income)
+  const deprHistory = (runLines || [])
+    .filter((l) => l.asset_id === asset.id)
+    .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+  const wearRule = activeRule(taxRules, asset.tax_class, 'wear_tear', `${yearOfIncome}-12-31`)
+  const invRule = activeRule(taxRules, asset.investment_class, 'investment', `${yearOfIncome}-12-31`)
+  const taxTreatment = !asset.tax_class && !asset.investment_class
+    ? 'None'
+    : [wearRule && 'Wear & Tear', invRule && 'Investment Allowance'].filter(Boolean).join(' + ') || 'None'
+
   return (
     <div className="as-profile">
       {/* ── Header ── */}
@@ -40,10 +57,17 @@ export default function AssetProfile({
           <p className="as-profile-name">{asset.name}</p>
           <p className="as-profile-sub">{cat?.name || 'Uncategorised'} · {asset.asset_type || 'equipment'}</p>
         </div>
-        <div className="as-profile-nbv">
-          <span>Net Book Value</span>
-          <strong>{fmt(calcNbv(asset))}</strong>
-          <small>Cost {fmt(asset.purchase_cost)} − Depn {fmt(asset.accumulated_depreciation)}</small>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div className="as-profile-nbv">
+            <span>Financial Accounting</span>
+            <strong>{fmt(calcNbv(asset))}</strong>
+            <small>Net Book Value · Cost {fmt(asset.purchase_cost)} − Depn {fmt(asset.accumulated_depreciation)}</small>
+          </div>
+          <div className="as-profile-nbv as-tax-wdv">
+            <span>Tax</span>
+            <strong>{fmt(taxPreview.closing_wtd)}</strong>
+            <small>Tax Written Down Value · {yearOfIncome} allowance {fmt(taxPreview.total_allowance)}</small>
+          </div>
         </div>
       </div>
 
@@ -132,22 +156,78 @@ export default function AssetProfile({
           )}
         </div>
 
-        {/* ── Financial ── */}
+        {/* ── Financial Accounting (posts to General Ledger) ── */}
         <div className="as-card">
-          <h3><Coins size={15} /> Financial</h3>
+          <h3><Coins size={15} /> Financial Accounting <span className="as-card-count">GL</span></h3>
           <div className="as-info-grid">
             <div><span>Purchase Date</span><strong>{fmtDate(asset.purchase_date)}</strong></div>
             <div><span>Supplier</span><strong>{supplier?.name || '—'}</strong></div>
             <div><span>Invoice Ref</span><strong className="as-mono">{asset.purchase_invoice_ref || '—'}</strong></div>
             <div><span>Purchase Cost</span><strong>{fmt(asset.purchase_cost)}</strong></div>
-            <div><span>Residual Value</span><strong>{fmt(asset.residual_value)}</strong></div>
-            <div><span>Useful Life</span><strong>{asset.useful_life_months} months</strong></div>
-            <div><span>Tax Class</span><strong>{kraTaxClass(asset.tax_class)?.label || 'Custom policy'}</strong></div>
             <div><span>Method</span><strong>{methodLabel(asset.depreciation_method)}</strong></div>
-            <div><span>Rate</span><strong>{asset.depreciation_method === 'reducing_balance' ? `${asset.depreciation_rate}% p.a.${asset.first_year_allowance ? ` (+${asset.first_year_allowance}% 1st yr)` : ''}` : '—'}</strong></div>
+            <div><span>Accounting Rate</span><strong>{asset.depreciation_method === 'reducing_balance' ? `${asset.depreciation_rate || 0}% p.a.` : '—'}</strong></div>
+            <div><span>Useful Life</span><strong>{asset.useful_life_months} months</strong></div>
+            <div><span>Residual Value</span><strong>{fmt(asset.residual_value)}</strong></div>
+            <div><span>Depreciation (monthly)</span><strong>{fmt(monthlyDepreciation(asset))}</strong></div>
             <div><span>Accumulated Depreciation</span><strong>{fmt(asset.accumulated_depreciation)}</strong></div>
             <div><span>Net Book Value</span><strong className="as-green">{fmt(calcNbv(asset))}</strong></div>
           </div>
+          {deprHistory.length > 0 ? (
+            <div className="as-table-wrap as-scroll-sm">
+              <table className="as-table">
+                <thead><tr><th>Depreciation History</th><th className="num">Amount</th><th className="num">Accumulated</th></tr></thead>
+                <tbody>
+                  {deprHistory.slice(0, 8).map((l) => (
+                    <tr key={l.id}>
+                      <td>{l.period_label || fmtDate(l.created_at)}</td>
+                      <td className="num">{fmt(l.depreciation_amount)}</td>
+                      <td className="num">{fmt(l.accumulated_after)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="as-none">No depreciation posted yet.</p>
+          )}
+        </div>
+
+        {/* ── Kenyan Tax Capital Allowances (tax computation, no GL) ── */}
+        <div className="as-card as-card-tax">
+          <h3><Landmark size={15} /> Kenyan Tax Capital Allowances <span className="as-card-count">no GL</span></h3>
+          <div className="as-info-grid">
+            <div><span>KRA Tax Class</span><strong>{asset.tax_class ? (wearRule?.description || kraTaxClass(asset.tax_class)?.label || asset.tax_class) : '—'}</strong></div>
+            <div><span>Investment Allowance</span><strong>{asset.investment_class ? (invRule?.description || kraTaxClass(asset.investment_class)?.label || asset.investment_class) : '—'}</strong></div>
+            <div><span>Tax Treatment</span><strong>{taxTreatment}</strong></div>
+            <div><span>Tax Basis</span><strong>{fmt(taxPreview.tax_basis)}</strong></div>
+            <div><span>Opening Tax WDV</span><strong>{fmt(taxPreview.opening_wtd)}</strong></div>
+            <div><span>Wear &amp; Tear Rate</span><strong>{taxPreview.wear_tear_rate ? `${taxPreview.wear_tear_rate}% p.a.` : '—'}</strong></div>
+            <div><span>Investment Rate</span><strong>{taxPreview.investment_rate ? `${taxPreview.investment_rate}% p.a.` : '—'}</strong></div>
+            <div><span>Allowance (Current Year)</span><strong>{fmt(taxPreview.total_allowance)}</strong></div>
+            <div><span>Tax Written Down Value</span><strong className="as-purple">{fmt(taxPreview.closing_wtd)}</strong></div>
+          </div>
+          {taxHistory.length > 0 ? (
+            <div className="as-table-wrap as-scroll-sm">
+              <table className="as-table">
+                <thead><tr><th>Year</th><th className="num">Opening WDV</th><th className="num">W&amp;T</th><th className="num">Inv.</th><th className="num">Closing WDV</th></tr></thead>
+                <tbody>
+                  {taxHistory.slice(0, 8).map((s) => (
+                    <tr key={s.id}>
+                      <td className="as-fw600">{s.year_of_income}</td>
+                      <td className="num">{fmt(s.opening_wtd)}</td>
+                      <td className="num">{fmt(s.wear_tear_allowance)}</td>
+                      <td className="num">{fmt(s.investment_allowance)}</td>
+                      <td className="num as-fw600">{fmt(s.closing_wtd)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="as-none">
+              No tax allowances computed yet — run them in the Tax &amp; Capital Allowances tab (year {yearOfIncome}).
+            </p>
+          )}
         </div>
 
         {/* ── Maintenance ── */}

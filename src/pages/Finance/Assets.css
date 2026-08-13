@@ -325,6 +325,58 @@
   gap: 0 12px;
 }
 
+/* ── Tax capital allowances ── */
+
+.as-tax-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  color: #6d28d9;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.as-tax-banner svg { flex-shrink: 0; margin-top: 2px; }
+.as-tax-banner strong { display: block; color: #4c1d95; font-size: 13px; }
+.as-tax-banner p { margin: 2px 0 0; color: #7c3aed; font-size: 12px; }
+
+.as-tax-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.as-tax-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 16px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.as-tax-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #1e293b;
+}
+
+.as-purple { color: #7c3aed; }
+
+.as-tax-wdv strong { color: #7c3aed; }
+
+.as-card-tax { border-color: #ddd6fe; }
+.as-card-tax h3 { color: #6d28d9; }
+
+.as-scroll-sm { max-height: 260px; overflow: auto; }
+
 /* ── Depreciation preview ── */
 
 .as-depr-preview {

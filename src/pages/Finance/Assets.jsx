@@ -14,7 +14,7 @@ import {
 } from './assetsUtils'
 import {
   TAX_RULE_TYPES, TAX_METHODS, FINANCE_ROLES, methodLabel as taxMethodLabel,
-  ensureDefaultTaxRules, loadTaxData, activeRule, taxRuleLabel,
+  ensureDefaultTaxRules, loadTaxData, taxRuleLabel,
   buildTaxSchedule, runTaxAllowances, taxVsAccounting,
 } from './taxUtils'
 import AssetProfile from './AssetProfile'
@@ -1284,7 +1284,20 @@ export default function AssetsPage({ initialTab }) {
                 </div>
                 <div>
                   <label className="as-label">Category *</label>
-                  <select className="as-select" value={assetForm.category_id} onChange={(e) => setAssetForm({ ...assetForm, category_id: e.target.value })}>
+                  <select className="as-select" value={assetForm.category_id} onChange={(e) => {
+                    const cat = categories.find((c) => c.id === e.target.value)
+                    setAssetForm((f) => assetModal.isNew ? {
+                      ...f, category_id: e.target.value,
+                      // Accounting policy comes from the category; KRA tax class
+                      // is only a default for the tax schedule, never a driver
+                      // of accounting depreciation.
+                      depreciation_method: cat?.depreciation_method || f.depreciation_method,
+                      useful_life_months: cat?.useful_life_months ?? f.useful_life_months,
+                      residual_value: cat?.residual_value ?? f.residual_value,
+                      depreciation_rate: cat?.depreciation_rate ?? f.depreciation_rate,
+                      tax_class: cat?.tax_class || f.tax_class,
+                    } : { ...f, category_id: e.target.value })
+                  }}>
                     <option value="">Select category</option>
                     {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
@@ -1328,15 +1341,65 @@ export default function AssetsPage({ initialTab }) {
               </div>
               {(() => {
                 const pc = categories.find((c) => c.id === assetForm.category_id)
-                if (!pc?.tax_class) return null
-                const k = kraTaxClass(pc.tax_class)
-                return k ? (
+                if (!pc) return null
+                return (
                   <p className="as-policy-hint">
-                    Depreciation policy: {k.label} — {k.rate}% p.a. reducing balance
-                    {k.first_year_allowance ? `, ${k.first_year_allowance}% first-year allowance` : ''}.
+                    Category policy: {pc.depreciation_method === 'straight_line' ? 'Straight-Line' : 'Reducing Balance'}
+                    {pc.depreciation_rate ? ` @ ${pc.depreciation_rate}% p.a.` : ''}
+                    {' · '}{pc.useful_life_months} months · residual {fmt(pc.residual_value)}.
+                    These prefill the accounting fields below and are independent of the KRA tax class.
                   </p>
-                ) : null
+                )
               })()}
+
+              <div className="as-tax-section-title"><span className="as-tax-section-label">FINANCIAL ACCOUNTING</span> <span className="as-muted">posts to the General Ledger</span></div>
+              <div className="as-grid-2">
+                <div>
+                  <label className="as-label">Depreciation Method <span className="as-muted">(accounting)</span></label>
+                  <select className="as-select" value={assetForm.depreciation_method} onChange={(e) => setAssetForm({ ...assetForm, depreciation_method: e.target.value })}>
+                    <option value="straight_line">Straight-Line</option>
+                    <option value="reducing_balance">Reducing Balance</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="as-label">Useful Life (months)</label>
+                  <input className="as-input" type="number" min="1" value={assetForm.useful_life_months} onChange={(e) => setAssetForm({ ...assetForm, useful_life_months: e.target.value })} />
+                </div>
+                <div>
+                  <label className="as-label">Residual Value</label>
+                  <input className="as-input" type="number" min="0" step="0.01" value={assetForm.residual_value} onChange={(e) => setAssetForm({ ...assetForm, residual_value: e.target.value })} />
+                </div>
+                <div>
+                  <label className="as-label">Depreciation Rate % p.a. <span className="as-muted">(reducing balance)</span></label>
+                  <input className="as-input" type="number" step="0.01" min="0" max="100" value={assetForm.depreciation_rate} onChange={(e) => setAssetForm({ ...assetForm, depreciation_rate: e.target.value })} placeholder="Auto if blank" />
+                </div>
+              </div>
+              <p className="as-tax-note">
+                The accounting policy is independent of tax. KRA tax class never overrides method, rate,
+                useful life or residual value.
+              </p>
+
+              <div className="as-tax-section-title"><span className="as-tax-section-label">KENYAN TAX CLASSIFICATION</span> <span className="as-muted">tax capital allowances only · never posted to the GL</span></div>
+              <div className="as-grid-2">
+                <div>
+                  <label className="as-label">KRA Tax Class <span className="as-muted">(wear &amp; tear)</span></label>
+                  <select className="as-select" value={assetForm.tax_class} onChange={(e) => setAssetForm({ ...assetForm, tax_class: e.target.value })}>
+                    <option value="">No wear &amp; tear class</option>
+                    {taxRules.filter((r) => r.rule_type === 'wear_tear').map((r) => (
+                      <option key={r.id} value={r.tax_class}>{r.description || r.tax_class} — {r.rate}% p.a.</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="as-label">Investment Allowance <span className="as-muted">(optional)</span></label>
+                  <select className="as-select" value={assetForm.investment_class} onChange={(e) => setAssetForm({ ...assetForm, investment_class: e.target.value })}>
+                    <option value="">None</option>
+                    {taxRules.filter((r) => r.rule_type === 'investment').map((r) => (
+                      <option key={r.id} value={r.tax_class}>{r.description || r.tax_class}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
             <div className="as-modal-foot">
               <button className="as-btn-outline" onClick={() => setAssetModal(false)}>Cancel</button>
@@ -1561,6 +1624,75 @@ export default function AssetsPage({ initialTab }) {
         </div>
       )}
 
+      {taxRuleModal && (
+        <div className="as-modal-overlay">
+          <div className="as-modal as-modal-lg">
+            <div className="as-modal-head">
+              <h3>{taxRuleModal.isNew ? 'Add' : 'Edit'} Statutory Tax Rule</h3>
+              <button className="as-icon-btn" onClick={() => setTaxRuleModal(null)}><X size={16} /></button>
+            </div>
+            <div className="as-modal-body">
+              {!taxRuleModal.isNew && (
+                <p className="as-tax-note">
+                  Editing a rule does NOT rewrite historical tax schedules — each schedule row keeps the
+                  rule version it was computed with. New computations pick up this version from its effective date.
+                </p>
+              )}
+              <div className="as-grid-2">
+                <div>
+                  <label className="as-label">Rule Type *</label>
+                  <select className="as-select" value={taxRuleForm.rule_type} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, rule_type: e.target.value })}>
+                    {TAX_RULE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="as-label">Tax Class Code *</label>
+                  <input className="as-input" value={taxRuleForm.tax_class} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, tax_class: e.target.value })} placeholder="e.g. class_ii or inv_b_manufacture" />
+                </div>
+              </div>
+              <label className="as-label">Description</label>
+              <input className="as-input" value={taxRuleForm.description} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, description: e.target.value })} placeholder="e.g. Class II — machines & plant" />
+              <label className="as-label">Asset Classification <span className="as-muted">(statutory wording)</span></label>
+              <textarea className="as-input" rows="2" value={taxRuleForm.asset_classification} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, asset_classification: e.target.value })} placeholder="What the class covers under the legislation" />
+              <div className="as-grid-2">
+                <div>
+                  <label className="as-label">Annual Rate % *</label>
+                  <input className="as-input" type="number" step="0.01" min="0" max="100" value={taxRuleForm.rate} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, rate: e.target.value })} />
+                </div>
+                <div>
+                  <label className="as-label">First-Year Rate %</label>
+                  <input className="as-input" type="number" step="0.01" min="0" max="100" value={taxRuleForm.first_year_rate} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, first_year_rate: e.target.value })} placeholder="e.g. investment initial allowance" />
+                </div>
+              </div>
+              <label className="as-label">Calculation Method</label>
+              <select className="as-select" value={taxRuleForm.calc_method} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, calc_method: e.target.value })}>
+                {TAX_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </select>
+              <div className="as-grid-2">
+                <div>
+                  <label className="as-label">Effective Date *</label>
+                  <input className="as-input" type="date" value={taxRuleForm.effective_date} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, effective_date: e.target.value })} />
+                </div>
+                <div>
+                  <label className="as-label">Expiry Date</label>
+                  <input className="as-input" type="date" value={taxRuleForm.expiry_date} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, expiry_date: e.target.value })} />
+                </div>
+              </div>
+              <label className="as-label">Source / Reference</label>
+              <input className="as-input" value={taxRuleForm.source_reference} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, source_reference: e.target.value })} placeholder="e.g. Income Tax Act (Cap 470) — Second Schedule" />
+              <label className="as-label as-inline-check" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" checked={taxRuleForm.is_active} onChange={(e) => setTaxRuleForm({ ...taxRuleForm, is_active: e.target.checked })} />
+                Active
+              </label>
+            </div>
+            <div className="as-modal-foot">
+              <button className="as-btn-outline" onClick={() => setTaxRuleModal(null)}>Cancel</button>
+              <button className="as-btn-primary" disabled={saving} onClick={saveTaxRule}>{saving ? 'Saving…' : 'Save Rule'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && <div className={`as-toast ${toast.type}`}>{toast.msg}</div>}
     </>
   )
@@ -1579,6 +1711,9 @@ export default function AssetsPage({ initialTab }) {
           locations={locations}
           maintenance={maintenance}
           documents={documents}
+          taxRules={taxRules}
+          taxSchedules={taxSchedules}
+          runLines={runLines}
           onBack={() => setSelectedAssetId(null)}
           onAssign={openAssignModal}
           onDispose={openDisposeModal}
@@ -1610,6 +1745,8 @@ export default function AssetsPage({ initialTab }) {
       {tab === 'register' && renderRegister()}
       {tab === 'categories' && renderCategories()}
       {tab === 'depreciation' && renderDepreciation()}
+      {tab === 'tax' && renderTax()}
+      {tab === 'taxrules' && renderTaxRules()}
       {tab === 'maintenance' && renderMaintenance()}
       {tab === 'transfers' && renderTransfers()}
 

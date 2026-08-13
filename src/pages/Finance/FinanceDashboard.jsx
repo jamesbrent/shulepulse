@@ -122,7 +122,7 @@ const NAV_SECTIONS = [
   },
 ]
 
-const DEFAULT_OPEN = ['student_finance', 'accounting', 'assets', 'payroll', 'accounts_payable', 'reports', 'system']
+const DEFAULT_OPEN = []
 
 const ComingSoon = ({ title }) => (
   <div className="b-coming-soon">

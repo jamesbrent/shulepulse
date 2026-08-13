@@ -36,23 +36,24 @@ export const DOCUMENT_TYPES = [
   { value: 'other', label: 'Other' },
 ]
 
+// Lightweight helper to prettify a KRA tax class code into a UI label.
+// The authoritative tax rules live in taxUtils / the tax_rules table; this
+// helper merely converts a code like "class_i" or "inv_b_hotel" into a
+// human-readable label for display when the full rule metadata is not
+// available in the calling context.
+export const kraTaxClass = (code) => {
+  if (!code) return null
+  const label = String(code).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  return { label }
+}
+
 export const assetStatus = (status) => ASSET_STATUSES.find((s) => s.value === status) || ASSET_STATUSES[0]
 
-// ─── KRA Tax Wear & Tear (Capital Allowances) ───────────────────────────────
-// Replaces arbitrary company depreciation rates with KRA Income Tax Act rates.
-//   • computers       → 20% reducing balance
-//   • motor_vehicles  → 25% reducing balance
-//   • furniture       → 10% reducing balance
-//   • manufacturing   → 50% first-year allowance, then 25% on the residue
-export const KRA_WEAR_AND_TEAR = [
-  { value: 'computers',      label: 'Computers, Copiers & Electronic Software', rate: 20, first_year_allowance: 0 },
-  { value: 'motor_vehicles', label: 'Motor Vehicles & Heavy Earth-Moving Equipment', rate: 25, first_year_allowance: 0 },
-  { value: 'furniture',      label: 'Furniture, Fixtures & General Fittings', rate: 10, first_year_allowance: 0 },
-  { value: 'manufacturing',  label: 'Manufacturing Machinery / Hospital Equipment', rate: 25, first_year_allowance: 50 },
-]
-
-export const kraTaxClass = (taxClass) =>
-  KRA_WEAR_AND_TEAR.find((k) => k.value === taxClass) || null
+// NOTE: Kenyan tax capital allowances no longer live here. KRA tax classes,
+// wear & tear rates and investment allowances are configured in the `tax_rules`
+// table and computed in ./taxUtils.js. This module is FINANCIAL ACCOUNTING
+// ONLY (straight-line / reducing balance) and is what posts to the General
+// Ledger via Depreciation Runs.
 
 export const calcNbv = (asset) =>
   Number(asset?.purchase_cost || 0) - Number(asset?.accumulated_depreciation || 0)
@@ -65,9 +66,9 @@ export const monthsBetween = (from, to = new Date()) => {
   return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth())
 }
 
-// Depreciation charge for one period (monthly). Never depreciates below residual value.
-// KRA first-year allowance (manufacturing / hospital): a % of cost is claimable
-// across the first 12 months, then reducing balance applies on the residue.
+// Depreciation charge for one period (monthly). Financial accounting only —
+// never below residual value. Kenyan tax capital allowances are computed
+// separately in taxUtils.js and do NOT influence this figure.
 export const monthlyDepreciation = (asset, asOf = new Date()) => {
   if (!asset) return 0
   const cost = Number(asset.purchase_cost || 0)
@@ -76,15 +77,6 @@ export const monthlyDepreciation = (asset, asOf = new Date()) => {
   const months = Math.max(1, Number(asset.useful_life_months || 60))
   const nbv = cost - acc
   const cap = Math.max(0, cost - residual - acc)
-
-  const fya = Number(asset.first_year_allowance || 0)
-  if (fya > 0 && cost > 0) {
-    const fyTotal = (cost * fya) / 100
-    const elapsed = Math.max(1, Math.min(monthsBetween(asset.purchase_date, asOf) + 1, 12))
-    const prorated = fyTotal * (elapsed / 12)
-    const catchUp = prorated - acc
-    if (catchUp > 0.01) return Math.min(catchUp, cap)
-  }
 
   if (asset.depreciation_method === 'reducing_balance') {
     const annualRate = Number(asset.depreciation_rate || 0) / 100

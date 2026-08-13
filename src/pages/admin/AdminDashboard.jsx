@@ -63,6 +63,9 @@ import '../../pages/teacher/CBCCompetency.css'
 import PayrollPage from '../Finance/Payroll'
 import '../Finance/Payroll.css'
 
+import AccountsPayablePage from '../Finance/AccountsPayable'
+import '../Finance/AccountsPayable.css'
+
 const STORAGE_KEY = 'admin_sidebar_expanded'
 
 const NAV_GROUPS = [
@@ -99,6 +102,7 @@ const NAV_GROUPS = [
     items: [
       { key: 'fees', label: 'Fees', icon: <DollarSign size={14} /> },
       { key: 'payroll', label: 'Payroll', icon: <Wallet size={14} /> },
+      { key: 'ap', label: 'Accounts Payable', icon: <Receipt size={14} /> },
     ],
   },
   {
@@ -136,6 +140,7 @@ const pageTitles = {
   dashboard: 'Admin Dashboard',
   students: 'Student Records',
   fees: 'Fee Management',
+  ap: 'Accounts Payable',
   attendance: 'Attendance',
   grades: 'Grades',
   teachers: 'Teachers',
@@ -190,6 +195,7 @@ export default function AdminDashboard() {
   const [trendData, setTrendData] = useState([])
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState(null)
+  const [pendingAp, setPendingAp] = useState(0)
 
   useEffect(() => {
     fetchDashboardData()
@@ -207,7 +213,7 @@ export default function AdminDashboard() {
     const schoolId = profile?.school_id
     if (!schoolId) { setLoading(false); return }
 
-    const [studentRes, feeRes, staffRes, attendanceRes, recentRes, pendingExamRes, pendingMarksRes, trendRes] = await Promise.all([
+    const [studentRes, feeRes, staffRes, attendanceRes, recentRes, pendingExamRes, pendingMarksRes, trendRes, apInvRes, apPayRes, apCfgRes] = await Promise.all([
       supabase
         .from('students')
         .select('*', { count: 'exact', head: true })
@@ -252,6 +258,21 @@ export default function AdminDashboard() {
         .eq('term', currentTerm)
         .eq('year', currentYear)
         .order('transaction_date', { ascending: true }),
+      supabase
+        .from('ap_invoices')
+        .select('id', { count: 'exact', head: true })
+        .eq('school_id', schoolId)
+        .in('status', ['submitted', 'reviewed']),
+      supabase
+        .from('ap_payments')
+        .select('id', { count: 'exact', head: true })
+        .eq('school_id', schoolId)
+        .in('status', ['submitted', 'reviewed']),
+      supabase
+        .from('ap_tax_config')
+        .select('id', { count: 'exact', head: true })
+        .eq('school_id', schoolId)
+        .eq('status', 'pending'),
     ])
 
     const totalCollected = (feeRes.data || []).reduce((s, p) => s + Number(p.amount), 0)
@@ -298,6 +319,8 @@ export default function AdminDashboard() {
       }
     }
     setAlerts(generatedAlerts)
+
+    setPendingAp((apInvRes.count || 0) + (apPayRes.count || 0) + (apCfgRes.count || 0))
 
     const enriched = await enrichWithStaffNames(recentRes.data || [])
     setRecentFees(enriched)
@@ -366,6 +389,7 @@ export default function AdminDashboard() {
       case 'students':       return <StudentsPage />
       case 'fees':           return <FeesPage />
       case 'payroll':        return <PayrollPage />
+      case 'ap':             return <AccountsPayablePage />
       case 'attendance':     return <AttendancePage />
       case 'grades':         return <GradesPage />
       case 'teachers':       return <TeachersPage />
@@ -679,6 +703,7 @@ export default function AdminDashboard() {
                     >
                       <span className="adm-item-icon">{item.icon}</span>
                       <span>{item.label}</span>
+                      {item.key === 'ap' && pendingAp > 0 && <span className="adm-item-badge">{pendingAp}</span>}
                     </button>
                   ))}
                 </div>

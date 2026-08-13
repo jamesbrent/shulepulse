@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Plus, Search, Pencil, Trash2, X, Eye, Printer, Download,
   FileText, CheckCircle, Banknote, AlertTriangle, Building2, Paperclip,
-  Upload, Send, UserCheck, Clock, Receipt, Columns3, Settings2, ArrowDownCircle, Calendar,
+  Upload, Send, UserCheck, Clock, Receipt, Columns3, Settings2, ArrowDownCircle, Calendar, XCircle,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
@@ -80,6 +80,8 @@ export default function AccountsPayablePage({ initialTab }) {
   const [statement, setStatement] = useState(null)  // supplier statement print
   const [configItem, setConfigItem] = useState(null)
   const [attachTarget, setAttachTarget] = useState(null)
+  const [rejectTarget, setRejectTarget] = useState(null)  // { type: 'invoice'|'payment', id }
+  const [rejectReason, setRejectReason] = useState('')
   const fileRef = useRef(null)
 
   const showToast = (msg, ok = true) => {
@@ -167,7 +169,12 @@ export default function AccountsPayablePage({ initialTab }) {
     try {
       let invoiceId = editInvoiceId
       if (editInvoiceId) {
-        const { error } = await supabase.from('ap_invoices').update({ ...invoiceForm, vat_rate: Number(invoiceForm.vat_rate) || 0, updated_at: new Date().toISOString() }).eq('id', editInvoiceId)
+        const wasRejected = (d.invoices || []).some((i) => i.id === editInvoiceId && i.status === 'rejected')
+        const { error } = await supabase.from('ap_invoices').update({
+          ...invoiceForm, vat_rate: Number(invoiceForm.vat_rate) || 0,
+          ...(wasRejected ? { status: 'draft', rejection_reason: null, rejected_by: null, rejected_at: null } : {}),
+          updated_at: new Date().toISOString(),
+        }).eq('id', editInvoiceId)
         if (error) throw error
         await supabase.from('ap_invoice_lines').delete().eq('invoice_id', editInvoiceId)
       } else {
@@ -342,6 +349,55 @@ export default function AccountsPayablePage({ initialTab }) {
     } catch (e) { showToast(e.message, false) }
   }
 
+  // ─── Rejection ────────────────────────────────────────────────────────────
+  const openReject = (type, id) => { setRejectReason(''); setRejectTarget({ type, id }) }
+
+  const rejectInvoice = async (inv, reason) => {
+    try {
+      const { error } = await supabase.from('ap_invoices').update({
+        status: 'rejected',
+        rejection_reason: reason,
+        rejected_by: userId,
+        rejected_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', inv.id)
+      if (error) throw error
+      showToast(`Invoice ${inv.invoice_no} rejected`)
+      await writeAudit(supabase, { schoolId, action: 'ap_invoice_rejected', details: { invoice_id: inv.id, invoice_no: inv.invoice_no, reason } })
+      load()
+    } catch (e) { showToast(e.message, false) }
+  }
+
+  const rejectPayment = async (pay, reason) => {
+    try {
+      const { error } = await supabase.from('ap_payments').update({
+        status: 'rejected',
+        rejection_reason: reason,
+        rejected_by: userId,
+        rejected_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', pay.id)
+      if (error) throw error
+      showToast(`Payment ${pay.payment_no} rejected`)
+      await writeAudit(supabase, { schoolId, action: 'ap_payment_rejected', details: { payment_id: pay.id, payment_no: pay.payment_no, reason } })
+      load()
+    } catch (e) { showToast(e.message, false) }
+  }
+
+  const confirmReject = async () => {
+    if (!rejectTarget || !rejectReason.trim()) return
+    const reason = rejectReason.trim()
+    const { type, id } = rejectTarget
+    setRejectTarget(null)
+    if (type === 'invoice') {
+      const inv = (d.invoices || []).find((i) => i.id === id)
+      if (inv) await rejectInvoice(inv, reason)
+    } else {
+      const pay = (d.payments || []).find((p) => p.id === id)
+      if (pay) await rejectPayment(pay, reason)
+    }
+  }
+
   // ─── Voucher ──────────────────────────────────────────────────────────────
   const printVoucher = async (pay) => {
     try {
@@ -443,6 +499,7 @@ export default function AccountsPayablePage({ initialTab }) {
       <div className="prl-tabs">
         {[
           { key: 'dashboard', label: 'Dashboard', icon: <Columns3 size={15} /> },
+          { key: 'approvals', label: 'Approvals', icon: <UserCheck size={15} /> },
           { key: 'suppliers', label: 'Suppliers', icon: <Building2 size={15} /> },
           { key: 'invoices', label: 'Invoices & Bills', icon: <Receipt size={15} /> },
           { key: 'payments', label: 'Payments', icon: <Banknote size={15} /> },
@@ -520,6 +577,104 @@ export default function AccountsPayablePage({ initialTab }) {
         </div>
       )}
 
+      {/* ═══ APPROVALS ═══ */}
+      {tab === 'approvals' && d && (() => {
+        const labels = { vat_rate: 'VAT Rate (Purchases)', ap_defaults: 'Default GL Accounts' }
+        const summaryOf = (row) => row.item === 'vat_rate' ? `${row.value.rate}%` : `AP ${row.value.ap_account} · VAT ${row.value.vat_input_account} · Bank ${row.value.bank_account} · M-Pesa ${row.value.mobile_account} · Cash ${row.value.cash_account}`
+        const pendingInvoices = (d.invoices || []).filter((i) => ['submitted', 'reviewed'].includes(i.status))
+        const pendingPayments = (d.payments || []).filter((p) => ['submitted', 'reviewed'].includes(p.status))
+        const pendingConfig = (d.config?._rows || []).filter((r) => r.status === 'pending')
+        return (
+          <div className="prl-section">
+            <p className="prl-hint">Everything waiting on your decision. Approve advances the item; Reject records a reason and returns it to the requestor.</p>
+
+            <div className="prl-pending-block">
+              <div className="prl-pending-head">
+                <Receipt size={15} />
+                <strong>Invoices awaiting approval</strong>
+                <span className="prl-badge" style={{ background: '#d977061a', color: '#d97706' }}>{pendingInvoices.length} pending</span>
+              </div>
+              <div className="prl-card">
+                <table className="prl-table">
+                  <thead><tr><th>Invoice</th><th>Supplier</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr></thead>
+                  <tbody>
+                    {pendingInvoices.map((inv) => (
+                      <tr key={inv.id}>
+                        <td className="prl-mono">{inv.invoice_no}</td>
+                        <td>{supplierOf(d, inv.supplier_id)?.name || '—'}</td>
+                        <td>{fmtDate(inv.invoice_date)}</td>
+                        <td style={{ fontWeight: 600 }}>{fmt(inv.total_amount)}</td>
+                        <td>{renderActions(null, AP_INVOICE_STATUSES, inv.status)}</td>
+                        <td className="prl-actions-cell">
+                          {inv.status === 'submitted' && <button className="prl-btn-ghost" onClick={() => invoiceTransition(inv, 'reviewed')} title="Review"><UserCheck size={14} /></button>}
+                          {inv.status === 'reviewed' && isAdmin && <button className="prl-btn-primary" onClick={() => invoiceTransition(inv, 'approved')} title="Approve"><CheckCircle size={14} /> Approve</button>}
+                          {isAdmin && <button className="prl-btn-danger-ghost" onClick={() => openReject('invoice', inv.id)} title="Reject"><XCircle size={14} /> Reject</button>}
+                          <button className="prl-btn-ghost" onClick={() => setView({ type: 'invoice', id: inv.id })}><Eye size={14} /></button>
+                        </td>
+                      </tr>
+                    ))}
+                    {pendingInvoices.length === 0 && <tr><td colSpan={6} className="prl-norows">No invoices awaiting approval.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="prl-pending-block">
+              <div className="prl-pending-head">
+                <Banknote size={15} />
+                <strong>Payments awaiting approval</strong>
+                <span className="prl-badge" style={{ background: '#d977061a', color: '#d97706' }}>{pendingPayments.length} pending</span>
+              </div>
+              <div className="prl-card">
+                <table className="prl-table">
+                  <thead><tr><th>Payment</th><th>Payee</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+                  <tbody>
+                    {pendingPayments.map((p) => (
+                      <tr key={p.id}>
+                        <td className="prl-mono">{p.payment_no}</td>
+                        <td>{supplierOf(d, p.supplier_id)?.name || p.payee_name || '—'}</td>
+                        <td>{fmtDate(p.payment_date)}</td>
+                        <td style={{ fontWeight: 600 }}>{fmt(p.amount)}</td>
+                        <td>{renderActions(null, AP_PAYMENT_STATUSES, p.status)}</td>
+                        <td className="prl-actions-cell">
+                          {p.status === 'submitted' && <button className="prl-btn-ghost" onClick={() => paymentTransition(p, 'reviewed')} title="Review"><UserCheck size={14} /></button>}
+                          {p.status === 'reviewed' && isAdmin && <button className="prl-btn-primary" onClick={() => paymentTransition(p, 'approved')} title="Approve"><CheckCircle size={14} /> Approve</button>}
+                          {isAdmin && <button className="prl-btn-danger-ghost" onClick={() => openReject('payment', p.id)} title="Reject"><XCircle size={14} /> Reject</button>}
+                          <button className="prl-btn-ghost" onClick={() => setView({ type: 'payment', id: p.id })}><Eye size={14} /></button>
+                        </td>
+                      </tr>
+                    ))}
+                    {pendingPayments.length === 0 && <tr><td colSpan={6} className="prl-norows">No payments awaiting approval.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="prl-pending-block">
+              <div className="prl-pending-head">
+                <Settings2 size={15} />
+                <strong>AP settings changes awaiting approval</strong>
+                <span className="prl-badge" style={{ background: '#d977061a', color: '#d97706' }}>{pendingConfig.length} pending</span>
+              </div>
+              <div className="prl-config-grid">
+                {pendingConfig.map((row) => (
+                  <div className="prl-config-card" key={row.id} style={{ borderColor: '#d97706' }}>
+                    <div className="prl-config-head"><strong>{labels[row.item] || row.item}</strong><span className="prl-badge" style={{ background: '#d977061a', color: '#d97706' }}>pending</span></div>
+                    <p className="prl-config-value">{summaryOf(row)}</p>
+                    <p className="prl-config-note">{row.notes}</p>
+                    <div className="prl-pending-actions">
+                      <button className="prl-btn-primary" onClick={async () => { try { await decideApConfig(supabase, { userId, row, approve: true }); showToast('Change approved — applies from today'); load() } catch (e) { showToast(e.message, false) } }}><CheckCircle size={14} /> Approve</button>
+                      <button className="prl-btn-danger" onClick={async () => { try { await decideApConfig(supabase, { userId, row, approve: false }); showToast('Change rejected'); load() } catch (e) { showToast(e.message, false) } }}>Reject</button>
+                    </div>
+                  </div>
+                ))}
+                {pendingConfig.length === 0 && <p className="prl-norows" style={{ gridColumn: '1 / -1' }}>No settings changes awaiting approval.</p>}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* ═══ SUPPLIERS ═══ */}
       {tab === 'suppliers' && d && (
         <div className="prl-section">
@@ -593,8 +748,9 @@ export default function AccountsPayablePage({ initialTab }) {
                       {inv.status === 'draft' && <button className="prl-btn-ghost" onClick={() => invoiceTransition(inv, 'submitted')} title="Submit"><Send size={14} /></button>}
                       {inv.status === 'submitted' && <button className="prl-btn-ghost" onClick={() => invoiceTransition(inv, 'reviewed')} title="Review"><UserCheck size={14} /></button>}
                       {inv.status === 'reviewed' && isAdmin && <button className="prl-btn-ghost" onClick={() => invoiceTransition(inv, 'approved')} title="Approve"><CheckCircle size={14} /></button>}
+                      {['submitted', 'reviewed'].includes(inv.status) && isAdmin && <button className="prl-btn-danger-ghost" onClick={() => openReject('invoice', inv.id)} title="Reject"><XCircle size={14} /></button>}
                       {inv.status === 'approved' && <button className="prl-btn-ghost" onClick={() => invoiceTransition(inv, 'posted')} title="Post to GL"><Columns3 size={14} /></button>}
-                      {['draft', 'submitted', 'reviewed'].includes(inv.status) && <button className="prl-btn-ghost" onClick={() => openInvoice(inv)}><Pencil size={14} /></button>}
+                      {['draft', 'submitted', 'reviewed', 'rejected'].includes(inv.status) && <button className="prl-btn-ghost" onClick={() => openInvoice(inv)}><Pencil size={14} /></button>}
                       {['posted', 'partially_paid', 'paid'].includes(inv.status) && isAdmin && <button className="prl-btn-danger-ghost" onClick={() => setConfirm({ message: `Reverse ${inv.invoice_no}? A reversing journal entry will be posted and the invoice returns to Approved.`, action: () => reverseInvoice(inv) })} title="Reverse"><ArrowDownCircle size={14} /></button>}
                       <button className="prl-btn-ghost" onClick={() => setView({ type: 'invoice', id: inv.id })}><Eye size={14} /></button>
                     </td>
@@ -641,6 +797,7 @@ export default function AccountsPayablePage({ initialTab }) {
                       {p.status === 'draft' && <button className="prl-btn-ghost" onClick={() => paymentTransition(p, 'submitted')} title="Submit"><Send size={14} /></button>}
                       {p.status === 'submitted' && <button className="prl-btn-ghost" onClick={() => paymentTransition(p, 'reviewed')} title="Review"><UserCheck size={14} /></button>}
                       {p.status === 'reviewed' && isAdmin && <button className="prl-btn-ghost" onClick={() => paymentTransition(p, 'approved')} title="Approve"><CheckCircle size={14} /></button>}
+                      {['submitted', 'reviewed'].includes(p.status) && isAdmin && <button className="prl-btn-danger-ghost" onClick={() => openReject('payment', p.id)} title="Reject"><XCircle size={14} /></button>}
                       {p.status === 'approved' && <button className="prl-btn-ghost" onClick={() => paymentTransition(p, 'processing')} title="Mark processing"><Clock size={14} /></button>}
                       {p.status === 'processing' && <button className="prl-btn-ghost" onClick={() => paymentTransition(p, 'paid')} title="Mark paid"><CheckCircle size={14} /></button>}
                       {p.status === 'paid' && <button className="prl-btn-ghost" onClick={() => paymentTransition(p, 'posted')} title="Post to GL"><Columns3 size={14} /></button>}
@@ -1023,6 +1180,7 @@ export default function AccountsPayablePage({ initialTab }) {
                   <div className="prl-detail-item"><span>Submitted</span><strong>{inv.submitted_at ? d?.nameOf[inv.submitted_by] : '—'}</strong></div>
                   <div className="prl-detail-item"><span>Reviewed</span><strong>{inv.reviewed_at ? d?.nameOf[inv.reviewed_by] : '—'}</strong></div>
                   <div className="prl-detail-item"><span>Approved</span><strong>{inv.approved_at ? d?.nameOf[inv.approved_by] : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Rejected</span><strong style={inv.rejected_at ? { color: '#dc2626' } : undefined}>{inv.rejected_at ? `${d?.nameOf[inv.rejected_by] || '—'}${inv.rejection_reason ? ` — ${inv.rejection_reason}` : ''}` : '—'}</strong></div>
                   <div className="prl-detail-item"><span>Posted</span><strong>{inv.posted_at ? d?.nameOf[inv.posted_by] : '—'}</strong></div>
                 </div>
               </div>
@@ -1099,6 +1257,7 @@ export default function AccountsPayablePage({ initialTab }) {
                   <div className="prl-detail-item"><span>Prepared</span><strong>{d?.nameOf[p.created_by] || '—'}</strong></div>
                   <div className="prl-detail-item"><span>Reviewed</span><strong>{p.reviewed_at ? d?.nameOf[p.reviewed_by] : '—'}</strong></div>
                   <div className="prl-detail-item"><span>Approved</span><strong>{p.approved_at ? d?.nameOf[p.approved_by] : '—'}</strong></div>
+                  <div className="prl-detail-item"><span>Rejected</span><strong style={p.rejected_at ? { color: '#dc2626' } : undefined}>{p.rejected_at ? `${d?.nameOf[p.rejected_by] || '—'}${p.rejection_reason ? ` — ${p.rejection_reason}` : ''}` : '—'}</strong></div>
                   <div className="prl-detail-item"><span>Processed</span><strong>{p.processed_at ? d?.nameOf[p.processed_by] : '—'}</strong></div>
                   <div className="prl-detail-item"><span>Paid</span><strong>{p.paid_at ? d?.nameOf[p.paid_by] : '—'}</strong></div>
                 </div>
@@ -1279,6 +1438,28 @@ export default function AccountsPayablePage({ initialTab }) {
                   <tr><td>—</td><td>—</td><td><strong>Closing balance</strong></td><td></td><td></td><td className="ap-stmt-strong" style={{ color: '#dc2626' }}>{fmt(statement.statement.closing)}</td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Reject dialog ═══ */}
+      {rejectTarget && (
+        <div className="prl-modal-overlay" onClick={() => setRejectTarget(null)}>
+          <div className="prl-modal prl-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="prl-modal-head">
+              <h3>Reject {rejectTarget.type === 'invoice' ? 'Invoice' : 'Payment'}</h3>
+              <button className="prl-btn-icon" onClick={() => setRejectTarget(null)}><X size={16} /></button>
+            </div>
+            <p className="prl-confirm-msg">Provide a reason so the requestor can correct and resubmit.</p>
+            <div className="prl-form-grid" style={{ padding: '0 18px' }}>
+              <label className="prl-field prl-field-full"><span>Rejection reason *</span>
+                <textarea rows={3} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="e.g. Missing invoice attachment, wrong GL account, no supporting document..." />
+              </label>
+            </div>
+            <div className="prl-modal-foot">
+              <button className="prl-btn-secondary" onClick={() => setRejectTarget(null)}>Cancel</button>
+              <button className="prl-btn-danger" disabled={!rejectReason.trim()} onClick={confirmReject}>Reject</button>
             </div>
           </div>
         </div>
