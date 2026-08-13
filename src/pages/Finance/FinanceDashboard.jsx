@@ -30,6 +30,8 @@ import AssetsPage from './Assets'
 import './Assets.css'
 import PayrollPage from './Payroll'
 import './Payroll.css'
+import PayrollReportsPage from './PayrollReports'
+import './PayrollReports.css'
 import AccountsPayablePage from './AccountsPayable'
 import './AccountsPayable.css'
 import ExpensesPage from './Expenses'
@@ -114,8 +116,8 @@ const NAV_SECTIONS = [
           { key: 'reports:financial', label: 'Financial Statements', icon: <BarChart3 size={15} />, page: 'financial_statements' },
           { key: 'reports:fee', label: 'Fee Collection', icon: <DollarSign size={15} />, page: 'reports', tab: 'overview' },
           { key: 'reports:expense', label: 'Expense Reports', icon: <Receipt size={15} />, page: 'expenses', tab: 'reports' },
-          { key: 'reports:payroll', label: 'Payroll Reports', icon: <Wallet size={15} />, page: 'coming-soon' },
-          { key: 'reports:asset', label: 'Asset Reports', icon: <Archive size={15} />, page: 'coming-soon' },
+          { key: 'reports:payroll', label: 'Payroll Reports', icon: <Wallet size={15} />, page: 'payroll_reports' },
+          { key: 'reports:asset', label: 'Asset Reports', icon: <Archive size={15} />, page: 'assets', tab: 'register' },
         ],
       },
     ],
@@ -279,6 +281,7 @@ export default function FinanceDashboard() {
       case 'accounting': return <AccountingPage initialTab={activeItem.tab} onOpenSource={(type, id) => { if (type === 'expense') { go(findItem('accounting:expenses') || { key: 'accounting:expenses', label: 'Expenses', page: 'expenses', tab: 'dashboard' }); setOpenExpenseId(id) } }} />
       case 'assets': return <AssetsPage initialTab={activeItem.tab} />
       case 'payroll': return <PayrollPage initialTab={activeItem.tab} />
+      case 'payroll_reports': return <PayrollReportsPage />
       case 'accounts_payable': return <AccountsPayablePage initialTab={activeItem.tab} />
       case 'cash_bank': return <CashBankPage initialTab={activeItem.tab} />
       case 'expenses': return <ExpensesPage initialTab={activeItem.tab} openExpenseId={openExpenseId} onOpenExpenseDone={() => setOpenExpenseId(null)} />

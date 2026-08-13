@@ -1,0 +1,50 @@
+/* ═══════════════════════════════════════════════════════════════════
+   BURSAR — Payroll Reports Page (extends the Reports design system)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.prpt-page { padding-bottom: 8px; }
+
+.prpt-kpi-row {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.prpt-muted {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.prpt-num { text-align: right; }
+
+.prpt-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.prpt-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #166534;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.prpt-ded-total {
+  border-top: 2px solid #e5e7eb;
+  padding-top: 14px;
+  margin-top: 6px;
+}
+
+@media (max-width: 1280px) {
+  .prpt-kpi-row { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  .prpt-kpi-row { grid-template-columns: 1fr; }
+}
