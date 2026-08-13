@@ -198,19 +198,29 @@ export const balanceError = (lines) => {
 }
 
 // Next sequential journal number, e.g. JE-26-000123 (mirrors the receipt pattern).
+// Uses the atomic postgres counter (migration 055) so two concurrent posts can
+// never receive the same number; falls back to the true max over the year's
+// entries when the migration hasn't been run yet. The old "latest by created_at"
+// approach could pick a stale row among same-timestamp backfilled entries and
+// collide with the unique (school_id, entry_no) constraint.
 export async function nextJournalNumber(supabase, schoolId, year = new Date().getFullYear()) {
-  const yearStr = String(year).slice(-2)
-  const { data } = await supabase
+  const yy = String(year).slice(-2)
+  const { data, error } = await supabase.rpc('next_journal_number', { p_school_id: schoolId, p_yy: Number(yy) })
+  if (!error && data != null && Number.isFinite(data)) {
+    return `JE-${yy}-${String(data).padStart(5, '0')}`
+  }
+  const { data: rows } = await supabase
     .from('journal_entries')
     .select('entry_no')
     .eq('school_id', schoolId)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .like('entry_no', `JE-${yy}-%`)
   let seq = 1
-  if (data?.length && data[0].entry_no?.startsWith(`JE-${yearStr}-`)) {
-    seq = parseInt(data[0].entry_no.split('-')[2]) + 1
-  }
-  return `JE-${yearStr}-${String(seq).padStart(5, '0')}`
+  const nums = (rows || [])
+    .map((r) => /^JE-\d{2}-(\d+)$/.exec(r.entry_no))
+    .filter(Boolean)
+    .map((m) => parseInt(m[1], 10))
+  if (nums.length) seq = Math.max(...nums) + 1
+  return `JE-${yy}-${String(seq).padStart(5, '0')}`
 }
 
 // Ensure specific accounts exist for a school — inserts any missing defaults

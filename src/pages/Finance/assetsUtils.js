@@ -126,7 +126,8 @@ export const monthlyDepreciation = (asset, asOf = new Date()) => {
   const cap = Math.max(0, cost - residual - acc)
 
   if (asset.depreciation_method === 'reducing_balance') {
-    const annualRate = Number(asset.depreciation_rate || 0) / 100
+    let annualRate = Number(asset.depreciation_rate || 0) / 100
+    if (!annualRate) annualRate = 12 / months
     const charge = (nbv * annualRate) / 12
     return Math.min(Math.max(0, charge), cap)
   }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Plus, Search, RefreshCw, Eye, Pencil, Trash2, Download,
-  X, TrendingDown, Wrench, User, FileText, Archive, Landmark, ShieldCheck, Power
+  X, TrendingDown, Wrench, User, FileText, Archive, Landmark, ShieldCheck, Power, CheckCircle2
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
@@ -29,7 +29,7 @@ const blankAsset = () => ({
   name: '', category_id: '', asset_type: 'equipment', serial_number: '', model: '',
   manufacturer: '', description: '', purchase_date: TODAY, supplier_id: '',
   purchase_invoice_ref: '', purchase_cost: '', residual_value: 0, useful_life_months: 60,
-  depreciation_method: 'straight_line', depreciation_rate: 0, warranty_until: '',
+  depreciation_method: 'reducing_balance', depreciation_rate: 0, warranty_until: '',
   status: 'active', campus: '', building: '', department: '', room: '', specific_location: '',
   custodian_id: '', assigned_date: TODAY,
   tax_class: '', investment_class: '', acquisition_source: 'supplier',
@@ -39,7 +39,7 @@ const blankAsset = () => ({
 })
 
 const blankCategory = () => ({
-  name: '', description: '', depreciation_method: 'straight_line',
+  name: '', description: '', depreciation_method: 'reducing_balance',
   useful_life_months: 60, depreciation_rate: 0, residual_value: 0,
   tax_class: '', expense_account_id: '', accumulated_account_id: '',
 })
@@ -233,7 +233,7 @@ export default function AssetsPage({ initialTab }) {
       description: asset.description || '', purchase_date: asset.purchase_date || TODAY, supplier_id: asset.supplier_id || '',
       purchase_invoice_ref: asset.purchase_invoice_ref || '', purchase_cost: asset.purchase_cost || '',
       residual_value: asset.residual_value || 0, useful_life_months: asset.useful_life_months || 60,
-      depreciation_method: asset.depreciation_method || 'straight_line', depreciation_rate: asset.depreciation_rate || 0,
+      depreciation_method: asset.depreciation_method || 'reducing_balance', depreciation_rate: asset.depreciation_rate || 0,
       warranty_until: asset.warranty_until || '', status: asset.status || 'active',
       campus: asset.campus || '', building: asset.building || '', department: asset.department || '',
       room: asset.room || '', specific_location: asset.specific_location || '',
@@ -425,7 +425,7 @@ export default function AssetsPage({ initialTab }) {
         useful_life_months: assetModal.isNew
           ? Number(policyCat?.useful_life_months ?? assetForm.useful_life_months) || 60
           : Number(assetForm.useful_life_months) || 60,
-        depreciation_method: policyCat?.depreciation_method || assetForm.depreciation_method || 'straight_line',
+        depreciation_method: policyCat?.depreciation_method || assetForm.depreciation_method || 'reducing_balance',
         depreciation_rate: Number(policyCat?.depreciation_rate ?? assetForm.depreciation_rate) || 0,
         // Kenyan tax classification — controls the tax capital-allowance
         // schedule ONLY. It does not affect accounting depreciation.
@@ -807,9 +807,97 @@ export default function AssetsPage({ initialTab }) {
     setViewRunLines(data || [])
   }
 
+  // Post (or complete) the GL journal entry for a depreciation run. Groups the
+  // per-asset amounts by class — ONE Dr/Cr account pair per class — and returns
+  // the created journal entry. Throws if a class has no resolvable accounts.
+  const postJournalForRun = async (run, entries) => {
+    const groups = {}
+    const unsetClasses = new Set()
+    for (const p of entries) {
+      const pc = categories.find((c) => c.id === p.asset.category_id)
+      const resolved = resolveClassAccounts(p.asset, pc)
+      const expenseId = resolved?.expenseId || deprForm.expense_account_id
+      const accId = resolved?.accId || deprForm.accumulated_account_id
+      if (!expenseId || !accId) { unsetClasses.add(resolved?.className || pc?.name || 'Uncategorised'); continue }
+      const key = `${expenseId}|${accId}`
+      if (!groups[key]) groups[key] = { expenseId, accId, amount: 0 }
+      groups[key].amount += p.amount
+    }
+    if (unsetClasses.size) {
+      throw new Error(`Set the depreciation accounts for: ${[...unsetClasses].join(', ')}. Nothing was posted.`)
+    }
+    const accountIds = new Set()
+    Object.values(groups).forEach((g) => { accountIds.add(g.expenseId); accountIds.add(g.accId) })
+    const ids = [...accountIds].filter(Boolean)
+    if (!ids.length) throw new Error('No valid accounts selected for posting.')
+    const { data: accRecords } = await supabase.from('chart_of_accounts').select('*').in('id', ids)
+    const accById = Object.fromEntries((accRecords || []).map((a) => [a.id, a]))
+    const journalLines = []
+    for (const g of Object.values(groups)) {
+      const exp = accById[g.expenseId]
+      const acc = accById[g.accId]
+      if (!exp || exp.type !== 'expense' || !(exp.category === 'Depreciation' || /^60\d0$/.test(exp.code))) {
+        throw new Error(`Invalid depreciation expense account selected: ${exp ? `${exp.code} — ${exp.name}` : g.expenseId}`)
+      }
+      if (!acc || acc.type !== 'asset' || !(acc.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(acc.code))) {
+        throw new Error(`Invalid accumulated depreciation account selected: ${acc ? `${acc.code} — ${acc.name}` : g.accId}`)
+      }
+      journalLines.push({ account_id: g.expenseId, debit: g.amount, credit: 0, notes: run.period_label })
+      journalLines.push({ account_id: g.accId, debit: 0, credit: g.amount, notes: run.period_label })
+    }
+    const je = await postToJournal(supabase, {
+      schoolId, userId, entry_date: run.run_date || TODAY,
+      description: `Depreciation for ${run.period_label} (${entries.length} assets)`,
+      source: 'assets', reference_type: 'depreciation_run', reference_id: run.id,
+      lines: journalLines,
+    })
+    await supabase.from('asset_depreciation_runs').update({ journal_entry_id: je.id }).eq('id', run.id)
+    await writeAudit(supabase, {
+      schoolId, action: 'assets.depreciation_run',
+      details: { period: run.period_label, total: run.total_depreciation, entry_no: je.entry_no },
+    })
+    return je
+  }
+
+  // Complete the GL posting of a run whose journal insert failed midway (an
+  // orphan: the run, its lines and the asset updates exist, but no journal
+  // entry). Entries are rebuilt from the run's line rows, so nothing is
+  // double-booked.
+  const completeOrphanRun = async (run) => {
+    setSaving(true)
+    try {
+      const { data: lns } = await supabase.from('asset_depreciation_lines')
+        .select('*').eq('run_id', run.id)
+      const entries = (lns || [])
+        .map((l) => ({ asset: assets.find((a) => a.id === l.asset_id), amount: l.depreciation_amount }))
+        .filter((e) => e.asset)
+      if (!entries.length) throw new Error('No depreciation lines found for this run.')
+      const je = await postJournalForRun(run, entries)
+      setSaving(false)
+      setToast({ type: 'success', msg: `Completed posting as ${je.entry_no}.` })
+      load()
+    } catch (e) {
+      setSaving(false)
+      setToast({ type: 'error', msg: e.message })
+    }
+  }
+
   const runDepreciation = async () => {
     const preview = previewDepreciation(deprModal.assetIds)
     if (!preview.length) { setToast({ type: 'error', msg: 'No assets are due for depreciation this period.' }); return }
+    // Never run the same period twice. A leftover run with no journal entry is
+    // an orphan from a failed posting — complete it instead of double-posting.
+    const { data: existing } = await supabase.from('asset_depreciation_runs')
+      .select('*, journal_entries(entry_no)').eq('school_id', schoolId).eq('period_label', deprForm.period_label)
+    if (existing?.length) {
+      if (existing[0].journal_entry_id) {
+        setToast({ type: 'error', msg: `Depreciation for ${deprForm.period_label} is already posted as ${existing[0].journal_entries?.entry_no}.` })
+        return
+      }
+      setToast({ type: 'info', msg: 'An earlier attempt for this period failed before the GL entry was posted — completing it now.' })
+      await completeOrphanRun(existing[0])
+      return
+    }
     setSaving(true)
     try {
       const total = preview.reduce((s, p) => s + p.amount, 0)
@@ -844,66 +932,7 @@ export default function AssetsPage({ initialTab }) {
         })
       }
 
-      // Map each asset to the appropriate accounts based on its class. Uses the
-      // account pair stored on the class (asset_categories), falling back to the
-      // standard codes derived from the class name. A class with no resolvable
-      // expense account blocks the whole run (spec rule: never guess accounts).
-      const groups = {}
-      const unsetClasses = new Set()
-      for (const p of preview) {
-        const pc = categories.find((c) => c.id === p.asset.category_id)
-        const resolved = resolveClassAccounts(p.asset, pc)
-        const expenseId = resolved?.expenseId || deprForm.expense_account_id
-        const accId = resolved?.accId || deprForm.accumulated_account_id
-        if (!expenseId || !accId) { unsetClasses.add(resolved?.className || pc?.name || 'Uncategorised'); continue }
-        const key = `${expenseId}|${accId}`
-        if (!groups[key]) groups[key] = { expenseId, accId, amount: 0, assets: [] }
-        groups[key].amount += p.amount
-        groups[key].assets.push(p.asset.id)
-      }
-      if (unsetClasses.size) {
-        throw new Error(`Set the depreciation accounts for: ${[...unsetClasses].join(', ')}. Nothing was posted.`)
-      }
-
-      // Build journal lines aggregated by account pair
-      const journalLines = []
-      const accountIds = new Set()
-      Object.values(groups).forEach((g) => {
-        accountIds.add(g.expenseId); accountIds.add(g.accId)
-      })
-      const ids = [...accountIds].filter(Boolean)
-
-      // Validate accounts server-side: fetch their records and ensure correct types/categories
-      if (!ids.length) throw new Error('No valid accounts selected for posting.')
-      const { data: accRecords } = await supabase.from('chart_of_accounts').select('*').in('id', ids)
-      const accById = Object.fromEntries((accRecords || []).map((a) => [a.id, a]))
-
-      for (const g of Object.values(groups)) {
-        const exp = accById[g.expenseId]
-        const acc = accById[g.accId]
-        if (!exp || exp.type !== 'expense' || !(exp.category === 'Depreciation' || /^60\d0$/.test(exp.code))) {
-          throw new Error(`Invalid depreciation expense account selected: ${exp ? `${exp.code} — ${exp.name}` : g.expenseId}`)
-        }
-        if (!acc || acc.type !== 'asset' || !(acc.category === 'Accumulated Depreciation' || /^17\d{2}$/.test(acc.code))) {
-          throw new Error(`Invalid accumulated depreciation account selected: ${acc ? `${acc.code} — ${acc.name}` : g.accId}`)
-        }
-        journalLines.push({ account_id: g.expenseId, debit: g.amount, credit: 0, notes: deprForm.period_label })
-        journalLines.push({ account_id: g.accId, debit: 0, credit: g.amount, notes: deprForm.period_label })
-      }
-
-      // Post the aggregated journal lines
-      const je = await postToJournal(supabase, {
-        schoolId, userId, entry_date: deprForm.run_date || TODAY,
-        description: `Depreciation for ${deprForm.period_label} (${preview.length} assets)`,
-        source: 'assets', reference_type: 'depreciation_run', reference_id: run.id,
-        lines: journalLines,
-      })
-
-      await supabase.from('asset_depreciation_runs').update({ journal_entry_id: je.id }).eq('id', run.id)
-      await writeAudit(supabase, {
-        schoolId, action: 'assets.depreciation_run',
-        details: { period: deprForm.period_label, total, entry_no: je.entry_no },
-      })
+      const je = await postJournalForRun(run, preview)
       setSaving(false)
       setDeprModal(null)
       setToast({ type: 'success', msg: `Depreciation ${fmt(total)} posted as ${je.entry_no}.` })
@@ -1275,10 +1304,14 @@ export default function AssetsPage({ initialTab }) {
                       <td>{fmtDate(r.run_date)}</td>
                       <td>{count}</td>
                       <td className="num as-fw600">{fmt(r.total_depreciation)}</td>
-                      <td className="as-mono">{r.journal_entries?.entry_no || '—'}</td>
+                      <td className="as-mono">{r.journal_entries?.entry_no || <span className="as-muted">Pending</span>}</td>
                       <td>{staffMap[r.created_by] || '—'}</td>
                       <td className="as-actions-cell">
-                        <button className="as-icon-btn" title="Journal entry report" onClick={() => openRunView(r)}><FileText size={14} /></button>
+                        {r.journal_entry_id ? (
+                          <button className="as-icon-btn" title="Journal entry report" onClick={() => openRunView(r)}><FileText size={14} /></button>
+                        ) : (
+                          <button className="as-icon-btn" title="Complete posting" onClick={() => completeOrphanRun(r)}><CheckCircle2 size={14} /></button>
+                        )}
                       </td>
                     </tr>
                   )

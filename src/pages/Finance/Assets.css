@@ -685,6 +685,7 @@
 
 .as-toast.success { background: #16a34a; }
 .as-toast.error { background: #dc2626; }
+.as-toast.info { background: #2563eb; }
 
 /* ── Asset profile ── */
 
