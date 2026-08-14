@@ -166,8 +166,8 @@ export default function FinanceDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchBursarData()
-  }, [currentTerm, currentYear])
+    if (activeItem?.page === 'dashboard') fetchBursarData()
+  }, [activeItem?.page, currentTerm, currentYear])
 
   const fetchBursarData = async () => {
     setLoading(true)
