@@ -1095,9 +1095,9 @@ export default function AccountsPayablePage({ initialTab }) {
                   {AP_PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
               </label>
-              <label className="prl-field"><span>Bank / Cash / M-Pesa Account *</span>
+              <label className="prl-field"><span>Pay From (Bank / Cash / M-Pesa source account) *</span>
                 <select value={paymentForm.payment_account_id} onChange={(e) => setPaymentForm({ ...paymentForm, payment_account_id: e.target.value })}>
-                  <option value="">Select account...</option>
+                  <option value="">Select source account...</option>
                   {(d?.accounts || []).filter((a) => a.type === 'asset' && ['1010', '1020', '1030', '1040'].includes(a.code)).map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
                 </select>
               </label>
