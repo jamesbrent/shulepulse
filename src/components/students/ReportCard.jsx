@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { Printer, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { getGrade as engineGetGrade, resolveSystem, gradeDisplay as engineGradeDisplay } from '../../services/grading'
 
 // ── Fetch student comments from database ──────────────────────
 export async function fetchStudentComments(schoolId, studentId, term, year) {
@@ -18,63 +19,18 @@ export async function fetchStudentComments(schoolId, studentId, term, year) {
 }
 
 // ── CBE Grading Engine ───────────────────────────────────────
+// Delegates to the central grading engine (src/services/grading).
+// getCBELevel returns a layout/system string ('early'|'middle'|'senior');
+// unknown classes resolve to 'middle' for LAYOUT only — actual grading is
+// handled by getCBEGrade, which never grades unknown classes.
 export const getCBELevel = (className = '') => {
-  const c = className.toLowerCase().trim()
-  if (c.includes('pp1') || c.includes('pp2') || c.includes('pre-primary') || c.includes('preprimary')) return 'early'
-  if (c.includes('grade 1') || c.includes('grade 2') || c.includes('grade 3')) return 'early'
-  if (c.includes('grade 4') || c.includes('grade 5') || c.includes('grade 6')) return 'middle'
-  if (c.includes('grade 7') || c.includes('grade 8') || c.includes('grade 9')) return 'middle'
-  if (c.includes('grade 10') || c.includes('grade 11') || c.includes('grade 12')) return 'senior'
-  return 'middle'
+  const sys = resolveSystem(className)
+  return sys === 'unresolved' ? 'middle' : sys
 }
 
-export const getEarlyBand = (score) => {
-  if (score >= 75) return { band: 'EE', label: 'Exceeding Expectations', color: 'ee' }
-  if (score >= 50) return { band: 'ME', label: 'Meeting Expectations', color: 'me' }
-  if (score >= 25) return { band: 'AE', label: 'Approaching Expectations', color: 'ae' }
-  return { band: 'BE', label: 'Below Expectations', color: 'be' }
-}
+export const getCBEGrade = (score, className) => engineGetGrade(score, className)
 
-export const getMiddleGrade = (score) => {
-  if (score >= 90) return { band: 'EE1', level: 8, points: 8, label: 'Exceptional', color: 'ee1' }
-  if (score >= 75) return { band: 'EE2', level: 7, points: 7, label: 'Very Good', color: 'ee2' }
-  if (score >= 58) return { band: 'ME1', level: 6, points: 6, label: 'Good', color: 'me1' }
-  if (score >= 41) return { band: 'ME2', level: 5, points: 5, label: 'Fair', color: 'me2' }
-  if (score >= 31) return { band: 'AE1', level: 4, points: 4, label: 'Needs Improvement', color: 'ae1' }
-  if (score >= 21) return { band: 'AE2', level: 3, points: 3, label: 'Below Average', color: 'ae2' }
-  if (score >= 11) return { band: 'BE1', level: 2, points: 2, label: 'Well Below Avg', color: 'be1' }
-  return { band: 'BE2', level: 1, points: 1, label: 'Minimal Competence', color: 'be2' }
-}
-
-export const getSeniorGrade = (score) => {
-  if (score >= 80) return { grade: 'A', points: 12, label: 'Highest Distinction', color: 'sa' }
-  if (score >= 75) return { grade: 'A-', points: 11, label: 'Excellent', color: 'sa' }
-  if (score >= 70) return { grade: 'B+', points: 10, label: 'Very Good', color: 'sb' }
-  if (score >= 65) return { grade: 'B', points: 9, label: 'Good', color: 'sb' }
-  if (score >= 60) return { grade: 'B-', points: 8, label: 'Competent', color: 'sb' }
-  if (score >= 55) return { grade: 'C+', points: 7, label: 'Satisfactory', color: 'sc' }
-  if (score >= 50) return { grade: 'C', points: 6, label: 'Average', color: 'sc' }
-  if (score >= 45) return { grade: 'C-', points: 5, label: 'Below Average', color: 'sc' }
-  if (score >= 40) return { grade: 'D+', points: 4, label: 'Marginal', color: 'sd' }
-  if (score >= 35) return { grade: 'D', points: 3, label: 'Weak', color: 'sd' }
-  if (score >= 25) return { grade: 'D-', points: 2, label: 'Very Weak', color: 'sd' }
-  return { grade: 'E', points: 1, label: 'Minimal Performance', color: 'se' }
-}
-
-export const getCBEGrade = (score, className) => {
-  const level = getCBELevel(className)
-  if (level === 'early') return { ...getEarlyBand(score), system: 'early' }
-  if (level === 'senior') return { ...getSeniorGrade(score), system: 'senior' }
-  return { ...getMiddleGrade(score), system: 'middle' }
-}
-
-export const gradeDisplay = (g) => {
-  if (!g) return '—'
-  if (g.system === 'early') return g.band
-  if (g.system === 'middle') return `${g.band} (${g.points}pts)`
-  if (g.system === 'senior') return g.grade
-  return g.band || g.grade || '—'
-}
+export const gradeDisplay = engineGradeDisplay
 
 // ── Data Grouping: Assessments → Subjects ────────────────────
 // Groups flat grade rows by subject, then by exam_type.
@@ -281,7 +237,7 @@ const CHART_COLORS = [
 
 function buildSummaryCardsHtml(totalMarks, totalMax, overallAvg, totalSubjects, className, rankInfo) {
   const grade = getCBEGrade(overallAvg, className)
-  const bandDisplay = grade.system === 'senior' ? grade.grade : grade.band
+  const bandDisplay = grade.band || '—'
   const rankText = rankInfo ? `${rankInfo.rank} / ${rankInfo.total}` : '— / —'
   return `
     <div class="rc-section-title">Summary</div>
@@ -339,18 +295,7 @@ function buildGradingLegendHtml(className) {
     <div class="rc-legend">
       <div class="rc-legend-title">Grading Scale</div>
       <div class="rc-legend-grid">
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#166534">A</span> Highest Distinction (80–100)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#166534">A-</span> Excellent (75–79)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">B+</span> Very Good (70–74)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">B</span> Good (65–69)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">B-</span> Competent (60–64)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">C+</span> Satisfactory (55–59)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">C</span> Average (50–54)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">C-</span> Below Average (45–49)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">D+</span> Marginal (40–44)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">D</span> Weak (35–39)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">D-</span> Very Weak (25–34)</div>
-        <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">E</span> Minimal Performance (0–24)</div>
+        <div class="rc-legend-item" style="color:#475569">Senior grades pending verification — scale to be confirmed.</div>
       </div>
     </div>`
 }
@@ -358,7 +303,7 @@ function buildGradingLegendHtml(className) {
 function buildSubjectTableHtml(subjects, examTypes, className) {
   const rows = subjects.map((sub, i) => {
     const cbe = getCBEGrade(sub.average, className)
-    const bandDisplay = cbe.system === 'senior' ? cbe.grade : cbe.band
+    const bandDisplay = cbe.band || '—'
     const assessCells = examTypes.map(et => {
       const a = sub.assessments.find(x => x.name === et)
       return `<td>${a ? `${Math.round(a.score)}/100` : '—'}</td>`
@@ -558,7 +503,7 @@ export function ReportCard({
   }
 
   const grade = getCBEGrade(grouped.overallAverage, className)
-  const bandDisplay = grade.system === 'senior' ? grade.grade : grade.band
+  const bandDisplay = grade.band || '—'
 
   const trendSection = grouped.examTypes.length >= 2
     ? buildTrendChartSvg(grouped.subjects, grouped.examTypes)
@@ -760,7 +705,7 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
 
   const subjectRows = grouped.subjects.map((sub, i) => {
     const cbe = getCBEGrade(sub.average, className)
-    const bandDisplay = cbe.system === 'senior' ? cbe.grade : cbe.band
+    const bandDisplay = cbe.band || '—'
     const assessCells = grouped.examTypes.map(et => {
       const a = sub.assessments.find(x => x.name === et)
       return `<td>${a ? `${Math.round(a.score)}/100` : '—'}</td>`
@@ -780,7 +725,7 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
   const assessHeaders = grouped.examTypes.map(et => `<th>${et}</th>`).join('')
 
   const grade = getCBEGrade(grouped.overallAverage, className)
-  const avgBand = grade.system === 'senior' ? grade.grade : grade.band
+  const avgBand = grade.band || '—'
   const rankInfo = extraData.classRank || null
   const rankText = rankInfo ? `${rankInfo.rank} / ${rankInfo.total}` : '— / —'
 
@@ -831,18 +776,7 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
     </div></div>`
   } else {
     legendHtml = `<div class="rc-legend"><div class="rc-legend-title">Grading Scale</div><div class="rc-legend-grid">
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#166534">A</span> Highest Distinction (80–100)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#166534">A-</span> Excellent (75–79)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">B+</span> Very Good (70–74)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">B</span> Good (65–69)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">B-</span> Competent (60–64)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">C+</span> Satisfactory (55–59)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">C</span> Average (50–54)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">C-</span> Below Average (45–49)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">D+</span> Marginal (40–44)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">D</span> Weak (35–39)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">D-</span> Very Weak (25–34)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">E</span> Minimal Performance (0–24)</div>
+      <div class="rc-legend-item" style="color:#475569">Senior grades pending verification — scale to be confirmed.</div>
     </div></div>`
   }
 

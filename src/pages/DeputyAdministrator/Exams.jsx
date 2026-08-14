@@ -8,6 +8,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { uploadExamFile, validateExamFile, fetchExamUploadForGroup } from '../../utils/examUpload'
+import { bandColor, sortBands } from '../../services/grading'
 import './Exams.css'
 
 function Modal({ open, title, children, onClose, onConfirm, confirmLabel, danger }) {
@@ -265,10 +266,10 @@ export default function Exams() {
   }
 
   const gradeDistribution = (arr) => {
-    const dist = { A: 0, B: 0, C: 0, D: 0, E: 0 }
+    const dist = {}
     arr.forEach(g => {
       const grade = (g.grade || '').toUpperCase()
-      if (dist[grade] !== undefined) dist[grade]++
+      if (grade) dist[grade] = (dist[grade] || 0) + 1
     })
     return dist
   }
@@ -277,7 +278,6 @@ export default function Exams() {
 
   const distrib = gradeDistribution(filtered)
   const totalFiltered = filtered.length
-  const gradeColors = { A: '#16a34a', B: '#2563eb', C: '#d97706', D: '#dc2626', E: '#991b1b' }
 
   if (viewExam) {
     const exam = viewExam
@@ -573,15 +573,16 @@ export default function Exams() {
 
           {totalFiltered > 0 && (
             <div className="exam-grade-row">
-              {Object.entries(distrib).map(([grade, count]) => {
+              {sortBands(Object.keys(distrib)).map(grade => {
+                const count = distrib[grade] || 0
                 const pct = totalFiltered > 0 ? Math.round((count / totalFiltered) * 100) : 0
                 return (
                   <div key={grade} className="exam-grade-card">
-                    <div className="exam-grade-letter" style={{ color: gradeColors[grade] }}>{grade}</div>
+                    <div className="exam-grade-letter" style={{ color: bandColor(grade) }}>{grade}</div>
                     <div className="exam-grade-count">{count}</div>
                     <div className="exam-grade-pct">{pct}%</div>
                     <div className="exam-grade-bar">
-                      <div className="exam-grade-bar-fill" style={{ width: `${pct}%`, background: gradeColors[grade] }} />
+                      <div className="exam-grade-bar-fill" style={{ width: `${pct}%`, background: bandColor(grade) }} />
                     </div>
                   </div>
                 )

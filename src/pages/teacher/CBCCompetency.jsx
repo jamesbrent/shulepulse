@@ -5,18 +5,12 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
+import { getGrade } from '../../services/grading'
 
 const TERM_ORDER = ['Term 1', 'Term 2', 'Term 3']
 
-function cbcPoints(score) {
-  if (score >= 90) return 8
-  if (score >= 75) return 7
-  if (score >= 58) return 6
-  if (score >= 41) return 5
-  if (score >= 31) return 4
-  if (score >= 21) return 3
-  if (score >= 11) return 2
-  return 1
+function cbcPoints(score, className) {
+  return getGrade(score, className || '').points || 0
 }
 
 function cbcBand(points) {
@@ -400,7 +394,7 @@ export default function CBCCompetency({ profile, mode }) {
       }
       if (!g.subject) return
       const score = Number(g.total_score || 0)
-      const pts = cbcPoints(score)
+      const pts = cbcPoints(score, cls)
       map[cls].scores.push(score)
       map[cls].points.push(pts)
       map[cls].dist[cbcBand(pts)] += 1
@@ -434,7 +428,7 @@ export default function CBCCompetency({ profile, mode }) {
       if (!g.subject) return
       if (!map[g.subject]) map[g.subject] = { scores: [], points: [], count: 0, bands: { EE: 0, ME: 0, AE: 0, BE: 0 } }
       const score = Number(g.total_score || 0)
-      const pts = cbcPoints(score)
+      const pts = cbcPoints(score, g.students?.class)
       map[g.subject].scores.push(score)
       map[g.subject].points.push(pts)
       map[g.subject].count += 1
@@ -480,7 +474,7 @@ export default function CBCCompetency({ profile, mode }) {
       if (!g.subject) return
       if (!allMap[g.subject]) allMap[g.subject] = { points: [], count: 0, bands: { EE: 0, ME: 0, AE: 0, BE: 0 } }
       const score = Number(g.total_score || 0)
-      const pts = cbcPoints(score)
+      const pts = cbcPoints(score, g.students?.class)
       allMap[g.subject].points.push(pts)
       allMap[g.subject].count += 1
       allMap[g.subject].bands[cbcBand(pts)] += 1

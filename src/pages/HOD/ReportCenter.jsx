@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
+import { getGrade, gradeShort } from '../../services/grading'
 
 const TABS = [
   { key: 'draft', label: 'Draft Report Cards', icon: FileText },
@@ -14,19 +15,8 @@ const TABS = [
   { key: 'export', label: 'Export Hub', icon: Download },
 ]
 
-function computeGrade(score) {
-  if (score >= 80) return 'A'
-  if (score >= 75) return 'A-'
-  if (score >= 70) return 'B+'
-  if (score >= 65) return 'B'
-  if (score >= 60) return 'B-'
-  if (score >= 55) return 'C+'
-  if (score >= 50) return 'C'
-  if (score >= 45) return 'C-'
-  if (score >= 40) return 'D+'
-  if (score >= 35) return 'D'
-  if (score >= 30) return 'D-'
-  return 'E'
+function computeGrade(score, className) {
+  return gradeShort(getGrade(score, className || ''))
 }
 
 const REPORT_CENTER_STYLES = `
@@ -182,7 +172,7 @@ export default function ReportCenter() {
     return Object.values(map).map(s => ({
       ...s,
       average: s.count > 0 ? Math.round(s.total / s.count) : 0,
-      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0),
+      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0, s.class),
     })).sort((a, b) => b.average - a.average)
   })()
 
@@ -215,14 +205,14 @@ export default function ReportCenter() {
           count: 0,
         }
       }
-      studentMap[sid].subjects.push({ subject: g.subject, score: Number(g.total_score || 0), grade: g.grade || computeGrade(Number(g.total_score || 0)) })
+      studentMap[sid].subjects.push({ subject: g.subject, score: Number(g.total_score || 0), grade: g.grade || computeGrade(Number(g.total_score || 0), className) })
       studentMap[sid].total += Number(g.total_score || 0)
       studentMap[sid].count += 1
     })
     return Object.values(studentMap).map(s => ({
       ...s,
       average: s.count > 0 ? Math.round(s.total / s.count) : 0,
-      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0),
+      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0, className),
     }))
   }
 
@@ -321,7 +311,7 @@ export default function ReportCenter() {
       .map(([name, d]) => {
         const avg = d.count > 0 ? Math.round(d.total / d.count) : 0
         const passRate = d.count > 0 ? Math.round((d.pass / d.count) * 100) : 0
-        const grade = computeGrade(avg)
+        const grade = computeGrade(avg, '')
         return { name, count: d.count, avg, passRate, grade }
       })
       .sort((a, b) => b.avg - a.avg)

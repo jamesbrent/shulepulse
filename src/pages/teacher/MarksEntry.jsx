@@ -16,14 +16,12 @@ import {
   exportStudentIndividualReport,
   exportBulkStudentReports,
 } from '../../utils/teacherPdfExport'
-import { getCBEGrade, gradeDisplay } from '../../components/students/ReportCard'
+import { getGrade as getCBEGrade, gradeDisplay, sortBands } from '../../services/grading'
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1]
 const AUTO_SAVE_DELAY = 15000
-
-const GRADE_LABELS = ['A', 'B', 'C', 'D', 'E']
 
 export default function MarksEntry({ profile }) {
   const { examTypes: examTypeConfig, examMap, getMax } = useExamTypeConfig()
@@ -317,16 +315,15 @@ export default function MarksEntry({ profile }) {
     : '—'
 
   const gradeDist = useMemo(() => {
-    const dist = { A: 0, B: 0, C: 0, D: 0, E: 0 }
+    const dist = {}
     scores.forEach(score => {
-      if (score >= 80) dist.A++
-      else if (score >= 65) dist.B++
-      else if (score >= 50) dist.C++
-      else if (score >= 35) dist.D++
-      else dist.E++
+      const band = getCBEGrade(score, selectedClass).band || '—'
+      dist[band] = (dist[band] || 0) + 1
     })
     return dist
-  }, [scores])
+  }, [scores, selectedClass])
+
+  const distBands = useMemo(() => sortBands(Object.keys(gradeDist)), [gradeDist])
 
   const maxGradeCount = Math.max(...Object.values(gradeDist), 1)
 
@@ -386,6 +383,15 @@ export default function MarksEntry({ profile }) {
 
   const persistGrades = async (status, shouldUploadFile = false) => {
     if (!hasChanges.current) return
+
+    const profileCheck = getCBEGrade(100, selectedClass)
+    if (profileCheck.status === 'unresolved' || profileCheck.status === 'pending') {
+      alert(`Marks for "${selectedClass}" cannot be saved — ${profileCheck.status === 'pending'
+        ? 'the senior grade profile is pending verification'
+        : 'the class grade profile is not configured'}. Please contact your administrator.`)
+      return
+    }
+
     const inserts = []
 
     filteredStudents.forEach(s => {
@@ -414,7 +420,7 @@ export default function MarksEntry({ profile }) {
           exam_score: 0,
           total_score: total,
           class_name: selectedClass,
-          grade: gradeDisplay(cbe),
+          grade: cbe.band || null,
           cbe_band: cbe.band || cbe.grade || null,
           points: cbe.points || null,
           performance_level: cbe.label || null,
@@ -914,7 +920,7 @@ export default function MarksEntry({ profile }) {
                   <div className="me-sp-divider" />
                   <h4 className="me-sp-subtitle">Grade Distribution</h4>
                   <div className="me-sp-dist">
-                    {GRADE_LABELS.map(grade => {
+                    {distBands.map(grade => {
                       const count = gradeDist[grade] || 0
                       const pct = maxGradeCount > 0 ? (count / maxGradeCount) * 100 : 0
                       return (
@@ -975,7 +981,7 @@ export default function MarksEntry({ profile }) {
               <div className="me-analysis-card" style={{ marginTop: 16 }}>
                 <h4>Grade Distribution</h4>
                 <div className="me-analysis-bars">
-                  {GRADE_LABELS.map(grade => {
+                  {distBands.map(grade => {
                     const count = gradeDist[grade] || 0
                     const pct = filteredStudents.length > 0 ? (count / filteredStudents.length) * 100 : 0
                     return (

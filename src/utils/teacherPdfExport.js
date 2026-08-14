@@ -13,6 +13,8 @@ import {
   fmtDate as fmtDateFull,
 } from './schoolPdfTemplate'
 
+import { getGrade, gradeDisplay, sortBands } from '../services/grading'
+
 const F = FONT.SERIF
 const BLUE = COLORS.PRIMARY
 const DARK = COLORS.DARK
@@ -169,14 +171,14 @@ export async function exportSubjectSummary({ school, className, subject, examTyp
   const passCount = scores.filter(s => s >= 50).length
   const passRate = scores.length ? ((passCount / scores.length) * 100).toFixed(0) + '%' : '\u2014'
 
-  const dist = { A: 0, B: 0, C: 0, D: 0, E: 0 }
-  scores.forEach(s => {
-    if (s >= 80) dist.A++
-    else if (s >= 65) dist.B++
-    else if (s >= 50) dist.C++
-    else if (s >= 35) dist.D++
-    else dist.E++
+  const dist = {}
+  students.forEach(s => {
+    const v = grades[s.id]?.total_score
+    if (v === '' || v == null) return
+    const band = getGrade(Number(v), className).band || '—'
+    dist[band] = (dist[band] || 0) + 1
   })
+  const distBands = sortBands(Object.keys(dist))
 
   y = sectionHead(doc, 'Performance Summary', y)
   y = summaryTable(doc, [
@@ -189,7 +191,8 @@ export async function exportSubjectSummary({ school, className, subject, examTyp
   y = sectionHead(doc, 'Grade Distribution', y)
   y = tbl(doc, {
     head: [['Grade', 'Count', 'Percentage']],
-    body: Object.entries(dist).map(([g, c]) => {
+    body: distBands.map(g => {
+      const c = dist[g] || 0
       const pct = scores.length ? ((c / scores.length) * 100).toFixed(0) + '%' : '0%'
       return [g, String(c), pct]
     }),
@@ -250,7 +253,7 @@ export async function exportStudentIndividualReport({ school, student, grades, t
   ], y)
 
   const overallGrade = mean !== '\u2014'
-    ? (Number(mean) >= 80 ? 'A (Excellent)' : Number(mean) >= 65 ? 'B (Good)' : Number(mean) >= 50 ? 'C (Satisfactory)' : Number(mean) >= 35 ? 'D (Below Average)' : 'E (Minimal)')
+    ? gradeDisplay(getGrade(Number(mean), student.class || ''))
     : '\u2014'
 
   doc.setFont(F, 'italic')

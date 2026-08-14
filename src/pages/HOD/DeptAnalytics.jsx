@@ -4,13 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-
-const GRADE_COLORS = {
-  A: '#16a34a', 'A-': '#22c55e', 'B+': '#65a30d',
-  B: '#a3e635', 'B-': '#eab308', 'C+': '#f59e0b',
-  C: '#f97316', 'C-': '#ef4444', 'D+': '#dc2626',
-  D: '#b91c1c', 'D-': '#991b1b', E: '#7f1d1d',
-}
+import { getGrade, gradeShort, bandColor, sortBands } from '../../services/grading'
 
 const TABS = [
   { key: 'subjects', label: 'Subject Analysis', icon: <BarChart2 size={15} /> },
@@ -131,7 +125,7 @@ export default function DeptAnalytics() {
     return Object.values(map).map(s => ({
       ...s,
       average: s.count > 0 ? Math.round(s.total / s.count) : 0,
-      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0),
+      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0, s.class),
     })).sort((a, b) => b.average - a.average)
   })()
 
@@ -200,16 +194,7 @@ export default function DeptAnalytics() {
   const topSubjects = [...subjectAverages].sort((a, b) => b.avg - a.avg).slice(0, 5)
   const bottomSubjects = [...subjectAverages].sort((a, b) => a.avg - b.avg).slice(0, 5)
 
-  const cbcPoints = (score) => {
-    if (score >= 90) return 8
-    if (score >= 75) return 7
-    if (score >= 58) return 6
-    if (score >= 41) return 5
-    if (score >= 31) return 4
-    if (score >= 21) return 3
-    if (score >= 11) return 2
-    return 1
-  }
+  const cbcPoints = (score, className) => getGrade(score, className || '').points || 0
 
   const cbcBand = (points) => {
     if (points >= 7) return 'EE'
@@ -241,7 +226,7 @@ export default function DeptAnalytics() {
       }
       const score = Number(g.total_score || 0)
       studentMap[key].scores.push(score)
-      studentMap[key].points.push(cbcPoints(score))
+      studentMap[key].points.push(cbcPoints(score, cls))
     })
     const classMap = {}
     Object.values(studentMap).forEach(s => {
@@ -716,19 +701,8 @@ export default function DeptAnalytics() {
   )
 }
 
-function computeGrade(score) {
-  if (score >= 80) return 'A'
-  if (score >= 75) return 'A-'
-  if (score >= 70) return 'B+'
-  if (score >= 65) return 'B'
-  if (score >= 60) return 'B-'
-  if (score >= 55) return 'C+'
-  if (score >= 50) return 'C'
-  if (score >= 45) return 'C-'
-  if (score >= 40) return 'D+'
-  if (score >= 35) return 'D'
-  if (score >= 30) return 'D-'
-  return 'E'
+function computeGrade(score, className) {
+  return gradeShort(getGrade(score, className || ''))
 }
 
 function SubjectAnalysis({
@@ -781,7 +755,8 @@ function SubjectAnalysis({
             <h3>Grade Distribution</h3>
           </div>
           <div className="hod-sp-grade-dist">
-            {Object.entries(gradeDist).sort().map(([grade, count]) => {
+            {sortBands(Object.keys(gradeDist)).map(grade => {
+              const count = gradeDist[grade] || 0
               const pct = totalStudents > 0 ? Math.round((count / totalStudents) * 100) : 0
               return (
                 <div key={grade} className="hod-sp-grade-bar-group">
@@ -792,7 +767,7 @@ function SubjectAnalysis({
                   <div className="hod-sp-grade-bar-track">
                     <div
                       className="hod-sp-grade-bar-fill"
-                      style={{ width: `${pct}%`, background: GRADE_COLORS[grade] || '#94a3b8' }}
+                      style={{ width: `${pct}%`, background: bandColor(grade) }}
                     />
                   </div>
                   <span className="hod-sp-grade-pct">{pct}%</span>
@@ -1196,7 +1171,7 @@ function DefaulterTracking({
                             background: s.average >= 50 ? '#dcfce7' : '#fee2e2',
                             color: s.average >= 50 ? '#16a34a' : '#dc2626',
                           }}>
-                            {computeGrade(s.average)}
+                            {computeGrade(s.average, s.class)}
                           </span>
                         </td>
                         <td style={{ textAlign: 'center' }}>
@@ -1451,7 +1426,7 @@ function ClassAverages({ classAverages, grades, selectedSubject, setSelectedSubj
       if (!g.subject) return
       if (!map[g.subject]) map[g.subject] = { scores: [], points: [], count: 0, bands: { EE: 0, ME: 0, AE: 0, BE: 0 } }
       const score = Number(g.total_score || 0)
-      const pts = cbcPoints(score)
+      const pts = cbcPoints(score, g.students?.class)
       map[g.subject].scores.push(score)
       map[g.subject].points.push(pts)
       map[g.subject].count += 1
@@ -1537,7 +1512,7 @@ function ClassAverages({ classAverages, grades, selectedSubject, setSelectedSubj
         if (!g.subject) return
         if (!allMap[g.subject]) allMap[g.subject] = { scores: [], points: [], count: 0, bands: { EE: 0, ME: 0, AE: 0, BE: 0 } }
         const score = Number(g.total_score || 0)
-        const pts = cbcPoints(score)
+        const pts = cbcPoints(score, g.students?.class)
         allMap[g.subject].scores.push(score)
         allMap[g.subject].points.push(pts)
         allMap[g.subject].count += 1

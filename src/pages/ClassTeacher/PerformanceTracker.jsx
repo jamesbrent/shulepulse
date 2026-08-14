@@ -15,37 +15,11 @@ import {
 } from '../../utils/schoolPdfTemplate'
 import { fetchBulkDataWithExtras, bulkPrint } from '../admin/grades/utils/bulkReportCards'
 import { getCBEGrade, REPORT_CARD_STYLES } from '../../components/students/ReportCard'
+import { gradeDisplay, sortBands, bandColor } from '../../services/grading'
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1]
-
-const GRADE_BANDS = [
-  { label: 'A', min: 80, color: '#16a34a' },
-  { label: 'B', min: 60, color: '#2563eb' },
-  { label: 'C', min: 50, color: '#ca8a04' },
-  { label: 'D', min: 40, color: '#f97316' },
-  { label: 'E', min: 0, color: '#dc2626' },
-]
-
-function getGradeBand(score) {
-  if (score >= 80) return 'A'
-  if (score >= 60) return 'B'
-  if (score >= 50) return 'C'
-  if (score >= 40) return 'D'
-  return 'E'
-}
-
-function cbcPoints(score) {
-  if (score >= 90) return 8
-  if (score >= 75) return 7
-  if (score >= 58) return 6
-  if (score >= 41) return 5
-  if (score >= 31) return 4
-  if (score >= 21) return 3
-  if (score >= 11) return 2
-  return 1
-}
 
 function cbcBand(points) {
   if (points >= 7) return 'EE'
@@ -173,12 +147,14 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
     return { ...s, avg, subjectCount: sg.length, grades: sg, cbe }
   }).filter(s => s.avg !== null).sort((a, b) => b.avg - a.avg)
 
+  const bandOptions = sortBands([...new Set(studentMeans.map(s => s.cbe?.band).filter(Boolean))])
+
   const rankedStudents = (() => {
     const filtered = studentMeans.filter(s => {
       const matchSearch = !rankSearch ||
         s.full_name?.toLowerCase().includes(rankSearch.toLowerCase()) ||
         s.admission_number?.toLowerCase().includes(rankSearch.toLowerCase())
-      const matchBand = rankBand === 'all' || getGradeBand(s.avg) === rankBand
+      const matchBand = rankBand === 'all' || s.cbe?.band === rankBand
       const matchStatus = rankStatus === 'all' ||
         (rankStatus === 'pass' && s.avg >= 50) ||
         (rankStatus === 'fail' && s.avg < 50)
@@ -214,7 +190,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
       }
       const score = Number(g.total_score || 0)
       studentMap[key].scores.push(score)
-      studentMap[key].points.push(cbcPoints(score))
+      studentMap[key].points.push(getCBEGrade(score, cls).points || 0)
     })
     const classMap = {}
     Object.values(studentMap).forEach(s => {
@@ -266,9 +242,10 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
 
   const gradeDist = {}
   filtered.forEach(g => {
-    const band = getGradeBand(g.total_score || 0)
+    const band = getCBEGrade(g.total_score || 0, g.students?.class).band || '—'
     gradeDist[band] = (gradeDist[band] || 0) + 1
   })
+  const distBands = sortBands(Object.keys(gradeDist))
 
   const getScoreColor = (score) => {
     if (score >= 80) return '#16a34a'
@@ -345,10 +322,10 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
     doc.text('Grade Distribution', M, y)
     y += 6
 
-    const distRows = GRADE_BANDS.map(b => {
-      const count = gradeDist[b.label] || 0
+    const distRows = distBands.map(b => {
+      const count = gradeDist[b] || 0
       const pct = summary.total > 0 ? Math.round((count / summary.total) * 100) : 0
-      return [b.label, String(count), `${pct}%`]
+      return [b, String(count), `${pct}%`]
     })
 
     autoTable(doc, {
@@ -375,7 +352,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
       g.students?.class || '\u2014',
       g.subject || '\u2014',
       String(g.total_score ?? '\u2014'),
-      getGradeBand(g.total_score || 0),
+      gradeDisplay(getCBEGrade(g.total_score || 0, g.students?.class)),
     ])
 
     autoTable(doc, {
@@ -411,10 +388,10 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
       [],
       ['Grade Distribution'],
       ['Grade', 'Count', 'Percentage'],
-      ...GRADE_BANDS.map(b => {
-        const count = gradeDist[b.label] || 0
+      ...distBands.map(b => {
+        const count = gradeDist[b] || 0
         const pct = summary.total > 0 ? Math.round((count / summary.total) * 100) : 0
-        return [b.label, count, `${pct}%`]
+        return [b, count, `${pct}%`]
       }),
     ]
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData)
@@ -430,7 +407,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
       'Subject': g.subject || '\u2014',
       'Exam Type': g.exam_type || '\u2014',
       'Score': g.total_score ?? '\u2014',
-      'Grade': getGradeBand(g.total_score || 0),
+      'Grade': gradeDisplay(getCBEGrade(g.total_score || 0, g.students?.class)),
     }))
     const scoreSheet = XLSX.utils.json_to_sheet(scoreRows)
     scoreSheet['!cols'] = [
@@ -598,7 +575,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                             background: s.avg >= 80 ? '#dcfce7' : s.avg >= 60 ? '#dbeafe' : s.avg >= 50 ? '#fef9c3' : '#fee2e2',
                             color: getScoreColor(s.avg),
                           }}>
-                            {s.cbe?.band || s.cbe?.grade || getGradeBand(s.avg)}
+                            {gradeDisplay(s.cbe)}
                           </span>
                         </td>
                         <td>
@@ -633,17 +610,17 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                 <p className="ct-text-muted">No data yet.</p>
               ) : (
                 <div className="ct-perf-grade-dist">
-                  {GRADE_BANDS.map(b => {
-                    const count = gradeDist[b.label] || 0
+                  {distBands.map(b => {
+                    const count = gradeDist[b] || 0
                     const pct = summary.total > 0 ? Math.round((count / summary.total) * 100) : 0
                     return (
-                      <div key={b.label} className="ct-perf-grade-row">
+                      <div key={b} className="ct-perf-grade-row">
                         <div className="ct-perf-grade-label">
-                          <span className="ct-perf-grade-letter" style={{ color: b.color }}>{b.label}</span>
+                          <span className="ct-perf-grade-letter" style={{ color: bandColor(b) }}>{b}</span>
                           <span className="ct-perf-grade-count">{count} ({pct}%)</span>
                         </div>
                         <div className="ct-perf-grade-track">
-                          <div className="ct-perf-grade-fill" style={{ width: `${pct}%`, background: b.color }} />
+                          <div className="ct-perf-grade-fill" style={{ width: `${pct}%`, background: bandColor(b) }} />
                         </div>
                       </div>
                     )
@@ -716,11 +693,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                 <label className="ct-rank-label">Grade:</label>
                 <select value={rankBand} onChange={e => setRankBand(e.target.value)} className="ct-rank-select">
                   <option value="all">All Grades</option>
-                  <option value="A">A (80-100)</option>
-                  <option value="B">B (60-79)</option>
-                  <option value="C">C (50-59)</option>
-                  <option value="D">D (40-49)</option>
-                  <option value="E">E (0-39)</option>
+                  {bandOptions.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
               <div className="ct-rank-filter-group">
@@ -818,7 +791,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                             background: s.avg >= 80 ? '#dcfce7' : s.avg >= 60 ? '#dbeafe' : s.avg >= 50 ? '#fef9c3' : '#fee2e2',
                             color: getScoreColor(s.avg),
                           }}>
-                            {s.cbe?.band || s.cbe?.grade || getGradeBand(s.avg)}
+                            {gradeDisplay(s.cbe)}
                           </span>
                         </td>
                         <td>
@@ -954,7 +927,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                           background: e.avg >= 80 ? '#dcfce7' : e.avg >= 60 ? '#dbeafe' : e.avg >= 50 ? '#fef9c3' : '#fee2e2',
                           color: getScoreColor(e.avg),
                         }}>
-                          {getCBEGrade(e.avg, e.student.class).band || getCBEGrade(e.avg, e.student.class).grade || getGradeBand(e.avg)}
+                          {gradeDisplay(getCBEGrade(e.avg, e.student.class))}
                         </span>
                       </td>
                       <td>{getCBEGrade(e.avg, e.student.class).points || '\u2014'}</td>
@@ -1106,7 +1079,7 @@ function ClassAveragesTab({ classCBCAverages, grades, assignedClasses, filterSub
       if (!g.subject) return
       if (!map[g.subject]) map[g.subject] = { scores: [], points: [], count: 0, bands: { EE: 0, ME: 0, AE: 0, BE: 0 } }
       const score = Number(g.total_score || 0)
-      const pts = cbcPoints(score)
+      const pts = getCBEGrade(score, g.students?.class).points || 0
       map[g.subject].scores.push(score)
       map[g.subject].points.push(pts)
       map[g.subject].count += 1
@@ -1153,7 +1126,7 @@ function ClassAveragesTab({ classCBCAverages, grades, assignedClasses, filterSub
       if (!g.subject) return
       if (!allMap[g.subject]) allMap[g.subject] = { points: [], count: 0, bands: { EE: 0, ME: 0, AE: 0, BE: 0 } }
       const score = Number(g.total_score || 0)
-      const pts = cbcPoints(score)
+      const pts = getCBEGrade(score, g.students?.class).points || 0
       allMap[g.subject].points.push(pts)
       allMap[g.subject].count += 1
       allMap[g.subject].bands[cbcBand(pts)] += 1

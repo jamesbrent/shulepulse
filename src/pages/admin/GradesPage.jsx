@@ -367,6 +367,14 @@ export default function GradesPage() {
     const student = students.find(s => s.id === form.student_id)
     const cbe = getCBEGrade(totalPct, student?.class || '')
 
+    if (cbe.status === 'unresolved' || cbe.status === 'pending') {
+      setError(cbe.status === 'pending'
+        ? `Cannot save grade for ${student?.class || 'this student'} — the senior grade profile is pending verification`
+        : `Cannot save grade for ${student?.class || 'this student'} — the class grade profile is not configured`)
+      setSaving(false)
+      return
+    }
+
     const payload = {
       school_id:        profile.school_id,
       student_id:       form.student_id,
@@ -619,7 +627,6 @@ export default function GradesPage() {
                       <td>
                         <strong>{cbe.points ?? '—'}</strong>
                         {cbe.system === 'middle' && <span className="pts-max"> /8</span>}
-                        {cbe.system === 'senior' && <span className="pts-max"> /12</span>}
                       </td>
                       <td>
                         <button className="action-btn" title="Open preview"
@@ -648,7 +655,7 @@ export default function GradesPage() {
             {subjectMeans.length === 0
               ? <p className="text-muted">No data yet.</p>
               : subjectMeans.map(s => {
-                  const cbe = getCBEGrade(s.avg, filterClass !== 'all' ? filterClass : 'Grade 7')
+                  const cbe = getCBEGrade(s.avg, filterClass !== 'all' ? filterClass : '')
                   return (
                     <div key={s.name} className="ga-bar-row">
                       <span className="ga-bar-label">{s.name}</span>
@@ -656,7 +663,7 @@ export default function GradesPage() {
                         <div className="ga-bar-fill" style={{ width: `${s.avg}%`, background: s.avg >= 58 ? '#10b981' : s.avg >= 41 ? '#f59e0b' : '#ef4444' }} />
                       </div>
                       <span className="ga-bar-val">{s.avg}%</span>
-                      <span className={`cbe-badge cbe-${cbeClassKey(cbe)}`}>{cbe.band || cbe.grade}</span>
+                      <span className={`cbe-badge cbe-${cbe.band ? cbeClassKey(cbe) : 'unresolved'}`}>{cbe.band || '—'}</span>
                       <span className="ga-count">{s.count} records</span>
                     </div>
                   )
@@ -1161,19 +1168,19 @@ export default function GradesPage() {
                 <div className="grade-preview">
                   <span>Score: <strong>{previewRaw}/{previewMax}</strong></span>
                   <span>→ <strong>{previewTotal}%</strong></span>
-                  <span className={`cbe-badge cbe-${cbeClassKey(previewCBE)}`}>
-                    {previewCBE.band || previewCBE.grade}
+                  <span className={`cbe-badge cbe-${previewCBE.band ? cbeClassKey(previewCBE) : 'unresolved'}`}>
+                    {previewCBE.band || '—'}
                   </span>
                   <span className="gp-label">{previewCBE.label}</span>
                   {previewCBE.points && (
                     <span className="gp-pts">
-                      {previewCBE.points} {previewCBE.system === 'senior' ? '/12 pts' : '/8 pts'}
+                      {previewCBE.points} /8 pts
                     </span>
                   )}
                   <span className="gp-system">
                     {previewCBE.system === 'early'  ? 'Early Years Rubric' :
                      previewCBE.system === 'middle' ? 'Middle School 8-Level' :
-                     'Senior School 12-Point'}
+                     'Senior — Pending Verification'}
                   </span>
                 </div>
               )}

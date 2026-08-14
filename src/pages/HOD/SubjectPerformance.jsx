@@ -4,13 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-
-const GRADE_COLORS = {
-  A: '#16a34a', 'A-': '#22c55e', 'B+': '#65a30d',
-  B: '#a3e635', 'B-': '#eab308', 'C+': '#f59e0b',
-  C: '#f97316', 'C-': '#ef4444', 'D+': '#dc2626',
-  D: '#b91c1c', 'D-': '#991b1b', E: '#7f1d1d',
-}
+import { bandColor, sortBands } from '../../services/grading'
 
 export default function SubjectPerformance() {
   const { currentTerm, currentYear } = useSchool()
@@ -118,7 +112,8 @@ export default function SubjectPerformance() {
       .single()
     const school = profile?.schools
 
-    const distRows = Object.entries(d.gradeDist).sort().map(([grade, count]) => {
+    const distRows = sortBands(Object.keys(d.gradeDist)).map(grade => {
+      const count = d.gradeDist[grade] || 0
       const pct = d.total > 0 ? Math.round((count / d.total) * 100) : 0
       return `<tr><td style="font-weight:600">${grade}</td><td style="text-align:center">${count}</td><td style="text-align:center">${pct}%</td></tr>`
     }).join('')
@@ -212,7 +207,8 @@ export default function SubjectPerformance() {
       [],
       ['Grade Distribution'],
       ['Grade', 'Count', 'Percentage'],
-      ...Object.entries(d.gradeDist).sort().map(([grade, count]) => {
+      ...sortBands(Object.keys(d.gradeDist)).map(grade => {
+        const count = d.gradeDist[grade] || 0
         const pct = d.total > 0 ? Math.round((count / d.total) * 100) : 0
         return [grade, count, `${pct}%`]
       }),
@@ -321,7 +317,8 @@ export default function SubjectPerformance() {
                 <h3>Grade Distribution</h3>
               </div>
               <div className="hod-sp-grade-dist">
-                {Object.entries(d.gradeDist).sort().map(([grade, count]) => {
+                {sortBands(Object.keys(d.gradeDist)).map(grade => {
+                  const count = d.gradeDist[grade] || 0
                   const pct = d.total > 0 ? Math.round((count / d.total) * 100) : 0
                   return (
                     <div key={grade} className="hod-sp-grade-bar-group">
@@ -332,7 +329,7 @@ export default function SubjectPerformance() {
                       <div className="hod-sp-grade-bar-track">
                         <div
                           className="hod-sp-grade-bar-fill"
-                          style={{ width: `${pct}%`, background: GRADE_COLORS[grade] || '#94a3b8' }}
+                          style={{ width: `${pct}%`, background: bandColor(grade) }}
                         />
                       </div>
                       <span className="hod-sp-grade-pct">{pct}%</span>

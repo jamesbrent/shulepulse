@@ -6,6 +6,7 @@ import {
   Activity, Target,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { getGrade, sortBands } from '../../services/grading'
 import { useExamTypeConfig } from '../../hooks/useSchoolConfig'
 import {
   exportClassMarkSheet,
@@ -19,7 +20,6 @@ import './GradesPage.css'
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1]
-const GRADE_LABELS = ['A', 'B', 'C', 'D', 'E']
 
 export default function GradesPage({ profile }) {
   const { examTypes: examTypeConfig, loading: examTypesLoading } = useExamTypeConfig()
@@ -201,14 +201,12 @@ export default function GradesPage({ profile }) {
     const passCount = scores.filter(s => s >= 50).length
     const passRate = scores.length > 0 ? ((passCount / scores.length) * 100).toFixed(0) : '—'
 
-    const dist = { A: 0, B: 0, C: 0, D: 0, E: 0 }
-    scores.forEach(s => {
-      if (s >= 80) dist.A++
-      else if (s >= 65) dist.B++
-      else if (s >= 50) dist.C++
-      else if (s >= 35) dist.D++
-      else dist.E++
+    const dist = {}
+    gradesList.forEach(g => {
+      const band = getGrade(Number(g.total_score), selectedClass).band || '—'
+      dist[band] = (dist[band] || 0) + 1
     })
+    const distBands = sortBands(Object.keys(dist))
 
     const ranked = [...studentGrades].filter(s => s.score !== null && s.score !== undefined).sort((a, b) => Number(b.score) - Number(a.score))
 
@@ -222,6 +220,7 @@ export default function GradesPage({ profile }) {
       passCount,
       passRate,
       dist,
+      distBands,
       ranked,
       totalStudents: scores.length,
     })
@@ -667,7 +666,7 @@ export default function GradesPage({ profile }) {
                   <div className="gd-card">
                     <div className="gd-card-hdr"><h4>Grade Distribution</h4></div>
                     <div style={{ display: 'flex', gap: 16, justifyContent: 'center', alignItems: 'flex-end', height: 140, padding: '12px 0' }}>
-                      {GRADE_LABELS.map(grade => {
+                      {(analyticsData.distBands || []).map(grade => {
                         const count = analyticsData.dist[grade] || 0
                         const pct = analyticsData.scores.length > 0 ? (count / analyticsData.scores.length) * 100 : 0
                         return (
@@ -746,7 +745,7 @@ export default function GradesPage({ profile }) {
                     <div className="me-sp-divider" />
                     <h4 className="me-sp-subtitle">Grade Distribution</h4>
                     <div className="me-sp-dist">
-                      {GRADE_LABELS.map(grade => {
+                      {(analyticsData.distBands || []).map(grade => {
                         const count = analyticsData.dist[grade] || 0
                         const pct = analyticsData.scores.length > 0 ? (count / analyticsData.scores.length) * 100 : 0
                         return (
