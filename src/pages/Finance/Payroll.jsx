@@ -61,6 +61,7 @@ export default function PayrollPage({ initialTab }) {
   const [periods, setPeriods] = useState([])
   const [runs, setRuns] = useState([])
   const [payRequests, setPayRequests] = useState([])
+  const [reqJournalLines, setReqJournalLines] = useState({})
   const [staff, setStaff] = useState([])
   const [teachers, setTeachers] = useState([])
 
@@ -115,6 +116,18 @@ export default function PayrollPage({ initialTab }) {
         .select('*, payroll_runs(run_label, journal_entry_id)')
         .eq('school_id', schoolId)
         .order('created_at', { ascending: false })
+      const reqIds = (reqRes || []).map((r) => r.journal_entry_id).filter(Boolean)
+      let linesByJe = {}
+      if (reqIds.length) {
+        const { data: jel } = await supabase
+          .from('journal_entry_lines')
+          .select('journal_entry_id, debit, credit, chart_of_accounts(code, name)')
+          .in('journal_entry_id', reqIds)
+        ;(jel || []).forEach((l) => {
+          (linesByJe[l.journal_entry_id] = linesByJe[l.journal_entry_id] || []).push(l)
+        })
+      }
+      setReqJournalLines(linesByJe)
       const { data: coaRes } = await supabase
         .from('chart_of_accounts')
         .select('id, code, name, type, category')
@@ -558,6 +571,16 @@ export default function PayrollPage({ initialTab }) {
     return mappedAccountLabel('bank')
   }
 
+  // The account the posted salary journal ACTUALLY credited (what the money
+  // really left). null = request not posted yet.
+  const glCreditAccount = (req) => {
+    const ls = reqJournalLines[req.journal_entry_id] || []
+    const cr = ls.find((l) => Number(l.credit) > 0)
+    return cr?.chart_of_accounts || null
+  }
+
+  const isCashBankAccount = (acc) => !!acc && (acc.category || '').toLowerCase() === 'cash & bank'
+
   // ─── Export ────────────────────────────────────────────────────────────────
   const exportRun = (run) => {
     const rows = (run.payroll_lines || []).map((l) => [
@@ -921,15 +944,17 @@ export default function PayrollPage({ initialTab }) {
           <div className="prl-card">
             <table className="prl-table">
               <thead>
-                <tr><th>Request No.</th><th>Run</th><th>Amount</th><th>Method</th><th>Disbursed From</th><th>Reference</th><th>Status</th><th></th></tr>
+                <tr><th>Request No.</th><th>Run</th><th>Amount</th><th>Method</th><th>Disbursed From</th><th>GL Credit</th><th>Reference</th><th>Status</th><th></th></tr>
               </thead>
               <tbody>
                 {payRequests.length === 0 && (
-                  <tr><td colSpan="8" className="prl-norows">No payment requests — open a posted run and click "Initiate Payment".</td></tr>
+                  <tr><td colSpan="9" className="prl-norows">No payment requests — open a posted run and click "Initiate Payment".</td></tr>
                 )}
                 {payRequests.map((r) => {
                   const st = paymentStatus(r.status)
                   const disbursed = disbursementAccount(r)
+                  const glCr = glCreditAccount(r)
+                  const glCrIsCash = isCashBankAccount(glCr)
                   return (
                     <tr key={r.id}>
                       <td className="prl-mono">{r.request_no}</td>
@@ -937,6 +962,16 @@ export default function PayrollPage({ initialTab }) {
                       <td style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(r.amount)}</td>
                       <td className="prl-cap">{PAY_METHODS.find((m) => m.value === r.payment_method)?.label || r.payment_method}</td>
                       <td>{disbursed ? <span className="prl-cap">{disbursed.name}</span> : <span style={{ color: '#94a3b8' }}>—</span>}</td>
+                      <td>
+                        {glCr ? (
+                          <span title={`Journal ${r.journal_entry_id}`}>
+                            <span className="prl-cap">{glCr.code} — {glCr.name}</span>
+                            {!glCrIsCash && <span className="prl-badge" style={{ background: '#fef2f21a', color: '#dc2626', marginLeft: 6 }}>not cash/bank</span>}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#94a3b8' }}>—</span>
+                        )}
+                      </td>
                       <td className="prl-mono">{r.reference_no || '—'}</td>
                       <td><span className="prl-badge" style={{ background: `${st.color}1a`, color: st.color }}>{st.label}</span></td>
                       <td className="prl-actions-cell">
