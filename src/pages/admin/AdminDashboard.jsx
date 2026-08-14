@@ -109,7 +109,7 @@ const NAV_GROUPS = [
       { key: 'dept_exams', label: 'Exam Reviews', icon: <ClipboardList size={14} /> },
       { key: 'subject_perf', label: 'Subject Performance', icon: <TrendingUp size={14} /> },
       { key: 'teacher_review', label: 'Teacher Review', icon: <Star size={14} /> },
-      { key: 'cbc_competency', label: 'CBC Competency', icon: <Award size={14} /> },
+      { key: 'cbc_competency', label: 'Overall Performance Analysis', icon: <Award size={14} /> },
       { key: 'timetable', label: 'Timetable', icon: <Calendar size={14} /> },
       { key: 'library', label: 'Library', icon: <BookOpen size={14} /> },
     ],
@@ -186,7 +186,7 @@ const pageTitles = {
   analytics: 'Performance Analytics',
   reports: 'Reports & Results',
   teacher_review: 'Teacher Review',
-  cbc_competency: 'CBC Competency',
+  cbc_competency: 'Overall Performance Analysis',
   payments: 'Payments',
   receipts: 'Receipts',
   statements: 'Statements',
@@ -216,6 +216,8 @@ export default function AdminDashboard() {
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
   const [activeNav, setActiveNav] = useState('dashboard')
+  const [studentAddPending, setStudentAddPending] = useState(false)
+  const goAddStudent = () => { setStudentAddPending(true); handleNav('students') }
   const [expandedGroup, setExpandedGroup] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) || null } catch { return null }
   })
@@ -423,7 +425,7 @@ export default function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeNav) {
-      case 'students':       return <StudentsPage />
+      case 'students':       return <StudentsPage initialAdd={studentAddPending} onAddHandled={() => setStudentAddPending(false)} />
       case 'fees':           return <FeesPage />
       case 'payments':       return <FinancePaymentsPage />
       case 'receipts':       return <ReceiptsPage />
@@ -489,7 +491,7 @@ export default function AdminDashboard() {
             <button className="adm-btn-ghost">
               <Upload size={15} /> Export
             </button>
-            <button className="adm-btn-primary" onClick={() => handleNav('students')}>
+            <button className="adm-btn-primary" onClick={goAddStudent}>
               <UserPlus size={15} /> Add Student
             </button>
             <div className="admin-avatar">
@@ -798,7 +800,7 @@ export default function AdminDashboard() {
               <button className="btn-secondary">
                 <Upload size={15} /> Export Report
               </button>
-              <button className="btn-primary" onClick={() => handleNav('students')}>
+              <button className="btn-primary" onClick={goAddStudent}>
                 <UserPlus size={15} /> Add Student
               </button>
               <div className="admin-avatar">

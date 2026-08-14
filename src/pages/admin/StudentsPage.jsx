@@ -65,7 +65,7 @@ const PROFILE_TABS = [
 
 const ROWS_PER_PAGE = 10
 
-export default function StudentsPage() {
+export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) {
   const { profile } = useAuthStore()
   const { school } = useSchool()
   const fileInputRef = useRef(null)
@@ -295,6 +295,13 @@ export default function StudentsPage() {
     setError('')
     setShowModal(true)
   }
+
+  useEffect(() => {
+    if (initialAdd) {
+      openAddModal()
+      if (onAddHandled) onAddHandled()
+    }
+  }, [initialAdd])
 
   const openEditModal = (student) => {
     setEditingStudent(student)

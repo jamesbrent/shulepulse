@@ -11,7 +11,7 @@ import { useAuthStore } from '../../store/authStore'
 
 // SUBJECTS and DEPARTMENTS are now fetched dynamically from Supabase
 const DEPARTMENTS = ['Sciences','Humanities','Languages','Technical','Arts','Physical Education']
-const EMPLOYMENT_TYPES = ['Full-time','Part-time','Contract']
+const EMPLOYMENT_TYPES = ['TSC','Board']
 const TEACHING_LEVELS = [
   'Pre-Primary',
   'Lower Primary',
@@ -38,7 +38,7 @@ const STATUS_META = {
 const EMPTY_FORM = {
   full_name: '', email: '', phone: '', id_number: '',
   employee_number: '', teacher_code: '', subjects: [], departments: [],
-  classes_assigned: [], employment_type: 'Full-time',
+  classes_assigned: [], employment_type: 'TSC',
   salary: '', date_of_hire: '', gender: '',
   date_of_birth: '', qualification: '', status: 'active',
   photo_url: null,
@@ -321,7 +321,7 @@ export default function TeachersPage() {
   // ── CSV Export ────────────────────────────────────────────
   const exportCSV = () => {
     const rows = [
-      ['Name','Employee No','Email','Phone','Subjects','Departments','Classes','Type','Status','Hire Date','Max Lessons/Wk','Max Lessons/Day'],
+      ['Name','Employee No','Email','Phone','Subjects','Departments','Classes','Terms','Status','Hire Date','Max Lessons/Wk','Max Lessons/Day'],
       ...teachers.map(t => [
         t.full_name, t.employee_number, t.email, t.phone,
         (t.subjects||[]).join(';'), (t.departments||[]).join(';'),
@@ -405,7 +405,7 @@ export default function TeachersPage() {
             {STATUSES.map(s=><option key={s} value={s}>{STATUS_META[s].label}</option>)}
           </select>
           <select className="filter-select" value={filterEmpType} onChange={e=>setFilterEmpType(e.target.value)}>
-            <option value="all">All Types</option>
+            <option value="all">All Terms</option>
             {EMPLOYMENT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
           </select>
           <select className="filter-select" value={filterClass} onChange={e=>setFilterClass(e.target.value)}>
@@ -440,7 +440,7 @@ export default function TeachersPage() {
                 <th>Subjects</th>
                 <th>Dept</th>
                 <th>Classes</th>
-                <th>Type</th>
+                <th>Terms of Employment</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -541,7 +541,7 @@ export default function TeachersPage() {
             </div>
           </div>
           <div className="tp-analytics-card">
-            <p className="tac-label">Employment Types</p>
+            <p className="tac-label">Terms of Employment</p>
             <div className="emp-type-list">
               {EMPLOYMENT_TYPES.map(et => {
                 const count = teachers.filter(t => t.employment_type === et).length
@@ -667,7 +667,7 @@ export default function TeachersPage() {
                   </select>
                 </div>
                 <div className="form-field">
-                  <label>Employment Type</label>
+                  <label>Terms of Employment</label>
                   <select value={form.employment_type} onChange={e=>setForm({...form,employment_type:e.target.value})}>
                     {EMPLOYMENT_TYPES.map(t=><option key={t}>{t}</option>)}
                   </select>
@@ -805,7 +805,7 @@ export default function TeachersPage() {
                       { label: 'Employee No.',     value: selectedTeacher.employee_number || '—' },
                       { label: 'Teacher Code',     value: selectedTeacher.teacher_code || '—' },
                       { label: 'Teaching Level',   value: selectedTeacher.teaching_level || '—' },
-                      { label: 'Employment Type',  value: selectedTeacher.employment_type || '—' },
+                      { label: 'Terms of Employment', value: selectedTeacher.employment_type || '—' },
                       { label: 'Date of Hire',     value: selectedTeacher.date_of_hire || '—' },
                       { label: 'Salary (KES)',     value: selectedTeacher.salary ? `KES ${Number(selectedTeacher.salary).toLocaleString()}` : '—' },
                       { label: 'Status',           value: STATUS_META[selectedTeacher.status || 'active']?.label },
