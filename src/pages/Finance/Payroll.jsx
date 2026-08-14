@@ -493,7 +493,7 @@ export default function PayrollPage({ initialTab }) {
         source: 'payroll', reference_type: 'payroll_payment', reference_id: req.id,
         lines: [
           { account_id: wagesId, debit: Number(req.amount), notes: 'Net pay disbursed' },
-          { account_id: payAccId, credit: Number(req.amount), notes: `Paid via ${methodLabel} from ${payAcc.data.name}${req.reference_no ? ` (${req.reference_no})` : ''}` },
+          { account_id: payAccId, credit: Number(req.amount), notes: `Paid via ${methodLabel} from ${payAcc.name}${req.reference_no ? ` (${req.reference_no})` : ''}` },
         ],
       })
       const { error: upErr } = await supabase.from('payroll_payment_requests').update({
