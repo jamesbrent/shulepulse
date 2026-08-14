@@ -16,7 +16,7 @@ import {
   exportStudentIndividualReport,
   exportBulkStudentReports,
 } from '../../utils/teacherPdfExport'
-import { getGrade as getCBEGrade, gradeDisplay, sortBands } from '../../services/grading'
+import { getGrade as getCBEGrade, gradeDisplay, sortBands, sortExamTypes } from '../../services/grading'
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
@@ -217,7 +217,7 @@ export default function MarksEntry({ profile }) {
           g => g.class_name === className && g.subject === subjectName
         )
         const examStatuses = {}
-        const examTypeNames = examTypeConfig.map(e => e.name)
+        const examTypeNames = sortExamTypes(examTypeConfig.map(e => e.name))
         examTypeNames.forEach(et => {
           const etGrades = existingGrades.filter(g => g.exam_type === et)
           const statuses = etGrades.map(g => g.status)

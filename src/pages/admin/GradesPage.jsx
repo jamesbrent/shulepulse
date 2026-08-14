@@ -540,10 +540,7 @@ export default function GradesPage() {
             onClick={() => setActiveTab(t.key)}>
             {t.icon} {t.label}
             {t.badge > 0 && (
-              <span style={{
-                background: '#dc2626', color: '#fff', borderRadius: 99,
-                padding: '1px 6px', fontSize: 10, fontWeight: 700, marginLeft: 4,
-              }}>{t.badge}</span>
+              <span className="grades-tab-badge">{t.badge}</span>
             )}
           </button>
         ))}
@@ -1025,7 +1022,7 @@ export default function GradesPage() {
             </div>
           ) : (
             <>
-              <div className="grades-summary" style={{ marginBottom: 16 }}>
+              <div className="grades-summary grades-approval-stats">
                 <div className={`grade-sum-card ${pendingExams.length > 0 ? 'red' : 'green'}`}>
                   <ShieldCheck size={20} />
                   <div>
@@ -1048,42 +1045,40 @@ export default function GradesPage() {
                   <p>No pending submissions from teachers</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                <div className="grades-pending-grid">
                   {pendingExams.map(exam => {
                     const avg = exam.entries.length
                       ? Math.round(exam.entries.reduce((s, g) => s + Number(g.total_score || 0), 0) / exam.entries.length)
                       : 0
                     const passCount = exam.entries.filter(g => Number(g.total_score || 0) >= 50).length
                     return (
-                      <div key={exam.id} className="report-student-card" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 36, height: 36, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <BookOpen size={18} color="#d97706" />
-                            </div>
+                      <div key={exam.id} className="grades-pending-card">
+                        <div className="gpc-head">
+                          <div className="gpc-title">
+                            <div className="gpc-subject-icon"><BookOpen size={16} /></div>
                             <div>
-                              <h4 style={{ margin: 0, fontSize: 14 }}>{exam.subject}</h4>
-                              <p className="text-muted" style={{ margin: 0, fontSize: 11 }}>{exam.examType} · {exam.className}</p>
+                              <h4 className="gpc-subject">{exam.subject}</h4>
+                              <p className="gpc-submeta">{exam.examType} · {exam.className}</p>
                             </div>
                           </div>
-                          <span className="cbe-badge cbe-be1" style={{ fontSize: 10, fontWeight: 600, borderRadius: 99 }}>Pending</span>
+                          <span className="gpc-status">Pending</span>
                         </div>
-                        <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#64748b' }}>
-                          <span><Users size={12} /> {exam.entries.length} students</span>
-                          <span><BarChart2 size={12} /> Avg: {avg}%</span>
-                          <span><CheckCircle size={12} /> {passCount} passed</span>
+                        <div className="gpc-stats">
+                          <span className="gpc-stat"><Users size={12} /> {exam.entries.length} students</span>
+                          <span className="gpc-stat"><BarChart2 size={12} /> Avg: {avg}%</span>
+                          <span className="gpc-stat"><CheckCircle size={12} /> {passCount} passed</span>
                         </div>
-                        <p className="text-muted" style={{ fontSize: 11, margin: 0 }}>
+                        <p className="gpc-meta">
                           {exam.teacherName ? `Teacher: ${exam.teacherName} · ` : ''}{exam.createdAt ? new Date(exam.createdAt).toLocaleDateString() : ''}
                         </p>
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', borderTop: '1px solid #f1f5f9', paddingTop: 8 }}>
+                        <div className="gpc-actions">
                           <button className="action-btn" onClick={() => { setViewExam(exam); loadExamUpload(exam) }}>
                             <Eye size={13} /> Review
                           </button>
-                          <button className="action-btn" style={{ color: '#dc2626', borderColor: '#fecaca' }} onClick={() => setRejectModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
+                          <button className="action-btn gpc-reject" onClick={() => setRejectModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
                             <XCircle size={13} /> Reject
                           </button>
-                          <button className="btn-primary" style={{ padding: '5px 12px', fontSize: 12 }} onClick={() => setConfirmApproveModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
+                          <button className="btn-primary" onClick={() => setConfirmApproveModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
                             <CheckCircle size={13} /> {approving === exam.id ? '...' : 'Approve'}
                           </button>
                         </div>

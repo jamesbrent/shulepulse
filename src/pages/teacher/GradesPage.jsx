@@ -6,7 +6,7 @@ import {
   Activity, Target,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { getGrade, sortBands, weightedScoreMean } from '../../services/grading'
+import { getGrade, sortBands, weightedScoreMean, sortExamTypes } from '../../services/grading'
 import { useExamTypeConfig } from '../../hooks/useSchoolConfig'
 import {
   exportClassMarkSheet,
@@ -431,7 +431,7 @@ export default function GradesPage({ profile }) {
                     <span className={`gd-progress-label ${progressLabelClass(prog.pct)}`}>{prog.done}/{prog.total}</span>
                   </div>
                   <div>
-                    {examTypeConfig.map(et => {
+                    {sortExamTypes(examTypeConfig).map(et => {
                       const st = card.examStatuses[et.name]
                       return (
                         <span key={et.name} className="gd-pill" style={{ marginRight: 4, marginBottom: 2 }}>

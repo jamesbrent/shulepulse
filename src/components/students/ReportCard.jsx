@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Printer, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { getGrade as engineGetGrade, resolveSystem, gradeDisplay as engineGradeDisplay } from '../../services/grading'
+import { getGrade as engineGetGrade, resolveSystem, gradeDisplay as engineGradeDisplay, sortExamTypes, compareExamTypes } from '../../services/grading'
 
 // ── Fetch student comments from database ──────────────────────
 export async function fetchStudentComments(schoolId, studentId, term, year) {
@@ -81,6 +81,8 @@ export function groupGradesBySubject(grades) {
       }
     })
 
+    assessments.sort((a, b) => compareExamTypes(a.name, b.name))
+
     const weightedSum = assessments.reduce((s, a) => s + a.score * a.weight, 0)
     const totalWeight = assessments.reduce((s, a) => s + a.weight, 0)
     const totalScore = assessments.reduce((s, a) => s + a.score, 0)
@@ -101,7 +103,7 @@ export function groupGradesBySubject(grades) {
   })
 
   subjects.sort((a, b) => a.name.localeCompare(b.name))
-  const examTypes = [...allExamTypes].sort()
+  const examTypes = sortExamTypes([...allExamTypes])
 
   const totalMarks = subjects.reduce((s, sub) => s + sub.totalScore, 0)
   const totalMax = subjects.reduce((s, sub) => s + sub.maxTotal, 0)
