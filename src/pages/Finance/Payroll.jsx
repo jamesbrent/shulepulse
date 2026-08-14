@@ -137,6 +137,7 @@ export default function PayrollPage({ initialTab }) {
         .eq('school_id', schoolId)
         .order('created_at', { ascending: false })
       const reqIds = (reqRes || []).map((r) => r.journal_entry_id).filter(Boolean)
+      const corrReqIds = (reqRes || []).map((r) => r.id).filter(Boolean)
       let linesByJe = {}
       if (reqIds.length) {
         const { data: jel, error: jelErr } = await supabase
@@ -151,14 +152,14 @@ export default function PayrollPage({ initialTab }) {
       }
       setReqJournalLines(linesByJe)
       let corrMap = {}
-      if (reqIds.length) {
+      if (corrReqIds.length) {
         const { data: corrRes } = await supabase
           .from('journal_entries')
           .select('reference_id')
           .eq('school_id', schoolId)
           .eq('source', 'payroll')
           .eq('reference_type', 'payroll_payment_correction')
-          .in('reference_id', reqIds)
+          .in('reference_id', corrReqIds)
         ;(corrRes || []).forEach((j) => { corrMap[j.reference_id] = true })
       }
       setPayCorrections(corrMap)
