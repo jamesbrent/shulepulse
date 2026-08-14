@@ -131,6 +131,13 @@
 .prl-modal-head h3 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 8px; }
 .prl-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 18px; border-top: 1px solid #eef2f7; }
 .prl-confirm-msg { padding: 16px 18px; margin: 0; font-size: 13.5px; color: #374151; line-height: 1.5; }
+.prl-fix-box { display: flex; flex-direction: column; gap: 4px; padding: 0 18px; }
+.prl-fix-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #f9fafb; border: 1px solid #eef2f7; border-radius: 8px; padding: 9px 12px; font-size: 12.5px; }
+.prl-fix-line span { font-weight: 800; font-size: 10.5px; letter-spacing: .07em; flex-shrink: 0; }
+.prl-fix-line strong { text-align: right; line-height: 1.4; }
+.prl-fix-dr { color: #dc2626; }
+.prl-fix-cr { color: #16a34a; }
+.prl-fix-arrow { font-size: 11px; color: #9ca3af; text-align: center; padding: 0 0 4px; }
 
 .prl-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; padding: 16px 18px; }
 .prl-field { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 600; color: #6b7280; }

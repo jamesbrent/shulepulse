@@ -75,6 +75,7 @@ export default function PayrollPage({ initialTab }) {
   const [reqJournalLines, setReqJournalLines] = useState({})
   const [payCorrections, setPayCorrections] = useState({})
   const [fixingReq, setFixingReq] = useState(null)
+  const [fixPreview, setFixPreview] = useState(null)
   const [staff, setStaff] = useState([])
   const [teachers, setTeachers] = useState([])
 
@@ -468,13 +469,22 @@ export default function PayrollPage({ initialTab }) {
     try {
       if (req.journal_entry_id || req.status === 'posted') return showToast('Payment already posted to the GL', false)
       const method = req.payment_method || 'bank'
-      await ensureAccounts(supabase, schoolId, ['1010', '1030'])
+      await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030'])
       const { map, byCode } = await resolveAccountMap(supabase, schoolId)
       const wagesId = map.net_pay
-      const payAccId = method === 'cash' ? byCode['1010'] : method === 'mobile' ? byCode['1030'] : map.bank
+      let payAccId = method === 'cash' ? byCode['1010'] : method === 'mobile' ? byCode['1030'] : map.bank
       if (!wagesId || !payAccId) throw new Error('Map Net Pay (Wages Payable) and Bank/Cash accounts in Payroll → Accounting Mapping')
-      const { data: payAcc } = await supabase.from('chart_of_accounts').select('*').eq('id', payAccId).single()
-      if (payAcc.error || !payAcc.data) throw new Error('Disbursement account not found in the chart')
+      let payAcc = (await supabase.from('chart_of_accounts').select('*').eq('id', payAccId).single()).data
+      if (!payAcc) {
+        // Stale mapped account (e.g. a deleted bank) — fall back to a valid
+        // cash/bank account rather than blocking the posting.
+        const fallbackId = byCode['1020'] || byCode['1010'] || byCode['1030']
+        if (!fallbackId) throw new Error('No Cash/Bank account available — check Payroll → Accounting Mapping')
+        payAcc = (await supabase.from('chart_of_accounts').select('*').eq('id', fallbackId).single()).data
+        if (!payAcc) throw new Error('Disbursement account not found in the chart')
+        payAccId = fallbackId
+        showToast(`Mapped disbursement account is missing — posting from ${payAcc.code} ${payAcc.name}`, false)
+      }
       const methodLabel = PAY_METHODS.find((m) => m.value === method)?.label || method
       const je = await postToJournal(supabase, {
         schoolId, userId, entry_date: TODAY,
@@ -654,8 +664,19 @@ export default function PayrollPage({ initialTab }) {
   const hasPostedRequests = payRequests.some((r) => r.journal_entry_id)
 
 
-  const fixMisplacement = async (item) => {
+  const openFixPreview = (item) => {
     const { req, credited, shouldBe } = item
+    if (payCorrections[req.id]) return
+    if (!credited?.id || !shouldBe?.id) {
+      showToast(`Cannot repair ${req.request_no}: the credited account is missing from the chart`, false)
+      return
+    }
+    setFixPreview(item)
+  }
+
+  const fixMisplacement = async () => {
+    if (!fixPreview) return
+    const { req, credited, shouldBe } = fixPreview
     if (fixingReq || payCorrections[req.id]) return
     if (!credited?.id || !shouldBe?.id) {
       showToast(`Cannot repair ${req.request_no}: the credited account is missing from the chart`, false)
@@ -677,6 +698,7 @@ export default function PayrollPage({ initialTab }) {
         details: { request_id: req.id, journal_id: je.id, amount: req.amount, from: credited.code, to: shouldBe.code },
       })
       showToast(`Corrected ${req.request_no} → ${shouldBe.code} ${shouldBe.name} (${je.entry_no})`)
+      setFixPreview(null)
       load()
     } catch (e) { showToast(e.message, false) } finally { setFixingReq(null) }
   }
@@ -1072,7 +1094,7 @@ export default function PayrollPage({ initialTab }) {
                           <button
                             className="prl-btn-secondary prl-btn-sm"
                             disabled={fixingReq === req.id}
-                            onClick={() => fixMisplacement({ req, credited, shouldBe })}
+                            onClick={() => openFixPreview({ req, credited, shouldBe })}
                           >{fixingReq === req.id ? 'Posting…' : 'Fix'}</button>
                         </td>
                       </tr>
@@ -1606,6 +1628,32 @@ export default function PayrollPage({ initialTab }) {
             <div className="prl-modal-foot">
               <button className="prl-btn-secondary" onClick={() => setConfirm(null)}>Cancel</button>
               <button className="prl-btn-danger" onClick={() => { setConfirm(null); confirm.action() }}>Yes, Continue</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ GL Correction Preview ═══ */}
+      {fixPreview && (
+        <div className="prl-modal-overlay" onClick={() => setFixPreview(null)}>
+          <div className="prl-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="prl-modal-head"><h3><Columns3 size={16} /> Confirm GL Correction</h3><button className="prl-btn-icon" onClick={() => setFixPreview(null)}><X size={16} /></button></div>
+            <p className="prl-confirm-msg">
+              Post a balanced correcting journal for <strong>{fixPreview.req.request_no}</strong> — <strong>{fmt(fixPreview.req.amount)}</strong>:
+            </p>
+            <div className="prl-fix-box">
+              <div className="prl-fix-line"><span className="prl-fix-dr">Debit</span><strong>{glAccLabel(fixPreview.credited)}</strong></div>
+              <div className="prl-fix-arrow">moves this misposted amount back</div>
+              <div className="prl-fix-line"><span className="prl-fix-cr">Credit</span><strong>{glAccLabel(fixPreview.shouldBe)}</strong></div>
+            </div>
+            <p className="prl-recon-note" style={{ margin: '8px 18px 0' }}>
+              This re-allocates the cash to the true source account ({fixPreview.shouldBe.code} {fixPreview.shouldBe.name}) and syncs everywhere — Cash &amp; Bank dashboard, Trial Balance, reports. Wages Payable is untouched.
+            </p>
+            <div className="prl-modal-foot">
+              <button className="prl-btn-secondary" onClick={() => setFixPreview(null)}>Cancel</button>
+              <button className="prl-btn-primary" disabled={fixingReq === fixPreview.req.id} onClick={fixMisplacement}>
+                {fixingReq === fixPreview.req.id ? 'Posting…' : 'Post Correction'}
+              </button>
             </div>
           </div>
         </div>
