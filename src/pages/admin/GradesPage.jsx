@@ -6,7 +6,7 @@ import {
   Eye, XCircle, Upload, File as FileIcon, AlertCircle,
 } from 'lucide-react'
 import { ReportCard, getCBEGrade, fetchStudentComments } from '../../components/students/ReportCard'
-import { weightedScoreMean } from '../../services/grading'
+import { weightedScoreMean, marksCell } from '../../services/grading'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
@@ -470,7 +470,7 @@ export default function GradesPage() {
   const classMeans = classes.map(c => {
     const cg = grades.filter(g => g.students?.class === c.class_name)
     const avg = cg.length
-      ? Math.round(cg.reduce((a, g) => a + (g.total_score || 0), 0) / cg.length)
+      ? Math.round(weightedScoreMean(cg))
       : null
     return { ...c, avg, count: cg.length }
   }).filter(c => c.avg !== null).sort((a, b) => b.avg - a.avg)
@@ -480,8 +480,8 @@ export default function GradesPage() {
     const curr = grades.filter(g => g.student_id === s.id)
     const prev = prevGrades.filter(g => g.student_id === s.id)
     if (!curr.length || !prev.length) return null
-    const currAvg = curr.reduce((a, g) => a + (g.total_score || 0), 0) / curr.length
-    const prevAvg = prev.reduce((a, g) => a + (g.total_score || 0), 0) / prev.length
+    const currAvg = weightedScoreMean(curr)
+    const prevAvg = weightedScoreMean(prev)
     const improvement = Math.round(currAvg - prevAvg)
     return { ...s, currAvg: Math.round(currAvg), prevAvg: Math.round(prevAvg), improvement }
   }).filter(Boolean).filter(s => s.improvement > 0).sort((a, b) => b.improvement - a.improvement).slice(0, 10)
@@ -599,7 +599,7 @@ export default function GradesPage() {
                   <th>Class</th>
                   <th>Subject</th>
                   <th>Exam</th>
-                  <th>Score</th>
+                  <th>Marks</th>
                   <th>Total %</th>
                   <th>CBE Band</th>
                   <th>Points</th>
@@ -625,7 +625,7 @@ export default function GradesPage() {
                       <td>{g.students?.class || '—'}</td>
                       <td className="subject-cell">{g.subject}</td>
                       <td>{g.exam_type || 'End Term'}</td>
-                      <td>{g.cat_score ?? g.sba_score ?? '—'}</td>
+                      <td>{marksCell(g)}</td>
                       <td><strong>{g.total_score ?? '—'}%</strong></td>
                       <td>
                         <span className={`cbe-badge cbe-${cbeClassKey(cbe)}`}>

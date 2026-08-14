@@ -101,7 +101,7 @@ export default function TeacherDashboard() {
       .from('grades')
       .select('*', { count: 'exact', head: true })
       .eq('teacher_id', tid)
-      .is('exam_score', null)
+      .in('status', ['draft', 'submitted', 'rejected'])
 
     setStats({
       classes: uniqueClasses.length,

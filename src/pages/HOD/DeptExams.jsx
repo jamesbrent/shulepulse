@@ -3,6 +3,7 @@ import { ClipboardList, Search, CheckCircle, XCircle, Eye, Clock, BookOpen, User
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { uploadExamFile, validateExamFile, fetchExamUploadForGroup } from '../../utils/examUpload'
+import { marksCell } from '../../services/grading'
 
 function Modal({ open, title, children, onClose, onConfirm, confirmLabel, danger }) {
   if (!open) return null
@@ -337,8 +338,7 @@ export default function DeptExams() {
                   <th>Adm No.</th>
                   <th>Class</th>
                   <th>Stream</th>
-                  <th>CAT Score</th>
-                  <th>Exam Score</th>
+                  <th>Marks</th>
                   <th>Total</th>
                   <th>Grade</th>
                 </tr>
@@ -350,8 +350,7 @@ export default function DeptExams() {
                     <td className="hod-monospace">{g.students?.admission_number || '—'}</td>
                     <td>{g.students?.class || '—'}</td>
                     <td>{g.students?.stream || '—'}</td>
-                    <td>{g.sba_score ?? g.cat_score ?? '—'}</td>
-                    <td>{g.summative_score ?? g.exam_score ?? '—'}</td>
+                    <td>{marksCell(g)}</td>
                     <td style={{ fontWeight: 600 }}>{g.total_score ?? '—'}%</td>
                     <td><span className="hod-sp-grade-chip">{g.grade || '—'}</span></td>
                   </tr>

@@ -23,6 +23,7 @@ import ReportCardsPage from './ReportCardsPage'
 import TranscriptsPage from './TranscriptsPage'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import RoleSwitcher from '../../components/RoleSwitcher'
+import { groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
 
 const NAV_GROUPS = [
   {
@@ -228,6 +229,11 @@ export default function StudentPortal() {
 
   const getGradeColor = (g) => {
     if (!g) return '#94a3b8'
+    if (g.startsWith('EE')) return '#16a34a'
+    if (g.startsWith('ME')) return '#2563eb'
+    if (g.startsWith('AE')) return '#ca8a04'
+    if (g.startsWith('BE')) return '#f97316'
+    if (g.startsWith('DE')) return '#dc2626'
     if (g.startsWith('A')) return '#16a34a'
     if (g.startsWith('B')) return '#2563eb'
     if (g.startsWith('C')) return '#ca8a04'
@@ -236,6 +242,11 @@ export default function StudentPortal() {
 
   const getGradeBg = (g) => {
     if (!g) return '#f1f5f9'
+    if (g.startsWith('EE')) return '#dcfce7'
+    if (g.startsWith('ME')) return '#dbeafe'
+    if (g.startsWith('AE')) return '#fef9c3'
+    if (g.startsWith('BE')) return '#ffedd5'
+    if (g.startsWith('DE')) return '#fef2f2'
     if (g.startsWith('A')) return '#dcfce7'
     if (g.startsWith('B')) return '#dbeafe'
     if (g.startsWith('C')) return '#fef9c3'
@@ -245,15 +256,11 @@ export default function StudentPortal() {
   const totalDue = fees.reduce((s, f) => s + (f.amount_due || 0), 0)
   const totalPaid = fees.reduce((s, f) => s + (f.amount_paid || 0), 0)
   const balance = totalDue - totalPaid
-  const avgGrade = grades.length > 0
-    ? Math.round(grades.reduce((s, g) => s + (g.total_score || 0), 0) / grades.length)
-    : 0
-  const highestGrade = grades.length > 0
-    ? Math.max(...grades.map(g => g.total_score || 0))
-    : 0
-  const lowestGrade = grades.length > 0
-    ? Math.min(...grades.map(g => g.total_score || 0))
-    : 0
+  const grouped = groupGradesBySubject(grades)
+  const avgGrade = grouped.overallAverage
+  const subScores = grouped.subjects.map(s => s.average)
+  const highestGrade = subScores.length ? Math.round(Math.max(...subScores)) : 0
+  const lowestGrade = subScores.length ? Math.round(Math.min(...subScores)) : 0
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   const todayTimetable = timetable.filter(t => t.day_of_week === today)
@@ -1251,7 +1258,7 @@ export default function StudentPortal() {
         <div className="sp-section">
           <div className="sp-section-header">
             <h3><Award size={18} /> Performance Overview</h3>
-            {grades.length > 0 && <span className="sp-badge">{grades.length} subjects</span>}
+            {grouped.totalSubjects > 0 && <span className="sp-badge">{grouped.totalSubjects} subjects</span>}
           </div>
           <div className="sp-performance-overview">
             {grades.length === 0 ? (
@@ -1261,31 +1268,35 @@ export default function StudentPortal() {
               </div>
             ) : (
               <div className="sp-perf-overview-grid">
-                {grades.map(g => {
-                  const gColor = getGradeColor(g.grade)
-                  const gBg = getGradeBg(g.grade)
+                {grouped.subjects.map((sub, i) => {
+                  const cbe = getCBEGrade(sub.average, student?.class || '')
+                  const band = cbe.band || '—'
+                  const gColor = getGradeColor(band)
+                  const gBg = getGradeBg(band)
                   return (
-                    <div key={g.id} className="sp-perf-subject-card">
+                    <div key={sub.name} className="sp-perf-subject-card">
                       <div className="sp-perf-subject-header">
-                        <p className="sp-perf-subject-name">{g.subject}</p>
+                        <p className="sp-perf-subject-name">{sub.name}</p>
                         <span className="sp-perf-subject-grade" style={{ background: gBg, color: gColor }}>
-                          {g.grade || '—'}
+                          {band}{cbe.points != null ? ` · ${cbe.points}pts` : ''}
                         </span>
                       </div>
                       <div className="sp-perf-subject-bar">
                         <div className="sp-perf-subject-bar-track">
                           <div
                             className="sp-perf-subject-bar-fill"
-                            style={{ width: `${Math.min(g.total_score || 0, 100)}%`, background: gColor }}
+                            style={{ width: `${Math.min(sub.average || 0, 100)}%`, background: gColor }}
                           />
                         </div>
                         <span className="sp-perf-subject-score" style={{ color: gColor }}>
-                          {Math.round(g.total_score || 0)}%
+                          {Math.round(sub.average || 0)}%
                         </span>
                       </div>
                       <div className="sp-perf-subject-details">
-                        <span>CAT: {g.cat_score || 0}%</span>
-                        <span>Exam: {g.exam_score || 0}%</span>
+                        {grouped.examTypes.map(et => {
+                          const a = sub.assessments.find(x => x.name === et)
+                          return <span key={et}>{et}: {a ? `${Math.round(a.rawMarks)}/${a.maxMarksRaw}` : '—'}</span>
+                        })}
                       </div>
                     </div>
                   )

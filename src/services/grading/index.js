@@ -4,7 +4,7 @@ export { aggregateSubject, aggregateStudentGrades, weightedScoreMean } from './a
 export { rankStudents } from './rank'
 export { isCBCClass, stageForClass, CBESTAGES } from './cbc'
 export { normalizeClassName, isValidScore, validateGradeRow } from './validate'
-export { gradeDisplay, gradeShort, pointsDisplay, sortBands, bandColor } from './display'
+export { gradeDisplay, gradeShort, pointsDisplay, sortBands, bandColor, rawMarkOf, marksCell } from './display'
 export { CBEPROFILES, getProfile, getActiveProfiles } from './profiles/presets'
 export { EARLY_PROFILE } from './profiles/early'
 export { UPPER_PRIMARY_PROFILE } from './profiles/upperPrimary'

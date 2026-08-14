@@ -1,4 +1,6 @@
 import { supabase } from '../../lib/supabase'
+import { getCBEGrade } from '../../components/students/ReportCard'
+import { weightedScoreMean } from '../../services/grading'
 
 const TERM_ORDER = { 'Term 1': 1, 'Term 2': 2, 'Term 3': 3 }
 
@@ -21,26 +23,24 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
     const subjectGrades = grades.filter(g => g.subject === subject)
     let bestScore = 0; let bestYear = ''; let bestTerm = ''
     let worstScore = 100; let worstYear = ''; let worstTerm = ''
-    let totalScore = 0; let count = 0
 
     const yearData = years.map(year => {
       const yearGrades = subjectGrades.filter(g => g.year === year)
       const termCells = terms.map(term => {
-        const tg = yearGrades.find(g => g.term === term)
-        if (!tg) return { score: null, band: null }
-        const s = tg.total_score ?? 0
-        totalScore += s; count++
+        const tg = yearGrades.filter(g => g.term === term)
+        if (!tg.length) return { score: null, band: null }
+        const s = Math.round(weightedScoreMean(tg))
         if (s > bestScore) { bestScore = s; bestYear = year; bestTerm = term }
         if (s < worstScore) { worstScore = s; worstYear = year; worstTerm = term }
-        return { score: s, band: tg.cbe_band || tg.grade || '-' }
+        return { score: s, band: getCBEGrade(s, student.class).band || '-' }
       })
-      const yearAvg = yearGrades.length ? Math.round(yearGrades.reduce((a, g) => a + (g.total_score ?? 0), 0) / yearGrades.length) : null
-      const yearBand = yearAvg ? getCompetencyLevel(yearAvg, student.class) : null
+      const yearAvg = yearGrades.length ? Math.round(weightedScoreMean(yearGrades)) : null
+      const yearBand = yearAvg != null ? getCBEGrade(yearAvg, student.class).band : null
       return { year, termCells, yearAvg, yearBand }
     })
 
-    const overallAvg = count ? Math.round(totalScore / count) : null
-    const finalBand = overallAvg ? getCompetencyLevel(overallAvg, student.class) : null
+    const overallAvg = subjectGrades.length ? Math.round(weightedScoreMean(subjectGrades)) : null
+    const finalBand = overallAvg != null ? getCBEGrade(overallAvg, student.class) : null
     const overallGrade = finalBand?.band || '-'
 
     return { subject, yearData, overallAvg, overallGrade, bestScore, bestYear, bestTerm, worstScore, worstYear, worstTerm }
@@ -175,7 +175,7 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
           <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Total Subjects Taken</td><td style="padding:4px 8px;border:1px solid #ccc">${subjects.length}</td></tr>
           <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Total Academic Years</td><td style="padding:4px 8px;border:1px solid #ccc">${years.length}</td></tr>
         </table>
-        <div style="font-size:8pt;color:#666;margin-top:4px;font-style:italic">* Competency levels: EE = Exceeding Expectations, ME = Meeting Expectations, AE = Approaching Expectations, BE = Below Expectations</div>
+        <div style="font-size:8pt;color:#666;margin-top:4px;font-style:italic">* Competency levels awarded via the school's configured grading profile (e.g. EE2 = Very Good, ME2 = Fair, AE1 = Needs Improvement).</div>
         ` : ''}
 
         <div style="font-size:11pt;font-weight:700;color:#1e3a5f;margin:16px 0 6px;border-bottom:1px solid #1e3a5f;padding-bottom:4px">5. CONDUCT & DISCIPLINE SUMMARY</div>
@@ -212,23 +212,4 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
       </div>
     `,
   }
-}
-
-function getCompetencyLevel(score, className = '') {
-  const c = (className || '').toLowerCase()
-  const isEarly = c.includes('pp1') || c.includes('pp2') || c.includes('pre-primary') || c.includes('grade 1') || c.includes('grade 2') || c.includes('grade 3')
-  if (isEarly) {
-    if (score >= 75) return { band: 'EE', label: 'Exceeding Expectations', color: '#16a34a' }
-    if (score >= 50) return { band: 'ME', label: 'Meeting Expectations', color: '#2563eb' }
-    if (score >= 25) return { band: 'AE', label: 'Approaching Expectations', color: '#ca8a04' }
-    return { band: 'BE', label: 'Below Expectations', color: '#dc2626' }
-  }
-  if (score >= 90) return { band: 'EE1', label: 'Exceptional', color: '#16a34a' }
-  if (score >= 75) return { band: 'EE2', label: 'Very Good', color: '#22c55e' }
-  if (score >= 58) return { band: 'ME1', label: 'Good', color: '#2563eb' }
-  if (score >= 41) return { band: 'ME2', label: 'Fair', color: '#6366f1' }
-  if (score >= 31) return { band: 'AE1', label: 'Needs Improvement', color: '#ca8a04' }
-  if (score >= 21) return { band: 'AE2', label: 'Below Average', color: '#f97316' }
-  if (score >= 11) return { band: 'BE1', label: 'Well Below Avg', color: '#ef4444' }
-  return { band: 'BE2', label: 'Minimal Competence', color: '#dc2626' }
 }

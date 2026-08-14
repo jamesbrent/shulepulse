@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf'
 import { applyPlugin } from 'jspdf-autotable'
 applyPlugin(jsPDF)
 import { loadLogoBase64, logoSizes, fmtRef } from './pdfLogoHelper'
-import { weightedScoreMean } from '../../../../services/grading'
+import { weightedScoreMean, marksCell } from '../../../../services/grading'
 
 const PAGE_W = 210
 const PAGE_H = 297
@@ -581,8 +581,8 @@ export async function generateAcademicsPdf({ school, student, grades }) {
     const rows = termGrades.map((g, i) => [
       i + 1,
       g.subject || '—',
-      g.sba_score ?? g.cat_score ?? '—',
-      g.summative_score ?? g.exam_score ?? '—',
+      g.exam_type || 'End Term',
+      marksCell(g),
       g.total_score ?? '—',
       g.grade || '—',
     ])
@@ -591,7 +591,7 @@ export async function generateAcademicsPdf({ school, student, grades }) {
       startY: y,
       margin: { left: MARGIN, right: MARGIN },
       tableWidth: CONTENT_W,
-      head: [['No.', 'Subject', 'SBA (40%)', 'Exam (60%)', 'Total', 'Grade']],
+      head: [['No.', 'Subject', 'Exam', 'Marks', 'Total', 'Grade']],
       body: rows,
       theme: 'plain',
       styles: { font: FONT, fontSize: 7.5, textColor: [...DARK], cellPadding: { top: 2, right: 2, bottom: 2, left: 2 }, lineColor: [...FAINT], lineWidth: 0.3 },
@@ -599,8 +599,8 @@ export async function generateAcademicsPdf({ school, student, grades }) {
       columnStyles: {
         0: { cellWidth: 10, halign: 'center' },
         1: { cellWidth: 'auto' },
-        2: { cellWidth: 20, halign: 'center' },
-        3: { cellWidth: 20, halign: 'center' },
+        2: { cellWidth: 22, halign: 'center' },
+        3: { cellWidth: 24, halign: 'center' },
         4: { cellWidth: 18, halign: 'center' },
         5: { cellWidth: 16, halign: 'center' },
       },

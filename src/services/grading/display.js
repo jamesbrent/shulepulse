@@ -43,3 +43,20 @@ export function bandColor(band) {
   if (c.startsWith('DE')) return '#dc2626'
   return '#6b7280'
 }
+
+export function rawMarkOf(g) {
+  if (!g) return null
+  const isEnd = g.exam_type === 'End Term'
+  const raw = isEnd
+    ? (g.summative_score ?? g.exam_score ?? g.sba_score ?? g.cat_score)
+    : (g.sba_score ?? g.cat_score ?? g.summative_score ?? g.exam_score)
+  if (raw == null || Number.isNaN(Number(raw))) return null
+  return Number(raw)
+}
+
+export function marksCell(g) {
+  const raw = rawMarkOf(g)
+  if (raw === null) return '—'
+  const mx = g?.max_marks ? Number(g.max_marks) : null
+  return mx ? `${raw}/${mx}` : String(raw)
+}

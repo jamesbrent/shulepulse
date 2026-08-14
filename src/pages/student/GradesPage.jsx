@@ -3,7 +3,7 @@ import { BarChart2, BookOpen, Award, TrendingUp, TrendingDown, Minus } from 'luc
 import { supabase } from '../../lib/supabase'
 import useStudentAcademicHistory from './useStudentAcademicHistory'
 import AcademicFilters from './AcademicFilters'
-import { weightedScoreMean } from '../../services/grading'
+import { weightedScoreMean, marksCell } from '../../services/grading'
 
 const TrendIcon = ({ value }) => {
   if (value === 'up') return <TrendingUp size={14} className="sp-trend up" />
@@ -136,6 +136,7 @@ export default function GradesPage({ student, school }) {
                 <tr>
                   <th>Subject</th>
                   <th>Exam Type</th>
+                  <th>Marks</th>
                   <th>Total</th>
                   <th>Grade</th>
                   <th>Class Avg</th>
@@ -150,6 +151,7 @@ export default function GradesPage({ student, school }) {
                     <tr key={g.id}>
                       <td><strong>{g.subject}</strong></td>
                       <td>{g.exam_type || g.type || 'Assessment'}</td>
+                      <td>{marksCell(g)}</td>
                       <td><strong>{Math.round(g.total_score || 0)}%</strong></td>
                       <td>
                         <span className="sp-grade-badge" style={{ background: getGradeBg(g.grade), color: getGradeColor(g.grade) }}>
@@ -214,7 +216,11 @@ export default function GradesPage({ student, school }) {
 
 export function getGradeColor(g) {
   if (!g) return '#94a3b8'
+  if (g.startsWith('EE')) return '#16a34a'
+  if (g.startsWith('ME')) return '#2563eb'
   if (g.startsWith('AE')) return '#ca8a04'
+  if (g.startsWith('BE')) return '#f97316'
+  if (g.startsWith('DE')) return '#dc2626'
   if (g.startsWith('A')) return '#16a34a'
   if (g.startsWith('B')) return '#2563eb'
   if (g.startsWith('C')) return '#ca8a04'
@@ -223,7 +229,11 @@ export function getGradeColor(g) {
 
 export function getGradeBg(g) {
   if (!g) return '#f1f5f9'
+  if (g.startsWith('EE')) return '#dcfce7'
+  if (g.startsWith('ME')) return '#dbeafe'
   if (g.startsWith('AE')) return '#fef9c3'
+  if (g.startsWith('BE')) return '#ffedd5'
+  if (g.startsWith('DE')) return '#fef2f2'
   if (g.startsWith('A')) return '#dcfce7'
   if (g.startsWith('B')) return '#dbeafe'
   if (g.startsWith('C')) return '#fef9c3'

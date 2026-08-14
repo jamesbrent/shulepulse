@@ -8,7 +8,6 @@ import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { supabase } from '../../lib/supabase'
 import { fmt, fmtDate } from '../admin/fees/utils/feesHelpers'
 import { groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
-import { weightedScoreMean } from '../../services/grading'
 
 const TABS = [
   { key: 'personal', label: 'Personal Info', icon: User },
@@ -367,26 +366,36 @@ export default function StudentProfile() {
         return (
           <div className="profile-section">
             {Object.entries(acByTerm).map(([term, grades]) => {
-              const avg = grades.length > 0 ? Math.round(weightedScoreMean(grades)) : 0
+              const grp = groupGradesBySubject(grades)
+              const maxMap = {}
+              grp.examTypes.forEach(et => {
+                const a = grp.subjects[0]?.assessments.find(x => x.name === et)
+                if (a) maxMap[et] = a.maxMarksRaw
+              })
               return (
                 <div key={term} className="form-card" style={{ padding: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <p className="form-section-label" style={{ margin: 0 }}>{term}</p>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#2563eb' }}>Avg: {avg}%</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#2563eb' }}>Avg: {Math.round(grp.overallAverage)}%</span>
                   </div>
                   <div className="table-wrap">
                     <table className="data-table">
-                      <thead><tr><th>Subject</th><th>SBA (40%)</th><th>Exam (60%)</th><th>Total</th><th>Grade</th></tr></thead>
+                      <thead><tr><th>Subject</th>{grp.examTypes.map(et => <th key={et}>{et}{maxMap[et] != null ? ` (${maxMap[et]})` : ''}</th>)}<th>Total /100</th><th>Level</th></tr></thead>
                       <tbody>
-                        {grades.map(g => (
-                          <tr key={g.id}>
-                            <td>{g.subject}</td>
-                            <td>{g.sba_score ?? g.cat_score ?? '—'}</td>
-                            <td>{g.summative_score ?? g.exam_score ?? '—'}</td>
-                            <td style={{ fontWeight: 600 }}>{g.total_score ?? '—'}</td>
-                            <td><span className="status-badge" style={{ background: '#eff6ff', color: '#2563eb' }}>{g.grade || '—'}</span></td>
-                          </tr>
-                        ))}
+                        {grp.subjects.map((sub, i) => {
+                          const cbe = getCBEGrade(sub.average, student?.class || '')
+                          return (
+                            <tr key={sub.name}>
+                              <td>{sub.name}</td>
+                              {grp.examTypes.map(et => {
+                                const a = sub.assessments.find(x => x.name === et)
+                                return <td key={et}>{a ? `${Math.round(a.rawMarks)}/${a.maxMarksRaw}` : '—'}</td>
+                              })}
+                              <td style={{ fontWeight: 600 }}>{Math.round(sub.average)}</td>
+                              <td><span className="status-badge" style={{ background: '#eff6ff', color: '#2563eb' }}>{cbe.band || '—'}{cbe.points != null ? ` · ${cbe.points}pts` : ''}</span></td>
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>

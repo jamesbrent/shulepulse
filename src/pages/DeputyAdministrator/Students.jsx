@@ -8,7 +8,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import StudentProfile from './StudentProfile'
-import { weightedScoreMean } from '../../services/grading'
+import { weightedScoreMean, marksCell } from '../../services/grading'
 import './Students.css'
 
 const ROWS_PER_PAGE = 15
@@ -623,8 +623,8 @@ export default function Students() {
                         <th>Subject</th>
                         <th>Term</th>
                         <th>Year</th>
-                        <th>SBA</th>
-                        <th>Exam</th>
+                        <th>Exam Type</th>
+                        <th>Marks</th>
                         <th>Total</th>
                         <th>Grade</th>
                       </tr>
@@ -635,8 +635,8 @@ export default function Students() {
                           <td>{g.subject}</td>
                           <td>{g.term || '—'}</td>
                           <td>{g.year || '—'}</td>
-                          <td>{g.sba_score ?? g.cat_score ?? '—'}</td>
-                          <td>{g.summative_score ?? g.exam_score ?? '—'}</td>
+                          <td>{g.exam_type || 'End Term'}</td>
+                          <td>{marksCell(g)}</td>
                           <td style={{ fontWeight: 600 }}>{g.total_score ?? '—'}</td>
                           <td>
                             <span className="da-badge">{g.grade || '—'}</span>

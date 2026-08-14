@@ -966,7 +966,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                       bySubject[sub].push(g)
                     })
                     return Object.entries(bySubject).sort(([a], [b]) => a.localeCompare(b)).map(([subject, exams]) => {
-                      const subAvg = Math.round(exams.reduce((s, e) => s + (e.total_score || 0), 0) / exams.length)
+                      const subAvg = Math.round(weightedScoreMean(exams))
                       return (
                         <div key={subject} className="ct-perf-detail-subject">
                           <div className="ct-perf-detail-subject-header">

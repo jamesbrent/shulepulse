@@ -931,7 +931,7 @@ export default function ExamSetup() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Name (key)</label>
-            <input value={examTypeForm.name} onChange={e => setExamTypeForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. CAT 1"
+            <input value={examTypeForm.name} onChange={e => setExamTypeForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Opener"
               style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13 }} />
           </div>
           <div>

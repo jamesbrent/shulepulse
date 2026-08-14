@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
+import { marksCell } from '../../services/grading'
 import './MarksApproval.css'
 
 const TABS = [
@@ -627,8 +628,7 @@ export default function MarksApproval() {
                         <th>Adm No.</th>
                         <th>Class</th>
                         <th>Stream</th>
-                        <th>CAT Score</th>
-                        <th>Exam Score</th>
+                        <th>Marks</th>
                         <th>Total</th>
                         <th>Grade</th>
                       </tr>
@@ -645,8 +645,7 @@ export default function MarksApproval() {
                           <td className="ma-mono">{g.students?.admission_number || '—'}</td>
                           <td>{g.students?.class || '—'}</td>
                           <td>{g.students?.stream || '—'}</td>
-                          <td>{g.sba_score ?? g.cat_score ?? '—'}</td>
-                          <td>{g.summative_score ?? g.exam_score ?? '—'}</td>
+                          <td>{marksCell(g)}</td>
                           <td style={{ fontWeight: 600 }}>{g.total_score ?? '—'}%</td>
                           <td><span className="ma-grade-chip">{g.grade || '—'}</span></td>
                         </tr>

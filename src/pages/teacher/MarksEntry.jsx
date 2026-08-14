@@ -342,7 +342,7 @@ export default function MarksEntry({ profile }) {
 
   const isLocked = Object.values(gradeForm).some(g => g.status === 'locked')
 
-  const maxForField = { cat1: 20, cat2: 20, et: 60 }
+  const maxForField = { cat1: getMax('Opener'), cat2: getMax('Midterm'), et: getMax('End Term') }
 
   const updateGrade = (studentId, field, value) => {
     if (isLocked) return
@@ -522,9 +522,9 @@ export default function MarksEntry({ profile }) {
             const c2 = Number(row[2])
             const et = Number(row[3])
             next[s.id] = {
-              cat1: !isNaN(c1) && c1 >= 0 && c1 <= 20 ? c1 : '',
-              cat2: !isNaN(c2) && c2 >= 0 && c2 <= 20 ? c2 : '',
-              et: !isNaN(et) && et >= 0 && et <= 60 ? et : '',
+              cat1: !isNaN(c1) && c1 >= 0 && c1 <= getMax('Opener') ? c1 : '',
+              cat2: !isNaN(c2) && c2 >= 0 && c2 <= getMax('Midterm') ? c2 : '',
+              et: !isNaN(et) && et >= 0 && et <= getMax('End Term') ? et : '',
               remarks: '',
               status: 'draft',
             }

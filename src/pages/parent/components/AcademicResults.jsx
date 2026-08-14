@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BarChart2, TrendingUp, TrendingDown, Minus, BookOpen, Award } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { groupGradesBySubject, getCBEGrade } from '../../../components/students/ReportCard'
 
 export default function AcademicResults({ activeChild, school }) {
   const [grades, setGrades] = useState([])
@@ -34,12 +35,11 @@ export default function AcademicResults({ activeChild, school }) {
     return <Minus size={16} className="trend flat" />
   }
 
-  const avgScore = grades.length > 0
-    ? Math.round(grades.reduce((s, g) => s + (g.total_score || 0), 0) / grades.length)
-    : 0
+  const grouped = groupGradesBySubject(grades)
+  const avgScore = grouped.overallAverage
 
-  const bestSubject = grades.length > 0
-    ? grades.reduce((best, g) => (g.total_score || 0) > (best?.total_score || 0) ? g : best, grades[0])
+  const bestSubject = grouped.subjects.length > 0
+    ? grouped.subjects.reduce((best, s) => s.average > (best?.average || 0) ? s : best, grouped.subjects[0])
     : null
 
   if (loading) return <p className="loading-state">Loading results...</p>
@@ -58,21 +58,21 @@ export default function AcademicResults({ activeChild, school }) {
           <BookOpen size={20} />
           <div>
             <p className="asc-label">Subjects</p>
-            <p className="asc-value">{grades.length}</p>
+            <p className="asc-value">{grouped.totalSubjects}</p>
           </div>
         </div>
         <div className="att-sum-card amber">
           <Award size={20} />
           <div>
             <p className="asc-label">Best Subject</p>
-            <p className="asc-value" style={{ fontSize: 16 }}>{bestSubject?.subject || '—'}</p>
+            <p className="asc-value" style={{ fontSize: 16 }}>{bestSubject?.name || '—'}</p>
           </div>
         </div>
         <div className="att-sum-card purple">
           <TrendingUp size={20} />
           <div>
             <p className="asc-label">Best Score</p>
-            <p className="asc-value">{bestSubject ? `${Math.round(bestSubject.total_score)}%` : '—'}</p>
+            <p className="asc-value">{bestSubject ? `${bestSubject.average}%` : '—'}</p>
           </div>
         </div>
       </div>
@@ -92,29 +92,31 @@ export default function AcademicResults({ activeChild, school }) {
             <table className="att-table">
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Subject</th>
-                  <th>CAT</th>
-                  <th>Exam</th>
-                  <th>Total</th>
-                  <th>Grade</th>
-                  <th>Trend</th>
+                  {grouped.examTypes.map(et => <th key={et}>{et}</th>)}
+                  <th>Total /100</th>
+                  <th>Level</th>
                 </tr>
               </thead>
               <tbody>
-                {grades.map(g => (
-                  <tr key={g.id}>
-                    <td><strong>{g.subject}</strong></td>
-                    <td>{g.cat_score}%</td>
-                    <td>{g.exam_score}%</td>
-                    <td><strong>{Math.round(g.total_score)}%</strong></td>
-                    <td>
-                      <span className={`grade-badge ${g.grade?.includes('A') ? 'a' : g.grade?.includes('B') || g.grade?.includes('C') ? 'b' : g.grade?.includes('D') || g.grade === 'E' ? 'c' : ''}`}>
-                        {g.grade || g.cbe_band || '—'}
-                      </span>
-                    </td>
-                    <td><TrendIcon value={g.total_score >= 70 ? 'up' : g.total_score >= 50 ? 'flat' : 'down'} /></td>
-                  </tr>
-                ))}
+                {grouped.subjects.map((sub, i) => {
+                  const cbe = getCBEGrade(sub.average, activeChild?.class || '')
+                  return (
+                    <tr key={sub.name}>
+                      <td>{i + 1}</td>
+                      <td><strong>{sub.name}</strong></td>
+                      {grouped.examTypes.map(et => {
+                        const a = sub.assessments.find(x => x.name === et)
+                        return <td key={et}>{a ? `${Math.round(a.rawMarks)}/${a.maxMarksRaw}` : '—'}</td>
+                      })}
+                      <td><strong>{Math.round(sub.average)}</strong></td>
+                      <td>
+                        <span className="grade-badge">{cbe.band || '—'}{cbe.points != null ? ` · ${cbe.points}pts` : ''}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

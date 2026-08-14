@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { BarChart2, DollarSign, ClipboardList, Bell, TrendingUp, TrendingDown, Minus, Award, BookOpen, CheckCircle } from 'lucide-react'
+import { BarChart2, DollarSign, ClipboardList, Bell, Award, BookOpen, CheckCircle } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { fmtDate } from '../../admin/fees/utils/feesHelpers'
+import { groupGradesBySubject, getCBEGrade } from '../../../components/students/ReportCard'
 
 export default function Overview({ activeChild, school }) {
   const [grades, setGrades] = useState([])
@@ -79,19 +80,12 @@ export default function Overview({ activeChild, school }) {
     setLoading(false)
   }
 
-  const avgScore = grades.length > 0
-    ? Math.round(grades.reduce((s, g) => s + (g.total_score || 0), 0) / grades.length)
-    : 0
+  const grouped = groupGradesBySubject(grades)
+  const avgScore = grouped.overallAverage
 
-  const bestSubject = grades.length > 0
-    ? grades.reduce((best, g) => (g.total_score || 0) > (best?.total_score || 0) ? g : best, grades[0])
+  const bestSubject = grouped.subjects.length > 0
+    ? grouped.subjects.reduce((best, s) => s.average > (best?.average || 0) ? s : best, grouped.subjects[0])
     : null
-
-  const TrendIcon = ({ value }) => {
-    if (value === 'up') return <TrendingUp size={16} className="trend up" />
-    if (value === 'down') return <TrendingDown size={16} className="trend down" />
-    return <Minus size={16} className="trend flat" />
-  }
 
   if (loading) return <div className="loading-state">Loading overview...</div>
 
@@ -102,7 +96,7 @@ export default function Overview({ activeChild, school }) {
           <div className="p-stat-icon" style={{ color: '#2563eb' }}><BarChart2 size={20} /></div>
           <p className="p-stat-label">Current Average</p>
           <p className="p-stat-value" style={{ color: '#2563eb' }}>{avgScore}%</p>
-          <p className="p-stat-sub">{grades.length > 0 ? `${grades.length} subjects` : 'No grades yet'}</p>
+          <p className="p-stat-sub">{grouped.totalSubjects > 0 ? `${grouped.totalSubjects} subjects` : 'No grades yet'}</p>
         </div>
         <div className="p-stat-card">
           <div className="p-stat-icon" style={{ color: '#16a34a' }}><ClipboardList size={20} /></div>
@@ -138,28 +132,28 @@ export default function Overview({ activeChild, school }) {
               <thead>
                 <tr>
                   <th>Subject</th>
-                  <th>CAT</th>
-                  <th>Exam</th>
-                  <th>Total</th>
-                  <th>Grade</th>
-                  <th>Trend</th>
+                  {grouped.examTypes.map(et => <th key={et}>{et}</th>)}
+                  <th>Total /100</th>
+                  <th>Level</th>
                 </tr>
               </thead>
               <tbody>
-                {grades.map(g => (
-                  <tr key={g.id}>
-                    <td>{g.subject}</td>
-                    <td>{g.cat_score}%</td>
-                    <td>{g.exam_score}%</td>
-                    <td><strong>{Math.round(g.total_score)}%</strong></td>
-                    <td>
-                      <span className={`grade-badge ${g.grade?.includes('A') ? 'a' : g.grade?.includes('B') ? 'b' : 'c'}`}>
-                        {g.grade || '—'}
-                      </span>
-                    </td>
-                    <td><TrendIcon value={g.total_score >= 70 ? 'up' : g.total_score >= 50 ? 'flat' : 'down'} /></td>
-                  </tr>
-                ))}
+                {grouped.subjects.map((sub, i) => {
+                  const cbe = getCBEGrade(sub.average, activeChild?.class || '')
+                  return (
+                    <tr key={sub.name}>
+                      <td>{sub.name}</td>
+                      {grouped.examTypes.map(et => {
+                        const a = sub.assessments.find(x => x.name === et)
+                        return <td key={et}>{a ? `${Math.round(a.rawMarks)}/${a.maxMarksRaw}` : '—'}</td>
+                      })}
+                      <td><strong>{Math.round(sub.average)}</strong></td>
+                      <td>
+                        <span className="grade-badge">{cbe.band || '—'}{cbe.points != null ? ` · ${cbe.points}pts` : ''}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}

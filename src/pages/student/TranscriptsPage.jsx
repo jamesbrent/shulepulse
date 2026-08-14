@@ -5,6 +5,7 @@ import useStudentAcademicHistory from './useStudentAcademicHistory'
 import AcademicFilters from './AcademicFilters'
 import TranscriptDocument from './TranscriptDocument'
 import { groupGradesBySubject, getCBEGrade, gradeDisplay } from '../../components/students/ReportCard'
+import { marksCell } from '../../services/grading'
 
 const TERM_ORDER = { 'Term 1': 1, 'Term 2': 2, 'Term 3': 3 }
 
@@ -198,6 +199,7 @@ export default function TranscriptsPage({ student, school }) {
                 <tr>
                   <th>Subject</th>
                   <th>Exam Type</th>
+                  <th>Marks</th>
                   <th>Total</th>
                   <th>Grade</th>
                 </tr>
@@ -207,6 +209,7 @@ export default function TranscriptsPage({ student, school }) {
                   <tr key={g.id}>
                     <td><strong>{g.subject}</strong></td>
                     <td>{g.exam_type || 'Assessment'}</td>
+                    <td>{marksCell(g)}</td>
                     <td>{Math.round(g.total_score || 0)}%</td>
                     <td>
                       <span className="sp-grade-badge" style={{ background: getGradeBg(g.grade), color: getGradeColor(g.grade) }}>
@@ -238,18 +241,26 @@ export default function TranscriptsPage({ student, school }) {
 
 function getGradeColor(g) {
   if (!g) return '#94a3b8'
+  if (g.startsWith('EE')) return '#16a34a'
+  if (g.startsWith('ME')) return '#2563eb'
   if (g.startsWith('AE')) return '#ca8a04'
-  if (g.startsWith('A') || g.startsWith('E')) return '#16a34a'
-  if (g.startsWith('B') || g.startsWith('M')) return '#2563eb'
+  if (g.startsWith('BE')) return '#f97316'
+  if (g.startsWith('DE')) return '#dc2626'
+  if (g.startsWith('A')) return '#16a34a'
+  if (g.startsWith('B')) return '#2563eb'
   if (g.startsWith('C')) return '#ca8a04'
   return '#dc2626'
 }
 
 function getGradeBg(g) {
   if (!g) return '#f1f5f9'
+  if (g.startsWith('EE')) return '#dcfce7'
+  if (g.startsWith('ME')) return '#dbeafe'
   if (g.startsWith('AE')) return '#fef9c3'
-  if (g.startsWith('A') || g.startsWith('E')) return '#dcfce7'
-  if (g.startsWith('B') || g.startsWith('M')) return '#dbeafe'
+  if (g.startsWith('BE')) return '#ffedd5'
+  if (g.startsWith('DE')) return '#fef2f2'
+  if (g.startsWith('A')) return '#dcfce7'
+  if (g.startsWith('B')) return '#dbeafe'
   if (g.startsWith('C')) return '#fef9c3'
   return '#fef2f2'
 }
