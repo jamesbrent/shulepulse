@@ -13,7 +13,7 @@ import { postToJournal, writeAudit, ensureAccounts } from './accountsUtils'
 import {
   computeEmployeePay, loadPayrollData, nextEmployeeNo, nextRunNo, nextRequestNo,
   postPayrollJournal, resolveAccountMap, ACCOUNT_MAPPING_ITEMS, ACCOUNT_MAPPING_KEYS,
-  ITEM_TYPES, PAY_METHODS, ALLOWANCE_TAX_TREATMENTS, allowanceTreatmentLabel,
+  ITEM_TYPES, PAY_METHODS, PAYMENT_STATUSES, ALLOWANCE_TAX_TREATMENTS, allowanceTreatmentLabel,
   runStatus, paymentStatus,
 } from './payrollUtils'
 import Payslip from './Payslip'
