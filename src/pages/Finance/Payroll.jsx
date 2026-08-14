@@ -9,7 +9,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { fmt, fmtDateTime, downloadFile } from '../admin/fees/utils/feesHelpers'
-import { postToJournal, writeAudit } from './accountsUtils'
+import { postToJournal, writeAudit, ensureAccounts } from './accountsUtils'
 import {
   computeEmployeePay, loadPayrollData, nextEmployeeNo, nextRunNo, nextRequestNo,
   postPayrollJournal, resolveAccountMap, ACCOUNT_MAPPING_ITEMS, ACCOUNT_MAPPING_KEYS,
@@ -421,17 +421,22 @@ export default function PayrollPage({ initialTab }) {
   const postRequest = async (req) => {
     try {
       if (req.journal_entry_id || req.status === 'posted') return showToast('Payment already posted to the GL', false)
-      const { map } = await resolveAccountMap(supabase, schoolId)
+      const method = req.payment_method || 'bank'
+      await ensureAccounts(supabase, schoolId, ['1010', '1030'])
+      const { map, byCode } = await resolveAccountMap(supabase, schoolId)
       const wagesId = map.net_pay
-      const bankId = map.bank
-      if (!wagesId || !bankId) throw new Error('Map Net Pay (Wages Payable) and Bank accounts in Payroll → Accounting Mapping')
+      const payAccId = method === 'cash' ? byCode['1010'] : method === 'mobile' ? byCode['1030'] : map.bank
+      if (!wagesId || !payAccId) throw new Error('Map Net Pay (Wages Payable) and Bank/Cash accounts in Payroll → Accounting Mapping')
+      const { data: payAcc } = await supabase.from('chart_of_accounts').select('*').eq('id', payAccId).single()
+      if (payAcc.error || !payAcc.data) throw new Error('Disbursement account not found in the chart')
+      const methodLabel = PAY_METHODS.find((m) => m.value === method)?.label || method
       const je = await postToJournal(supabase, {
         schoolId, userId, entry_date: TODAY,
         description: `Salary payment ${req.request_no}`,
         source: 'payroll', reference_type: 'payroll_payment', reference_id: req.id,
         lines: [
           { account_id: wagesId, debit: Number(req.amount), notes: 'Net pay disbursed' },
-          { account_id: bankId, credit: Number(req.amount), notes: `Paid via ${PAY_METHODS.find((m) => m.value === req.payment_method)?.label || req.payment_method}${req.reference_no ? ` (${req.reference_no})` : ''}` },
+          { account_id: payAccId, credit: Number(req.amount), notes: `Paid via ${methodLabel} from ${payAcc.data.name}${req.reference_no ? ` (${req.reference_no})` : ''}` },
         ],
       })
       const { error: upErr } = await supabase.from('payroll_payment_requests').update({
@@ -539,6 +544,18 @@ export default function PayrollPage({ initialTab }) {
   const mappedAccountLabel = (key) => {
     const id = acctMap[key] || glAccounts.find((a) => a.code === ACCOUNT_MAPPING_ITEMS[key].defaultCode)?.id
     return glAccounts.find((a) => a.id === id)
+  }
+
+  // The GL account a salary payment is disbursed from, driven by the payment
+  // method: cash → Petty Cash (1010), mobile → Mobile Money (1030), otherwise
+  // the school's mapped Bank / Cash Disbursement account (default 1020). This
+  // must mirror the resolution in postRequest() so Cash & Bank positions move
+  // on the account the money actually leaves.
+  const disbursementAccount = (req) => {
+    const method = req?.payment_method || 'bank'
+    if (method === 'cash') return glAccounts.find((a) => a.code === '1010')
+    if (method === 'mobile') return glAccounts.find((a) => a.code === '1030')
+    return mappedAccountLabel('bank')
   }
 
   // ─── Export ────────────────────────────────────────────────────────────────
@@ -904,20 +921,22 @@ export default function PayrollPage({ initialTab }) {
           <div className="prl-card">
             <table className="prl-table">
               <thead>
-                <tr><th>Request No.</th><th>Run</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th><th></th></tr>
+                <tr><th>Request No.</th><th>Run</th><th>Amount</th><th>Method</th><th>Disbursed From</th><th>Reference</th><th>Status</th><th></th></tr>
               </thead>
               <tbody>
                 {payRequests.length === 0 && (
-                  <tr><td colSpan="7" className="prl-norows">No payment requests — open a posted run and click "Initiate Payment".</td></tr>
+                  <tr><td colSpan="8" className="prl-norows">No payment requests — open a posted run and click "Initiate Payment".</td></tr>
                 )}
                 {payRequests.map((r) => {
                   const st = paymentStatus(r.status)
+                  const disbursed = disbursementAccount(r)
                   return (
                     <tr key={r.id}>
                       <td className="prl-mono">{r.request_no}</td>
                       <td>{r.payroll_runs?.run_label || '—'}</td>
                       <td style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(r.amount)}</td>
                       <td className="prl-cap">{PAY_METHODS.find((m) => m.value === r.payment_method)?.label || r.payment_method}</td>
+                      <td>{disbursed ? <span className="prl-cap">{disbursed.name}</span> : <span style={{ color: '#94a3b8' }}>—</span>}</td>
                       <td className="prl-mono">{r.reference_no || '—'}</td>
                       <td><span className="prl-badge" style={{ background: `${st.color}1a`, color: st.color }}>{st.label}</span></td>
                       <td className="prl-actions-cell">
@@ -1346,6 +1365,9 @@ export default function PayrollPage({ initialTab }) {
                 <select value={payModal.method} onChange={(e) => setPayModal({ ...payModal, method: e.target.value })}>
                   {PAY_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
+                <p className="prl-hint" style={{ margin: '6px 0 0' }}>
+                  Disbursed from: <strong>{disbursementAccount({ payment_method: payModal.method })?.name || '—'}</strong>
+                </p>
               </label>
               <label className="prl-field prl-field-full">
                 <span>Amount (Net Pay)</span>
