@@ -138,13 +138,15 @@ export default function PayrollPage({ initialTab }) {
       const reqIds = (reqRes || []).map((r) => r.journal_entry_id).filter(Boolean)
       let linesByJe = {}
       if (reqIds.length) {
-        const { data: jel } = await supabase
+        const { data: jel, error: jelErr } = await supabase
           .from('journal_entry_lines')
-          .select('journal_entry_id, debit, credit, chart_of_accounts(code, name)')
+          .select('journal_entry_id, account_id, debit, credit')
           .in('journal_entry_id', reqIds)
-        ;(jel || []).forEach((l) => {
-          (linesByJe[l.journal_entry_id] = linesByJe[l.journal_entry_id] || []).push(l)
-        })
+        if (!jelErr) {
+          ;(jel || []).forEach((l) => {
+            (linesByJe[l.journal_entry_id] = linesByJe[l.journal_entry_id] || []).push(l)
+          })
+        }
       }
       setReqJournalLines(linesByJe)
       let corrMap = {}
@@ -607,12 +609,16 @@ export default function PayrollPage({ initialTab }) {
   }
 
   // The account the posted salary journal ACTUALLY credited (what the money
-  // really left). null = request not posted yet.
+  // really left). null = request not posted yet. Resolved locally against the
+  // chart (no DB embed) so orphaned/missing account ids never crash the page.
   const glCreditAccount = (req) => {
     const ls = reqJournalLines[req.journal_entry_id] || []
     const cr = ls.find((l) => Number(l.credit) > 0)
-    return cr?.chart_of_accounts || null
+    if (!cr || !cr.account_id) return null
+    return glAccounts.find((a) => a.id === cr.account_id) || { id: cr.account_id, code: null, name: 'Account not in chart' }
   }
+
+  const glAccLabel = (acc) => (acc?.code && acc?.name) ? `${acc.code} — ${acc.name}` : (acc?.id ? acc.name : '—')
 
   // True when this posted payment's GL credit did not land on the method's
   // cash/bank source account (old code always credited the mapped Bank). These
@@ -651,6 +657,10 @@ export default function PayrollPage({ initialTab }) {
   const fixMisplacement = async (item) => {
     const { req, credited, shouldBe } = item
     if (fixingReq || payCorrections[req.id]) return
+    if (!credited?.id || !shouldBe?.id) {
+      showToast(`Cannot repair ${req.request_no}: the credited account is missing from the chart`, false)
+      return
+    }
     setFixingReq(req.id)
     try {
       const je = await postToJournal(supabase, {
@@ -1056,8 +1066,8 @@ export default function PayrollPage({ initialTab }) {
                         <td className="prl-mono">{req.request_no}</td>
                         <td>{req.payroll_runs?.run_label || '—'}</td>
                         <td className="prl-amount">{fmt(req.amount)}</td>
-                        <td><span className="prl-gl-acc">{credited.code} — {credited.name}</span></td>
-                        <td><span className="prl-gl-acc prl-gl-ok">{shouldBe.code} — {shouldBe.name}</span></td>
+                        <td><span className="prl-gl-acc">{glAccLabel(credited)}</span></td>
+                        <td><span className="prl-gl-acc prl-gl-ok">{glAccLabel(shouldBe)}</span></td>
                         <td className="prl-actions-cell">
                           <button
                             className="prl-btn-secondary prl-btn-sm"
@@ -1129,8 +1139,8 @@ export default function PayrollPage({ initialTab }) {
                         <td>
                           {glCr ? (
                             <span className="prl-gl" title={`Journal ${r.journal_entry_id}`}>
-                              <span className="prl-gl-acc">{glCr.code} — {glCr.name}</span>
-                              {m && <span className="prl-gl-warn"><AlertTriangle size={11} /> Expected: {m.shouldBe.code} {m.shouldBe.name}</span>}
+                              <span className="prl-gl-acc">{glAccLabel(glCr)}</span>
+                              {m && <span className="prl-gl-warn"><AlertTriangle size={11} /> Expected: {glAccLabel(m.shouldBe)}</span>}
                             </span>
                           ) : (
                             <span className="prl-muted">—</span>
