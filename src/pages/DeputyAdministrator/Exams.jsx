@@ -8,7 +8,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { uploadExamFile, validateExamFile, fetchExamUploadForGroup } from '../../utils/examUpload'
-import { bandColor, sortBands } from '../../services/grading'
+import { bandColor, sortBands, weightedScoreMean } from '../../services/grading'
 import './Exams.css'
 
 function Modal({ open, title, children, onClose, onConfirm, confirmLabel, danger }) {
@@ -262,7 +262,7 @@ export default function Exams() {
 
   const avgScore = (arr) => {
     if (!arr.length) return 0
-    return Math.round(arr.reduce((s, g) => s + (g.total_score || 0), 0) / arr.length)
+    return Math.round(weightedScoreMean(arr))
   }
 
   const gradeDistribution = (arr) => {

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
+import { weightedScoreMean } from '../../services/grading'
 
 // SUBJECTS and DEPARTMENTS are now fetched dynamically from Supabase
 const DEPARTMENTS = ['Sciences','Humanities','Languages','Technical','Arts','Physical Education']
@@ -922,18 +923,18 @@ export default function TeachersPage() {
                   ) : (() => {
                     const subjects = [...new Set(teacherPerf.grades.map(g => g.subject))]
                     const totalStudents = [...new Set(teacherPerf.grades.map(g => g.student_id).filter(Boolean))].length || teacherPerf.grades.length
-                    const avgScoreAll = Math.round(teacherPerf.grades.reduce((s, g) => s + (g.total_score || 0), 0) / teacherPerf.grades.length)
+                    const avgScoreAll = teacherPerf.grades.length > 0 ? Math.round(weightedScoreMean(teacherPerf.grades)) : 0
                     const grouped = {}
                     teacherPerf.grades.forEach(g => {
                       const key = `${g.subject}|${g.term || ''}|${g.year || ''}`
                       if (!grouped[key]) grouped[key] = { subject: g.subject, term: g.term || '—', year: g.year || '—', scores: [], ids: new Set() }
-                      grouped[key].scores.push(g.total_score || 0)
+                      grouped[key].scores.push(g)
                       if (g.student_id) grouped[key].ids.add(g.student_id)
                     })
                     const tableRows = Object.values(grouped).map(g => ({
                       ...g,
                       numStudents: g.ids.size || g.scores.length,
-                      avgScore: Math.round(g.scores.reduce((a, b) => a + b, 0) / g.scores.length)
+                      avgScore: Math.round(weightedScoreMean(g.scores))
                     }))
                     return (
                       <>

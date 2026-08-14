@@ -8,6 +8,7 @@ import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { supabase } from '../../lib/supabase'
 import { fmt, fmtDate } from '../admin/fees/utils/feesHelpers'
 import { groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
+import { weightedScoreMean } from '../../services/grading'
 
 const TABS = [
   { key: 'personal', label: 'Personal Info', icon: User },
@@ -366,8 +367,7 @@ export default function StudentProfile() {
         return (
           <div className="profile-section">
             {Object.entries(acByTerm).map(([term, grades]) => {
-              const total = grades.reduce((s, g) => s + Number(g.total_score || 0), 0)
-              const avg = grades.length > 0 ? Math.round(total / grades.length) : 0
+              const avg = grades.length > 0 ? Math.round(weightedScoreMean(grades)) : 0
               return (
                 <div key={term} className="form-card" style={{ padding: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>

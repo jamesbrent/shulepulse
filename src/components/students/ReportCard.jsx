@@ -59,10 +59,12 @@ export function groupGradesBySubject(grades) {
       const sba = g.sba_score ?? g.cat_score ?? 0
       const summ = g.summative_score ?? g.exam_score ?? 0
       const maxMarks = 100
+      const weight = g.max_marks || 100
       return {
         name: examName,
         score,
         maxMarks,
+        weight,
         sba,
         summ,
         marks: g.total_score || 0,
@@ -72,10 +74,12 @@ export function groupGradesBySubject(grades) {
       }
     })
 
+    const weightedSum = assessments.reduce((s, a) => s + a.score * a.weight, 0)
+    const totalWeight = assessments.reduce((s, a) => s + a.weight, 0)
     const totalScore = assessments.reduce((s, a) => s + a.score, 0)
     const totalMax = assessments.reduce((s, a) => s + a.maxMarks, 0)
-    const average = assessments.length > 0
-      ? Math.round((totalScore / assessments.length) * 10) / 10
+    const average = totalWeight > 0
+      ? Math.round((weightedSum / totalWeight) * 10) / 10
       : 0
     const teacher = assessments.find(a => a.teacher)?.teacher || rows[0]?.teacher_name || ''
 

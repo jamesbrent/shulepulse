@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-import { getGrade, gradeShort } from '../../services/grading'
+import { getGrade, gradeShort, weightedScoreMean } from '../../services/grading'
 
 const TABS = [
   { key: 'draft', label: 'Draft Report Cards', icon: FileText },
@@ -137,7 +137,7 @@ export default function ReportCenter() {
     const studentIds = [...new Set(classGrades.map(g => g.student_id))]
     const subjectSet = [...new Set(classGrades.map(g => g.subject).filter(Boolean))]
     const avgScore = classGrades.length > 0
-      ? Math.round(classGrades.reduce((s, g) => s + Number(g.total_score || 0), 0) / classGrades.length)
+      ? Math.round(weightedScoreMean(classGrades))
       : 0
     const allApproved = classGrades.every(g => g.status === 'approved' || g.approved)
     const hasGrades = classGrades.length > 0
@@ -163,16 +163,21 @@ export default function ReportCenter() {
           subjects: {},
           total: 0,
           count: 0,
+          wtotal: 0,
+          wcount: 0,
         }
       }
       map[sid].subjects[g.subject] = Number(g.total_score || 0)
+      const w = Number(g.max_marks) || 100
+      map[sid].wtotal += Number(g.total_score || 0) * w
+      map[sid].wcount += w
       map[sid].total += Number(g.total_score || 0)
       map[sid].count += 1
     })
     return Object.values(map).map(s => ({
       ...s,
-      average: s.count > 0 ? Math.round(s.total / s.count) : 0,
-      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0, s.class),
+      average: s.wcount > 0 ? Math.round(s.wtotal / s.wcount) : 0,
+      grade: computeGrade(s.wcount > 0 ? Math.round(s.wtotal / s.wcount) : 0, s.class),
     })).sort((a, b) => b.average - a.average)
   })()
 
@@ -203,16 +208,21 @@ export default function ReportCenter() {
           subjects: [],
           total: 0,
           count: 0,
+          wtotal: 0,
+          wcount: 0,
         }
       }
       studentMap[sid].subjects.push({ subject: g.subject, score: Number(g.total_score || 0), grade: g.grade || computeGrade(Number(g.total_score || 0), className) })
+      const w = Number(g.max_marks) || 100
+      studentMap[sid].wtotal += Number(g.total_score || 0) * w
+      studentMap[sid].wcount += w
       studentMap[sid].total += Number(g.total_score || 0)
       studentMap[sid].count += 1
     })
     return Object.values(studentMap).map(s => ({
       ...s,
-      average: s.count > 0 ? Math.round(s.total / s.count) : 0,
-      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0, className),
+      average: s.wcount > 0 ? Math.round(s.wtotal / s.wcount) : 0,
+      grade: computeGrade(s.wcount > 0 ? Math.round(s.wtotal / s.wcount) : 0, className),
     }))
   }
 
@@ -300,8 +310,10 @@ export default function ReportCenter() {
     const subjectMap = {}
     grades.forEach(g => {
       if (!g.subject) return
-      if (!subjectMap[g.subject]) subjectMap[g.subject] = { total: 0, count: 0, pass: 0, students: [] }
-      subjectMap[g.subject].total += Number(g.total_score || 0)
+      if (!subjectMap[g.subject]) subjectMap[g.subject] = { wtotal: 0, wcount: 0, count: 0, pass: 0, students: [] }
+      const w = Number(g.max_marks) || 100
+      subjectMap[g.subject].wtotal += Number(g.total_score || 0) * w
+      subjectMap[g.subject].wcount += w
       subjectMap[g.subject].count += 1
       if (Number(g.total_score || 0) >= 50) subjectMap[g.subject].pass += 1
       subjectMap[g.subject].students.push({ name: g.students?.full_name || '—', score: Number(g.total_score || 0) })
@@ -309,7 +321,7 @@ export default function ReportCenter() {
 
     const subjectRows = Object.entries(subjectMap)
       .map(([name, d]) => {
-        const avg = d.count > 0 ? Math.round(d.total / d.count) : 0
+        const avg = d.wcount > 0 ? Math.round(d.wtotal / d.wcount) : 0
         const passRate = d.count > 0 ? Math.round((d.pass / d.count) * 100) : 0
         const grade = computeGrade(avg, '')
         return { name, count: d.count, avg, passRate, grade }
@@ -325,7 +337,7 @@ export default function ReportCenter() {
     </tr>`).join('')
 
     const totalStudents = grades.length
-    const overallAvg = totalStudents > 0 ? Math.round(grades.reduce((s, g) => s + Number(g.total_score || 0), 0) / totalStudents) : 0
+    const overallAvg = totalStudents > 0 ? Math.round(weightedScoreMean(grades)) : 0
     const overallPass = totalStudents > 0 ? Math.round(grades.filter(g => Number(g.total_score || 0) >= 50).length / totalStudents * 100) : 0
 
     const bodyHtml = `
@@ -372,14 +384,16 @@ export default function ReportCenter() {
     const subjectMap = {}
     grades.forEach(g => {
       if (!g.subject) return
-      if (!subjectMap[g.subject]) subjectMap[g.subject] = { total: 0, count: 0, pass: 0 }
-      subjectMap[g.subject].total += Number(g.total_score || 0)
+      if (!subjectMap[g.subject]) subjectMap[g.subject] = { wtotal: 0, wcount: 0, count: 0, pass: 0 }
+      const w = Number(g.max_marks) || 100
+      subjectMap[g.subject].wtotal += Number(g.total_score || 0) * w
+      subjectMap[g.subject].wcount += w
       subjectMap[g.subject].count += 1
       if (Number(g.total_score || 0) >= 50) subjectMap[g.subject].pass += 1
     })
     const subjectRowsHtml = Object.entries(subjectMap)
       .map(([name, d]) => {
-        const avg = d.count > 0 ? Math.round(d.total / d.count) : 0
+        const avg = d.wcount > 0 ? Math.round(d.wtotal / d.wcount) : 0
         const passRate = d.count > 0 ? Math.round((d.pass / d.count) * 100) : 0
         return { name, avg, passRate, count: d.count }
       })

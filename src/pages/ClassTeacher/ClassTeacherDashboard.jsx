@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { weightedScoreMean } from '../../services/grading'
 import ClassAttendance from './ClassAttendance'
 import './ClassAttendance.css'
 import MarksEntry from '../teacher/MarksEntry'
@@ -98,7 +99,7 @@ export default function ClassTeacherDashboard() {
         .eq('status', 'present'),
       supabase
         .from('grades')
-        .select('total_score')
+        .select('total_score, max_marks')
         .eq('school_id', schoolId)
         .eq('term', currentTerm)
         .eq('year', currentYear)
@@ -106,9 +107,9 @@ export default function ClassTeacherDashboard() {
         .in('status', ['approved', 'published']),
     ])
 
-    const scores = (gradeRes.data || []).map(g => g.total_score).filter(Boolean)
-    const avg = scores.length
-      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+    const gradeRows = gradeRes.data || []
+    const avg = gradeRows.length
+      ? Math.round(weightedScoreMean(gradeRows))
       : 0
 
     setStats({

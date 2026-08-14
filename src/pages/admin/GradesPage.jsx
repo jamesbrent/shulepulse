@@ -6,6 +6,7 @@ import {
   Eye, XCircle, Upload, File as FileIcon, AlertCircle,
 } from 'lucide-react'
 import { ReportCard, getCBEGrade, fetchStudentComments } from '../../components/students/ReportCard'
+import { weightedScoreMean } from '../../services/grading'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
@@ -79,7 +80,7 @@ export default function GradesPage() {
   const [saving, setSaving]             = useState(false)
   const [error, setError]               = useState('')
   const [form, setForm]                 = useState({
-    student_id: '', subject: '', exam_type: 'CAT 1', term: '', year: '',
+    student_id: '', subject: '', exam_type: 'Opener', term: '', year: '',
     cat1: '', cat2: '', et: '',
   })
 
@@ -361,7 +362,7 @@ export default function GradesPage() {
     const et  = parseFloat(form.et) || 0
     if (!form.cat1 && !form.cat2 && !form.et) { setError('At least one exam mark required'); setSaving(false); return }
     const max = getMax(form.exam_type) || 100
-    const raw = form.exam_type === 'CAT 1' ? c1 : form.exam_type === 'CAT 2' ? c2 : et
+    const raw = form.exam_type === 'Opener' ? c1 : form.exam_type === 'Midterm' ? c2 : et
     const totalPct = Math.round((raw / max) * 100)
 
     const student = students.find(s => s.id === form.student_id)
@@ -384,9 +385,10 @@ export default function GradesPage() {
       year:             parseInt(form.year),
       sba_score:        raw,
       summative_score:  0,
-      cat_score:        form.exam_type === 'CAT 1' || form.exam_type === 'CAT 2' ? raw : 0,
+      cat_score:        form.exam_type === 'End Term' ? 0 : raw,
       exam_score:       form.exam_type === 'End Term' ? raw : 0,
       total_score:      totalPct,
+      max_marks:        max,
       class_name:       student?.class || null,
       grade:            cbe.grade  || cbe.band  || null,
       cbe_band:         cbe.band   || cbe.grade || null,
@@ -404,8 +406,15 @@ export default function GradesPage() {
 
     setSaving(false)
     setShowModal(false)
-    setForm({ student_id: '', subject: '', exam_type: 'CAT 1', term: filterTerm, year: filterYear, cat1: '', cat2: '', et: '' })
+    setForm({ student_id: '', subject: '', exam_type: examTypeConfig[0]?.name || 'Opener', term: filterTerm, year: filterYear, cat1: '', cat2: '', et: '' })
     fetchGrades()
+  }
+
+  // ── Open Add Grade ─────────────────────────────────────────
+  const openAddGrade = () => {
+    setForm({ student_id: '', subject: '', exam_type: examTypeConfig[0]?.name || 'Opener', term: filterTerm, year: filterYear, cat1: '', cat2: '', et: '' })
+    setError('')
+    setShowModal(true)
   }
 
   // ── Open Report Card ──────────────────────────────────────
@@ -431,19 +440,18 @@ export default function GradesPage() {
   })
 
   // Summary cards
-  const scores = grades.map(g => g.total_score || 0).filter(s => s > 0)
   const summary = {
     total:   grades.length,
-    avg:     scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
-    highest: scores.length ? Math.max(...scores) : 0,
-    lowest:  scores.length ? Math.min(...scores) : 0,
+    avg:     grades.length ? Math.round(weightedScoreMean(grades)) : 0,
+    highest: Math.max(...grades.map(g => Number(g.total_score || 0)), 0),
+    lowest:  grades.length ? Math.min(...grades.map(g => Number(g.total_score || 0))) : 0,
   }
 
   // Mean per subject
   const subjectMeans = subjectsList.map(s => {
     const sg = grades.filter(g => g.subject === s.name)
     const avg = sg.length
-      ? Math.round(sg.reduce((a, g) => a + (g.total_score || 0), 0) / sg.length)
+      ? Math.round(weightedScoreMean(sg))
       : null
     return { name: s.name, avg, count: sg.length }
   }).filter(s => s.count > 0).sort((a, b) => b.avg - a.avg)
@@ -452,7 +460,7 @@ export default function GradesPage() {
   const studentMeans = students.map(s => {
     const sg = grades.filter(g => g.student_id === s.id)
     const avg = sg.length
-      ? Math.round(sg.reduce((a, g) => a + (g.total_score || 0), 0) / sg.length)
+      ? Math.round(weightedScoreMean(sg))
       : null
     const totalPts = sg.reduce((a, g) => a + (g.points || 0), 0)
     return { ...s, avg, totalPts, subjectCount: sg.length }
@@ -482,7 +490,7 @@ export default function GradesPage() {
   const pC1  = parseFloat(form.cat1)  || 0
   const pC2  = parseFloat(form.cat2)  || 0
   const pET  = parseFloat(form.et) || 0
-  const previewRaw = form.exam_type === 'CAT 1' ? pC1 : form.exam_type === 'CAT 2' ? pC2 : pET
+  const previewRaw = form.exam_type === 'Opener' ? pC1 : form.exam_type === 'Midterm' ? pC2 : pET
   const previewMax = getMax(form.exam_type) || 100
   const previewTotal = previewRaw ? Math.round((previewRaw / previewMax) * 100) : 0
   const previewStudent = students.find(s => s.id === form.student_id)
@@ -564,7 +572,7 @@ export default function GradesPage() {
             {subjectsList.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
           </select>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn-primary" onClick={openAddGrade}>
           <Plus size={15} /> Add Grade
         </button>
       </div>
@@ -578,7 +586,7 @@ export default function GradesPage() {
           <div className="empty-grades">
             <BarChart2 size={40} color="#cbd5e1" />
             <p>No grades for {filterTerm} {filterYear}</p>
-            <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <button className="btn-primary" onClick={openAddGrade}>
               <Plus size={14} /> Add Grade
             </button>
           </div>
@@ -1140,24 +1148,24 @@ export default function GradesPage() {
                     {YEARS.map(y => <option key={y}>{y}</option>)}
                   </select>
                 </div>
-                {form.exam_type === 'CAT 1' && (
+                {form.exam_type === 'Opener' && (
                   <div className="form-field">
-                    <label>CAT 1 Score (0–20)</label>
-                    <input type="number" min="0" max="20" placeholder="e.g. 15"
+                    <label>Opener Score (0–{getMax('Opener')})</label>
+                    <input type="number" min="0" max={getMax('Opener')} placeholder="e.g. 12"
                       value={form.cat1} onChange={e => setForm({ ...form, cat1: e.target.value })} />
                   </div>
                 )}
-                {form.exam_type === 'CAT 2' && (
+                {form.exam_type === 'Midterm' && (
                   <div className="form-field">
-                    <label>CAT 2 Score (0–20)</label>
-                    <input type="number" min="0" max="20" placeholder="e.g. 17"
+                    <label>Midterm Score (0–{getMax('Midterm')})</label>
+                    <input type="number" min="0" max={getMax('Midterm')} placeholder="e.g. 13"
                       value={form.cat2} onChange={e => setForm({ ...form, cat2: e.target.value })} />
                   </div>
                 )}
                 {form.exam_type === 'End Term' && (
                   <div className="form-field">
-                    <label>End Term Score (0–60)</label>
-                    <input type="number" min="0" max="60" placeholder="e.g. 48"
+                    <label>End Term Score (0–{getMax('End Term')})</label>
+                    <input type="number" min="0" max={getMax('End Term')} placeholder="e.g. 56"
                       value={form.et} onChange={e => setForm({ ...form, et: e.target.value })} />
                   </div>
                 )}

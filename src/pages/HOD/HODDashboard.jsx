@@ -9,6 +9,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { weightedScoreMean } from '../../services/grading'
 import './HODDashboard.css'
 import SubjectPerformance from './SubjectPerformance'
 import TeacherReview from './TeacherReview'
@@ -67,7 +68,7 @@ export default function HODDashboard() {
         .eq('status', 'active'),
       supabase
         .from('grades')
-        .select('subject, total_score')
+        .select('subject, total_score, max_marks')
         .eq('school_id', schoolId)
         .eq('term', currentTerm)
         .eq('year', currentYear),
@@ -75,19 +76,21 @@ export default function HODDashboard() {
 
     const gradeData = gradesRes.data || []
     const avgPerf = gradeData.length
-      ? Math.round(gradeData.reduce((s, g) => s + Number(g.total_score || 0), 0) / gradeData.length)
+      ? Math.round(weightedScoreMean(gradeData))
       : 0
 
     const subjMap = {}
     gradeData.forEach(g => {
-      if (!subjMap[g.subject]) subjMap[g.subject] = { total: 0, count: 0 }
-      subjMap[g.subject].total += Number(g.total_score || 0)
+      if (!subjMap[g.subject]) subjMap[g.subject] = { wtotal: 0, wcount: 0, count: 0 }
+      const w = Number(g.max_marks) || 100
+      subjMap[g.subject].wtotal += Number(g.total_score || 0) * w
+      subjMap[g.subject].wcount += w
       subjMap[g.subject].count += 1
     })
 
     const summary = Object.entries(subjMap).map(([name, d]) => ({
       name,
-      avg: Math.round(d.total / d.count),
+      avg: d.wcount > 0 ? Math.round(d.wtotal / d.wcount) : 0,
       count: d.count,
     })).sort((a, b) => b.avg - a.avg)
 

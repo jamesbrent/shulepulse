@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-import { getGrade, gradeShort, bandColor, sortBands } from '../../services/grading'
+import { getGrade, gradeShort, bandColor, sortBands, weightedScoreMean } from '../../services/grading'
 
 const TABS = [
   { key: 'subjects', label: 'Subject Analysis', icon: <BarChart2 size={15} /> },
@@ -70,9 +70,7 @@ export default function DeptAnalytics() {
   })
 
   const totalStudents = filteredGrades.length
-  const avgScore = totalStudents > 0
-    ? Math.round(filteredGrades.reduce((s, g) => s + Number(g.total_score || 0), 0) / totalStudents)
-    : 0
+  const avgScore = totalStudents > 0 ? Math.round(weightedScoreMean(filteredGrades)) : 0
   const passCount = filteredGrades.filter(g => Number(g.total_score || 0) >= 50).length
   const passRate = totalStudents > 0 ? Math.round((passCount / totalStudents) * 100) : 0
   const highest = totalStudents > 0 ? Math.max(...filteredGrades.map(g => Number(g.total_score || 0))) : 0
@@ -88,14 +86,16 @@ export default function DeptAnalytics() {
     const map = {}
     filteredGrades.forEach(g => {
       if (!g.subject) return
-      if (!map[g.subject]) map[g.subject] = { total: 0, count: 0, pass: 0 }
-      map[g.subject].total += Number(g.total_score || 0)
+      if (!map[g.subject]) map[g.subject] = { wtotal: 0, wcount: 0, count: 0, pass: 0 }
+      const w = Number(g.max_marks) || 100
+      map[g.subject].wtotal += Number(g.total_score || 0) * w
+      map[g.subject].wcount += w
       map[g.subject].count += 1
       if (Number(g.total_score || 0) >= 50) map[g.subject].pass += 1
     })
     return Object.entries(map).map(([name, d]) => ({
       name,
-      avg: Math.round(d.total / d.count),
+      avg: d.wcount > 0 ? Math.round(d.wtotal / d.wcount) : 0,
       count: d.count,
       passRate: d.count > 0 ? Math.round((d.pass / d.count) * 100) : 0,
     })).sort((a, b) => b.avg - a.avg)
@@ -116,16 +116,21 @@ export default function DeptAnalytics() {
           subjects: {},
           total: 0,
           count: 0,
+          wtotal: 0,
+          wcount: 0,
         }
       }
       map[sid].subjects[g.subject] = Number(g.total_score || 0)
+      const w = Number(g.max_marks) || 100
+      map[sid].wtotal += Number(g.total_score || 0) * w
+      map[sid].wcount += w
       map[sid].total += Number(g.total_score || 0)
       map[sid].count += 1
     })
     return Object.values(map).map(s => ({
       ...s,
-      average: s.count > 0 ? Math.round(s.total / s.count) : 0,
-      grade: computeGrade(s.count > 0 ? Math.round(s.total / s.count) : 0, s.class),
+      average: s.wcount > 0 ? Math.round(s.wtotal / s.wcount) : 0,
+      grade: computeGrade(s.wcount > 0 ? Math.round(s.wtotal / s.wcount) : 0, s.class),
     })).sort((a, b) => b.average - a.average)
   })()
 

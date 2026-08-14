@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-import { bandColor, sortBands } from '../../services/grading'
+import { bandColor, sortBands, weightedScoreMean } from '../../services/grading'
 
 export default function SubjectPerformance() {
   const { currentTerm, currentYear } = useSchool()
@@ -77,7 +77,7 @@ export default function SubjectPerformance() {
     }
 
     const total = filtered.length
-    const avgScore = total > 0 ? Math.round(filtered.reduce((s, g) => s + Number(g.total_score || 0), 0) / total) : 0
+    const avgScore = total > 0 ? Math.round(weightedScoreMean(filtered)) : 0
     const highest = total > 0 ? Math.max(...filtered.map(g => Number(g.total_score || 0))) : 0
     const lowest = total > 0 ? Math.min(...filtered.map(g => Number(g.total_score || 0))) : 0
     const passCount = filtered.filter(g => Number(g.total_score || 0) >= 50).length

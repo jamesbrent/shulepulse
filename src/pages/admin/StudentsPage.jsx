@@ -16,6 +16,7 @@ import { promoteStudentsAtomic, getGradeLevels } from '../../services/students/b
 import { createStudentAuth, bulkCreateStudentAuth, resetAllStudentPasswords } from '../../services/students/studentService'
 import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { ReportCard, fetchStudentComments } from '../../components/students/ReportCard'
+import { weightedScoreMean } from '../../services/grading'
 import { fmt, fmtDate } from './fees/utils/feesHelpers'
 import {
   generatePersonalPdf,
@@ -871,8 +872,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
                 </button>
               </div>
               {Object.entries(acByTerm).map(([term, grades]) => {
-                const total = grades.reduce((s, g) => s + Number(g.total_score || 0), 0)
-                const avg = grades.length > 0 ? Math.round(total / grades.length) : 0
+                const avg = grades.length > 0 ? Math.round(weightedScoreMean(grades)) : 0
                 return (
                   <div key={term} className="sp-card" style={{ padding: 16 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>

@@ -8,6 +8,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import StudentProfile from './StudentProfile'
+import { weightedScoreMean } from '../../services/grading'
 import './Students.css'
 
 const ROWS_PER_PAGE = 15
@@ -57,7 +58,7 @@ export default function Students() {
         .order('full_name'),
       supabase
         .from('grades')
-        .select('student_id, total_score')
+        .select('student_id, total_score, max_marks')
         .eq('school_id', profile.school_id),
       supabase
         .from('attendance')
@@ -68,15 +69,15 @@ export default function Students() {
     const studentsList = studentsRes.data || []
     setStudents(studentsList)
 
-    // Compute grades average per student
+    // Compute grades average per student (weighted by assessment max_marks)
     const gradesByStudent = {}
     for (const g of gradesRes.data || []) {
       if (!gradesByStudent[g.student_id]) gradesByStudent[g.student_id] = []
-      if (g.total_score != null) gradesByStudent[g.student_id].push(g.total_score)
+      if (g.total_score != null) gradesByStudent[g.student_id].push(g)
     }
     const avgByStudent = {}
-    for (const [sid, scores] of Object.entries(gradesByStudent)) {
-      avgByStudent[sid] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+    for (const [sid, rows] of Object.entries(gradesByStudent)) {
+      avgByStudent[sid] = Math.round(weightedScoreMean(rows))
     }
     setStudentAvg(avgByStudent)
 

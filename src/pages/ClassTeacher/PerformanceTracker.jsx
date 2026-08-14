@@ -15,7 +15,7 @@ import {
 } from '../../utils/schoolPdfTemplate'
 import { fetchBulkDataWithExtras, bulkPrint } from '../admin/grades/utils/bulkReportCards'
 import { getCBEGrade, REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-import { gradeDisplay, sortBands, bandColor } from '../../services/grading'
+import { gradeDisplay, sortBands, bandColor, weightedScoreMean } from '../../services/grading'
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
@@ -129,7 +129,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
   const passCount = filtered.filter(g => (g.total_score || 0) >= 50).length
   const summary = {
     total: filtered.length,
-    avg: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+    avg: scores.length ? Math.round(weightedScoreMean(filtered)) : 0,
     highest: scores.length ? Math.max(...scores) : 0,
     lowest: scores.length ? Math.min(...scores) : 0,
     passRate: scores.length ? Math.round((passCount / scores.length) * 100) : 0,
@@ -141,7 +141,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
   const studentMeans = filteredStudents.map(s => {
     const sg = filtered.filter(g => g.student_id === s.id)
     const avg = sg.length
-      ? Math.round(sg.reduce((a, g) => a + (g.total_score || 0), 0) / sg.length)
+      ? Math.round(weightedScoreMean(sg))
       : null
     const cbe = avg !== null ? getCBEGrade(avg, s.class) : null
     return { ...s, avg, subjectCount: sg.length, grades: sg, cbe }
@@ -233,7 +233,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
   const subjectMeans = subjectsList.map(sub => {
     const sg = filtered.filter(g => g.subject === sub.name)
     const avg = sg.length
-      ? Math.round(sg.reduce((a, g) => a + (g.total_score || 0), 0) / sg.length)
+      ? Math.round(weightedScoreMean(sg))
       : null
     return { name: sub.name, avg, count: sg.length }
   }).filter(s => s.count > 0).sort((a, b) => b.avg - a.avg)

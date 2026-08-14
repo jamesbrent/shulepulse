@@ -1,5 +1,6 @@
 import { supabase } from '../../../../lib/supabase'
 import { buildReportCardHtml, REPORT_CARD_STYLES, groupGradesBySubject, getCBEGrade, calculateClassRank, fetchStudentComments } from '../../../../components/students/ReportCard'
+import { weightedScoreMean } from '../../../../services/grading'
 import { saveAs } from 'file-saver'
 import * as XLSX from 'xlsx'
 
@@ -58,7 +59,7 @@ export async function fetchBulkDataWithExtras(schoolId, filterClass, filterTerm,
     const allStudentIds = classStudents.map(e => e.student.id)
     const { data: allGrades } = await supabase
       .from('grades')
-      .select('student_id, subject, total_score, exam_type')
+      .select('student_id, subject, total_score, exam_type, max_marks')
       .eq('school_id', schoolId)
       .eq('term', filterTerm)
       .eq('year', filterYear)
@@ -72,7 +73,7 @@ export async function fetchBulkDataWithExtras(schoolId, filterClass, filterTerm,
 
     classAveragesMap[cls] = Object.entries(subjectGroups).map(([name, rows]) => {
       const avg = rows.length > 0
-        ? Math.round(rows.reduce((s, r) => s + (r.total_score || 0), 0) / rows.length)
+        ? Math.round(weightedScoreMean(rows))
         : 0
       return { name, avg }
     })
@@ -112,15 +113,15 @@ export async function fetchBulkDataWithExtras(schoolId, filterClass, filterTerm,
       rows.forEach(r => {
         const key = `${r.year}-${r.term}`
         if (!byTermYear[key]) byTermYear[key] = []
-        byTermYear[key].push(r.total_score || 0)
+        byTermYear[key].push(r)
       })
-      Object.entries(byTermYear).forEach(([ky, scores]) => {
+      Object.entries(byTermYear).forEach(([ky, rows]) => {
         const [yr, t] = ky.split('-')
         const gIdx = currentGradeIdx >= 0 ? currentGradeIdx - 1 : 0
         const gradeLabel = gradeOrder[Math.max(0, gIdx)] || cls
         if (!gradeTerms[gradeLabel]) gradeTerms[gradeLabel] = {}
         const existing = gradeTerms[gradeLabel][t]
-        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        const avg = Math.round(weightedScoreMean(rows))
         gradeTerms[gradeLabel][t] = existing ? Math.round((existing + avg) / 2) : avg
       })
     }

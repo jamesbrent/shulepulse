@@ -3,6 +3,7 @@ import { BarChart2, BookOpen, Award, TrendingUp, TrendingDown, Minus } from 'luc
 import { supabase } from '../../lib/supabase'
 import useStudentAcademicHistory from './useStudentAcademicHistory'
 import AcademicFilters from './AcademicFilters'
+import { weightedScoreMean } from '../../services/grading'
 
 const TrendIcon = ({ value }) => {
   if (value === 'up') return <TrendingUp size={14} className="sp-trend up" />
@@ -28,7 +29,7 @@ export default function GradesPage({ student, school }) {
       if (!selectedTerm || !selectedYear || !selectedClass || !student?.id) return
       const { data } = await supabase
         .from('grades')
-        .select('student_id, subject, total_score')
+        .select('student_id, subject, total_score, max_marks')
         .eq('term', selectedTerm)
         .eq('year', Number(selectedYear))
         .eq('class_name', selectedClass)
@@ -36,11 +37,11 @@ export default function GradesPage({ student, school }) {
       const bySub = {}
       ;(data || []).forEach(g => {
         if (!bySub[g.subject]) bySub[g.subject] = []
-        bySub[g.subject].push(g.total_score || 0)
+        bySub[g.subject].push(g)
       })
       const map = {}
-      Object.entries(bySub).forEach(([sub, scores]) => {
-        map[sub] = Math.round(scores.reduce((s, v) => s + v, 0) / scores.length)
+      Object.entries(bySub).forEach(([sub, rows]) => {
+        map[sub] = Math.round(weightedScoreMean(rows))
       })
       setClassAvgMap(map)
     }
@@ -48,7 +49,7 @@ export default function GradesPage({ student, school }) {
   }, [termKey, selectedClass, student?.id])
 
   const avgScore = grades.length > 0
-    ? Math.round(grades.reduce((s, g) => s + (g.total_score || 0), 0) / grades.length)
+    ? Math.round(weightedScoreMean(grades))
     : 0
   const bestSubject = grades.length > 0
     ? grades.reduce((best, g) => (g.total_score || 0) > (best?.total_score || 0) ? g : best, grades[0])

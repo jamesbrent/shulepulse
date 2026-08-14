@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { ReportCard, groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
+import { weightedScoreMean } from '../../services/grading'
 import './StudentProfile.css'
 
 export default function StudentProfile({ student, onBack, schoolId }) {
@@ -78,8 +79,7 @@ export default function StudentProfile({ student, onBack, schoolId }) {
   const termAvgs = terms.map(t => {
     const [termName, yearStr] = t.split(' ')
     const termGrades = grades.filter(g => g.term === termName && String(g.year) === yearStr)
-    const scores = termGrades.map(g => g.total_score).filter(v => v != null)
-    return { term: t, avg: scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0 }
+    return { term: t, avg: termGrades.length > 0 ? Math.round(weightedScoreMean(termGrades)) : 0 }
   })
 
   // Subject averages for current term

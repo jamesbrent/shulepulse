@@ -1,6 +1,6 @@
 export { resolveProfile, resolveSystem, PROFILES_BY_CLASS } from './resolve'
 export { getGrade, lookupBand } from './grade'
-export { aggregateSubject, aggregateStudentGrades } from './aggregate'
+export { aggregateSubject, aggregateStudentGrades, weightedScoreMean } from './aggregate'
 export { rankStudents } from './rank'
 export { isCBCClass, stageForClass, CBESTAGES } from './cbc'
 export { normalizeClassName, isValidScore, validateGradeRow } from './validate'

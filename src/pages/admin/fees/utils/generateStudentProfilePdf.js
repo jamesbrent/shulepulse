@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf'
 import { applyPlugin } from 'jspdf-autotable'
 applyPlugin(jsPDF)
 import { loadLogoBase64, logoSizes, fmtRef } from './pdfLogoHelper'
+import { weightedScoreMean } from '../../../../services/grading'
 
 const PAGE_W = 210
 const PAGE_H = 297
@@ -573,8 +574,7 @@ export async function generateAcademicsPdf({ school, student, grades }) {
   Object.entries(byTerm).forEach(([termLabel, termGrades]) => {
     if (y > PAGE_H - 60) { doc.addPage(); y = MARGIN }
 
-    const total = termGrades.reduce((s, g) => s + Number(g.total_score || 0), 0)
-    const avg = termGrades.length > 0 ? Math.round(total / termGrades.length) : 0
+    const avg = termGrades.length > 0 ? Math.round(weightedScoreMean(termGrades)) : 0
 
     y = drawSectionHeader(doc, y, `${termLabel}  |  Average: ${avg}%`)
 

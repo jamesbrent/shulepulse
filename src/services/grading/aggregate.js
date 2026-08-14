@@ -1,14 +1,33 @@
-// Interim aggregation: simple mean of stored total_scores (percentages) per
-// subject — mirrors today's groupGradesBySubject behaviour exactly.
-// NOTE: this is the current-school weighting, NOT the KNEC national
-// aggregation. Phase 6 replaces it with the weighted assessment scheme
-// (Opener 15 / Midterm 15 / End Term 70).
+// Weighted aggregation over flat grade rows.
+//
+// Each grade row holds one assessment (Opener / Midterm / End Term) with a
+// percentage total_score. max_marks carries that assessment's weight
+// (15 / 15 / 70 under the current scheme; historical rows keep their original
+// 20 / 20 / 60 via backfill). Combined scores weight each assessment by its
+// max_marks:  mean = Σ(score × max) / Σ(max). Rows without max_marks fall
+// back to weight 100 (simple mean). This is the current-school weighting,
+// NOT the KNEC national aggregation.
+export function weightedScoreMean(rows) {
+  let num = 0
+  let den = 0
+  ;(rows || []).forEach(g => {
+    const p = Number(g?.total_score)
+    if (!Number.isFinite(p)) return
+    const w = Number(g?.max_marks) || 100
+    num += p * w
+    den += w
+  })
+  return den > 0 ? Math.round((num / den) * 10) / 10 : 0
+}
+
+// Interim aggregation: weighted mean of stored total_scores (percentages) per
+// subject, weighted by each assessment's max_marks.
 export function aggregateSubject(grades) {
   const rows = (grades || []).filter(g => g && Number.isFinite(Number(g.total_score)))
   if (!rows.length) return { meanScore: 0, assessments: 0, totalScore: 0, maxTotal: 0 }
   const totalScore = rows.reduce((s, g) => s + Number(g.total_score), 0)
   return {
-    meanScore: Math.round((totalScore / rows.length) * 10) / 10,
+    meanScore: weightedScoreMean(rows),
     assessments: rows.length,
     totalScore,
     maxTotal: rows.length * 100,

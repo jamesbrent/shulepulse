@@ -6,7 +6,7 @@ import {
   Activity, Target,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { getGrade, sortBands } from '../../services/grading'
+import { getGrade, sortBands, weightedScoreMean } from '../../services/grading'
 import { useExamTypeConfig } from '../../hooks/useSchoolConfig'
 import {
   exportClassMarkSheet,
@@ -120,7 +120,7 @@ export default function GradesPage({ profile }) {
 
     const { data: allGrades } = await supabase
       .from('grades')
-      .select('class_name, subject, exam_type, status, total_score, updated_at')
+      .select('class_name, subject, exam_type, status, total_score, max_marks, updated_at')
       .eq('school_id', schoolId)
       .eq('teacher_id', profile.id)
       .eq('term', term)
@@ -132,7 +132,7 @@ export default function GradesPage({ profile }) {
           g => g.class_name === className && g.subject === subjectName
         )
         const examStatuses = {}
-        let allScores = []
+        let allRows = []
         let latestUpdate = null
         const examTypeNames = examTypeConfig.map(e => e.name)
         examTypeNames.forEach(et => {
@@ -147,14 +147,14 @@ export default function GradesPage({ profile }) {
           examStatuses[`${et}_mean`] = scores.length > 0
             ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)
             : null
-          allScores = allScores.concat(scores)
           etGrades.forEach(g => {
+            if (!isNaN(Number(g.total_score))) allRows.push(g)
             if (g.updated_at && (!latestUpdate || g.updated_at > latestUpdate))
               latestUpdate = g.updated_at
           })
         })
-        const overallMean = allScores.length > 0
-          ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1)
+        const overallMean = allRows.length > 0
+          ? weightedScoreMean(allRows).toFixed(1)
           : null
         return {
           className, subjectName,

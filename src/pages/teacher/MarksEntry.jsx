@@ -238,7 +238,7 @@ export default function MarksEntry({ profile }) {
       const pct = g.total_score ?? 0
       const max = getMax(g.exam_type) || 100
       const raw = max === 100 ? pct : Math.round((pct / 100) * max)
-      const key = g.exam_type === 'CAT 1' ? 'cat1' : g.exam_type === 'CAT 2' ? 'cat2' : 'et'
+      const key = g.exam_type === 'Opener' ? 'cat1' : g.exam_type === 'Midterm' ? 'cat2' : 'et'
       if (!merged[g.student_id]) merged[g.student_id] = { cat1: '', cat2: '', et: '', remarks: '', status: 'draft' }
       merged[g.student_id][key] = raw || ''
       const statusVal = g.status || 'draft'
@@ -373,8 +373,8 @@ export default function MarksEntry({ profile }) {
       const c1 = Number(g.cat1) || 0
       const c2 = Number(g.cat2) || 0
       const et = Number(g.et) || 0
-      if (g.cat1 && (isNaN(c1) || c1 < 0 || c1 > getMax('CAT 1'))) { newErrors[s.id] = 'CAT 1 invalid'; return }
-      if (g.cat2 && (isNaN(c2) || c2 < 0 || c2 > getMax('CAT 2'))) { newErrors[s.id] = 'CAT 2 invalid'; return }
+      if (g.cat1 && (isNaN(c1) || c1 < 0 || c1 > getMax('Opener'))) { newErrors[s.id] = 'Opener invalid'; return }
+      if (g.cat2 && (isNaN(c2) || c2 < 0 || c2 > getMax('Midterm'))) { newErrors[s.id] = 'Midterm invalid'; return }
       if (g.et && (isNaN(et) || et < 0 || et > getMax('End Term'))) { newErrors[s.id] = 'End Term invalid'; return }
     })
     setErrors(newErrors)
@@ -402,8 +402,8 @@ export default function MarksEntry({ profile }) {
       const et = Number(g.et) || 0
 
       const examFields = []
-      if (g.cat1) examFields.push({ exam_type: 'CAT 1', raw: c1, max: getMax('CAT 1') })
-      if (g.cat2) examFields.push({ exam_type: 'CAT 2', raw: c2, max: getMax('CAT 2') })
+      if (g.cat1) examFields.push({ exam_type: 'Opener', raw: c1, max: getMax('Opener') })
+      if (g.cat2) examFields.push({ exam_type: 'Midterm', raw: c2, max: getMax('Midterm') })
       if (g.et) examFields.push({ exam_type: 'End Term', raw: et, max: getMax('End Term') })
 
       examFields.forEach(({ exam_type, raw, max }) => {
@@ -416,9 +416,10 @@ export default function MarksEntry({ profile }) {
           exam_type,
           term,
           year: Number(year),
-          cat_score: 0,
-          exam_score: 0,
+          cat_score: exam_type === 'End Term' ? 0 : raw,
+          exam_score: exam_type === 'End Term' ? raw : 0,
           total_score: total,
+          max_marks: max,
           class_name: selectedClass,
           grade: cbe.band || null,
           cbe_band: cbe.band || cbe.grade || null,
@@ -826,8 +827,8 @@ export default function MarksEntry({ profile }) {
                           <th style={{ width: 40 }}>#</th>
                           <th>Student</th>
                           <th style={{ width: 110 }}>Adm No.</th>
-                           <th style={{ width: 80 }}>CAT 1 ({getMax('CAT 1')})</th>
-                           <th style={{ width: 80 }}>CAT 2 ({getMax('CAT 2')})</th>
+                           <th style={{ width: 80 }}>Opener ({getMax('Opener')})</th>
+                           <th style={{ width: 80 }}>Midterm ({getMax('Midterm')})</th>
                            <th style={{ width: 80 }}>End Term ({getMax('End Term')})</th>
                           <th style={{ width: 70 }}>Total (100)</th>
                           <th style={{ width: 70 }}>Grade</th>
@@ -856,7 +857,7 @@ export default function MarksEntry({ profile }) {
                               <td>
                                 <div className="me-input-wrap">
                                   <input type="number" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.cat1 !== '' && g?.cat1 !== undefined ? 'me-input-filled' : ''}`}
-                                    min="0" max="20" value={g?.cat1 ?? ''}
+                                    min="0" max={getMax('Opener')} value={g?.cat1 ?? ''}
                                     onChange={e => updateGrade(s.id, 'cat1', e.target.value)}
                                     onKeyDown={e => handleKeyDown(e, s.id, 'cat1', i)}
                                     data-student={s.id} data-field="cat1" placeholder="—" disabled={isLocked} />
@@ -865,7 +866,7 @@ export default function MarksEntry({ profile }) {
                               <td>
                                 <div className="me-input-wrap">
                                   <input type="number" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.cat2 !== '' && g?.cat2 !== undefined ? 'me-input-filled' : ''}`}
-                                    min="0" max="20" value={g?.cat2 ?? ''}
+                                    min="0" max={getMax('Midterm')} value={g?.cat2 ?? ''}
                                     onChange={e => updateGrade(s.id, 'cat2', e.target.value)}
                                     onKeyDown={e => handleKeyDown(e, s.id, 'cat2', i)}
                                     data-student={s.id} data-field="cat2" placeholder="—" disabled={isLocked} />
@@ -874,7 +875,7 @@ export default function MarksEntry({ profile }) {
                               <td>
                                 <div className="me-input-wrap">
                                   <input type="number" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.et !== '' && g?.et !== undefined ? 'me-input-filled' : ''}`}
-                                    min="0" max="60" value={g?.et ?? ''}
+                                    min="0" max={getMax('End Term')} value={g?.et ?? ''}
                                     onChange={e => updateGrade(s.id, 'et', e.target.value)}
                                     onKeyDown={e => handleKeyDown(e, s.id, 'et', i)}
                                     data-student={s.id} data-field="et" placeholder="—" disabled={isLocked} />

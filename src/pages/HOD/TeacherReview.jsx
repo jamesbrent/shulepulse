@@ -3,6 +3,7 @@ import { Search, Star, Mail, Phone } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { useAuthStore } from '../../store/authStore'
+import { weightedScoreMean } from '../../services/grading'
 
 export default function TeacherReview() {
   const { currentTerm, currentYear } = useSchool()
@@ -68,7 +69,7 @@ export default function TeacherReview() {
 
     const gradeData = gradesRes.data || []
     const avgScore = gradeData.length
-      ? Math.round(gradeData.reduce((s, g) => s + Number(g.total_score || 0), 0) / gradeData.length)
+      ? Math.round(weightedScoreMean(gradeData))
       : 0
     const passCount = gradeData.filter(g => Number(g.total_score || 0) >= 50).length
     const passRate = gradeData.length > 0 ? Math.round((passCount / gradeData.length) * 100) : 0
