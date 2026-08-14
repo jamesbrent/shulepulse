@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-import { getGrade, gradeShort, bandColor, sortBands, weightedScoreMean } from '../../services/grading'
+import { getGrade, gradeShort, bandColor, sortBands, weightedScoreMean, rankEntries } from '../../services/grading'
 
 const TABS = [
   { key: 'subjects', label: 'Subject Analysis', icon: <BarChart2 size={15} /> },
@@ -134,7 +134,17 @@ export default function DeptAnalytics() {
     })).sort((a, b) => b.average - a.average)
   })()
 
-  const studentAveragesWithRank = studentAverages.map((s, i) => ({ ...s, rank: i + 1 }))
+  const rankById = new Map(
+    rankEntries(studentAverages.map(s => ({
+      studentId: s.student_id,
+      score: s.average,
+      count: s.count,
+    })), { scope: selectedClass ? 'class' : 'school' }).map(r => [r.studentId, r])
+  )
+  const studentAveragesWithRank = studentAverages.map(s => ({
+    ...s,
+    rank: rankById.get(s.student_id)?.rank ?? studentAverages.length,
+  }))
 
   const uniqueSubjects = [...new Set(grades.map(g => g.subject).filter(Boolean))].sort()
 

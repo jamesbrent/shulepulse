@@ -1,6 +1,6 @@
 import { supabase } from '../../../../lib/supabase'
-import { buildReportCardHtml, REPORT_CARD_STYLES, groupGradesBySubject, getCBEGrade, calculateClassRank, fetchStudentComments } from '../../../../components/students/ReportCard'
-import { weightedScoreMean } from '../../../../services/grading'
+import { buildReportCardHtml, REPORT_CARD_STYLES, groupGradesBySubject, getCBEGrade, fetchStudentComments } from '../../../../components/students/ReportCard'
+import { weightedScoreMean, rankEntries, findRank } from '../../../../services/grading'
 import { saveAs } from 'file-saver'
 import * as XLSX from 'xlsx'
 
@@ -50,7 +50,7 @@ export async function fetchBulkDataWithExtras(schoolId, filterClass, filterTerm,
 
   const classAveragesMap = {}
   const historicalDataMap = {}
-  const rankEntries = []
+  const classRankMap = {}
 
   for (const cls of classNames) {
     const classStudents = entries.filter(e => e.student.class === cls)
@@ -78,13 +78,14 @@ export async function fetchBulkDataWithExtras(schoolId, filterClass, filterTerm,
       return { name, avg }
     })
 
-    classStudents.forEach(e => {
-      rankEntries.push({
+    classRankMap[cls] = rankEntries(
+      classStudents.map(e => ({
         studentId: e.student.id,
-        avg: e.avg || 0,
-        class: cls,
-      })
-    })
+        score: e.avg || 0,
+        count: e.subjectCount || e.grades.length,
+      })),
+      { scope: 'class' }
+    )
 
     const { data: histGrades } = await supabase
       .from('grades')
@@ -136,14 +137,10 @@ export async function fetchBulkDataWithExtras(schoolId, filterClass, filterTerm,
 
   return entries.map(e => {
     const cls = e.student.class
-    const classRank = calculateClassRank(
-      rankEntries.filter(r => r.class === cls),
-      e.student.id
-    )
     return {
       ...e,
       classAverages: classAveragesMap[cls] || [],
-      classRank,
+      classRank: findRank(classRankMap[cls] || [], e.student.id),
       historicalData: historicalDataMap[cls] || [],
     }
   })
@@ -187,18 +184,22 @@ export async function downloadBulkZip(entries, school, term, year, onProgress) {
 }
 
 export function buildRankingSheet(entries) {
+  const ranked = rankEntries(
+    entries.map(e => ({
+      studentId: e.student?.id,
+      score: e.avg || 0,
+      count: e.subjectCount || (e.grades || []).length,
+    })),
+    { scope: 'class' }
+  )
+  const rankById = new Map(ranked.map(r => [r.studentId, r]))
   const sorted = [...entries].sort((a, b) => (b.avg || 0) - (a.avg || 0))
-  let currentRank = 0
-  let prevScore = null
-  const rows = sorted.map((e, i) => {
+  const rows = sorted.map(e => {
     const score = e.avg || 0
-    if (score !== prevScore) {
-      currentRank = i + 1
-      prevScore = score
-    }
+    const r = rankById.get(e.student?.id)
     const cbe = getCBEGrade(score, e.student?.class || '')
     return {
-      'Position': currentRank,
+      'Position': r ? r.rank : '—',
       'Admission No': e.student?.admission_number || '',
       'Full Name': e.student?.full_name || '',
       'Class': e.student?.class || '',

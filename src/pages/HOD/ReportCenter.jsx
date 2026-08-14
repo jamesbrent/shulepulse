@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-import { getGrade, gradeShort, weightedScoreMean } from '../../services/grading'
+import { getGrade, gradeShort, weightedScoreMean, rankEntries } from '../../services/grading'
 
 const TABS = [
   { key: 'draft', label: 'Draft Report Cards', icon: FileText },
@@ -190,6 +190,21 @@ export default function ReportCenter() {
     ? Math.round(meritList.reduce((s, m) => s + m.average, 0) / meritList.length)
     : 0
 
+  const meritRankById = new Map(
+    rankEntries(filteredMerit.map(s => ({
+      studentId: s.student_id,
+      score: s.average,
+      count: s.count,
+    })), { scope: selectedClass ? 'class' : 'school' }).map(r => [r.studentId, r.rank])
+  )
+  const schoolRankById = new Map(
+    rankEntries(studentAverages.map(s => ({
+      studentId: s.student_id,
+      score: s.average,
+      count: s.count,
+    })), { scope: 'school' }).map(r => [r.studentId, r.rank])
+  )
+
   const uniqueSubjects = [...new Set(grades.map(g => g.subject).filter(Boolean))].sort()
 
   const getStudentReport = (className) => {
@@ -235,9 +250,10 @@ export default function ReportCenter() {
     const school = profile?.schools
 
     const rowsHtml = students.map((s, i) => {
-      const rankColor = i === 0 ? '#ca8a04' : i === 1 ? '#64748b' : i === 2 ? '#b45309' : '#475569'
+      const r = meritRankById.get(s.student_id) ?? i + 1
+      const rankColor = r === 1 ? '#ca8a04' : r === 2 ? '#64748b' : r === 3 ? '#b45309' : '#475569'
       return `<tr>
-        <td class="rank-cell" style="color:${rankColor}">${i < 3 ? '&#9733; ' : ''}${i + 1}</td>
+        <td class="rank-cell" style="color:${rankColor}">${r <= 3 ? '&#9733; ' : ''}${r}</td>
         <td style="font-weight:500">${s.name}</td>
         <td style="font-family:monospace;color:#64748b">${s.admNo}</td>
         <td>${s.class}</td>
@@ -270,7 +286,7 @@ export default function ReportCenter() {
       wsData.push([
         i + 1, s.name, s.admNo, s.class,
         ...subjectList.map(sub => s.subjects[sub] ?? ''),
-        s.total, s.average, s.grade, i + 1,
+        s.total, s.average, s.grade, schoolRankById.get(s.student_id) ?? i + 1,
       ])
     })
     const ws = XLSX.utils.aoa_to_sheet(wsData)
@@ -645,16 +661,18 @@ export default function ReportCenter() {
                     </tr>
                   </thead>
                   <tbody>
-                    {meritList.map((s, i) => (
+                    {meritList.map((s, i) => {
+                      const r = meritRankById.get(s.student_id) ?? i + 1
+                      return (
                       <tr key={s.student_id}>
                         <td>
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: 4,
-                            color: i === 0 ? '#ca8a04' : i === 1 ? '#64748b' : i === 2 ? '#b45309' : '#94a3b8',
+                            color: r === 1 ? '#ca8a04' : r === 2 ? '#64748b' : r === 3 ? '#b45309' : '#94a3b8',
                             fontWeight: 700,
                           }}>
-                            {i < 3 && <Award size={14} />}
-                            {i + 1}
+                            {r <= 3 && <Award size={14} />}
+                            {r}
                           </span>
                         </td>
                         <td style={{ fontWeight: 500 }}>{s.name}</td>
@@ -667,7 +685,8 @@ export default function ReportCenter() {
                           <span className="hod-sp-grade-chip">{s.grade}</span>
                         </td>
                       </tr>
-                    ))}
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

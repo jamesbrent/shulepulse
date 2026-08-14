@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  BarChart2, Plus, Search, X, Save, Award,
+  BarChart2, Search, Save, Award,
   TrendingUp, BookOpen, CheckCircle, Printer,
   Users, Star, ArrowUp, ArrowDown, Download, ShieldCheck,
-  Eye, XCircle, Upload, File as FileIcon, AlertCircle,
+  Eye, XCircle, Upload, File as FileIcon, AlertCircle, Loader2,
 } from 'lucide-react'
 import { ReportCard, getCBEGrade, fetchStudentComments } from '../../components/students/ReportCard'
 import { weightedScoreMean, marksCell } from '../../services/grading'
@@ -56,7 +56,7 @@ const cbeClassKey = (cbe) => (cbe.band || cbe.grade || 'me1').toLowerCase()
 export default function GradesPage() {
   const { profile } = useAuthStore()
   const { currentTerm, currentYear: schoolYear } = useSchool()
-  const { examTypes: examTypeConfig, examMap, getMax } = useExamTypeConfig()
+  const { examTypes: examTypeConfig } = useExamTypeConfig()
 
   // ── State ─────────────────────────────────────────────────
   const [grades, setGrades]           = useState([])
@@ -74,15 +74,6 @@ export default function GradesPage() {
   const [filterYear, setFilterYear]     = useState('')
   const [filterClass, setFilterClass]   = useState('all')
   const [filterSubject, setFilterSubject] = useState('all')
-
-  // Modal
-  const [showModal, setShowModal]       = useState(false)
-  const [saving, setSaving]             = useState(false)
-  const [error, setError]               = useState('')
-  const [form, setForm]                 = useState({
-    student_id: '', subject: '', exam_type: 'Opener', term: '', year: '',
-    cat1: '', cat2: '', et: '',
-  })
 
   // Report card
   const [reportStudent, setReportStudent] = useState(null)
@@ -122,11 +113,9 @@ export default function GradesPage() {
   useEffect(() => {
     if (currentTerm && !filterTerm) {
       setFilterTerm(currentTerm)
-      setForm(f => ({ ...f, term: currentTerm }))
     }
     if (schoolYear && !filterYear) {
       setFilterYear(schoolYear)
-      setForm(f => ({ ...f, year: schoolYear }))
     }
   }, [currentTerm, schoolYear])
 
@@ -352,71 +341,6 @@ export default function GradesPage() {
     }
   }
 
-  // ── Save Grade ────────────────────────────────────────────
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSaving(true); setError('')
-
-    const c1  = parseFloat(form.cat1)  || 0
-    const c2  = parseFloat(form.cat2)  || 0
-    const et  = parseFloat(form.et) || 0
-    if (!form.cat1 && !form.cat2 && !form.et) { setError('At least one exam mark required'); setSaving(false); return }
-    const max = getMax(form.exam_type) || 100
-    const raw = form.exam_type === 'Opener' ? c1 : form.exam_type === 'Midterm' ? c2 : et
-    const totalPct = Math.round((raw / max) * 100)
-
-    const student = students.find(s => s.id === form.student_id)
-    const cbe = getCBEGrade(totalPct, student?.class || '')
-
-    if (cbe.status === 'unresolved' || cbe.status === 'pending') {
-      setError(cbe.status === 'pending'
-        ? `Cannot save grade for ${student?.class || 'this student'} — the senior grade profile is pending verification`
-        : `Cannot save grade for ${student?.class || 'this student'} — the class grade profile is not configured`)
-      setSaving(false)
-      return
-    }
-
-    const payload = {
-      school_id:        profile.school_id,
-      student_id:       form.student_id,
-      subject:          form.subject,
-      exam_type:        form.exam_type,
-      term:             form.term,
-      year:             parseInt(form.year),
-      sba_score:        raw,
-      summative_score:  0,
-      cat_score:        form.exam_type === 'End Term' ? 0 : raw,
-      exam_score:       form.exam_type === 'End Term' ? raw : 0,
-      total_score:      totalPct,
-      max_marks:        max,
-      class_name:       student?.class || null,
-      grade:            cbe.grade  || cbe.band  || null,
-      cbe_band:         cbe.band   || cbe.grade || null,
-      points:           cbe.points || null,
-      performance_level: cbe.label || null,
-      teacher_id:       profile.id,
-      updated_at:       new Date().toISOString(),
-    }
-
-    const { error: err } = await supabase
-      .from('grades')
-      .upsert(payload, { onConflict: 'student_id,subject,exam_type,term,year', ignoreDuplicates: false })
-
-    if (err) { setError(err.message); setSaving(false); return }
-
-    setSaving(false)
-    setShowModal(false)
-    setForm({ student_id: '', subject: '', exam_type: examTypeConfig[0]?.name || 'Opener', term: filterTerm, year: filterYear, cat1: '', cat2: '', et: '' })
-    fetchGrades()
-  }
-
-  // ── Open Add Grade ─────────────────────────────────────────
-  const openAddGrade = () => {
-    setForm({ student_id: '', subject: '', exam_type: examTypeConfig[0]?.name || 'Opener', term: filterTerm, year: filterYear, cat1: '', cat2: '', et: '' })
-    setError('')
-    setShowModal(true)
-  }
-
   // ── Open Report Card ──────────────────────────────────────
   const openReportCard = async (student) => {
     const sg = grades.filter(g => g.student_id === student.id)
@@ -485,18 +409,6 @@ export default function GradesPage() {
     const improvement = Math.round(currAvg - prevAvg)
     return { ...s, currAvg: Math.round(currAvg), prevAvg: Math.round(prevAvg), improvement }
   }).filter(Boolean).filter(s => s.improvement > 0).sort((a, b) => b.improvement - a.improvement).slice(0, 10)
-
-  // Live preview in form
-  const pC1  = parseFloat(form.cat1)  || 0
-  const pC2  = parseFloat(form.cat2)  || 0
-  const pET  = parseFloat(form.et) || 0
-  const previewRaw = form.exam_type === 'Opener' ? pC1 : form.exam_type === 'Midterm' ? pC2 : pET
-  const previewMax = getMax(form.exam_type) || 100
-  const previewTotal = previewRaw ? Math.round((previewRaw / previewMax) * 100) : 0
-  const previewStudent = students.find(s => s.id === form.student_id)
-  const previewCBE = (form.cat1 || form.cat2 || form.et)
-    ? getCBEGrade(previewTotal, previewStudent?.class || '')
-    : null
 
   const prevTermLabel = (() => {
     const p = getPrevTerm(filterTerm, parseInt(filterYear))
@@ -569,9 +481,6 @@ export default function GradesPage() {
             {subjectsList.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
           </select>
         </div>
-        <button className="btn-primary" onClick={openAddGrade}>
-          <Plus size={15} /> Add Grade
-        </button>
       </div>
 
       {/* ══════════════════════════════════════════
@@ -583,9 +492,6 @@ export default function GradesPage() {
           <div className="empty-grades">
             <BarChart2 size={40} color="#cbd5e1" />
             <p>No grades for {filterTerm} {filterYear}</p>
-            <button className="btn-primary" onClick={openAddGrade}>
-              <Plus size={14} /> Add Grade
-            </button>
           </div>
         ) : (
           <div className="grades-table-wrap">
@@ -1055,8 +961,8 @@ export default function GradesPage() {
                       <div key={exam.id} className="grades-pending-card">
                         <div className="gpc-head">
                           <div className="gpc-title">
-                            <div className="gpc-subject-icon"><BookOpen size={16} /></div>
-                            <div>
+                            <div className="gpc-subject-icon"><BookOpen size={17} /></div>
+                            <div className="gpc-title-text">
                               <h4 className="gpc-subject">{exam.subject}</h4>
                               <p className="gpc-submeta">{exam.examType} · {exam.className}</p>
                             </div>
@@ -1064,22 +970,31 @@ export default function GradesPage() {
                           <span className="gpc-status">Pending</span>
                         </div>
                         <div className="gpc-stats">
-                          <span className="gpc-stat"><Users size={12} /> {exam.entries.length} students</span>
-                          <span className="gpc-stat"><BarChart2 size={12} /> Avg: {avg}%</span>
-                          <span className="gpc-stat"><CheckCircle size={12} /> {passCount} passed</span>
+                          <div className="gpc-stat">
+                            <span className="gpc-stat-value">{exam.entries.length}</span>
+                            <span className="gpc-stat-label">Students</span>
+                          </div>
+                          <div className="gpc-stat">
+                            <span className="gpc-stat-value">{avg}%</span>
+                            <span className="gpc-stat-label">Average</span>
+                          </div>
+                          <div className="gpc-stat">
+                            <span className={`gpc-stat-value ${passCount > 0 ? 'gpc-stat-ok' : ''}`}>{passCount}</span>
+                            <span className="gpc-stat-label">Passed</span>
+                          </div>
                         </div>
                         <p className="gpc-meta">
-                          {exam.teacherName ? `Teacher: ${exam.teacherName} · ` : ''}{exam.createdAt ? new Date(exam.createdAt).toLocaleDateString() : ''}
+                          {exam.teacherName ? `Teacher: ${exam.teacherName} · ` : ''}{exam.createdAt ? new Date(exam.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
                         </p>
                         <div className="gpc-actions">
-                          <button className="action-btn" onClick={() => { setViewExam(exam); loadExamUpload(exam) }}>
-                            <Eye size={13} /> Review
+                          <button className="action-btn" title="Review" onClick={() => { setViewExam(exam); loadExamUpload(exam) }}>
+                            <Eye size={15} />
                           </button>
-                          <button className="action-btn gpc-reject" onClick={() => setRejectModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
-                            <XCircle size={13} /> Reject
+                          <button className="action-btn gpc-reject" title="Reject" onClick={() => setRejectModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
+                            <XCircle size={15} />
                           </button>
-                          <button className="btn-primary" onClick={() => setConfirmApproveModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
-                            <CheckCircle size={13} /> {approving === exam.id ? '...' : 'Approve'}
+                          <button className="btn-primary" title="Approve" onClick={() => setConfirmApproveModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
+                            {approving === exam.id ? <Loader2 size={15} className="gpc-spin" /> : <CheckCircle size={15} />}
                           </button>
                         </div>
                       </div>
@@ -1090,113 +1005,6 @@ export default function GradesPage() {
             </>
           )}
         </>
-      )}
-
-      {/* ══════════════════════════════════════════
-          ADD GRADE MODAL
-      ══════════════════════════════════════════ */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Add Grade</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}><X size={18} /></button>
-            </div>
-            <form onSubmit={handleSubmit} className="modal-form">
-              {error && <div className="form-error">{error}</div>}
-              <div className="form-grid">
-                <div className="form-field full">
-                  <label>Student *</label>
-                  <select required value={form.student_id}
-                    onChange={e => setForm({ ...form, student_id: e.target.value })}>
-                    <option value="">Select student...</option>
-                    {students.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.full_name} — {s.class} ({s.admission_number})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-field full">
-                  <label>Subject *</label>
-                  <select required value={form.subject}
-                    onChange={e => setForm({ ...form, subject: e.target.value })}>
-                    <option value="">Select subject...</option>
-                    {subjectsList.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-field">
-                  <label>Exam Type *</label>
-                  <select value={form.exam_type} onChange={e => setForm({ ...form, exam_type: e.target.value })}>
-                    {examTypeConfig.map(et => <option key={et.name} value={et.name}>{et.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-field">
-                  <label>Term *</label>
-                  <select value={form.term} onChange={e => setForm({ ...form, term: e.target.value })}>
-                    {TERMS.map(t => <option key={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div className="form-field">
-                  <label>Year *</label>
-                  <select value={form.year} onChange={e => setForm({ ...form, year: e.target.value })}>
-                    {YEARS.map(y => <option key={y}>{y}</option>)}
-                  </select>
-                </div>
-                {form.exam_type === 'Opener' && (
-                  <div className="form-field">
-                    <label>Opener Score (0–{getMax('Opener')})</label>
-                    <input type="number" min="0" max={getMax('Opener')} placeholder="e.g. 12"
-                      value={form.cat1} onChange={e => setForm({ ...form, cat1: e.target.value })} />
-                  </div>
-                )}
-                {form.exam_type === 'Midterm' && (
-                  <div className="form-field">
-                    <label>Midterm Score (0–{getMax('Midterm')})</label>
-                    <input type="number" min="0" max={getMax('Midterm')} placeholder="e.g. 13"
-                      value={form.cat2} onChange={e => setForm({ ...form, cat2: e.target.value })} />
-                  </div>
-                )}
-                {form.exam_type === 'End Term' && (
-                  <div className="form-field">
-                    <label>End Term Score (0–{getMax('End Term')})</label>
-                    <input type="number" min="0" max={getMax('End Term')} placeholder="e.g. 56"
-                      value={form.et} onChange={e => setForm({ ...form, et: e.target.value })} />
-                  </div>
-                )}
-              </div>
-
-              {/* Live CBE preview */}
-              {previewCBE && (
-                <div className="grade-preview">
-                  <span>Score: <strong>{previewRaw}/{previewMax}</strong></span>
-                  <span>→ <strong>{previewTotal}%</strong></span>
-                  <span className={`cbe-badge cbe-${previewCBE.band ? cbeClassKey(previewCBE) : 'unresolved'}`}>
-                    {previewCBE.band || '—'}
-                  </span>
-                  <span className="gp-label">{previewCBE.label}</span>
-                  {previewCBE.points && (
-                    <span className="gp-pts">
-                      {previewCBE.points} /8 pts
-                    </span>
-                  )}
-                  <span className="gp-system">
-                    {previewCBE.system === 'early'  ? 'Early Years Rubric' :
-                     previewCBE.system === 'middle' ? 'Middle School 8-Level' :
-                     'Senior — Pending Verification'}
-                  </span>
-                </div>
-              )}
-
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn-primary" disabled={saving}>
-                  <Save size={15} /> {saving ? 'Saving...' : 'Save Grade'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {/* ── Report Card Modal ── */}

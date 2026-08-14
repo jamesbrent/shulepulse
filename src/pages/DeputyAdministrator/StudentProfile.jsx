@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { ReportCard, groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
-import { weightedScoreMean } from '../../services/grading'
+import { weightedScoreMean, rankStudentsByGrades, findRank } from '../../services/grading'
 import './StudentProfile.css'
 
 export default function StudentProfile({ student, onBack, schoolId }) {
@@ -19,7 +19,7 @@ export default function StudentProfile({ student, onBack, schoolId }) {
   const [attendance, setAttendance] = useState([])
   const [comments, setComments] = useState([])
   const [timetable, setTimetable] = useState([])
-  const [classSize, setClassSize] = useState(0)
+  const [classRank, setClassRank] = useState(null)
   const [showTranscript, setShowTranscript] = useState(false)
   const [school, setSchool] = useState(null)
 
@@ -30,13 +30,12 @@ export default function StudentProfile({ student, onBack, schoolId }) {
     const sid = student?.id
     if (!sid) { setLoading(false); return }
 
-    const [gradesRes, discRes, attRes, commRes, ttRes, classRes, schoolRes] = await Promise.all([
+    const [gradesRes, discRes, attRes, commRes, ttRes, schoolRes] = await Promise.all([
       supabase.from('grades').select('*').eq('student_id', sid).order('year', { ascending: false }).order('term', { ascending: false }),
       supabase.from('discipline_records').select('*').eq('student_id', sid).order('date', { ascending: false }),
       supabase.from('attendance').select('date, status, notes').eq('student_id', sid).order('date', { ascending: false }).limit(100),
       supabase.from('teacher_comments').select('*, teachers(full_name)').eq('student_id', sid).order('created_at', { ascending: false }),
       supabase.from('timetable_slots').select('*, teachers(full_name), subjects(name)').eq('class_id', student.class_id).order('day_of_week').order('start_time'),
-      supabase.from('students').select('id', { count: 'exact', head: true }).eq('school_id', schoolId).eq('class', student.class),
       supabase.from('schools').select('id, name, logo_url, motto').eq('id', schoolId).single(),
     ])
 
@@ -45,8 +44,25 @@ export default function StudentProfile({ student, onBack, schoolId }) {
     setAttendance(attRes.data || [])
     setComments(commRes.data || [])
     setTimetable(ttRes.data || [])
-    setClassSize(classRes.count || 0)
     setSchool(schoolRes.data || null)
+
+    // Class position from the CENTRAL ranking engine — scoped to the
+    // learner's class for the latest term/year that has results.
+    const allGrades = gradesRes.data || []
+    const latest = allGrades[0]
+    if (latest && student?.class) {
+      const { data: classGrades } = await supabase
+        .from('grades')
+        .select('student_id, subject, total_score, max_marks')
+        .eq('term', latest.term)
+        .eq('year', latest.year)
+        .eq('class_name', student.class)
+        .in('status', ['approved', 'published'])
+      const ranked = rankStudentsByGrades(classGrades || [], { scope: 'class' })
+      setClassRank(findRank(ranked, sid))
+    } else {
+      setClassRank(null)
+    }
     setLoading(false)
   }
 
@@ -71,8 +87,8 @@ export default function StudentProfile({ student, onBack, schoolId }) {
   const openCases = discipline.filter(d => d.status === 'pending' || d.status === 'recorded').length
   const resolvedCases = discipline.filter(d => d.status === 'resolved').length
 
-  // Class position (approximate based on averages)
-  const position = classSize > 0 ? Math.max(1, Math.round((1 - avgPerformance / 100) * classSize) + 1) : '—'
+  // Class position from the central ranking engine (latest term, same class)
+  const position = classRank ? `${classRank.rank} / ${classRank.total}` : '—'
 
   // Performance by term for chart
   const terms = [...new Set(grades.map(g => `${g.term} ${g.year}`))].slice(0, 6).reverse()
@@ -199,7 +215,7 @@ export default function StudentProfile({ student, onBack, schoolId }) {
             <div className="sp-kpi-icon sp-kpi-icon--blue"><Users size={16} /></div>
             <div className="sp-kpi-info">
               <p className="sp-kpi-label">Class Position</p>
-              <p className="sp-kpi-value">{typeof position === 'number' ? `${position} / ${classSize}` : '—'}</p>
+              <p className="sp-kpi-value">{position}</p>
             </div>
           </div>
         </div>
@@ -271,7 +287,7 @@ export default function StudentProfile({ student, onBack, schoolId }) {
                 </div>
                 <div className="sp-perf-stat">
                   <p className="sp-perf-stat-label">Class Position</p>
-                  <p className="sp-perf-stat-value">{typeof position === 'number' ? `${position}/${classSize}` : '—'}</p>
+                  <p className="sp-perf-stat-value">{position}</p>
                 </div>
                 <div className="sp-perf-stat">
                   <p className="sp-perf-stat-label">Total Subjects</p>

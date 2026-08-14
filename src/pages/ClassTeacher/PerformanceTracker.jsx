@@ -15,7 +15,7 @@ import {
 } from '../../utils/schoolPdfTemplate'
 import { fetchBulkDataWithExtras, bulkPrint } from '../admin/grades/utils/bulkReportCards'
 import { getCBEGrade, REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-import { gradeDisplay, sortBands, bandColor, weightedScoreMean } from '../../services/grading'
+import { gradeDisplay, sortBands, bandColor, weightedScoreMean, rankEntries } from '../../services/grading'
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
@@ -146,6 +146,17 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
     const cbe = avg !== null ? getCBEGrade(avg, s.class) : null
     return { ...s, avg, subjectCount: sg.length, grades: sg, cbe }
   }).filter(s => s.avg !== null).sort((a, b) => b.avg - a.avg)
+
+  const studentRankById = new Map(
+    rankEntries(studentMeans.map(s => ({
+      studentId: s.id,
+      score: s.avg,
+      count: s.subjectCount,
+    })), { scope: filterClass !== 'all' ? 'class' : 'school' }).map(r => [r.studentId, r.rank])
+  )
+  studentMeans.forEach(s => {
+    s.rank = studentRankById.get(s.id) || studentMeans.length
+  })
 
   const bandOptions = sortBands([...new Set(studentMeans.map(s => s.cbe?.band).filter(Boolean))])
 
@@ -550,8 +561,8 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                     {studentMeans.map((s, i) => (
                       <tr key={s.id} onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
                         <td>
-                          <span className={`ct-perf-rank-cell ${i < 3 ? `rank-${i + 1}` : ''}`}>
-                            {i + 1}
+                          <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>
+                            {s.rank}
                           </span>
                         </td>
                         <td>
@@ -636,7 +647,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
               ) : (
                 studentMeans.slice(0, 5).map((s, i) => (
                   <div key={s.id} className="ct-perf-student-row" onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
-                    <span className="ct-perf-rank">{i + 1}</span>
+                    <span className="ct-perf-rank">{s.rank}</span>
                     <div className="ct-student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9 }}>
                       {s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
@@ -766,8 +777,8 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                     {rankedStudents.map((s, i) => (
                       <tr key={s.id} onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
                         <td>
-                          <span className={`ct-perf-rank-cell ${i < 3 ? `rank-${i + 1}` : ''}`}>
-                            {i + 1}
+                          <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>
+                            {s.rank}
                           </span>
                         </td>
                         <td>
@@ -817,7 +828,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                   <p className="ct-perf-card-title"><Star size={15} /> Top 5 Performers</p>
                   {studentMeans.slice(0, 5).map((s, i) => (
                     <div key={s.id} className="ct-perf-student-row" onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
-                      <span className="ct-perf-rank" style={{ color: i === 0 ? '#ca8a04' : i < 3 ? '#2563eb' : '#94a3b8' }}>{i + 1}</span>
+                      <span className="ct-perf-rank" style={{ color: s.rank === 1 ? '#ca8a04' : s.rank <= 3 ? '#2563eb' : '#94a3b8' }}>{s.rank}</span>
                       <div className="ct-student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9 }}>
                         {s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>
@@ -834,7 +845,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                   <p className="ct-perf-card-title"><TrendingDown size={15} /> Bottom 5 (Needs Support)</p>
                   {studentMeans.slice(-5).reverse().map((s, i) => (
                     <div key={s.id} className="ct-perf-student-row" onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
-                      <span className="ct-perf-rank" style={{ color: '#dc2626' }}>{studentMeans.length - i}</span>
+                      <span className="ct-perf-rank" style={{ color: '#dc2626' }}>{s.rank}</span>
                       <div className="ct-student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9, background: '#fef2f2', color: '#dc2626' }}>
                         {s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>

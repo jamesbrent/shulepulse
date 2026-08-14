@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import useStudentAcademicHistory from './useStudentAcademicHistory'
 import AcademicFilters from './AcademicFilters'
 import { groupGradesBySubject, getCBEGrade, gradeDisplay, ReportCard, fetchStudentComments } from '../../components/students/ReportCard'
-import { weightedScoreMean } from '../../services/grading'
+import { rankStudentsByGrades, findRank } from '../../services/grading'
 
 export default function ReportCardsPage({ student, school }) {
   const {
@@ -38,24 +38,14 @@ export default function ReportCardsPage({ student, school }) {
 
       const { data: classmates } = await supabase
         .from('grades')
-        .select('student_id, total_score, max_marks')
+        .select('student_id, subject, total_score, max_marks')
         .eq('term', term)
         .eq('year', Number(year))
         .eq('class_name', selectedClass)
         .in('status', ['approved', 'published'])
       if (!active) return
-      const byStudent = {}
-      ;(classmates || []).forEach(g => {
-        if (!byStudent[g.student_id]) byStudent[g.student_id] = []
-        byStudent[g.student_id].push(g)
-      })
-      const entries = Object.entries(byStudent).map(([sid, rows]) => ({
-        studentId: sid,
-        avg: weightedScoreMean(rows),
-      }))
-      const sorted = entries.sort((a, b) => b.avg - a.avg)
-      const rank = sorted.findIndex(e => e.studentId === student.id) + 1
-      setClassRank(rank > 0 ? { rank, total: sorted.length } : null)
+      const ranked = rankStudentsByGrades(classmates || [], { scope: 'class' })
+      setClassRank(findRank(ranked, student.id))
     }
     loadCardData()
     return () => { active = false }

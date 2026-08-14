@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Printer, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { getGrade as engineGetGrade, resolveSystem, gradeDisplay as engineGradeDisplay, sortExamTypes, compareExamTypes } from '../../services/grading'
+import { getGrade as engineGetGrade, resolveSystem, gradeDisplay as engineGradeDisplay, sortExamTypes, compareExamTypes, overallScore } from '../../services/grading'
 
 // ── Fetch student comments from database ──────────────────────
 export async function fetchStudentComments(schoolId, studentId, term, year) {
@@ -107,9 +107,7 @@ export function groupGradesBySubject(grades) {
 
   const totalMarks = subjects.reduce((s, sub) => s + sub.totalScore, 0)
   const totalMax = subjects.reduce((s, sub) => s + sub.maxTotal, 0)
-  const overallAvg = subjects.length > 0
-    ? Math.round(subjects.reduce((s, sub) => s + sub.average, 0) / subjects.length)
-    : 0
+  const overallAvg = overallScore(grades) ?? 0
 
   return {
     subjects,
@@ -119,16 +117,6 @@ export function groupGradesBySubject(grades) {
     overallAverage: overallAvg,
     totalSubjects: subjects.length,
   }
-}
-
-// ── Calculate class rank from all student entries ────────────
-// Takes an array of { student, avg } and a studentId, returns "rank / total"
-export function calculateClassRank(studentEntries, studentId) {
-  if (!studentEntries || studentEntries.length === 0) return null
-  const sorted = [...studentEntries].sort((a, b) => (b.avg || 0) - (a.avg || 0))
-  const rank = sorted.findIndex(e => e.studentId === studentId) + 1
-  if (rank === 0) return null
-  return { rank, total: sorted.length }
 }
 
 // ── Shared Report Card Styles ────────────────────────────────
@@ -179,6 +167,8 @@ export const REPORT_CARD_STYLES = `
     table.gtbl td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: center; color: #1e293b; font-size: 10px; }
     table.gtbl td.left { text-align: left; }
     table.gtbl tbody tr:nth-child(even) td { background: #f8fafc; }
+    table.gtbl tbody tr.gtbl-total td { background: #f1f5f9; border-top: 2px solid #cbd5e1; font-weight: 800; color: #0f172a; }
+    table.gtbl td.rc-total-na { color: #94a3b8; font-weight: 400; }
     .band-chip { font-weight: 700; }
     .chip-ee { color: #166534; }
     .chip-me { color: #1e40af; }
@@ -315,7 +305,7 @@ function buildGradingLegendHtml(className) {
     </div>`
 }
 
-function buildSubjectTableHtml(subjects, examTypes, className) {
+function buildSubjectTableHtml(subjects, examTypes, className, overallScore) {
   const rows = subjects.map((sub, i) => {
     const cbe = getCBEGrade(sub.average, className)
     const resolved = cbe.status !== 'unresolved' && cbe.status !== 'pending'
@@ -336,6 +326,21 @@ function buildSubjectTableHtml(subjects, examTypes, className) {
     </tr>`
   }).join('')
 
+  const overall = getCBEGrade(overallScore || 0, className)
+  const oResolved = overall.status !== 'unresolved' && overall.status !== 'pending'
+  const oBand = oResolved && overall.band ? overall.band : '—'
+  const oPts = oResolved && overall.points != null ? ` · ${overall.points}pts` : ''
+  const oChip = oBand !== '—' ? `class="band-chip ${chipClass(oBand)}"` : 'class="band-chip"'
+  const naCells = examTypes.map(() => `<td class="rc-total-na">—</td>`).join('')
+  const totalRow = `
+    <tr class="gtbl-total">
+      <td class="left" colspan="2" style="font-weight:800;text-transform:uppercase">Overall</td>
+      ${naCells}
+      <td style="font-weight:800">${Math.round(overallScore || 0)}/100</td>
+      <td><span ${oChip}>${oBand}</span>${oPts ? `<span class="rc-pts">${oPts}</span>` : ''}</td>
+      <td class="left" style="font-size:8px"></td>
+    </tr>`
+
   const assessHeaders = examTypes.map(et => {
     const found = subjects.map(s => s.assessments.find(x => x.name === et)).find(Boolean)
     const max = found ? found.maxMarksRaw : 100
@@ -352,7 +357,7 @@ function buildSubjectTableHtml(subjects, examTypes, className) {
         <th>Achievement Level</th>
         <th>Teacher</th>
       </tr></thead>
-      <tbody>${rows}</tbody>
+      <tbody>${rows}${totalRow}</tbody>
     </table>`
 }
 
@@ -569,7 +574,7 @@ export function ReportCard({
             <div dangerouslySetInnerHTML={{ __html: buildSummaryCardsHtml(grouped.totalMarks, grouped.totalMax, grouped.overallAverage, grouped.totalSubjects, className, classRank) }} />
             <hr className="rc-hr-light" />
 
-            <div dangerouslySetInnerHTML={{ __html: buildSubjectTableHtml(grouped.subjects, grouped.examTypes, className) }} />
+            <div dangerouslySetInnerHTML={{ __html: buildSubjectTableHtml(grouped.subjects, grouped.examTypes, className, grouped.overallAverage) }} />
             <hr className="rc-hr-light" />
 
             {trendSection && <>
@@ -782,7 +787,7 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
       ${buildSummaryCardsHtml(grouped.totalMarks, grouped.totalMax, grouped.overallAverage, grouped.totalSubjects, className, rankInfo)}
       <hr class="rc-hr-light" />
 
-      ${buildSubjectTableHtml(grouped.subjects, grouped.examTypes, className)}
+      ${buildSubjectTableHtml(grouped.subjects, grouped.examTypes, className, grouped.overallAverage)}
       <hr class="rc-hr-light" />
 
       ${trendSection}
