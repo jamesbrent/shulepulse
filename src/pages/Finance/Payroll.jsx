@@ -62,6 +62,8 @@ export default function PayrollPage({ initialTab }) {
   const [runs, setRuns] = useState([])
   const [payRequests, setPayRequests] = useState([])
   const [reqJournalLines, setReqJournalLines] = useState({})
+  const [payCorrections, setPayCorrections] = useState({})
+  const [fixingReq, setFixingReq] = useState(null)
   const [staff, setStaff] = useState([])
   const [teachers, setTeachers] = useState([])
 
@@ -128,6 +130,18 @@ export default function PayrollPage({ initialTab }) {
         })
       }
       setReqJournalLines(linesByJe)
+      let corrMap = {}
+      if (reqIds.length) {
+        const { data: corrRes } = await supabase
+          .from('journal_entries')
+          .select('reference_id')
+          .eq('school_id', schoolId)
+          .eq('source', 'payroll')
+          .eq('reference_type', 'payroll_payment_correction')
+          .in('reference_id', reqIds)
+        ;(corrRes || []).forEach((j) => { corrMap[j.reference_id] = true })
+      }
+      setPayCorrections(corrMap)
       const { data: coaRes } = await supabase
         .from('chart_of_accounts')
         .select('id, code, name, type, category')
@@ -581,6 +595,44 @@ export default function PayrollPage({ initialTab }) {
 
   const isCashBankAccount = (acc) => !!acc && (acc.category || '').toLowerCase() === 'cash & bank'
 
+  // Posted salary payments whose GL credit did not land on the method's cash
+  // account (old code always credited the mapped Bank). These never moved the
+  // Cash & Bank dashboard, so we can detect and repair them here.
+  const misplacedPayments = () =>
+    payRequests
+      .filter((r) => r.journal_entry_id && !payCorrections[r.id])
+      .map((r) => {
+        const credited = glCreditAccount(r)
+        const shouldBe = disbursementAccount(r)
+        if (!credited || !shouldBe) return null
+        const wrong = credited.id !== shouldBe.id || !isCashBankAccount(credited)
+        return wrong ? { req: r, credited, shouldBe } : null
+      })
+      .filter(Boolean)
+
+  const fixMisplacement = async (item) => {
+    const { req, credited, shouldBe } = item
+    if (fixingReq || payCorrections[req.id]) return
+    setFixingReq(req.id)
+    try {
+      const je = await postToJournal(supabase, {
+        schoolId, userId, entry_date: TODAY,
+        description: `Correct salary payment ${req.request_no}: ${credited.code} ${credited.name} → ${shouldBe.code} ${shouldBe.name}`,
+        source: 'payroll', reference_type: 'payroll_payment_correction', reference_id: req.id,
+        lines: [
+          { account_id: credited.id, debit: Number(req.amount), notes: 'Reverse misplaced salary credit' },
+          { account_id: shouldBe.id, credit: Number(req.amount), notes: `Re-allocated to ${shouldBe.code} ${shouldBe.name}` },
+        ],
+      })
+      await writeAudit(supabase, {
+        schoolId, action: 'salary_payment_corrected',
+        details: { request_id: req.id, journal_id: je.id, amount: req.amount, from: credited.code, to: shouldBe.code },
+      })
+      showToast(`Corrected ${req.request_no} → ${shouldBe.code} ${shouldBe.name} (${je.entry_no})`)
+      load()
+    } catch (e) { showToast(e.message, false) } finally { setFixingReq(null) }
+  }
+
   // ─── Export ────────────────────────────────────────────────────────────────
   const exportRun = (run) => {
     const rows = (run.payroll_lines || []).map((l) => [
@@ -941,6 +993,37 @@ export default function PayrollPage({ initialTab }) {
           <div className="prl-toolbar">
             <p className="prl-hint" style={{ margin: 0 }}>Net pay disbursement workflow — bursar initiates, admin approves, then post to the bank.</p>
           </div>
+          {misplacedPayments().length > 0 && (
+            <div className="prl-run-warn" style={{ margin: '0 0 14px', borderColor: 'rgba(220,38,38,.35)' }}>
+              <div className="prl-run-warn-title">Cash & Bank reconciliation — {misplacedPayments().length} posted payment{misplacedPayments().length > 1 ? 's' : ''} never moved the dashboard</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                {misplacedPayments().map(({ req, credited, shouldBe }) => (
+                  <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <span className="prl-mono" style={{ fontWeight: 600 }}>{req.request_no}</span>
+                    <span style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(req.amount)}</span>
+                    <span className="prl-cap" style={{ color: '#f87171' }}>went to {credited.code} — {credited.name}</span>
+                    <span style={{ color: '#94a3b8' }}>→</span>
+                    <span className="prl-cap" style={{ color: '#4ade80' }}>{shouldBe.code} — {shouldBe.name}</span>
+                    <button
+                      className="prl-btn-primary"
+                      disabled={fixingReq === req.id}
+                      onClick={() => fixMisplacement({ req, credited, shouldBe })}
+                    >{fixingReq === req.id ? 'Posting…' : 'Move to source'}</button>
+                    <span style={{ color: '#cbd5e1', fontSize: 12 }}>{payCorrections[req.id] ? 'already corrected' : ''}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="prl-hint" style={{ margin: '12px 0 0', color: '#fca5a5' }}>
+                Each fix posts a correcting transfer: <b>Dr</b> {misplacedPayments()[0]?.credited.code} (undo the credit) → <b>Cr</b> the correct source account, so the Cash &amp; Bank dashboard moves the moment you post.
+              </p>
+            </div>
+          )}
+          {payRequests.some((r) => r.journal_entry_id) && misplacedPayments().length === 0 && (
+            <div className="prl-run-warn" style={{ margin: '0 0 14px', borderColor: 'rgba(34,197,94,.35)' }}>
+              <span style={{ color: '#4ade80', fontWeight: 600 }}>✓ All posted salary payments credit a Cash &amp; Bank account</span>
+              <span className="prl-hint" style={{ marginLeft: 8 }}>— the dashboard reflects them.</span>
+            </div>
+          )}
           <div className="prl-card">
             <table className="prl-table">
               <thead>
