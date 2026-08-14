@@ -161,6 +161,7 @@ ${REPORT_CARD_STYLES}
   .rc-page-break { page-break-after: always; break-after: page; }
   .rc-page-break:last-child { page-break-after: auto; break-after: auto; }
 }
+@page { size: A4 portrait; margin: 10mm; }
 </style></head><body>${entriesHtml}</body></html>`
 }
 

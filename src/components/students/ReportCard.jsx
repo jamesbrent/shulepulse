@@ -58,13 +58,20 @@ export function groupGradesBySubject(grades) {
       const score = g.total_score || 0
       const sba = g.sba_score ?? g.cat_score ?? 0
       const summ = g.summative_score ?? g.exam_score ?? 0
+      const maxMarksRaw = Number(g.max_marks) || 100
+      const storedRaw = g.exam_type === 'End Term' ? g.exam_score : g.cat_score
+      const rawMarks = storedRaw != null && Number(storedRaw) > 0
+        ? Number(storedRaw)
+        : Math.round((Number(g.total_score) / 100) * maxMarksRaw)
       const maxMarks = 100
-      const weight = g.max_marks || 100
+      const weight = maxMarksRaw
       return {
         name: examName,
         score,
         maxMarks,
         weight,
+        rawMarks,
+        maxMarksRaw,
         sba,
         summ,
         marks: g.total_score || 0,
@@ -127,14 +134,14 @@ export const REPORT_CARD_STYLES = `
     .rc-wrap, .rc-wrap * { box-sizing: border-box; margin: 0; padding: 0; }
     .rc-wrap {
       font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
-      font-size: 11px;
+      font-size: 10px;
       color: #1a1a1a;
       background: #fff;
       line-height: 1.5;
-      width: 85%;
-      max-width: 720px;
+      width: 100%;
+      max-width: 800px;
       margin: 0 auto;
-      padding: 24px 28px;
+      padding: 16px 20px;
     }
     .rc-top { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
     .rc-logo-box {
@@ -159,15 +166,15 @@ export const REPORT_CARD_STYLES = `
     .rc-hr { border: none; border-top: 2px solid #1e293b; margin: 10px 0; }
     .rc-hr-light { border: none; border-top: 1px solid #e2e8f0; margin: 10px 0; }
 
-    .rc-section-title { font-size: 12px; font-weight: 800; color: #0f172a; margin: 12px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .rc-section-title { font-size: 11px; font-weight: 800; color: #0f172a; margin: 10px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
     table.gtbl { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 6px; }
     table.gtbl th {
-      background: #1e293b; border: 1px solid #94a3b8; padding: 6px 6px;
+      background: #1e293b; border: 1px solid #94a3b8; padding: 5px 6px;
       text-align: center; font-weight: 700; font-size: 9px; color: #fff;
     }
     table.gtbl th.left { text-align: left; }
-    table.gtbl td { border: 1px solid #cbd5e1; padding: 5px 6px; text-align: center; color: #1e293b; font-size: 10px; }
+    table.gtbl td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: center; color: #1e293b; font-size: 10px; }
     table.gtbl td.left { text-align: left; }
     table.gtbl tbody tr:nth-child(even) td { background: #f8fafc; }
     .band-chip { font-weight: 700; }
@@ -175,18 +182,20 @@ export const REPORT_CARD_STYLES = `
     .chip-me { color: #1e40af; }
     .chip-ae { color: #92400e; }
     .chip-be { color: #991b1b; }
+    .rc-pts { font-size: 8.5px; color: #64748b; font-weight: 600; }
+    .rc-label { font-size: 8.5px; color: #475569; }
 
     .rc-comments {
       display: grid; grid-template-columns: 1fr 1fr; gap: 0;
-      margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden;
+      margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden;
     }
-    .rc-comment-cell { padding: 10px 12px; border-right: 1px solid #cbd5e1; }
+    .rc-comment-cell { padding: 8px 10px; border-right: 1px solid #cbd5e1; }
     .rc-comment-cell:last-child { border-right: none; }
     .rc-comment-label {
       font-size: 10px; font-weight: 700; text-align: center;
-      border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px; color: #1e293b;
+      border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 5px; color: #1e293b;
     }
-    .rc-comment-text { font-size: 10px; color: #334155; min-height: 36px; line-height: 1.6; }
+    .rc-comment-text { font-size: 10px; color: #334155; min-height: 28px; line-height: 1.6; }
     .rc-sig-line { border-bottom: 1px solid #94a3b8; height: 20px; display: block; width: 100%; }
 
     .rc-trend-table { width: 100%; border-collapse: collapse; font-size: 9px; margin: 8px 0; }
@@ -241,26 +250,26 @@ const CHART_COLORS = [
 
 function buildSummaryCardsHtml(totalMarks, totalMax, overallAvg, totalSubjects, className, rankInfo) {
   const grade = getCBEGrade(overallAvg, className)
-  const bandDisplay = grade.band || '—'
+  const resolved = grade.status !== 'unresolved' && grade.status !== 'pending'
+  const bandDisplay = resolved && grade.band ? grade.band : '—'
+  const pts = resolved && grade.points != null ? `${grade.points} pts` : ''
+  const label = resolved ? grade.label : ''
   const rankText = rankInfo ? `${rankInfo.rank} / ${rankInfo.total}` : '— / —'
+  const chipCls = bandDisplay !== '—' ? `class="band-chip ${chipClass(bandDisplay)}"` : 'class="band-chip"'
   return `
-    <div class="rc-section-title">Summary</div>
+    <div class="rc-section-title">Overall Summary</div>
     <table class="gtbl">
       <thead><tr>
-        <th>Total Marks</th>
-        <th>Overall Average</th>
-        <th>Performance Level</th>
-        <th>Class Rank</th>
+        <th>Overall Total</th>
+        <th>Overall Achievement</th>
+        <th>Class Position</th>
         <th>Subjects Assessed</th>
-        <th>Remark</th>
       </tr></thead>
       <tbody><tr>
-        <td style="font-weight:700">${Math.round(overallAvg)}/${totalSubjects > 0 ? totalSubjects * 100 : 100}</td>
-        <td style="font-weight:700">${overallAvg}%</td>
-        <td><span class="band-chip ${chipClass(bandDisplay)}">${bandDisplay}</span></td>
+        <td style="font-weight:700">${Math.round(overallAvg)} / 100</td>
+        <td><span ${chipCls}>${bandDisplay}</span>${pts ? ` <span class="rc-pts">${pts}</span>` : ''}${label ? `<div class="rc-label">${label}</div>` : ''}</td>
         <td>${rankText}</td>
         <td>${totalSubjects}</td>
-        <td>${grade.label || '—'}</td>
       </tr></tbody>
     </table>`
 }
@@ -307,35 +316,38 @@ function buildGradingLegendHtml(className) {
 function buildSubjectTableHtml(subjects, examTypes, className) {
   const rows = subjects.map((sub, i) => {
     const cbe = getCBEGrade(sub.average, className)
-    const bandDisplay = cbe.band || '—'
+    const resolved = cbe.status !== 'unresolved' && cbe.status !== 'pending'
+    const bandDisplay = resolved && cbe.band ? cbe.band : '—'
+    const pts = resolved && cbe.points != null ? ` · ${cbe.points}pts` : ''
+    const chipCls = bandDisplay !== '—' ? `class="band-chip ${chipClass(bandDisplay)}"` : 'class="band-chip"'
     const assessCells = examTypes.map(et => {
       const a = sub.assessments.find(x => x.name === et)
-      return `<td>${a ? `${Math.round(a.score)}/100` : '—'}</td>`
+      return `<td>${a ? `${Math.round(a.rawMarks)}/${a.maxMarksRaw}` : '—'}</td>`
     }).join('')
     return `<tr>
       <td class="left" style="font-weight:600">${i + 1}</td>
       <td class="left">${sub.name}</td>
       ${assessCells}
       <td style="font-weight:700">${Math.round(sub.average)}/100</td>
-      <td style="font-weight:700">${sub.average}%</td>
-      <td><span class="band-chip ${chipClass(bandDisplay)}">${bandDisplay}</span></td>
-      <td class="left" style="font-size:8.5px">${cbe.label || '—'}</td>
-      <td style="font-size:8px">${sub.teacher || '—'}</td>
+      <td><span ${chipCls}>${bandDisplay}</span>${pts ? `<span class="rc-pts">${pts}</span>` : ''}</td>
+      <td class="left" style="font-size:8px">${sub.teacher || '—'}</td>
     </tr>`
   }).join('')
 
-  const assessHeaders = examTypes.map(et => `<th>${et}</th>`).join('')
+  const assessHeaders = examTypes.map(et => {
+    const found = subjects.map(s => s.assessments.find(x => x.name === et)).find(Boolean)
+    const max = found ? found.maxMarksRaw : 100
+    return `<th>${et}<br/><span style="font-weight:400">/${max}</span></th>`
+  }).join('')
   return `
     <div class="rc-section-title">Subject Performance</div>
     <table class="gtbl">
       <thead><tr>
-        <th style="width:24px">#</th>
+        <th style="width:22px">#</th>
         <th class="left">Subject</th>
         ${assessHeaders}
-        <th>Marks</th>
-        <th>Average</th>
-        <th>Level</th>
-        <th>Comment</th>
+        <th>Total<br/><span style="font-weight:400">/100</span></th>
+        <th>Achievement Level</th>
         <th>Teacher</th>
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -499,7 +511,7 @@ export function ReportCard({
   const handlePrint = () => {
     const content = printRef.current.innerHTML
     const win = window.open('', '_blank')
-    const printCSS = REPORT_CARD_STYLES + 'body { margin: 0; padding: 0; } @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; } body { margin: 0; padding: 0; } .rc-wrap { width: 100%; padding: 12px 16px; } }'
+    const printCSS = REPORT_CARD_STYLES + 'body { margin: 0; padding: 0; } @page { size: A4 portrait; margin: 10mm; } @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; } body { margin: 0; padding: 0; } .rc-wrap { width: 100%; padding: 8px 12px; } }'
     win.document.write(`<html><head><title>Student Transcript – ${student.full_name}</title>
       <style>${printCSS}</style></head><body>${content}</body></html>`)
     win.document.close()
@@ -539,7 +551,7 @@ export function ReportCard({
                 {school?.logo_url ? <img src={school.logo_url} alt="logo" /> : <span className="rc-logo-placeholder">{school?.name?.slice(0,4).toUpperCase() || 'SCH'}</span>}
               </div>
               <div className="rc-school-block">
-                <div className="rc-transcript-label">Student Transcript</div>
+                <div className="rc-transcript-label">Student Report Card</div>
                 <div className="rc-school-name">{school?.name || 'School Name'}</div>
                 {school?.phone && <div className="rc-school-contact">Tel: {school.phone}{school.email ? `  •  ${school.email}` : ''}</div>}
                 <hr className="rc-hr" />
@@ -635,6 +647,9 @@ const INLINE_RULES = [
   ['chip-me', 'color:#1e40af;font-weight:700'],
   ['chip-ae', 'color:#92400e;font-weight:700'],
   ['chip-be', 'color:#991b1b;font-weight:700'],
+  ['rc-pts', 'font-size:8.5px;color:#64748b;font-weight:600'],
+  ['rc-label', 'font-size:8.5px;color:#475569'],
+  ['rc-chart-wrap', 'width:100%;margin:8px 0;overflow-x:auto'],
 ]
 
 const TABLE_INLINE = {
@@ -707,31 +722,7 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
   const className = student?.class || ''
   const grouped = groupGradesBySubject(grades)
 
-  const subjectRows = grouped.subjects.map((sub, i) => {
-    const cbe = getCBEGrade(sub.average, className)
-    const bandDisplay = cbe.band || '—'
-    const assessCells = grouped.examTypes.map(et => {
-      const a = sub.assessments.find(x => x.name === et)
-      return `<td>${a ? `${Math.round(a.score)}/100` : '—'}</td>`
-    }).join('')
-    return `<tr>
-      <td class="left" style="font-weight:600">${i + 1}</td>
-      <td class="left">${sub.name}</td>
-      ${assessCells}
-      <td style="font-weight:700">${Math.round(sub.average)}/100</td>
-      <td style="font-weight:700">${sub.average}%</td>
-      <td><span class="band-chip ${chipClass(bandDisplay)}">${bandDisplay}</span></td>
-      <td class="left" style="font-size:8.5px">${cbe.label || '—'}</td>
-      <td style="font-size:8px">${sub.teacher || '—'}</td>
-    </tr>`
-  }).join('')
-
-  const assessHeaders = grouped.examTypes.map(et => `<th>${et}</th>`).join('')
-
-  const grade = getCBEGrade(grouped.overallAverage, className)
-  const avgBand = grade.band || '—'
   const rankInfo = extraData.classRank || null
-  const rankText = rankInfo ? `${rankInfo.rank} / ${rankInfo.total}` : '— / —'
 
   const trendSvg = grouped.examTypes.length >= 2
     ? buildTrendChartSvg(grouped.subjects, grouped.examTypes)
@@ -758,31 +749,7 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
     <hr class="rc-hr-light" />
     ${historyHtml}` : ''
 
-  const level = getCBELevel(className)
-  let legendHtml = ''
-  if (level === 'early') {
-    legendHtml = `<div class="rc-legend"><div class="rc-legend-title">Grading Scale</div><div class="rc-legend-grid">
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#166534">EE</span> Exceeding Expectations</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">ME</span> Meeting Expectations</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">AE</span> Approaching Expectations</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">BE</span> Below Expectations</div>
-    </div></div>`
-  } else if (level === 'middle') {
-    legendHtml = `<div class="rc-legend"><div class="rc-legend-title">Grading Scale</div><div class="rc-legend-grid">
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#166534">EE1</span> Exceptional (90–100)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#166534">EE2</span> Very Good (75–89)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">ME1</span> Good (58–74)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#1e40af">ME2</span> Fair (41–57)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">AE1</span> Needs Improvement (31–40)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#92400e">AE2</span> Below Average (21–30)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">BE1</span> Well Below Avg (11–20)</div>
-      <div class="rc-legend-item"><span class="rc-legend-band" style="color:#991b1b">BE2</span> Minimal Competence (0–10)</div>
-    </div></div>`
-  } else {
-    legendHtml = `<div class="rc-legend"><div class="rc-legend-title">Grading Scale</div><div class="rc-legend-grid">
-      <div class="rc-legend-item" style="color:#475569">Senior grades pending verification — scale to be confirmed.</div>
-    </div></div>`
-  }
+  const legendHtml = buildGradingLegendHtml(className)
 
   return `
     <div class="rc-wrap">
@@ -794,7 +761,7 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
           }
         </div>
         <div class="rc-school-block">
-          <div class="rc-transcript-label">Student Transcript</div>
+          <div class="rc-transcript-label">Student Report Card</div>
           <div class="rc-school-name">${school?.name || 'School Name'}</div>
           ${school?.phone ? `<div class="rc-school-contact">Tel: ${school.phone}${school.email ? `  •  ${school.email}` : ''}</div>` : ''}
           <hr class="rc-hr" />
@@ -810,41 +777,10 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
       </div>
       <hr class="rc-hr" />
 
-      <div class="rc-section-title">Summary</div>
-      <table class="gtbl">
-        <thead><tr>
-          <th>Total Marks</th>
-          <th>Overall Average</th>
-          <th>Performance Level</th>
-          <th>Class Rank</th>
-          <th>Subjects Assessed</th>
-          <th>Remark</th>
-        </tr></thead>
-        <tbody><tr>
-          <td style="font-weight:700">${Math.round(grouped.overallAverage)}/${grouped.totalSubjects > 0 ? grouped.totalSubjects * 100 : 100}</td>
-          <td style="font-weight:700">${grouped.overallAverage}%</td>
-          <td><span class="band-chip ${chipClass(avgBand)}">${avgBand}</span></td>
-          <td>${rankText}</td>
-          <td>${grouped.totalSubjects}</td>
-          <td>${grade.label || '—'}</td>
-        </tr></tbody>
-      </table>
+      ${buildSummaryCardsHtml(grouped.totalMarks, grouped.totalMax, grouped.overallAverage, grouped.totalSubjects, className, rankInfo)}
       <hr class="rc-hr-light" />
 
-      <div class="rc-section-title">Subject Performance</div>
-      <table class="gtbl">
-        <thead><tr>
-          <th style="width:24px">#</th>
-          <th class="left">Subject</th>
-          ${assessHeaders}
-          <th>Marks</th>
-          <th>Average</th>
-          <th>Level</th>
-          <th>Comment</th>
-          <th>Teacher</th>
-        </tr></thead>
-        <tbody>${subjectRows}</tbody>
-      </table>
+      ${buildSubjectTableHtml(grouped.subjects, grouped.examTypes, className)}
       <hr class="rc-hr-light" />
 
       ${trendSection}
