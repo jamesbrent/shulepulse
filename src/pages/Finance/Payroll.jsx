@@ -24,6 +24,17 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const monthLabel = (m, y) => `${MONTHS[(Number(m)||1)-1]} ${y}`
 const roleLabel = (r) => r ? r.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : ''
 
+const PAY_BADGES = {
+  initiated: { label: 'Pending',  color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+  reviewed:  { label: 'Reviewed', color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
+  approved:  { label: 'Approved', color: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe' },
+  processed: { label: 'Processed', color: '#0e7490', bg: '#ecfeff', border: '#a5f3fc' },
+  posted:    { label: 'Posted',   color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
+  cancelled: { label: 'Cancelled', color: '#b91c1c', bg: '#fef2f2', border: '#fecaca' },
+}
+const RECON_BADGE = { label: 'Needs reconciliation', color: '#b45309', bg: '#fffbeb', border: '#f59e0b' }
+const statusBadge = (status) => PAY_BADGES[status] || { label: status || '—', color: '#6b7280', bg: '#f9fafb', border: '#e5e7eb' }
+
 const blankEmployee = () => ({
   employee_no: '', profile_id: '', staff_type: 'teaching', job_title: '',
   department: '', basic_salary: '', kra_pin: '', shif_no: '', nssf_no: '',
@@ -70,6 +81,12 @@ export default function PayrollPage({ initialTab }) {
   const [search, setSearch] = useState('')
   const [selectedRun, setSelectedRun] = useState(null)
   const [payslipLine, setPayslipLine] = useState(null)
+
+  // Salary Payments filters
+  const [paySearch, setPaySearch] = useState('')
+  const [payStatusFilter, setPayStatusFilter] = useState('')
+  const [payRunFilter, setPayRunFilter] = useState('')
+  const [payMethodFilter, setPayMethodFilter] = useState('')
 
   // accounting integration (Payroll → Chart of Accounts mapping)
   const [glAccounts, setGlAccounts] = useState([])
@@ -573,6 +590,8 @@ export default function PayrollPage({ initialTab }) {
     return glAccounts.find((a) => a.id === id)
   }
 
+  const isCashBankAccount = (acc) => !!acc && (acc.category || '').toLowerCase() === 'cash & bank'
+
   // The GL account a salary payment is disbursed from, driven by the payment
   // method: cash → Petty Cash (1010), mobile → Mobile Money (1030), otherwise
   // the school's mapped Bank / Cash Disbursement account (default 1020). This
@@ -582,7 +601,9 @@ export default function PayrollPage({ initialTab }) {
     const method = req?.payment_method || 'bank'
     if (method === 'cash') return glAccounts.find((a) => a.code === '1010')
     if (method === 'mobile') return glAccounts.find((a) => a.code === '1030')
-    return mappedAccountLabel('bank')
+    const mapped = mappedAccountLabel('bank')
+    if (mapped && isCashBankAccount(mapped)) return mapped
+    return glAccounts.find((a) => a.code === '1020')
   }
 
   // The account the posted salary journal ACTUALLY credited (what the money
@@ -593,22 +614,39 @@ export default function PayrollPage({ initialTab }) {
     return cr?.chart_of_accounts || null
   }
 
-  const isCashBankAccount = (acc) => !!acc && (acc.category || '').toLowerCase() === 'cash & bank'
+  // True when this posted payment's GL credit did not land on the method's
+  // cash/bank source account (old code always credited the mapped Bank). These
+  // never moved the Cash & Bank dashboard, so we can detect and repair them.
+  const misplacementFor = (r) => {
+    if (!r.journal_entry_id || payCorrections[r.id]) return null
+    const credited = glCreditAccount(r)
+    const shouldBe = disbursementAccount(r)
+    if (!credited || !shouldBe) return null
+    const wrong = credited.id !== shouldBe.id || !isCashBankAccount(credited)
+    return wrong ? { req: r, credited, shouldBe } : null
+  }
 
-  // Posted salary payments whose GL credit did not land on the method's cash
-  // account (old code always credited the mapped Bank). These never moved the
-  // Cash & Bank dashboard, so we can detect and repair them here.
-  const misplacedPayments = () =>
-    payRequests
-      .filter((r) => r.journal_entry_id && !payCorrections[r.id])
-      .map((r) => {
-        const credited = glCreditAccount(r)
-        const shouldBe = disbursementAccount(r)
-        if (!credited || !shouldBe) return null
-        const wrong = credited.id !== shouldBe.id || !isCashBankAccount(credited)
-        return wrong ? { req: r, credited, shouldBe } : null
-      })
-      .filter(Boolean)
+  const misplacedPayments = () => payRequests.map(misplacementFor).filter(Boolean)
+
+  const payRunOptions = useMemo(
+    () => [...new Set(payRequests.map((r) => r.payroll_runs?.run_label).filter(Boolean))],
+    [payRequests]
+  )
+
+  const filteredRequests = useMemo(() => {
+    const q = paySearch.trim().toLowerCase()
+    return payRequests.filter((r) => {
+      if (payStatusFilter && r.status !== payStatusFilter) return false
+      if (payRunFilter && (r.payroll_runs?.run_label || '') !== payRunFilter) return false
+      if (payMethodFilter && r.payment_method !== payMethodFilter) return false
+      if (q && !`${r.request_no} ${r.reference_no || ''}`.toLowerCase().includes(q)) return false
+      return true
+    })
+  }, [payRequests, paySearch, payStatusFilter, payRunFilter, payMethodFilter])
+
+  const needsRecon = misplacedPayments()
+  const hasPostedRequests = payRequests.some((r) => r.journal_entry_id)
+
 
   const fixMisplacement = async (item) => {
     const { req, credited, shouldBe } = item
@@ -991,86 +1029,130 @@ export default function PayrollPage({ initialTab }) {
       {tab === 'payments' && (
         <div className="prl-section">
           <div className="prl-toolbar">
-            <p className="prl-hint" style={{ margin: 0 }}>Net pay disbursement workflow — bursar initiates, admin approves, then post to the bank.</p>
+            <p className="prl-hint" style={{ margin: 0 }}>Net pay disbursement workflow — bursar initiates, admin approves, then post to the GL.</p>
           </div>
-          {misplacedPayments().length > 0 && (
-            <div className="prl-run-warn" style={{ margin: '0 0 14px', borderColor: 'rgba(220,38,38,.35)' }}>
-              <div className="prl-run-warn-title">Cash & Bank reconciliation — {misplacedPayments().length} posted payment{misplacedPayments().length > 1 ? 's' : ''} never moved the dashboard</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-                {misplacedPayments().map(({ req, credited, shouldBe }) => (
-                  <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <span className="prl-mono" style={{ fontWeight: 600 }}>{req.request_no}</span>
-                    <span style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(req.amount)}</span>
-                    <span className="prl-cap" style={{ color: '#f87171' }}>went to {credited.code} — {credited.name}</span>
-                    <span style={{ color: '#94a3b8' }}>→</span>
-                    <span className="prl-cap" style={{ color: '#4ade80' }}>{shouldBe.code} — {shouldBe.name}</span>
-                    <button
-                      className="prl-btn-primary"
-                      disabled={fixingReq === req.id}
-                      onClick={() => fixMisplacement({ req, credited, shouldBe })}
-                    >{fixingReq === req.id ? 'Posting…' : 'Move to source'}</button>
-                    <span style={{ color: '#cbd5e1', fontSize: 12 }}>{payCorrections[req.id] ? 'already corrected' : ''}</span>
-                  </div>
-                ))}
+
+          {needsRecon.length > 0 && (
+            <div className="prl-recon-card">
+              <div className="prl-recon-head">
+                <span className="prl-recon-icon"><AlertTriangle size={15} /></span>
+                <div className="prl-recon-copy">
+                  <h4>Accounting Reconciliation Required</h4>
+                  <p>
+                    <strong>{needsRecon.length}</strong> payment{needsRecon.length > 1 ? 's' : ''} require reconciliation —
+                    these were posted to <strong>{needsRecon[0].credited.code} {needsRecon[0].credited.name}</strong> instead of the
+                    selected Cash/Bank/Mobile Money source account. Review the affected transactions.
+                  </p>
+                </div>
               </div>
-              <p className="prl-hint" style={{ margin: '12px 0 0', color: '#fca5a5' }}>
-                Each fix posts a correcting transfer: <b>Dr</b> {misplacedPayments()[0]?.credited.code} (undo the credit) → <b>Cr</b> the correct source account, so the Cash &amp; Bank dashboard moves the moment you post.
+              <div className="prl-table-wrap">
+                <table className="prl-table prl-recon-table">
+                  <thead>
+                    <tr><th>Request</th><th>Payroll Run</th><th className="prl-th-right">Amount</th><th>Current GL Account</th><th>Correct Source</th><th className="prl-th-right">Action</th></tr>
+                  </thead>
+                  <tbody>
+                    {needsRecon.map(({ req, credited, shouldBe }) => (
+                      <tr key={req.id}>
+                        <td className="prl-mono">{req.request_no}</td>
+                        <td>{req.payroll_runs?.run_label || '—'}</td>
+                        <td className="prl-amount">{fmt(req.amount)}</td>
+                        <td><span className="prl-gl-acc">{credited.code} — {credited.name}</span></td>
+                        <td><span className="prl-gl-acc prl-gl-ok">{shouldBe.code} — {shouldBe.name}</span></td>
+                        <td className="prl-actions-cell">
+                          <button
+                            className="prl-btn-secondary prl-btn-sm"
+                            disabled={fixingReq === req.id}
+                            onClick={() => fixMisplacement({ req, credited, shouldBe })}
+                          >{fixingReq === req.id ? 'Posting…' : 'Fix'}</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="prl-recon-note">
+                Each fix posts a balanced correcting transfer (Dr the wrong account → Cr the correct source) so the Cash &amp; Bank dashboard reflects the true disbursement. Wages Payable is left untouched.
               </p>
             </div>
           )}
-          {payRequests.some((r) => r.journal_entry_id) && misplacedPayments().length === 0 && (
-            <div className="prl-run-warn" style={{ margin: '0 0 14px', borderColor: 'rgba(34,197,94,.35)' }}>
-              <span style={{ color: '#4ade80', fontWeight: 600 }}>✓ All posted salary payments credit a Cash &amp; Bank account</span>
-              <span className="prl-hint" style={{ marginLeft: 8 }}>— the dashboard reflects them.</span>
-            </div>
+
+          {hasPostedRequests && needsRecon.length === 0 && (
+            <div className="prl-recon-ok"><CheckCircle size={14} /> All posted salary payments credit a Cash &amp; Bank account — the dashboard reflects them.</div>
           )}
+
+          <div className="prl-filters">
+            <div className="prl-search-wrap prl-filter-search">
+              <Search size={15} />
+              <input
+                placeholder="Search request no. or reference…"
+                value={paySearch}
+                onChange={(e) => setPaySearch(e.target.value)}
+              />
+            </div>
+            <select className="prl-select prl-filter-select" value={payStatusFilter} onChange={(e) => setPayStatusFilter(e.target.value)}>
+              <option value="">All statuses</option>
+              {PAYMENT_STATUSES.map((s) => <option key={s.value} value={s.value}>{statusBadge(s.value).label}</option>)}
+            </select>
+            <select className="prl-select prl-filter-select" value={payRunFilter} onChange={(e) => setPayRunFilter(e.target.value)}>
+              <option value="">All runs</option>
+              {payRunOptions.map((label) => <option key={label} value={label}>{label}</option>)}
+            </select>
+            <select className="prl-select prl-filter-select" value={payMethodFilter} onChange={(e) => setPayMethodFilter(e.target.value)}>
+              <option value="">All methods</option>
+              {PAY_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select>
+            <span className="prl-filter-count">{filteredRequests.length} of {payRequests.length}</span>
+          </div>
+
           <div className="prl-card">
-            <table className="prl-table">
-              <thead>
-                <tr><th>Request No.</th><th>Run</th><th>Amount</th><th>Method</th><th>Disbursed From</th><th>GL Credit</th><th>Reference</th><th>Status</th><th></th></tr>
-              </thead>
-              <tbody>
-                {payRequests.length === 0 && (
-                  <tr><td colSpan="9" className="prl-norows">No payment requests — open a posted run and click "Initiate Payment".</td></tr>
-                )}
-                {payRequests.map((r) => {
-                  const st = paymentStatus(r.status)
-                  const disbursed = disbursementAccount(r)
-                  const glCr = glCreditAccount(r)
-                  const glCrIsCash = isCashBankAccount(glCr)
-                  return (
-                    <tr key={r.id}>
-                      <td className="prl-mono">{r.request_no}</td>
-                      <td>{r.payroll_runs?.run_label || '—'}</td>
-                      <td style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(r.amount)}</td>
-                      <td className="prl-cap">{PAY_METHODS.find((m) => m.value === r.payment_method)?.label || r.payment_method}</td>
-                      <td>{disbursed ? <span className="prl-cap">{disbursed.name}</span> : <span style={{ color: '#94a3b8' }}>—</span>}</td>
-                      <td>
-                        {glCr ? (
-                          <span title={`Journal ${r.journal_entry_id}`}>
-                            <span className="prl-cap">{glCr.code} — {glCr.name}</span>
-                            {!glCrIsCash && <span className="prl-badge" style={{ background: '#fef2f21a', color: '#dc2626', marginLeft: 6 }}>not cash/bank</span>}
-                          </span>
-                        ) : (
-                          <span style={{ color: '#94a3b8' }}>—</span>
-                        )}
-                      </td>
-                      <td className="prl-mono">{r.reference_no || '—'}</td>
-                      <td><span className="prl-badge" style={{ background: `${st.color}1a`, color: st.color }}>{st.label}</span></td>
-                      <td className="prl-actions-cell">
-                        {r.status === 'initiated' && <button className="prl-btn-secondary" onClick={() => advanceRequest(r, 'reviewed')}>Review</button>}
-                        {r.status === 'reviewed' && (
-                          <button className="prl-btn-primary" onClick={() => advanceRequest(r, 'approved', { approved_by: userId, approved_at: new Date().toISOString() })} disabled={!isAdmin} title={isAdmin ? '' : 'Admin approval required'}>Approve</button>
-                        )}
-                        {r.status === 'approved' && <button className="prl-btn-primary" onClick={() => advanceRequest(r, 'processed', { processed_by: userId, processed_at: new Date().toISOString() })}>Process</button>}
-                        {r.status === 'processed' && <button className="prl-btn-primary" onClick={() => postRequest(r)}>Post to GL</button>}
-                        {r.status === 'posted' && <span className="prl-paid-note"><CheckCircle size={14} /> Posted</span>}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <div className="prl-table-wrap">
+              <table className="prl-table">
+                <thead>
+                  <tr><th>Request No.</th><th>Payroll Run</th><th className="prl-th-right">Amount</th><th>Method</th><th>Disbursed From</th><th>GL Account</th><th>Reference</th><th>Status</th><th className="prl-th-right">Action</th></tr>
+                </thead>
+                <tbody>
+                  {filteredRequests.length === 0 && (
+                    <tr><td colSpan="9" className="prl-norows">{payRequests.length === 0 ? 'No payment requests — open a posted run and click "Initiate Payment".' : 'No payments match the current filters.'}</td></tr>
+                  )}
+                  {filteredRequests.map((r) => {
+                    const disp = disbursementAccount(r)
+                    const glCr = glCreditAccount(r)
+                    const m = misplacementFor(r)
+                    const badge = m ? RECON_BADGE : statusBadge(r.status)
+                    return (
+                      <tr key={r.id}>
+                        <td className="prl-mono">{r.request_no}</td>
+                        <td>{r.payroll_runs?.run_label || '—'}</td>
+                        <td className="prl-amount">{fmt(r.amount)}</td>
+                        <td className="prl-cap">{PAY_METHODS.find((x) => x.value === r.payment_method)?.label || r.payment_method}</td>
+                        <td>{disp ? <span className="prl-cap">{disp.name}</span> : <span className="prl-muted">—</span>}</td>
+                        <td>
+                          {glCr ? (
+                            <span className="prl-gl" title={`Journal ${r.journal_entry_id}`}>
+                              <span className="prl-gl-acc">{glCr.code} — {glCr.name}</span>
+                              {m && <span className="prl-gl-warn"><AlertTriangle size={11} /> Expected: {m.shouldBe.code} {m.shouldBe.name}</span>}
+                            </span>
+                          ) : (
+                            <span className="prl-muted">—</span>
+                          )}
+                        </td>
+                        <td className="prl-mono">{r.reference_no || '—'}</td>
+                        <td><span className="prl-status-badge" style={{ color: badge.color, background: badge.bg, borderColor: badge.border }}>{badge.label}</span></td>
+                        <td className="prl-actions-cell">
+                          {r.status === 'initiated' && <button className="prl-btn-secondary prl-btn-sm" onClick={() => advanceRequest(r, 'reviewed')}>Review</button>}
+                          {r.status === 'reviewed' && (
+                            <button className="prl-btn-primary prl-btn-sm" onClick={() => advanceRequest(r, 'approved', { approved_by: userId, approved_at: new Date().toISOString() })} disabled={!isAdmin} title={isAdmin ? '' : 'Admin approval required'}>Approve</button>
+                          )}
+                          {r.status === 'approved' && <button className="prl-btn-primary prl-btn-sm" onClick={() => advanceRequest(r, 'processed', { processed_by: userId, processed_at: new Date().toISOString() })}>Process</button>}
+                          {r.status === 'processed' && <button className="prl-btn-primary prl-btn-sm" onClick={() => postRequest(r)}>Post to GL</button>}
+                          {r.status === 'posted' && <span className="prl-paid-note"><CheckCircle size={14} /> Posted</span>}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
