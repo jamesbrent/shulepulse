@@ -12,6 +12,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import DeputyAdminDashboard from './pages/DeputyAdministrator/DeputyAdminDashboard'
 import FinanceDashboard from './pages/Finance/FinanceDashboard'
 import RegistrarDashboard from './pages/Registrar/RegistrarDashboard'
+import ReceptionDashboard from './pages/Reception/ReceptionDashboard'
 import HODDashboard from './pages/HOD/HODDashboard'
 import TeacherDashboard from './pages/teacher/TeacherDashboard'
 import ClassTeacherDashboard from './pages/ClassTeacher/ClassTeacherDashboard'
@@ -60,6 +61,11 @@ export default function App() {
         <Route path="/registrar" element={
           <ProtectedRoute allowedRoles={['registrar']}>
             <RegistrarDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/reception" element={
+          <ProtectedRoute allowedRoles={['reception', 'admin', 'superadmin']}>
+            <ReceptionDashboard />
           </ProtectedRoute>
         } />
         <Route path="/hod" element={

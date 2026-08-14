@@ -8,6 +8,7 @@ const ROLE_ROUTES = {
   deputy_administrator: '/deputy-admin',
   bursar: '/bursar',
   registrar: '/registrar',
+  reception: '/reception',
   hod: '/hod',
   teacher: '/teacher',
   class_teacher: '/class-teacher',

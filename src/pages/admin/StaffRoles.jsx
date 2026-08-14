@@ -15,6 +15,7 @@ const ROLE_OPTIONS = [
   { value: 'deputy_administrator', label: 'Deputy Administrator',    icon: <Shield size={16} /> },
   { value: 'bursar',           label: 'Finance',                    icon: <DollarSign size={16} /> },
   { value: 'registrar',        label: 'Registrar / Admissions',      icon: <UserCheck size={16} /> },
+  { value: 'reception',        label: 'Reception / Secretary',        icon: <Shield size={16} /> },
   { value: 'class_teacher',    label: 'Class Teacher',               icon: <Users size={16} /> },
   { value: 'librarian',        label: 'Librarian',                   icon: <Library size={16} /> },
 ]
@@ -37,6 +38,7 @@ const ROLE_BADGE = {
   deputy_administrator: { label: 'Deputy Admin',         color: '#2563eb', bg: '#dbeafe' },
   bursar:               { label: 'Finance',             color: '#16a34a', bg: '#dcfce7' },
   registrar:            { label: 'Registrar',            color: '#ca8a04', bg: '#fef9c3' },
+  reception:            { label: 'Reception',            color: '#0d9488', bg: '#ccfbf1' },
   class_teacher:        { label: 'Class Teacher',        color: '#dc2626', bg: '#fef2f2' },
   teacher:              { label: 'Teacher',               color: '#64748b', bg: '#f1f5f9' },
   admin:                { label: 'Admin',                 color: '#0f172a', bg: '#e2e8f0' },

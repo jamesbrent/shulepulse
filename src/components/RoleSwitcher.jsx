@@ -12,6 +12,7 @@ const ROLE_META = {
   deputy_administrator: { label: 'Deputy Admin',      color: '#2563eb', route: '/deputy-admin' },
   bursar:               { label: 'Finance',           color: '#16a34a', route: '/bursar' },
   registrar:            { label: 'Registrar',         color: '#ca8a04', route: '/registrar' },
+  reception:            { label: 'Reception',          color: '#0d9488', route: '/reception' },
   hod:                  { label: 'HOD',               color: '#7c3aed', route: '/hod' },
   teacher:              { label: 'Teacher',           color: '#64748b', route: '/teacher' },
   class_teacher:        { label: 'Class Teacher',     color: '#dc2626', route: '/class-teacher' },

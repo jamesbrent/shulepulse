@@ -41,6 +41,7 @@ export default function Login() {
     else if (role === 'parent') window.location.href = basePath('/parent')
     else if (role === 'student') window.location.href = basePath('/student')
     else if (role === 'librarian') window.location.href = basePath('/library')
+    else if (role === 'reception') window.location.href = basePath('/reception')
     else window.location.href = basePath('/admin')
   }
 
