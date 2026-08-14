@@ -25,6 +25,7 @@ const AUTO_SAVE_DELAY = 15000
 
 export default function MarksEntry({ profile }) {
   const { examTypes: examTypeConfig, examMap, getMax } = useExamTypeConfig()
+  const isAdmin = profile?.roles?.includes('admin') || profile?.roles?.includes('superadmin')
   const [students, setStudents] = useState([])
   const [classes, setClasses] = useState([])
   const [subjects, setSubjects] = useState([])
@@ -121,30 +122,53 @@ export default function MarksEntry({ profile }) {
         .single()
       setSchool(schoolData)
 
-      const { data: teacherRecData } = await supabase
-        .from('teachers')
-        .select('id, full_name')
-        .eq('email', profile.email)
-        .eq('school_id', schoolId)
-        .maybeSingle()
-      if (!teacherRecData) { setLoading(false); return }
-      setTeacherRec(teacherRecData)
-      setTeacherName(teacherRecData.full_name || 'Teacher')
+      let teacherRecData = null
+      if (!isAdmin) {
+        const { data } = await supabase
+          .from('teachers')
+          .select('id, full_name')
+          .eq('email', profile.email)
+          .eq('school_id', schoolId)
+          .maybeSingle()
+        teacherRecData = data || null
+      }
+      if (!teacherRecData && !isAdmin) { setLoading(false); return }
 
-      const [{ data: slots }, { data: subs }] = await Promise.all([
-        supabase.from('timetable_slots').select('class_id, subject_id, classes(class_name), subjects(name)').eq('teacher_id', teacherRecData.id).eq('school_id', schoolId),
-        supabase.from('subjects').select('id, name').eq('school_id', schoolId).order('name'),
-      ])
+      setTeacherRec(teacherRecData || { id: profile.id, full_name: profile.full_name || 'Admin' })
+      setTeacherName(teacherRecData?.full_name || profile.full_name || 'Admin')
+
+      const { data: subs } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .eq('school_id', schoolId)
+        .order('name')
 
       const classSubjects = {}
-      ;(slots || []).forEach(s => {
-        const cn = s.classes?.class_name?.trim()
-        const sn = s.subjects?.name
-        if (cn && sn) {
-          if (!classSubjects[cn]) classSubjects[cn] = new Set()
-          classSubjects[cn].add(sn)
-        }
-      })
+      if (teacherRecData) {
+        const { data: slots } = await supabase
+          .from('timetable_slots')
+          .select('class_id, subject_id, classes(class_name), subjects(name)')
+          .eq('teacher_id', teacherRecData.id)
+          .eq('school_id', schoolId)
+        ;(slots || []).forEach(s => {
+          const cn = s.classes?.class_name?.trim()
+          const sn = s.subjects?.name
+          if (cn && sn) {
+            if (!classSubjects[cn]) classSubjects[cn] = new Set()
+            classSubjects[cn].add(sn)
+          }
+        })
+      } else {
+        const { data: classRows } = await supabase
+          .from('classes')
+          .select('class_name')
+          .eq('school_id', schoolId)
+        ;(classRows || []).forEach(c => {
+          const cn = c.class_name?.trim()
+          if (cn) classSubjects[cn] = classSubjects[cn] || new Set()
+        })
+        ;(subs || []).forEach(s => { Object.values(classSubjects).forEach(set => set.add(s.name)) })
+      }
       classSubjectRef.current = classSubjects
 
       const uniqueClasses = Object.keys(classSubjects).sort()
@@ -178,13 +202,14 @@ export default function MarksEntry({ profile }) {
       if (s.class) rawCounts[s.class.trim().toLowerCase()] = (rawCounts[s.class.trim().toLowerCase()] || 0) + 1
     })
 
-    const { data: allGrades } = await supabase
+    const gradesQ = supabase
       .from('grades')
       .select('class_name, subject, exam_type, status, total_score')
       .eq('school_id', schoolId)
-      .eq('teacher_id', profile.id)
       .eq('term', term)
       .eq('year', Number(year))
+    if (!isAdmin) gradesQ.eq('teacher_id', profile.id)
+    const { data: allGrades } = await gradesQ
 
     const cards = Object.entries(classSubjects).flatMap(([className, subjects]) =>
       [...subjects].map(subjectName => {
@@ -489,7 +514,7 @@ export default function MarksEntry({ profile }) {
         term,
         year: Number(year),
         uploadedBy: profile.id,
-        uploadedByRole: 'teacher',
+        uploadedByRole: isAdmin ? 'admin' : 'teacher',
       })
       setExamFile(null)
       if (examFileInputRef.current) examFileInputRef.current.value = ''

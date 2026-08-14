@@ -11,7 +11,7 @@ import {
   Bell, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronLeft, Activity, ArrowUpRight, ArrowDownRight,
   Plus, Banknote, FileOutput, ClipboardCheck, Users2,
-  Printer, Send, Download, Wallet, Landmark,
+  Printer, Send, Download, Wallet, Landmark, PencilLine,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -28,6 +28,8 @@ import AttendancePage from './AttendancePage'
 import './AttendancePage.css'
 import GradesPage from './GradesPage'
 import './GradesPage.css'
+import MarksEntry from '../teacher/MarksEntry'
+import '../teacher/MarksEntry.css'
 import TeachersPage from './TeachersPage'
 import './TeachersPage.css'
 import BrandingPage from '../../features/branding/BrandingSettingsPage'
@@ -104,6 +106,7 @@ const NAV_GROUPS = [
     icon: <BookOpen size={16} />,
     items: [
       { key: 'grades', label: 'Grades', icon: <BarChart2 size={14} /> },
+      { key: 'marks_entry', label: 'Marks Entry', icon: <PencilLine size={14} /> },
       { key: 'exam_setup', label: 'Exam Setup', icon: <Settings size={14} /> },
       { key: 'marks_approval', label: 'Marks Approval', icon: <FileCheck size={14} /> },
       { key: 'dept_exams', label: 'Exam Reviews', icon: <ClipboardList size={14} /> },
@@ -171,6 +174,7 @@ const pageTitles = {
   ap: 'Accounts Payable',
   attendance: 'Attendance',
   grades: 'Grades',
+  marks_entry: 'Marks Entry',
   teachers: 'Teachers',
   alumni: 'Alumni & Archives',
   staffroles: 'Staff Roles',
@@ -440,6 +444,7 @@ export default function AdminDashboard() {
       case 'financial_statements': return <FinancialStatementsPage />
       case 'attendance':     return <AttendancePage />
       case 'grades':         return <GradesPage />
+      case 'marks_entry':    return <MarksEntry profile={authProfile} />
       case 'teachers':       return <TeachersPage />
       case 'alumni':         return <AdminAlumni />
       case 'comments':       return <CommentsPage />
