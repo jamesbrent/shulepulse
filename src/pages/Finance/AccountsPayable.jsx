@@ -14,7 +14,7 @@ import {
   AP_SUPPLIER_TYPES, AP_INVOICE_STATUSES, AP_PAYMENT_STATUSES, AP_PAYMENT_METHODS,
   apStatus, invoiceTotals, loadApData, nextSupplierNo, nextInvoiceNo, nextPaymentNo,
   voucherNo, supplierOf, invoiceLinesOf, attachmentsOf, invoiceOutstanding,
-  effectivePaymentIds, postInvoiceJournal, postPaymentJournal, reverseJournalEntry,
+  effectivePaymentIds, paidByInvoice, postInvoiceJournal, postPaymentJournal, reverseJournalEntry,
   recomputeInvoicePaid, saveApConfig, decideApConfig, uploadAttachment, deleteAttachment,
   attachmentPublicUrl, apSummary, buildSupplierStatement, logInvoiceToAssets, logPaymentToAssets,
 } from './apUtils'
@@ -74,6 +74,7 @@ export default function AccountsPayablePage({ initialTab }) {
   const [paymentModal, setPaymentModal] = useState(false)
   const [paymentForm, setPaymentForm] = useState(blankPayment())
   const [allocLines, setAllocLines] = useState([])
+  const [supplierPayCtx, setSupplierPayCtx] = useState({ effective: { count: 0, total: 0 }, pending: { count: 0, total: 0 } })
 
   const [view, setView] = useState(null)            // { type: 'invoice'|'payment'|'supplier', id }
   const [confirm, setConfirm] = useState(null)      // { message, action, danger }
@@ -260,6 +261,7 @@ export default function AccountsPayablePage({ initialTab }) {
       payment_account_id: d?.accountByCode?.[defaultAccount?.bank_account]?.id || '',
     })
     setAllocLines([])
+    setSupplierPayCtx({ effective: { count: 0, total: 0 }, pending: { count: 0, total: 0 } })
     setPaymentModal(true)
   }
 
@@ -271,16 +273,31 @@ export default function AccountsPayablePage({ initialTab }) {
       payment_account_id: d?.accountByCode?.[defaultAccount?.bank_account]?.id || '',
     })
     setAllocLines([])
+    setSupplierPayCtx({ effective: { count: 0, total: 0 }, pending: { count: 0, total: 0 } })
     setPaymentModal(true)
   }
 
   const pickSupplierForAlloc = (supplierId) => {
     setPaymentForm({ ...paymentForm, supplier_id: supplierId })
+    if (!supplierId) {
+      setAllocLines([])
+      setSupplierPayCtx({ effective: { count: 0, total: 0 }, pending: { count: 0, total: 0 } })
+      return
+    }
+    const toNum2 = (n) => Number(n || 0)
+    const supplierPays = (d.payments || []).filter((p) => p.supplier_id === supplierId)
+    const effective = supplierPays.filter((p) => ['paid', 'posted'].includes(p.status))
+    const pending = supplierPays.filter((p) => !['paid', 'posted', 'cancelled', 'rejected'].includes(p.status))
+    setSupplierPayCtx({
+      effective: { count: effective.length, total: effective.reduce((s, p) => s + toNum2(p.amount), 0) },
+      pending: { count: pending.length, total: pending.reduce((s, p) => s + toNum2(p.amount), 0) },
+    })
+    const paidMap = paidByInvoice(d)
     const outstanding = (d.invoices || [])
       .filter((i) => i.supplier_id === supplierId && ['posted', 'partially_paid', 'paid'].includes(i.status))
-      .map((i) => ({ invoice: i, outstanding: invoiceOutstanding(d, i) }))
+      .map((i) => ({ invoice: i, paid: paidMap[i.id] || 0, outstanding: invoiceOutstanding(d, i) }))
       .filter((x) => x.outstanding > 0.01)
-    setAllocLines(outstanding.map((x) => ({ invoice_id: x.invoice.id, invoice_no: x.invoice.invoice_no, supplier: x.invoice.supplier_id, outstanding: x.outstanding, amount: String(x.outstanding) })))
+    setAllocLines(outstanding.map((x) => ({ invoice_id: x.invoice.id, invoice_no: x.invoice.invoice_no, supplier: x.invoice.supplier_id, paid: x.paid, outstanding: x.outstanding, amount: String(x.outstanding) })))
   }
 
   const allocTotal = allocLines.reduce((s, a) => s + (Number(a.amount) || 0), 0)
@@ -1043,14 +1060,26 @@ export default function AccountsPayablePage({ initialTab }) {
                       {(d?.suppliers || []).filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   </label>
+                  {supplierPayCtx.pending.count > 0 && (
+                    <div className="prl-field prl-field-full" style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '8px 10px', fontSize: 12.5, color: '#92400e', lineHeight: 1.5 }}>
+                      <strong>{supplierPayCtx.pending.count}</strong> earlier payment{supplierPayCtx.pending.count > 1 ? 's' : ''} (<strong>{fmt(supplierPayCtx.pending.total)}</strong>) for this supplier {supplierPayCtx.pending.count > 1 ? 'are' : 'is'} still <strong>draft / approved</strong> — they only count as paid once marked <strong>Paid</strong> or <strong>Posted to GL</strong>, so these invoices still show as outstanding.
+                    </div>
+                  )}
+                  {supplierPayCtx.effective.count > 0 && (
+                    <div className="prl-field prl-field-full" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '8px 10px', fontSize: 12.5, color: '#15803d', lineHeight: 1.5 }}>
+                      <strong>{fmt(supplierPayCtx.effective.total)}</strong> already paid across {supplierPayCtx.effective.count} effective payment{supplierPayCtx.effective.count > 1 ? 's' : ''}. Only the outstanding balance below still needs paying.
+                    </div>
+                  )}
                   {allocLines.length > 0 && (
                     <div className="prl-card prl-field-full" style={{ borderRadius: 10, padding: 10 }}>
-                      <table className="prl-table" style={{ minWidth: 480 }}>
-                        <thead><tr><th>Invoice</th><th>Outstanding</th><th style={{ width: 110 }}>Pay</th></tr></thead>
+                      <table className="prl-table" style={{ minWidth: 560 }}>
+                        <thead><tr><th>Invoice</th><th>Total</th><th>Already Paid</th><th>Outstanding</th><th style={{ width: 110 }}>Pay</th></tr></thead>
                         <tbody>
                           {allocLines.map((a, i) => (
                             <tr key={a.invoice_id}>
                               <td className="prl-mono">{a.invoice_no}</td>
+                              <td style={{ fontWeight: 600 }}>{fmt((a.paid || 0) + a.outstanding)}</td>
+                              <td style={{ color: '#16a34a', fontWeight: 600 }}>{fmt(a.paid || 0)}</td>
                               <td style={{ color: '#dc2626', fontWeight: 600 }}>{fmt(a.outstanding)}</td>
                               <td><input className="ap-line-input" type="number" min="0" max={a.outstanding} value={a.amount} onChange={(e) => setAllocLines(allocLines.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))} /></td>
                             </tr>
