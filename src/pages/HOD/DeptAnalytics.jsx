@@ -137,8 +137,9 @@ export default function DeptAnalytics() {
   const rankById = new Map(
     rankEntries(studentAverages.map(s => ({
       studentId: s.student_id,
-      score: s.average,
+      score: s.wcount > 0 ? s.wtotal / s.wcount : 0,
       count: s.count,
+      admission: s.admission_number !== '—' ? s.admission_number : undefined,
     })), { scope: selectedClass ? 'class' : 'school' }).map(r => [r.studentId, r])
   )
   const studentAveragesWithRank = studentAverages.map(s => ({

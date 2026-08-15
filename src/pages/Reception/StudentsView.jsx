@@ -65,12 +65,11 @@ export default function StudentsView() {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>Student Lookup</h2>
-          <p>Search student records to answer front desk questions — read only, no grading or academic data</p>
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Search student records to answer front desk questions — read only, no grading or academic data</p>
+        <div className="rcp-page-toolbar-actions">
+          <span className="rcp-badge rcp-badge--teal"><Users size={12} /> {students.length} records</span>
         </div>
-        <span className="rcp-badge rcp-badge--teal"><Users size={12} /> {students.length} records</span>
       </div>
 
       <div className="rcp-filters">

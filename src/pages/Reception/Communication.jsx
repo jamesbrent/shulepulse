@@ -83,14 +83,13 @@ export default function Communication({ profile }) {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>Notices & Announcements</h2>
-          <p>Publish school-wide communication visible to parents, students and staff</p>
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Publish school-wide communication visible to parents, students and staff</p>
+        <div className="rcp-page-toolbar-actions">
+          <button className="rcp-btn-primary" onClick={() => setShowForm(!showForm)}>
+            {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> New Notice</>}
+          </button>
         </div>
-        <button className="rcp-btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> New Notice</>}
-        </button>
       </div>
 
       {showForm && (

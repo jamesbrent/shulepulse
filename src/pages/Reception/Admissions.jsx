@@ -146,12 +146,9 @@ export default function Admissions({ onChanged }) {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>Admissions Pipeline</h2>
-          <p>Track prospective students from first enquiry to admission handover to the Registrar</p>
-        </div>
-        <div className="rcp-page-header-actions">
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Track prospective students from first enquiry to admission handover to the Registrar</p>
+        <div className="rcp-page-toolbar-actions">
           <button className="rcp-btn-primary" onClick={() => setShowForm(!showForm)}>
             {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> New Inquiry</>}
           </button>

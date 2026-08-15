@@ -117,12 +117,9 @@ export default function Appointments({ onChanged }) {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>Appointments</h2>
-          <p>Schedule and track meetings between visitors and staff or office heads</p>
-        </div>
-        <div className="rcp-page-header-actions">
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Schedule and track meetings between visitors and staff or office heads</p>
+        <div className="rcp-page-toolbar-actions">
           <span className="rcp-badge rcp-badge--teal"><CalendarDays size={12} /> {upcoming} upcoming</span>
           <button className="rcp-btn-primary" onClick={() => setShowForm(!showForm)}>
             {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> New Appointment</>}

@@ -15,7 +15,7 @@ import {
 } from '../../utils/schoolPdfTemplate'
 import { fetchBulkDataWithExtras, bulkPrint } from '../admin/grades/utils/bulkReportCards'
 import { getCBEGrade, REPORT_CARD_STYLES } from '../../components/students/ReportCard'
-import { gradeDisplay, sortBands, bandColor, weightedScoreMean, rankEntries } from '../../services/grading'
+import { gradeDisplay, sortBands, bandColor, weightedScoreMean, precisionScore, rankEntries } from '../../services/grading'
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
@@ -150,8 +150,9 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
   const studentRankById = new Map(
     rankEntries(studentMeans.map(s => ({
       studentId: s.id,
-      score: s.avg,
+      score: s.grades.length > 0 ? precisionScore(s.grades) : 0,
       count: s.subjectCount,
+      admission: s.admission_number || undefined,
     })), { scope: filterClass !== 'all' ? 'class' : 'school' }).map(r => [r.studentId, r.rank])
   )
   studentMeans.forEach(s => {

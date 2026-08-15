@@ -20,7 +20,7 @@ export default function AcademicResultsPage({ activeChild }) {
       const year = school.current_year || new Date().getFullYear()
       const { data: clsGrades } = await supabase
         .from('grades')
-        .select('student_id, subject, total_score, max_marks')
+        .select('student_id, subject, total_score, max_marks, students(id, admission_number)')
         .eq('school_id', school.id)
         .eq('term', term)
         .eq('year', year)

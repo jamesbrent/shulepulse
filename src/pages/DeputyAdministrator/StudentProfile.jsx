@@ -53,7 +53,7 @@ export default function StudentProfile({ student, onBack, schoolId }) {
     if (latest && student?.class) {
       const { data: classGrades } = await supabase
         .from('grades')
-        .select('student_id, subject, total_score, max_marks')
+        .select('student_id, subject, total_score, max_marks, students(id, admission_number)')
         .eq('term', latest.term)
         .eq('year', latest.year)
         .eq('class_name', student.class)

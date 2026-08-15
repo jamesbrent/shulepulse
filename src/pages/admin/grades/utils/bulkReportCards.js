@@ -1,6 +1,6 @@
 import { supabase } from '../../../../lib/supabase'
 import { buildReportCardHtml, REPORT_CARD_STYLES, groupGradesBySubject, getCBEGrade, fetchStudentComments } from '../../../../components/students/ReportCard'
-import { weightedScoreMean, rankEntries, findRank } from '../../../../services/grading'
+import { weightedScoreMean, precisionScore, rankEntries, findRank } from '../../../../services/grading'
 import { saveAs } from 'file-saver'
 import * as XLSX from 'xlsx'
 
@@ -81,8 +81,9 @@ export async function fetchBulkDataWithExtras(schoolId, filterClass, filterTerm,
     classRankMap[cls] = rankEntries(
       classStudents.map(e => ({
         studentId: e.student.id,
-        score: e.avg || 0,
+        score: e.grades.length > 0 ? precisionScore(e.grades) : 0,
         count: e.subjectCount || e.grades.length,
+        admission: e.student?.admission_number || undefined,
       })),
       { scope: 'class' }
     )
@@ -187,13 +188,16 @@ export function buildRankingSheet(entries) {
   const ranked = rankEntries(
     entries.map(e => ({
       studentId: e.student?.id,
-      score: e.avg || 0,
+      score: (e.grades || []).length > 0 ? precisionScore(e.grades) : 0,
       count: e.subjectCount || (e.grades || []).length,
+      admission: e.student?.admission_number || undefined,
     })),
     { scope: 'class' }
   )
   const rankById = new Map(ranked.map(r => [r.studentId, r]))
-  const sorted = [...entries].sort((a, b) => (b.avg || 0) - (a.avg || 0))
+  const sorted = [...entries].sort((a, b) =>
+    (rankById.get(a.student?.id)?.rank ?? 9999) - (rankById.get(b.student?.id)?.rank ?? 9999)
+  )
   const rows = sorted.map(e => {
     const score = e.avg || 0
     const r = rankById.get(e.student?.id)

@@ -75,12 +75,11 @@ export default function ParentsView() {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>Parents & Guardians</h2>
-          <p>Front desk directory for parents and guardians — read only</p>
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Front desk directory for parents and guardians — read only</p>
+        <div className="rcp-page-toolbar-actions">
+          <span className="rcp-badge rcp-badge--teal"><Shield size={12} /> {parents.length} records</span>
         </div>
-        <span className="rcp-badge rcp-badge--teal"><Shield size={12} /> {parents.length} records</span>
       </div>
 
       <div className="rcp-filters">

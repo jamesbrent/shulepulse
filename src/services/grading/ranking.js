@@ -7,20 +7,24 @@
 // that displays a learner's position must consume THIS module.
 // No individual page may compute its own rank.
 //
-// Ranking score  : overallScore(rows) = Math.round(weightedScoreMean(rows)).
-//                  This is the SAME final overall score used by the
-//                  report card's Overall Total / Overall Summary, so the
-//                  rank is always based on the same underlying grade rows
-//                  produced by the central aggregation engine.
+// Ranking score  : precisionScore(rows) — the UNROUNDED weighted
+//                  mean (Σ score×max / Σ max) of the learner's grade
+//                  rows. Integer-rounded means are NOT used so that
+//                  near-equal results (79.45 vs 79.51) never collapse
+//                  into an artificial tie. The displayed overall
+//                  average (overallScore = Math.round(...)) remains the
+//                  same number the report card shows.
 // Ranking scope  : default 'class'. The caller supplies the grade rows
 //                  already scoped to school + academic year + term +
 //                  class/stream + assessment period. 'grade' and 'school'
 //                  are supported for future configurable scopes, but pages
 //                  must NOT invent their own population.
-// Tie handling   : standard competition ranking — learners with equal
-//                  scores share the same rank and the next rank skips
-//                  ahead (1, 2, 2, 4). This is the single source of truth
-//                  for tie behavior.
+// Positions      : UNIQUE — every eligible learner gets a distinct
+//                  1, 2, 3… rank. No two learners ever share a position.
+//                  Sort is score descending; exact score ties are broken
+//                  deterministically by (1) more graded assessment rows
+//                  first, then (2) admission number, falling back to
+//                  student id when admission is not available.
 // Eligibility    : a learner is eligible only when they have at least one
 //                  graded assessment row in the scope (count > 0). Learners
 //                  without results are excluded from the population and do
@@ -30,16 +34,34 @@ import { weightedScoreMean } from './aggregate'
 
 export const RANK_SCOPES = ['class', 'grade', 'school']
 
-// Canonical overall score (%) for a learner's grade rows — the same score
-// the report card uses for its overall average / overall total.
+// Display overall score (%) for a learner's grade rows — the same score
+// the report card uses for its overall average / overall total. Rounded to
+// an integer for display; ranking itself must use precisionScore().
 export function overallScore(rows) {
   return rows && rows.length > 0 ? Math.round(weightedScoreMean(rows)) : null
 }
 
-// Rank an array of entries [{ studentId, score, count }].
+// Full-precision weighted mean (NO rounding) — the authoritative ranking
+// score. Keeps near-equal results apart so positions never artificially tie.
+export function precisionScore(rows) {
+  let num = 0
+  let den = 0
+  ;(rows || []).forEach(g => {
+    const p = Number(g?.total_score)
+    if (!Number.isFinite(p)) return
+    const w = Number(g?.max_marks) || 100
+    num += p * w
+    den += w
+  })
+  return den > 0 ? num / den : null
+}
+
+// Rank an array of entries [{ studentId, score, count, admission? }].
 // Returns the same entries enriched with { rank, total, scope }, sorted by
 // score descending. `count` is the number of graded assessment rows and is
 // the eligibility criterion (also accepts `subjectCount` as an alias).
+// Every eligible entry receives a UNIQUE rank (1, 2, 3…). Exact score ties
+// are broken by higher count first, then admission number (fallback studentId).
 export function rankEntries(entries, opts = {}) {
   const scope = RANK_SCOPES.includes(opts.scope) ? opts.scope : 'class'
   const scored = (entries || [])
@@ -50,18 +72,14 @@ export function rankEntries(entries, opts = {}) {
       return { ...e, score, count }
     })
     .filter(e => Number.isFinite(e.score) && e.count > 0)
-    .sort((a, b) => b.score - a.score || String(a.studentId).localeCompare(String(b.studentId)))
+    .sort((a, b) =>
+      b.score - a.score ||
+      (b.count - a.count) ||
+      String(a.admission ?? a.adm ?? a.studentId).localeCompare(String(b.admission ?? b.adm ?? b.studentId))
+    )
 
-  let total = scored.length
-  let rank = 0
-  let prevScore = null
-  return scored.map((e, i) => {
-    if (prevScore === null || e.score !== prevScore) {
-      rank = i + 1
-      prevScore = e.score
-    }
-    return { ...e, rank, total, scope }
-  })
+  const total = scored.length
+  return scored.map((e, i) => ({ ...e, rank: i + 1, total, scope }))
 }
 
 // Look up one learner's position within a ranked list.
@@ -72,7 +90,9 @@ export function findRank(ranked, studentId) {
 }
 
 // Convenience: rank learners from flat grade rows scoped by the caller.
-// Each row needs { student_id, subject, total_score, max_marks }.
+// Each row needs { student_id, subject, total_score, max_marks } and may
+// carry admission_number (directly or via students.admission_number) for
+// deterministic tie-breaking.
 export function rankStudentsByGrades(rows, opts = {}) {
   const byStudent = {}
   ;(rows || []).forEach(r => {
@@ -83,8 +103,9 @@ export function rankStudentsByGrades(rows, opts = {}) {
   })
   const entries = Object.entries(byStudent).map(([sid, srows]) => ({
     studentId: sid,
-    score: overallScore(srows),
+    score: precisionScore(srows),
     count: srows.filter(r => Number.isFinite(Number(r.total_score))).length,
+    admission: srows.map(r => r.admission_number || r.students?.admission_number || r.adm).find(Boolean),
   }))
   return rankEntries(entries, opts)
 }

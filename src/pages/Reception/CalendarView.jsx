@@ -105,14 +105,13 @@ export default function CalendarView({ onChanged }) {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>School Calendar</h2>
-          <p>Upcoming school events, meetings and key dates for the front desk</p>
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Upcoming school events, meetings and key dates for the front desk</p>
+        <div className="rcp-page-toolbar-actions">
+          <button className="rcp-btn-primary" onClick={() => setShowForm(!showForm)}>
+            {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add Event</>}
+          </button>
         </div>
-        <button className="rcp-btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add Event</>}
-        </button>
       </div>
 
       {showForm && (

@@ -193,15 +193,17 @@ export default function ReportCenter() {
   const meritRankById = new Map(
     rankEntries(filteredMerit.map(s => ({
       studentId: s.student_id,
-      score: s.average,
+      score: s.wcount > 0 ? s.wtotal / s.wcount : 0,
       count: s.count,
+      admission: s.admNo !== '—' ? s.admNo : undefined,
     })), { scope: selectedClass ? 'class' : 'school' }).map(r => [r.studentId, r.rank])
   )
   const schoolRankById = new Map(
     rankEntries(studentAverages.map(s => ({
       studentId: s.student_id,
-      score: s.average,
+      score: s.wcount > 0 ? s.wtotal / s.wcount : 0,
       count: s.count,
+      admission: s.admNo !== '—' ? s.admNo : undefined,
     })), { scope: 'school' }).map(r => [r.studentId, r.rank])
   )
 

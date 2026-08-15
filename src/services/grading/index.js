@@ -1,7 +1,7 @@
 export { resolveProfile, resolveSystem, PROFILES_BY_CLASS } from './resolve'
 export { getGrade, lookupBand } from './grade'
 export { aggregateSubject, aggregateStudentGrades, weightedScoreMean } from './aggregate'
-export { overallScore, rankEntries, findRank, rankStudentsByGrades, RANK_SCOPES } from './ranking'
+export { overallScore, precisionScore, rankEntries, findRank, rankStudentsByGrades, RANK_SCOPES } from './ranking'
 export { isCBCClass, stageForClass, CBESTAGES } from './cbc'
 export { normalizeClassName, isValidScore, validateGradeRow } from './validate'
 export { gradeDisplay, gradeShort, pointsDisplay, sortBands, bandColor, rawMarkOf, marksCell } from './display'

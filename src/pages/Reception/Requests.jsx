@@ -151,12 +151,9 @@ export default function Requests({ onChanged }) {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>Requests & Routing</h2>
-          <p>Log visitor / parent requests and direct them to the right department</p>
-        </div>
-        <div className="rcp-page-header-actions">
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Log visitor / parent requests and direct them to the right department</p>
+        <div className="rcp-page-toolbar-actions">
           <span className="rcp-badge rcp-badge--amber"><ClipboardList size={12} /> {openCount} open</span>
           <button className="rcp-btn-primary" onClick={() => setShowForm(!showForm)}>
             {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Log Request</>}

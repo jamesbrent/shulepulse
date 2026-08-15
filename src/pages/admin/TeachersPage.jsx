@@ -508,9 +508,9 @@ export default function TeachersPage() {
                   </td>
                   <td>
                     <div className="action-btns">
-                      <button className="action-btn" onClick={() => openProfile(t)}><Eye size={13}/> View</button>
-                      <button className="action-btn" onClick={() => openEdit(t)}><Edit size={13}/> Edit</button>
-                      <button className="action-btn danger" onClick={() => handleDelete(t)}><Trash2 size={13}/> Remove</button>
+                      <button className="action-btn" title="View Profile" onClick={() => openProfile(t)}><Eye size={14} /></button>
+                      <button className="action-btn" title="Edit Teacher" onClick={() => openEdit(t)}><Edit size={14} /></button>
+                      <button className="action-btn danger" title="Remove Teacher" onClick={() => handleDelete(t)}><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>

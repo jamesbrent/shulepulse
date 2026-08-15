@@ -112,12 +112,9 @@ export default function Visitors({ onChanged }) {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>Visitor Register</h2>
-          <p>Record who enters and leaves the school, and why they are here</p>
-        </div>
-        <div className="rcp-page-header-actions">
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Record who enters and leaves the school, and why they are here</p>
+        <div className="rcp-page-toolbar-actions">
           <span className="rcp-badge rcp-badge--green">
             <DoorOpen size={12} /> {onSite.length} on campus now
           </span>

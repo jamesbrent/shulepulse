@@ -871,7 +871,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
                   if (profile?.school_id && selectedStudent?.id && selectedStudent?.class) {
                     const { data: clsGrades } = await supabase
                       .from('grades')
-                      .select('student_id, subject, total_score, max_marks')
+                      .select('student_id, subject, total_score, max_marks, students(id, admission_number)')
                       .eq('school_id', profile.school_id)
                       .eq('term', getCurrentTerm())
                       .eq('year', getCurrentYear())

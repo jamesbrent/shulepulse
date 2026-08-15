@@ -145,12 +145,9 @@ export default function Reports() {
 
   return (
     <div className="rcp-page">
-      <div className="rcp-page-header">
-        <div>
-          <h2>Front Office Reports</h2>
-          <p>Summary of visitors, appointments, requests and the admissions pipeline</p>
-        </div>
-        <div className="rcp-page-header-actions">
+      <div className="rcp-page-toolbar">
+        <p className="rcp-page-toolbar-desc">Summary of visitors, appointments, requests and the admissions pipeline</p>
+        <div className="rcp-page-toolbar-actions">
           <button className="rcp-btn-secondary" onClick={fetchReportData}>Refresh</button>
           <button className="rcp-btn-primary" onClick={handlePrint}><Printer size={14} /> Print Report</button>
         </div>

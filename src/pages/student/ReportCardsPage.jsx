@@ -38,7 +38,7 @@ export default function ReportCardsPage({ student, school }) {
 
       const { data: classmates } = await supabase
         .from('grades')
-        .select('student_id, subject, total_score, max_marks')
+        .select('student_id, subject, total_score, max_marks, students(id, admission_number)')
         .eq('term', term)
         .eq('year', Number(year))
         .eq('class_name', selectedClass)
