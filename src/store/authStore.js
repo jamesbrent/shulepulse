@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
+import { loadGradingConfig } from '../services/grading/config'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -17,6 +18,7 @@ export const useAuthStore = create((set) => ({
         .single()
 
       set({ user: session.user, profile: { ...profile, roles: profile?.roles || (profile?.role ? [profile.role] : []) }, loading: false })
+      loadGradingConfig()
     } else {
       set({ user: null, profile: null, loading: false })
     }
@@ -30,6 +32,7 @@ export const useAuthStore = create((set) => ({
           .single()
 
         set({ user: session.user, profile: { ...profile, roles: profile?.roles || (profile?.role ? [profile.role] : []) }, loading: false })
+        loadGradingConfig()
       } else {
         set({ user: null, profile: null, loading: false })
       }

@@ -3,6 +3,7 @@ import { Settings, FileText, Clock, BarChart3, Info, CheckCircle, AlertCircle, F
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
 import { useGradingConfig, useExamTypeConfig } from '../../hooks/useSchoolConfig'
+import { refreshGradingConfig } from '../../services/grading/config'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
@@ -35,6 +36,7 @@ export default function ExamSetup() {
   const { currentTerm, currentYear } = useSchool()
   const { systems: gradingSystems, loading: gradingLoading, defaultSystem, getBands, refresh: refreshGrading } = useGradingConfig()
   const { examTypes, loading: examTypesLoading, examMap, getMax, refresh: refreshExamTypes } = useExamTypeConfig()
+  const reloadGrading = () => { refreshGrading(); refreshGradingConfig() }
   const [activeTab, setActiveTab] = useState('grading')
   const [loading, setLoading] = useState(true)
   const [subjects, setSubjects] = useState([])
@@ -654,7 +656,7 @@ export default function ExamSetup() {
       }
       setEditingBand(null)
       setBandForm({ grade: '', label: '', min_score: 0, max_score: 100, points: 0, color: '#64748b' })
-      refreshGrading()
+      reloadGrading()
     } catch (err) {
       console.error('Save band failed:', err)
     } finally {
@@ -666,7 +668,7 @@ export default function ExamSetup() {
     if (!window.confirm(`Delete grade "${band.grade}" from this system?`)) return
     try {
       await supabase.from('grading_bands').delete().eq('id', band.id)
-      refreshGrading()
+      reloadGrading()
     } catch (err) {
       console.error('Delete band failed:', err)
     }
@@ -688,7 +690,7 @@ export default function ExamSetup() {
       if (error) throw error
       setNewSystemName('')
       setNewSystemSlug('')
-      refreshGrading()
+      reloadGrading()
     } catch (err) {
       console.error('Create system failed:', err)
     } finally {
@@ -702,7 +704,7 @@ export default function ExamSetup() {
       await supabase.from('grading_systems').update({ is_default: false }).eq('school_id', system.school_id)
       // Set this one
       await supabase.from('grading_systems').update({ is_default: true }).eq('id', system.id)
-      refreshGrading()
+      reloadGrading()
     } catch (err) {
       console.error('Set default failed:', err)
     }
@@ -712,7 +714,7 @@ export default function ExamSetup() {
     if (!window.confirm(`Delete grading system "${system.name}"? This will also remove all its grade bands.`)) return
     try {
       await supabase.from('grading_systems').delete().eq('id', system.id)
-      refreshGrading()
+      reloadGrading()
     } catch (err) {
       console.error('Delete system failed:', err)
     }

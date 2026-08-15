@@ -1,5 +1,6 @@
 export { resolveProfile, resolveSystem, PROFILES_BY_CLASS } from './resolve'
 export { getGrade, lookupBand } from './grade'
+export { loadGradingConfig, refreshGradingConfig, getConfiguredBands } from './config'
 export { aggregateSubject, aggregateStudentGrades, weightedScoreMean } from './aggregate'
 export { overallScore, precisionScore, rankEntries, findRank, rankStudentsByGrades, RANK_SCOPES } from './ranking'
 export { isCBCClass, stageForClass, CBESTAGES } from './cbc'
