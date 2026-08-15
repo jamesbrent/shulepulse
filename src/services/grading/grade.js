@@ -57,8 +57,6 @@ export function getGrade(score, className) {
   if (resolved.status === 'unresolved') {
     return { ...UNRESOLVED_RESULT, reason: resolved.reason }
   }
-  const preset = getProfile(resolved.profile)
-  if (!preset || preset.status === 'pending') return { ...PENDING_RESULT }
 
   const configuredBands = getConfiguredBands(resolved.profile)
   if (configuredBands && configuredBands.length) {
@@ -81,16 +79,17 @@ export function getGrade(score, className) {
     }
   }
 
-  const profile = preset
-  const band = lookupBand(profile, score)
+  const preset = getProfile(resolved.profile)
+  if (!preset || preset.status === 'pending') return { ...PENDING_RESULT }
+  const band = lookupBand(preset, score)
   if (!band) return { ...PENDING_RESULT }
-  const pointsMax = profile.bands?.length
-    ? Math.max(...profile.bands.map(b => (Number(b.points) || 0)))
+  const pointsMax = preset.bands?.length
+    ? Math.max(...preset.bands.map(b => (Number(b.points) || 0)))
     : null
   return {
-    system: profile.system,
-    profile: profile.id,
-    status: profile.status,
+    system: preset.system,
+    profile: preset.id,
+    status: preset.status,
     band: band.code,
     level: band.level,
     points: band.points,

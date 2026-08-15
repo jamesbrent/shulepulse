@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Settings, FileText, Clock, BarChart3, Info, CheckCircle, AlertCircle, Filter, Upload, X, File, ChevronRight, ArrowLeft, Download, Eye, Plus, Trash2, Save } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useSchool } from '../admin/useSchool'
@@ -34,8 +34,8 @@ function GradeCard({ g, onEdit, onDelete }) {
 
 export default function ExamSetup() {
   const { currentTerm, currentYear } = useSchool()
-  const { systems: gradingSystems, loading: gradingLoading, defaultSystem, getBands, refresh: refreshGrading } = useGradingConfig()
-  const { examTypes, loading: examTypesLoading, examMap, getMax, refresh: refreshExamTypes } = useExamTypeConfig()
+  const { systems: gradingSystems, loading: gradingLoading, getBands, refresh: refreshGrading } = useGradingConfig()
+  const { examTypes, loading: examTypesLoading, refresh: refreshExamTypes } = useExamTypeConfig()
   const reloadGrading = () => { refreshGrading(); refreshGradingConfig() }
   const [activeTab, setActiveTab] = useState('grading')
   const [loading, setLoading] = useState(true)
@@ -66,10 +66,7 @@ export default function ExamSetup() {
   const [examTypeForm, setExamTypeForm] = useState({ name: '', label: '', max_marks: 100, weightage: 0, description: '' })
   const [savingExamType, setSavingExamType] = useState(false)
 
-  // New system state
-  const [newSystemName, setNewSystemName] = useState('')
-  const [newSystemSlug, setNewSystemSlug] = useState('')
-  const [savingSystem, setSavingSystem] = useState(false)
+  const CANONICAL_GRADING_SLUGS = ['early', 'upperPrimary', 'junior', 'senior']
 
   const tabs = [
     { key: 'grading', label: 'Grading Configuration', icon: <BarChart3 size={16} /> },
@@ -674,52 +671,6 @@ export default function ExamSetup() {
     }
   }
 
-  // ── CRUD: Grading Systems ────────────────────────────────────
-  const handleCreateSystem = async () => {
-    if (!newSystemName.trim() || !newSystemSlug.trim()) return
-    setSavingSystem(true)
-    try {
-      const userId = (await supabase.auth.getUser()).data.user.id
-      const { data: profile } = await supabase.from('profiles').select('school_id').eq('id', userId).single()
-      const { error } = await supabase.from('grading_systems').insert({
-        school_id: profile?.school_id,
-        name: newSystemName.trim(),
-        slug: newSystemSlug.trim().toLowerCase(),
-        is_default: gradingSystems.length === 0,
-      })
-      if (error) throw error
-      setNewSystemName('')
-      setNewSystemSlug('')
-      reloadGrading()
-    } catch (err) {
-      console.error('Create system failed:', err)
-    } finally {
-      setSavingSystem(false)
-    }
-  }
-
-  const handleSetDefaultSystem = async (system) => {
-    try {
-      // Unset all defaults
-      await supabase.from('grading_systems').update({ is_default: false }).eq('school_id', system.school_id)
-      // Set this one
-      await supabase.from('grading_systems').update({ is_default: true }).eq('id', system.id)
-      reloadGrading()
-    } catch (err) {
-      console.error('Set default failed:', err)
-    }
-  }
-
-  const handleDeleteSystem = async (system) => {
-    if (!window.confirm(`Delete grading system "${system.name}"? This will also remove all its grade bands.`)) return
-    try {
-      await supabase.from('grading_systems').delete().eq('id', system.id)
-      reloadGrading()
-    } catch (err) {
-      console.error('Delete system failed:', err)
-    }
-  }
-
   // ── CRUD: Exam Types ─────────────────────────────────────────
   const handleSaveExamType = async () => {
     setSavingExamType(true)
@@ -768,120 +719,124 @@ export default function ExamSetup() {
   }
 
   // ── Other tabs (unchanged) ──────────────────────────────────
-  const renderGradingTab = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* New system form */}
-      <div className="hod-card">
-        <div className="hod-card-header">
-          <h3>Add Grading System</h3>
+  const renderGradingTab = () => {
+    const canonicalSystems = CANONICAL_GRADING_SLUGS
+      .map(slug => gradingSystems.find(s => s.slug === slug))
+      .filter(Boolean)
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Class profile mapping notice */}
+        <div className="hod-card" style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <Info size={18} color="#d97706" style={{ flexShrink: 0, marginTop: 2 }} />
+            <p style={{ margin: 0, fontSize: 13, color: '#92400e', lineHeight: 1.6 }}>
+              Grading is applied by class profile: <b>PP1–Grade 3 → Early Years</b>, <b>Grade 4–6 → Upper Primary</b>, <b>Grade 7–9 → Junior Secondary</b>, <b>Grade 10–12 → Senior School</b>. These four systems are the only active grading profiles. Edit the grade bands below — changes take effect across Marks Entry, Report Cards and exports immediately.
+            </p>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 160 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>System Name</label>
-            <input value={newSystemName} onChange={e => setNewSystemName(e.target.value)} placeholder="e.g. Senior School"
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13 }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 120 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Slug (key)</label>
-            <input value={newSystemSlug} onChange={e => setNewSystemSlug(e.target.value)} placeholder="e.g. senior"
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13 }} />
-          </div>
-          <button className="hod-btn-primary" onClick={handleCreateSystem} disabled={savingSystem || !newSystemName.trim()}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontSize: 13 }}>
-            <Plus size={14} /> {savingSystem ? 'Saving…' : 'Add System'}
-          </button>
-        </div>
-      </div>
 
-      {/* Grading systems */}
-      {gradingSystems.map(sys => (
-        <div key={sys.id} className="hod-card">
-          <div className="hod-card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <h3 style={{ margin: 0 }}>{sys.name}</h3>
-              {sys.is_default && <span style={{ fontSize: 11, background: '#dcfce7', color: '#16a34a', padding: '2px 8px', borderRadius: 99, fontWeight: 600 }}>Default</span>}
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {!sys.is_default && (
-                <button className="hod-btn-ghost" onClick={() => handleSetDefaultSystem(sys)} style={{ fontSize: 12, padding: '6px 10px' }}>Set Default</button>
-              )}
-              <button className="hod-btn-danger" onClick={() => handleDeleteSystem(sys)} style={{ fontSize: 12, padding: '6px 10px' }}><Trash2 size={13} /></button>
-            </div>
-          </div>
-          <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 16px' }}>
-            Slug: <code style={{ background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>{sys.slug}</code> — {sys.bands.length} grade band{sys.bands.length !== 1 ? 's' : ''}
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8, marginBottom: 16 }}>
-            {sys.bands.map(b => (
-              <GradeCard key={b.id} g={b}
-                onEdit={(band) => { setEditingSystem(sys); setEditingBand(band); setBandForm({ grade: band.grade, label: band.label || '', min_score: band.min_score, max_score: band.max_score, points: band.points, color: band.color }) }}
-                onDelete={handleDeleteBand}
-              />
-            ))}
-          </div>
-
-          {/* Add/Edit band form */}
-          {(editingSystem?.id === sys.id || (!editingSystem && gradingSystems.indexOf(sys) === 0)) && (
-            <div style={{ padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', marginBottom: 10 }}>
-                {editingBand ? `Edit: ${editingBand.grade}` : 'Add New Grade Band'}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8 }}>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Grade</label>
-                  <input value={bandForm.grade} onChange={e => setBandForm(f => ({ ...f, grade: e.target.value }))} placeholder="A+"
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+        {canonicalSystems.map(sys => {
+          const isSenior = sys.slug === 'senior'
+          return (
+            <div key={sys.id} className="hod-card">
+              <div className="hod-card-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <h3 style={{ margin: 0 }}>{sys.name}</h3>
+                  {isSenior && (
+                    <span style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: 99, fontWeight: 600 }}>Pending bands</span>
+                  )}
                 </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Label</label>
-                  <input value={bandForm.label} onChange={e => setBandForm(f => ({ ...f, label: e.target.value }))} placeholder="Excellent"
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Min Score</label>
-                  <input type="number" value={bandForm.min_score} onChange={e => setBandForm(f => ({ ...f, min_score: e.target.value }))}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Max Score</label>
-                  <input type="number" value={bandForm.max_score} onChange={e => setBandForm(f => ({ ...f, max_score: e.target.value }))}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Points</label>
-                  <input type="number" value={bandForm.points} onChange={e => setBandForm(f => ({ ...f, points: e.target.value }))}
-                    style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Color</label>
-                  <input type="color" value={bandForm.color} onChange={e => setBandForm(f => ({ ...f, color: e.target.value }))}
-                    style={{ width: '100%', padding: '4px', border: '1px solid #e2e8f0', borderRadius: 6, height: 32 }} />
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button className="hod-btn-primary" onClick={() => handleSaveBand(sys.id)} disabled={savingBand || !bandForm.grade.trim()}
-                  style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Save size={13} /> {savingBand ? 'Saving…' : editingBand ? 'Update Band' : 'Add Band'}
+                <button className="hod-btn-ghost" onClick={() => { setEditingSystem(sys); setEditingBand(null); setBandForm({ grade: '', label: '', min_score: 0, max_score: 100, points: 0, color: '#64748b' }) }}
+                  style={{ fontSize: 12, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Plus size={13} /> Add Band
                 </button>
-                {editingBand && (
-                  <button className="hod-btn-ghost" onClick={() => { setEditingBand(null); setBandForm({ grade: '', label: '', min_score: 0, max_score: 100, points: 0, color: '#64748b' }) }}
-                    style={{ fontSize: 13 }}>Cancel</button>
-                )}
               </div>
-            </div>
-          )}
-        </div>
-      ))}
+              <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 16px' }}>
+                Slug: <code style={{ background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>{sys.slug}</code> — {sys.bands.length} grade band{sys.bands.length !== 1 ? 's' : ''}
+              </p>
 
-      {gradingSystems.length === 0 && !gradingLoading && (
-        <div className="hod-card" style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
-          <BarChart3 size={40} color="#cbd5e1" style={{ marginBottom: 8 }} />
-          <p style={{ margin: 0 }}>No grading systems configured yet. Add one above.</p>
-        </div>
-      )}
-    </div>
-  )
+              {isSenior && sys.bands.length === 0 && (
+                <div style={{ padding: '14px 16px', background: '#fef3c7', borderRadius: 10, border: '1px solid #fde68a', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <AlertCircle size={16} color="#b45309" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <p style={{ margin: 0, fontSize: 13, color: '#92400e', lineHeight: 1.6 }}>
+                    The official 8-point Senior School rubric has not been confirmed yet. No bands are configured, so no grades are issued for Grade 10–12 until then. Add the confirmed bands here when available.
+                  </p>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8, marginBottom: 16 }}>
+                {sys.bands.map(b => (
+                  <GradeCard key={b.id} g={b}
+                    onEdit={(band) => { setEditingSystem(sys); setEditingBand(band); setBandForm({ grade: band.grade, label: band.label || '', min_score: band.min_score, max_score: band.max_score, points: band.points, color: band.color }) }}
+                    onDelete={handleDeleteBand}
+                  />
+                ))}
+              </div>
+
+              {/* Add/Edit band form */}
+              {(editingSystem?.id === sys.id || (!editingSystem && canonicalSystems.indexOf(sys) === 0)) && (
+                <div style={{ padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', marginBottom: 10 }}>
+                    {editingBand ? `Edit: ${editingBand.grade}` : 'Add New Grade Band'}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8 }}>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Grade</label>
+                      <input value={bandForm.grade} onChange={e => setBandForm(f => ({ ...f, grade: e.target.value }))} placeholder="EE1"
+                        style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Label</label>
+                      <input value={bandForm.label} onChange={e => setBandForm(f => ({ ...f, label: e.target.value }))} placeholder="Exceptional"
+                        style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Min Score</label>
+                      <input type="number" value={bandForm.min_score} onChange={e => setBandForm(f => ({ ...f, min_score: e.target.value }))}
+                        style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Max Score</label>
+                      <input type="number" value={bandForm.max_score} onChange={e => setBandForm(f => ({ ...f, max_score: e.target.value }))}
+                        style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Points</label>
+                      <input type="number" value={bandForm.points} onChange={e => setBandForm(f => ({ ...f, points: e.target.value }))}
+                        style={{ width: '100%', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>Color</label>
+                      <input type="color" value={bandForm.color} onChange={e => setBandForm(f => ({ ...f, color: e.target.value }))}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #e2e8f0', borderRadius: 6, height: 32 }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <button className="hod-btn-primary" onClick={() => handleSaveBand(sys.id)} disabled={savingBand || !bandForm.grade.trim()}
+                      style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Save size={13} /> {savingBand ? 'Saving…' : editingBand ? 'Update Band' : 'Add Band'}
+                    </button>
+                    {editingBand && (
+                      <button className="hod-btn-ghost" onClick={() => { setEditingBand(null); setBandForm({ grade: '', label: '', min_score: 0, max_score: 100, points: 0, color: '#64748b' }) }}
+                        style={{ fontSize: 13 }}>Cancel</button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {canonicalSystems.length === 0 && !gradingLoading && (
+          <div className="hod-card" style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+            <BarChart3 size={40} color="#cbd5e1" style={{ marginBottom: 8 }} />
+            <p style={{ margin: 0 }}>No grading systems configured yet.</p>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const renderWeightageTab = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
