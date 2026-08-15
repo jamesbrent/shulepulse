@@ -6,7 +6,9 @@ import {
   Eye, XCircle, Upload, File as FileIcon, AlertCircle, Loader2,
 } from 'lucide-react'
 import { ReportCard, getCBEGrade, fetchStudentComments } from '../../components/students/ReportCard'
-import { weightedScoreMean, marksCell, rankStudentsByGrades, findRank } from '../../services/grading'
+import {
+  weightedScoreMean, marksCell, rawMarkOf, compareExamTypes, rankStudentsByGrades, findRank,
+} from '../../services/grading'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
@@ -74,6 +76,7 @@ export default function GradesPage() {
   const [filterYear, setFilterYear]     = useState('')
   const [filterClass, setFilterClass]   = useState('all')
   const [filterSubject, setFilterSubject] = useState('all')
+  const [filterAssessment, setFilterAssessment] = useState('all')
 
   // Report card
   const [reportStudent, setReportStudent] = useState(null)
@@ -359,13 +362,36 @@ export default function GradesPage() {
   }
 
   // ── Derived Analytics ─────────────────────────────────────
+  // Normalized percentage for an assessment row (raw / assessment maximum).
+  // Falls back to the stored total_score so legacy rows stay consistent.
+  const scoreOf = (g) => {
+    const raw = rawMarkOf(g)
+    const mx = g?.max_marks ? Number(g.max_marks) : null
+    if (raw != null && mx) return Math.round((raw / mx) * 100)
+    return Number(g.total_score ?? 0)
+  }
+
   const filtered = grades.filter(g => {
     const s = search.toLowerCase()
+    const exam = g.exam_type || 'End Term'
     const matchSearch  = !s || g.students?.full_name?.toLowerCase().includes(s) ||
       g.students?.admission_number?.toLowerCase().includes(s)
     const matchClass   = filterClass === 'all' || g.students?.class === filterClass
     const matchSubject = filterSubject === 'all' || g.subject === filterSubject
-    return matchSearch && matchClass && matchSubject
+    const matchAssessment = filterAssessment === 'all' || exam === filterAssessment
+    return matchSearch && matchClass && matchSubject && matchAssessment
+  })
+
+  // Grade Records rows: group by Student → Subject → Opener → Midterm → End Term.
+  // Assessment order comes from the central EXAM_DISPLAY_ORDER, never DB order.
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    const na = a.students?.full_name || ''
+    const nb = b.students?.full_name || ''
+    if (na !== nb) return na.localeCompare(nb)
+    const sa = a.subject || ''
+    const sb = b.subject || ''
+    if (sa !== sb) return sa.localeCompare(sb)
+    return compareExamTypes(a.exam_type || 'End Term', b.exam_type || 'End Term')
   })
 
   // Summary cards
@@ -493,6 +519,10 @@ export default function GradesPage() {
             <option value="all">All Subjects</option>
             {subjectsList.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
           </select>
+          <select className="filter-select" value={filterAssessment} onChange={e => setFilterAssessment(e.target.value)}>
+            <option value="all">All Assessments</option>
+            {['Opener', 'Midterm', 'End Term'].map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
         </div>
       </div>
 
@@ -501,7 +531,7 @@ export default function GradesPage() {
       ══════════════════════════════════════════ */}
       {activeTab === 'grades' && (
         loading ? <p className="loading-state">Loading grades...</p>
-        : filtered.length === 0 ? (
+        : sortedFiltered.length === 0 ? (
           <div className="empty-grades">
             <BarChart2 size={40} color="#cbd5e1" />
             <p>No grades for {filterTerm} {filterYear}</p>
@@ -514,17 +544,17 @@ export default function GradesPage() {
                   <th>Student</th>
                   <th>Class</th>
                   <th>Subject</th>
-                  <th>Exam</th>
+                  <th>Assessment</th>
                   <th>Marks</th>
-                  <th>Total %</th>
-                  <th>CBE Band</th>
+                  <th>Score</th>
+                  <th>Achievement</th>
                   <th>Points</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(g => {
-                  const cbe = getCBEGrade(g.total_score || 0, g.students?.class || '')
+                {sortedFiltered.map(g => {
+                  const cbe = getCBEGrade(scoreOf(g), g.students?.class || '')
                   return (
                     <tr key={g.id}>
                       <td>
@@ -540,22 +570,25 @@ export default function GradesPage() {
                       </td>
                       <td>{g.students?.class || '—'}</td>
                       <td className="subject-cell">{g.subject}</td>
-                      <td>{g.exam_type || 'End Term'}</td>
-                      <td>{marksCell(g)}</td>
-                      <td><strong>{g.total_score ?? '—'}%</strong></td>
+                      <td>
+                        <span className="assessment-chip">{g.exam_type || 'End Term'}</span>
+                      </td>
+                      <td className="marks-cell">{marksCell(g)}</td>
+                      <td><strong>{scoreOf(g)}%</strong></td>
                       <td>
                         <span className={`cbe-badge cbe-${cbeClassKey(cbe)}`}>
-                          {cbe.band || cbe.grade || '—'}
+                          {cbe.band || '—'}
                         </span>
                       </td>
                       <td>
-                        <strong>{cbe.points ?? '—'}</strong>
-                        {cbe.system === 'middle' && <span className="pts-max"> /8</span>}
+                        {cbe.points != null && cbe.pointsMax
+                          ? <strong>{cbe.points}/{cbe.pointsMax}</strong>
+                          : <span className="text-muted">—</span>}
                       </td>
                       <td>
-                        <button className="action-btn" title="Open preview"
+                        <button className="grade-records-action-btn" title="Open report card"
                           onClick={() => openReportCard(g.students)}>
-                          <Printer size={12} /> Card
+                          <Eye size={14} />
                         </button>
                       </td>
                     </tr>

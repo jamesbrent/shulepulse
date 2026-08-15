@@ -21,6 +21,7 @@ export const UNRESOLVED_RESULT = {
   grade: null,
   level: null,
   points: null,
+  pointsMax: null,
   label: 'Unresolved class profile — no grade issued',
   color: null,
   reason: 'unknown-class',
@@ -34,6 +35,7 @@ export const PENDING_RESULT = {
   grade: null,
   level: null,
   points: null,
+  pointsMax: null,
   label: 'Pending verification — no grade issued',
   color: null,
 }
@@ -47,6 +49,9 @@ export function getGrade(score, className) {
   if (!profile || profile.status === 'pending') return { ...PENDING_RESULT }
   const band = lookupBand(profile, score)
   if (!band) return { ...PENDING_RESULT }
+  const pointsMax = profile.bands?.length
+    ? Math.max(...profile.bands.map(b => (Number(b.points) || 0)))
+    : null
   return {
     system: profile.system,
     profile: profile.id,
@@ -54,6 +59,7 @@ export function getGrade(score, className) {
     band: band.code,
     level: band.level,
     points: band.points,
+    pointsMax: pointsMax || null,
     label: band.label,
     color: band.color,
   }
