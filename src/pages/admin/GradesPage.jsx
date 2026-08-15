@@ -457,18 +457,31 @@ export default function GradesPage() {
   // ── Report Cards tab ──────────────────────────────────────
   // Class cards (shown when filterClass === 'all'): distinct students,
   // distinct learning areas, and class average from the central engine.
-  const reportClassCards = classes.map(c => {
-    const rows = grades.filter(g => g.students?.class === c.class_name)
-    if (!rows.length) return null
-    const subjRows = filterSubject === 'all' ? rows : rows.filter(g => g.subject === filterSubject)
-    if (filterSubject !== 'all' && !subjRows.length) return null
-    return {
-      class_name: c.class_name,
-      studentCount: subjRows.length ? new Set(subjRows.map(g => g.student_id)).size : 0,
-      learningAreas: new Set(rows.map(g => g.subject)).size,
-      avg: subjRows.length ? Math.round(weightedScoreMean(subjRows)) : 0,
-    }
-  }).filter(Boolean)
+  // Classes are derived from the GRADE DATA itself (distinct class values on
+  // grade rows) so the tab always reflects real records regardless of whether
+  // the classes table is populated or its names match student records.
+  const reportClassCards = (() => {
+    const byClass = new Map()
+    ;(grades || []).forEach(g => {
+      const cn = g.students?.class
+      if (!cn) return
+      if (!byClass.has(cn)) byClass.set(cn, [])
+      byClass.get(cn).push(g)
+    })
+    return [...byClass.entries()]
+      .map(([class_name, rows]) => {
+        const subjRows = filterSubject === 'all' ? rows : rows.filter(g => g.subject === filterSubject)
+        if (filterSubject !== 'all' && !subjRows.length) return null
+        return {
+          class_name,
+          studentCount: subjRows.length ? new Set(subjRows.map(g => g.student_id)).size : 0,
+          learningAreas: new Set(rows.map(g => g.subject)).size,
+          avg: subjRows.length ? Math.round(weightedScoreMean(subjRows)) : 0,
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.class_name.localeCompare(b.class_name))
+  })()
 
   // Student cards (shown when a class is selected): subject count is DISTINCT
   // subjects/learning areas only — assessment records (Opener/Midterm/End Term)
@@ -741,8 +754,10 @@ export default function GradesPage() {
       {activeTab === 'report' && (
         <div className="grades-report-list">
           {filterClass === 'all' ? (
-            reportClassCards.length === 0 ? (
+            grades.length === 0 ? (
               <p className="text-muted">No grade data for this term/year yet.</p>
+            ) : reportClassCards.length === 0 ? (
+              <p className="text-muted">No classes with grades for the current filters.</p>
             ) : (
               <>
                 <p className="ga-title" style={{ marginBottom: 12 }}>
