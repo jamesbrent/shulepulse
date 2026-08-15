@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { BarChart2, TrendingUp, TrendingDown, Minus, BookOpen, Award } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { groupGradesBySubject, getCBEGrade, ReportCard, fetchStudentComments } from '../../components/students/ReportCard'
+import { rankStudentsByGrades, findRank } from '../../services/grading'
 
 export default function AcademicResultsPage({ activeChild }) {
   const [grades, setGrades] = useState([])
@@ -10,6 +11,27 @@ export default function AcademicResultsPage({ activeChild }) {
   const [activeTab, setActiveTab] = useState('results')
   const [showTranscript, setShowTranscript] = useState(false)
   const [transcriptComment, setTranscriptComment] = useState('')
+  const [transcriptClassRank, setTranscriptClassRank] = useState(null)
+
+  const openTranscript = async () => {
+    setTranscriptClassRank(null)
+    if (school?.id && activeChild?.id && activeChild?.class) {
+      const term = school.current_term || 'Term 1'
+      const year = school.current_year || new Date().getFullYear()
+      const { data: clsGrades } = await supabase
+        .from('grades')
+        .select('student_id, subject, total_score, max_marks')
+        .eq('school_id', school.id)
+        .eq('term', term)
+        .eq('year', year)
+        .eq('class_name', activeChild.class)
+      setTranscriptClassRank(findRank(
+        rankStudentsByGrades(clsGrades || [], { scope: 'class' }),
+        activeChild.id
+      ))
+    }
+    setShowTranscript(true)
+  }
 
   useEffect(() => {
     if (activeChild) fetchGrades()
@@ -80,7 +102,7 @@ export default function AcademicResultsPage({ activeChild }) {
           </button>
         ))}
         {activeTab === 'results' && (
-          <button className="btn-secondary" style={{ marginLeft: 'auto', padding: '6px 16px', fontSize: 13 }} onClick={() => setShowTranscript(true)}>
+          <button className="btn-secondary" style={{ marginLeft: 'auto', padding: '6px 16px', fontSize: 13 }} onClick={openTranscript}>
             Print Full Transcript
           </button>
         )}
@@ -172,7 +194,7 @@ export default function AcademicResultsPage({ activeChild }) {
           </div>
           <div style={{ padding: 16 }}>
             <p style={{ fontSize: 13, color: '#64748b' }}>View and print the complete academic transcript.</p>
-            <button className="btn-primary" onClick={() => setShowTranscript(true)} style={{ marginTop: 12 }}>
+            <button className="btn-primary" onClick={openTranscript} style={{ marginTop: 12 }}>
               Open Full Transcript
             </button>
           </div>
@@ -186,6 +208,7 @@ export default function AcademicResultsPage({ activeChild }) {
           school={school}
           term={grades[0]?.term || 'Term 1'}
           year={grades[0]?.year || new Date().getFullYear()}
+          classRank={transcriptClassRank}
           teacherComment={transcriptComment}
           onClose={() => setShowTranscript(false)}
         />

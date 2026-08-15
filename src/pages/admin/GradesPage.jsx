@@ -6,7 +6,7 @@ import {
   Eye, XCircle, Upload, File as FileIcon, AlertCircle, Loader2,
 } from 'lucide-react'
 import { ReportCard, getCBEGrade, fetchStudentComments } from '../../components/students/ReportCard'
-import { weightedScoreMean, marksCell } from '../../services/grading'
+import { weightedScoreMean, marksCell, rankStudentsByGrades, findRank } from '../../services/grading'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
@@ -79,6 +79,7 @@ export default function GradesPage() {
   const [reportStudent, setReportStudent] = useState(null)
   const [reportGrades, setReportGrades]   = useState([])
   const [reportTeacherComment, setReportTeacherComment] = useState('')
+  const [reportClassRank, setReportClassRank] = useState(null)
 
   // Bulk
   const [filterExam, setFilterExam]       = useState('')
@@ -347,6 +348,10 @@ export default function GradesPage() {
     setReportGrades(sg)
     setReportStudent(student)
     setReportTeacherComment('')
+    setReportClassRank(findRank(
+      rankStudentsByGrades(grades.filter(g => g.students?.class === student.class), { scope: 'class' }),
+      student.id
+    ))
     if (profile?.school_id && student?.id) {
       const comment = await fetchStudentComments(profile.school_id, student.id, filterTerm, parseInt(filterYear))
       setReportTeacherComment(comment)
@@ -1015,6 +1020,7 @@ export default function GradesPage() {
           school={school}
           term={filterTerm}
           year={filterYear}
+          classRank={reportClassRank}
           teacherComment={reportTeacherComment}
           onClose={() => setReportStudent(null)}
         />

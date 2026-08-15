@@ -523,6 +523,7 @@ export default function StudentProfile({ student, onBack, schoolId }) {
           school={school}
           term={student?.term || 'Term 2'}
           year={student?.year || new Date().getFullYear()}
+          classRank={classRank}
           teacherComment={comments.length > 0 ? comments[0].comment : ''}
           onClose={() => setShowTranscript(false)}
         />

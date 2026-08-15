@@ -16,6 +16,7 @@ import { promoteStudentsAtomic, getGradeLevels } from '../../services/students/b
 import { createStudentAuth, bulkCreateStudentAuth, resetAllStudentPasswords } from '../../services/students/studentService'
 import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { ReportCard, fetchStudentComments, groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
+import { rankStudentsByGrades, findRank } from '../../services/grading'
 import { fmt, fmtDate } from './fees/utils/feesHelpers'
 import {
   generatePersonalPdf,
@@ -147,6 +148,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
   const [profileGrades, setProfileGrades] = useState([])
   const [profileTabLoading, setProfileTabLoading] = useState(false)
   const [showTranscript, setShowTranscript] = useState(false)
+  const [transcriptClassRank, setTranscriptClassRank] = useState(null)
   const [transcriptComment, setTranscriptComment] = useState('')
   const [promotingClass, setPromotingClass] = useState(false)
 
@@ -861,9 +863,23 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
                 <button className="sp-btn-ghost sm" onClick={async () => {
                   setTranscriptComment('')
+                  setTranscriptClassRank(null)
                   if (profile?.school_id && selectedStudent?.id) {
                     const comment = await fetchStudentComments(profile.school_id, selectedStudent.id, getCurrentTerm(), getCurrentYear())
                     setTranscriptComment(comment)
+                  }
+                  if (profile?.school_id && selectedStudent?.id && selectedStudent?.class) {
+                    const { data: clsGrades } = await supabase
+                      .from('grades')
+                      .select('student_id, subject, total_score, max_marks')
+                      .eq('school_id', profile.school_id)
+                      .eq('term', getCurrentTerm())
+                      .eq('year', getCurrentYear())
+                      .eq('class_name', selectedStudent.class)
+                    setTranscriptClassRank(findRank(
+                      rankStudentsByGrades(clsGrades || [], { scope: 'class' }),
+                      selectedStudent.id
+                    ))
                   }
                   setShowTranscript(true)
                 }}>
@@ -955,7 +971,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
           <div className="sp-tab-content">{renderProfileTab()}</div>
         </div>
         {showTranscript && (
-          <ReportCard student={selectedStudent} grades={profileGrades} school={school} term={getCurrentTerm()} year={getCurrentYear()} teacherComment={transcriptComment} onClose={() => setShowTranscript(false)} />
+          <ReportCard student={selectedStudent} grades={profileGrades} school={school} term={getCurrentTerm()} year={getCurrentYear()} classRank={transcriptClassRank} teacherComment={transcriptComment} onClose={() => setShowTranscript(false)} />
         )}
       </>
     )
