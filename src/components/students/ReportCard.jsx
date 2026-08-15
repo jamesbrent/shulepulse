@@ -105,8 +105,11 @@ export function groupGradesBySubject(grades) {
   subjects.sort((a, b) => a.name.localeCompare(b.name))
   const examTypes = sortExamTypes([...allExamTypes])
 
-  const totalMarks = subjects.reduce((s, sub) => s + sub.totalScore, 0)
-  const totalMax = subjects.reduce((s, sub) => s + sub.maxTotal, 0)
+  // Overall Total = total marks obtained across all assessed learning areas
+  // OUT OF the total possible marks. Each subject's Total is out of 100, so the
+  // overall total is Σ subject totals / (subjects × 100), e.g. 878 / 1,100.
+  const totalMarks = subjects.reduce((s, sub) => s + sub.average, 0)
+  const totalMax = subjects.length * 100
   const overallAvg = overallScore(grades) ?? 0
 
   return {
@@ -248,6 +251,8 @@ function buildSummaryCardsHtml(totalMarks, totalMax, overallAvg, totalSubjects, 
   const label = resolved ? grade.label : ''
   const rankText = rankInfo ? `${rankInfo.rank} / ${rankInfo.total}` : '— / —'
   const chipCls = bandDisplay !== '—' ? `class="band-chip ${chipClass(bandDisplay)}"` : 'class="band-chip"'
+  const pct = totalMax > 0 ? Math.round((totalMarks / totalMax) * 1000) / 10 : 0
+  const overallTotalText = totalMax > 0 ? `${Math.round(totalMarks)} / ${totalMax}` : `${Math.round(overallAvg)} / 100`
   return `
     <div class="rc-section-title">Overall Summary</div>
     <table class="gtbl">
@@ -258,7 +263,7 @@ function buildSummaryCardsHtml(totalMarks, totalMax, overallAvg, totalSubjects, 
         <th>Subjects Assessed</th>
       </tr></thead>
       <tbody><tr>
-        <td style="font-weight:700">${Math.round(overallAvg)} / 100</td>
+        <td style="font-weight:700">${overallTotalText}<span class="rc-pts" style="display:block">= ${pct.toFixed(1)}%</span></td>
         <td><span ${chipCls}>${bandDisplay}</span>${pts ? ` <span class="rc-pts">${pts}</span>` : ''}${label ? `<div class="rc-label">${label}</div>` : ''}</td>
         <td>${rankText}</td>
         <td>${totalSubjects}</td>
@@ -332,11 +337,14 @@ function buildSubjectTableHtml(subjects, examTypes, className, overallScore) {
   const oPts = oResolved && overall.points != null ? ` · ${overall.points}pts` : ''
   const oChip = oBand !== '—' ? `class="band-chip ${chipClass(oBand)}"` : 'class="band-chip"'
   const naCells = examTypes.map(() => `<td class="rc-total-na">—</td>`).join('')
+  const overallMarks = subjects.reduce((s, sub) => s + sub.average, 0)
+  const overallMax = subjects.length * 100
+  const overallPct = overallMax > 0 ? (overallMarks / overallMax) * 100 : 0
   const totalRow = `
     <tr class="gtbl-total">
       <td class="left" colspan="2" style="font-weight:800;text-transform:uppercase">Overall</td>
       ${naCells}
-      <td style="font-weight:800">${Math.round(overallScore || 0)}/100</td>
+      <td style="font-weight:800">${Math.round(overallMarks)} / ${overallMax}<span class="rc-pts" style="display:block">= ${overallPct.toFixed(1)}%</span></td>
       <td><span ${oChip}>${oBand}</span>${oPts ? `<span class="rc-pts">${oPts}</span>` : ''}</td>
       <td class="left" style="font-size:8px"></td>
     </tr>`
