@@ -802,9 +802,80 @@
   flex-direction: column;
   gap: 12px;
 }
+/* Class cards — exactly 5 per row on desktop */
+.report-class-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+.report-class-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 16px 14px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 132px;
+}
+.report-class-card:hover {
+  border-color: #BFDBFE;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+.report-class-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.report-class-meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: #475569;
+}
+.report-class-avg {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563EB;
+}
+.report-class-view {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563EB;
+}
+.report-back-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.report-back-btn {
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #334155;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.report-back-btn:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+/* Student cards — exactly 5 per row on desktop */
 .report-student-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
 .report-student-card {
@@ -1022,6 +1093,8 @@
 @media (max-width: 1024px) {
   .grades-summary   { grid-template-columns: repeat(2, 1fr); }
   .grades-analytics { grid-template-columns: 1fr; }
+  .report-class-grid  { grid-template-columns: repeat(3, 1fr); }
+  .report-student-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 640px) {
   .grades-summary     { grid-template-columns: 1fr 1fr; }
@@ -1035,6 +1108,11 @@
   .form-field.full    { grid-column: 1; }
   .ga-bar-label       { width: 90px; }
   .grades-analytics   { grid-template-columns: 1fr; }
-  .report-student-grid { grid-template-columns: 1fr; }
+  .report-class-grid  { grid-template-columns: repeat(2, 1fr); }
+  .report-student-grid { grid-template-columns: repeat(2, 1fr); }
   .grades-pending-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 400px) {
+  .report-class-grid  { grid-template-columns: 1fr; }
+  .report-student-grid { grid-template-columns: 1fr; }
 }

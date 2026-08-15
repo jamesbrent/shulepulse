@@ -454,6 +454,40 @@ export default function GradesPage() {
     return `${p.term} ${p.year}`
   })()
 
+  // ── Report Cards tab ──────────────────────────────────────
+  // Class cards (shown when filterClass === 'all'): distinct students,
+  // distinct learning areas, and class average from the central engine.
+  const reportClassCards = classes.map(c => {
+    const rows = grades.filter(g => g.students?.class === c.class_name)
+    if (!rows.length) return null
+    const subjRows = filterSubject === 'all' ? rows : rows.filter(g => g.subject === filterSubject)
+    if (filterSubject !== 'all' && !subjRows.length) return null
+    return {
+      class_name: c.class_name,
+      studentCount: subjRows.length ? new Set(subjRows.map(g => g.student_id)).size : 0,
+      learningAreas: new Set(rows.map(g => g.subject)).size,
+      avg: subjRows.length ? Math.round(weightedScoreMean(subjRows)) : 0,
+    }
+  }).filter(Boolean)
+
+  // Student cards (shown when a class is selected): subject count is DISTINCT
+  // subjects/learning areas only — assessment records (Opener/Midterm/End Term)
+  // are never counted as subjects. Average stays on the central aggregation engine.
+  const reportStudents = filterClass === 'all'
+    ? []
+    : students.filter(s => s.class === filterClass).map(s => {
+        const sg = grades.filter(g => g.student_id === s.id && (filterSubject === 'all' || g.subject === filterSubject))
+        if (!sg.length) return null
+        const avg = Math.round(weightedScoreMean(sg))
+        const subjectCount = new Set(sg.map(g => g.subject)).size
+        return { ...s, avg, subjectCount }
+      }).filter(Boolean).sort((a, b) => b.avg - a.avg)
+
+  const sQuery = search.toLowerCase()
+  const reportStudentsFiltered = reportStudents.filter(st =>
+    !sQuery || st.full_name?.toLowerCase().includes(sQuery) ||
+    st.admission_number?.toLowerCase().includes(sQuery))
+
   return (
     <div className="grades-page">
 
@@ -706,28 +740,57 @@ export default function GradesPage() {
       ══════════════════════════════════════════ */}
       {activeTab === 'report' && (
         <div className="grades-report-list">
-          <p className="ga-title" style={{ marginBottom: 12 }}>
-            <Printer size={15} /> Select a student to generate their report card for {filterTerm} {filterYear}
-          </p>
-          {studentMeans.length === 0
-            ? <p className="text-muted">No grade data for this term/year yet.</p>
-            : (
-              <div className="report-student-grid">
-                {studentMeans.map(s => (
-                  <div key={s.id} className="report-student-card" onClick={() => openReportCard(s)}>
-                    <div className="student-avatar-sm">
-                      {s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          {filterClass === 'all' ? (
+            reportClassCards.length === 0 ? (
+              <p className="text-muted">No grade data for this term/year yet.</p>
+            ) : (
+              <>
+                <p className="ga-title" style={{ marginBottom: 12 }}>
+                  <Printer size={15} /> Select a class to generate report cards for {filterTerm} {filterYear}
+                </p>
+                <div className="report-class-grid">
+                  {reportClassCards.map(c => (
+                    <div key={c.class_name} className="report-class-card" onClick={() => setFilterClass(c.class_name)}>
+                      <p className="report-class-name">{c.class_name}</p>
+                      <p className="report-class-meta">{c.studentCount} Students</p>
+                      <p className="report-class-meta">{c.learningAreas} Learning Areas</p>
+                      <p className="report-class-avg">Class Average: {c.avg}%</p>
+                      <span className="report-class-view">View Students →</span>
                     </div>
-                    <div>
-                      <p className="sname">{s.full_name}</p>
-                      <p className="sadm">{s.class} · {s.subjectCount} subjects · avg {s.avg}%</p>
-                    </div>
-                    <Printer size={14} color="#7c3aed" />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )
-          }
+          ) : (
+            <>
+              <div className="report-back-row">
+                <button className="report-back-btn" onClick={() => setFilterClass('all')}>
+                  ← All Classes
+                </button>
+                <p className="ga-title" style={{ margin: 0 }}>
+                  <Printer size={15} /> {filterClass} — select a student for {filterTerm} {filterYear}
+                </p>
+              </div>
+              {reportStudentsFiltered.length === 0 ? (
+                <p className="text-muted">No grade data for {filterClass} this term/year.</p>
+              ) : (
+                <div className="report-student-grid">
+                  {reportStudentsFiltered.map(s => (
+                    <div key={s.id} className="report-student-card" onClick={() => openReportCard(s)}>
+                      <div className="student-avatar-sm">
+                        {s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div>
+                        <p className="sname">{s.full_name}</p>
+                        <p className="sadm">{s.class} · {s.subjectCount} subjects · avg {s.avg}%</p>
+                      </div>
+                      <Printer size={14} color="#7c3aed" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
