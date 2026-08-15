@@ -395,6 +395,14 @@ export default function GradesPage() {
     return { ...s, avg, totalPts, subjectCount: sg.length }
   }).filter(s => s.avg !== null).sort((a, b) => b.avg - a.avg)
 
+  // Top students leaderboard — same central ranking engine as merit list/report cards
+  // (competition ties 1,2,2,4), scoped to the current class filter.
+  const studentMeansById = new Map(studentMeans.map(s => [s.id, s]))
+  const studentRanked = rankStudentsByGrades(
+    grades.filter(g => !filterClass || filterClass === 'all' || g.students?.class === filterClass),
+    { scope: filterClass && filterClass !== 'all' ? 'class' : 'school' }
+  ).map(e => ({ ...e, ...(studentMeansById.get(e.studentId) || {}) }))
+
   // Mean per class
   const classMeans = classes.map(c => {
     const cg = grades.filter(g => g.students?.class === c.class_name)
@@ -610,11 +618,11 @@ export default function GradesPage() {
             <p className="ga-title"><Award size={15} /> Top Students — {filterTerm} {filterYear}</p>
             {studentMeans.length === 0
               ? <p className="text-muted">No data yet.</p>
-              : studentMeans.slice(0, 10).map((s, i) => {
+              : studentRanked.slice(0, 10).map((s) => {
                   const cbe = getCBEGrade(s.avg, s.class || '')
                   return (
-                    <div key={s.id} className="ga-student-row">
-                      <span className="ga-rank">{i + 1}</span>
+                    <div key={s.studentId} className="ga-student-row">
+                      <span className="ga-rank">{s.rank}</span>
                       <div className="student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9 }}>
                         {s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>

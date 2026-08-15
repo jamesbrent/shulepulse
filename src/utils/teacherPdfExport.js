@@ -13,7 +13,7 @@ import {
   fmtDate as fmtDateFull,
 } from './schoolPdfTemplate'
 
-import { getGrade, gradeDisplay, sortBands } from '../services/grading'
+import { getGrade, gradeDisplay, sortBands, rankEntries } from '../services/grading'
 
 const F = FONT.SERIF
 const BLUE = COLORS.PRIMARY
@@ -199,18 +199,19 @@ export async function exportSubjectSummary({ school, className, subject, examTyp
     startY: y,
   })
 
-  const ranked = students
-    .map(s => {
-      const v = grades[s.id]?.total_score
-      return { name: s.full_name, adm: s.admission_number, score: (v !== '' && v != null) ? Number(v) : null, grade: grades[s.id]?.grade || '\u2014' }
-    })
-    .filter(s => s.score !== null)
-    .sort((a, b) => b.score - a.score)
+  const ranked = rankEntries(
+    students
+      .map(s => {
+        const v = grades[s.id]?.total_score
+        return { studentId: s.id, score: (v !== '' && v != null) ? Number(v) : null, name: s.full_name, adm: s.admission_number, grade: grades[s.id]?.grade || '\u2014' }
+      })
+      .filter(s => s.score !== null)
+  )
 
   y = sectionHead(doc, 'Student Ranking', y)
   y = tbl(doc, {
     head: [['Rank', 'Adm No.', 'Name', 'Marks', 'Grade']],
-    body: ranked.map((s, i) => [i + 1, s.adm || '\u2014', s.name || '\u2014', String(s.score), s.grade]),
+    body: ranked.map(s => [s.rank, s.adm || '\u2014', s.name || '\u2014', String(s.score), s.grade]),
     startY: y,
     fontSize: 7,
   })
