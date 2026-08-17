@@ -48,7 +48,13 @@ export default function SettingsPage() {
       if (terms.length) setAvailableTerms(terms)
       if (years.length) setAvailableYears(years)
     }
-    setSchoolTypes(['primary', 'secondary', 'mixed', 'boarding', 'day', 'international'])
+    setSchoolTypes([
+      { value: 'pre-primary', label: 'Pre-Primary Education (PP1–PP2)' },
+      { value: 'primary', label: 'Primary Education (Grades 1–6)' },
+      { value: 'junior-secondary', label: 'Junior Secondary School / JSS (Grades 7–9)' },
+      { value: 'senior-secondary', label: 'Senior Secondary School / SSS (Grades 10–12)' },
+      { value: 'mixed', label: 'Mixed (Primary + Secondary)' },
+    ])
   }
 
   const loadSchool = async () => {
@@ -233,13 +239,13 @@ export default function SettingsPage() {
               />
             </div>
             <div className="form-field">
-              <label>School Type</label>
+              <label>School Category</label>
               <select
                 value={schoolForm.type}
                 onChange={e => setSchoolForm({ ...schoolForm, type: e.target.value })}
               >
-                <option value="">Select type</option>
-                {schoolTypes.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                <option value="">Select category</option>
+                {schoolTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
             <div className="form-field full">

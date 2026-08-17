@@ -50,7 +50,7 @@ export default function OnboardSchoolModal({ onClose }) {
 
   useEffect(() => {
     if (schoolTypes.length > 0 && !school.type) {
-      setSchool((prev) => ({ ...prev, type: schoolTypes[0] }))
+      setSchool((prev) => ({ ...prev, type: schoolTypes[0].value }))
     }
   }, [schoolTypes])
 
@@ -211,10 +211,10 @@ export default function OnboardSchoolModal({ onClose }) {
                   </select>
                 </div>
                 <div className="form-field">
-                  <label><Building2 size={14} /> School Type</label>
+                  <label><Building2 size={14} /> School Category</label>
                   <select value={school.type} onChange={(e) => updateSchool('type', e.target.value)}>
                     {schoolTypes.map((t) => (
-                      <option key={t} value={t}>{t}</option>
+                      <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                 </div>
@@ -355,7 +355,7 @@ export default function OnboardSchoolModal({ onClose }) {
                   <h4><School size={14} /> School Details</h4>
                   <div className="review-row"><span>Name</span><span>{school.name}</span></div>
                   <div className="review-row"><span>County</span><span>{school.county}</span></div>
-                  <div className="review-row"><span>Type</span><span>{school.type}</span></div>
+                  <div className="review-row"><span>Category</span><span>{schoolTypes.find(t => t.value === school.type)?.label || school.type}</span></div>
                   <div className="review-row"><span>Phone</span><span>{school.phone || '—'}</span></div>
                   <div className="review-row"><span>Email</span><span>{school.email || '—'}</span></div>
                   <div className="review-row"><span>Address</span><span>{school.address || '—'}</span></div>

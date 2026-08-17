@@ -101,10 +101,10 @@ export default function EditSchoolModal({ school, onClose, onSaved }) {
               </select>
             </div>
             <div className="form-field">
-              <label><Building2 size={14} /> Type</label>
+              <label><Building2 size={14} /> Category</label>
               <select value={form.type} onChange={(e) => update('type', e.target.value)}>
                 {schoolTypes.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
             </div>

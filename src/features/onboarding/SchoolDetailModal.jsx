@@ -44,7 +44,7 @@ export default function SchoolDetailModal({ school, onClose, onEdit }) {
     { label: 'Phone', value: school.phone, icon: Phone },
     { label: 'Website', value: school.website, icon: Globe },
     { label: 'Address', value: school.address, icon: MapPin },
-    { label: 'Type', value: school.type, icon: Building2 },
+    { label: 'Category', value: school.type, icon: Building2 },
   ]
 
   const statItems = [

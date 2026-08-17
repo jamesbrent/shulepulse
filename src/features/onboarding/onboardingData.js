@@ -6,8 +6,13 @@ export async function fetchCounties() {
 }
 
 export async function fetchSchoolTypes() {
-  const { data } = await supabase.from('school_types').select('name').order('id')
-  return (data || []).map((t) => t.name)
+  return [
+    { value: 'pre-primary', label: 'Pre-Primary Education (PP1–PP2)' },
+    { value: 'primary', label: 'Primary Education (Grades 1–6)' },
+    { value: 'junior-secondary', label: 'Junior Secondary School / JSS (Grades 7–9)' },
+    { value: 'senior-secondary', label: 'Senior Secondary School / SSS (Grades 10–12)' },
+    { value: 'mixed', label: 'Mixed (Primary + Secondary)' },
+  ]
 }
 
 export async function fetchPlans() {
