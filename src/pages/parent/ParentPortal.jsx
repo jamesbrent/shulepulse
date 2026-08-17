@@ -13,6 +13,7 @@ const WhatsAppIcon = ({ size = 16 }) => (
 )
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
+import { useNoticeCount } from '../../hooks/useNoticeCount'
 import './ParentPortal.css'
 import './AcademicResultsPage.css'
 import './AttendancePage.css'
@@ -37,6 +38,7 @@ export default function ParentPortal() {
   const [showChildDropdown, setShowChildDropdown] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const { logoUrl, schoolName } = useBrandingStore()
+  const notifCount = useNoticeCount(school?.id)
 
   useEffect(() => {
     fetchParentData()
@@ -185,6 +187,7 @@ export default function ParentPortal() {
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
+              {item.key === 'notices' && notifCount > 0 && <span className="nav-badge" style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: '10px', fontWeight: 700, padding: '1px 6px', marginLeft: 'auto' }}>{notifCount}</span>}
             </button>
           ))}
         </nav>

@@ -26,6 +26,7 @@ import Comments from './Comments'
 import './Comments.css'
 import MyLibrary from '../library/MyLibrary'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { useNoticeCount } from '../../hooks/useNoticeCount'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 
@@ -44,6 +45,7 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const { logoUrl, schoolName } = useBrandingStore()
+  const notifCount = useNoticeCount(profile?.school_id)
 
   useEffect(() => {
     fetchTeacherData()
@@ -407,6 +409,7 @@ export default function TeacherDashboard() {
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
+              {item.key === 'notices' && notifCount > 0 && <span className="nav-badge" style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: '10px', fontWeight: 700, padding: '1px 6px', marginLeft: 'auto' }}>{notifCount}</span>}
             </button>
           ))}
         </nav>

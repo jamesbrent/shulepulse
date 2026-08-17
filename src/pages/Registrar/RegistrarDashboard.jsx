@@ -12,6 +12,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { useNoticeCount } from '../../hooks/useNoticeCount'
 import { fmtDate } from '../admin/fees/utils/feesHelpers'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import './RegistrarDashboard.css'
@@ -58,6 +59,7 @@ export default function RegistrarDashboard() {
   const [updatedAt, setUpdatedAt] = useState(null)
   const [loading, setLoading] = useState(true)
   const [overallPct, setOverallPct] = useState(0)
+  const notifCount = useNoticeCount(authProfile?.school_id)
 
   useEffect(() => {
     fetchRegistrarData()
@@ -228,7 +230,7 @@ export default function RegistrarDashboard() {
       case 'bulk-import': return <BulkImport />
       case 'archives': return <ArchivesAlumni />
       case 'notices': return <NoticesPage profile={authProfile} />
-      case 'library': return <LibraryContent schoolId={authProfile?.school_id} school={school} />
+      case 'library': return <LibraryContent schoolId={authProfile?.school_id} school={school} profile={authProfile} />
       case 'support': return <SchoolSupportPage />
       default: return renderDashboard()
     }
@@ -623,6 +625,7 @@ export default function RegistrarDashboard() {
             >
               <span className="reg-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
+              {item.key === 'notices' && notifCount > 0 && <span className="nav-badge" style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: '10px', fontWeight: 700, padding: '1px 6px', marginLeft: 'auto' }}>{notifCount}</span>}
             </button>
           ))}
         </nav>

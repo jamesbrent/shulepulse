@@ -328,6 +328,7 @@ function buildSubjectTableHtml(subjects, examTypes, className, overallScore) {
       <td style="font-weight:700">${Math.round(sub.average)}/100</td>
       <td><span ${chipCls}>${bandDisplay}</span>${pts ? `<span class="rc-pts">${pts}</span>` : ''}</td>
       <td class="left" style="font-size:8px">${sub.teacher || '—'}</td>
+      <td class="left" style="font-size:8px"></td>
     </tr>`
   }).join('')
 
@@ -347,6 +348,7 @@ function buildSubjectTableHtml(subjects, examTypes, className, overallScore) {
       <td style="font-weight:800">${Math.round(overallMarks)} / ${overallMax}<span class="rc-pts" style="display:block">= ${overallPct.toFixed(1)}%</span></td>
       <td><span ${oChip}>${oBand}</span>${oPts ? `<span class="rc-pts">${oPts}</span>` : ''}</td>
       <td class="left" style="font-size:8px"></td>
+      <td class="left" style="font-size:8px"></td>
     </tr>`
 
   const assessHeaders = examTypes.map(et => {
@@ -364,6 +366,7 @@ function buildSubjectTableHtml(subjects, examTypes, className, overallScore) {
         <th>Total<br/><span style="font-weight:400">/100</span></th>
         <th>Achievement Level</th>
         <th>Teacher</th>
+        <th>Comments</th>
       </tr></thead>
       <tbody>${rows}${totalRow}</tbody>
     </table>`
@@ -409,13 +412,6 @@ function buildTrendChartSvg(subjects, examTypes) {
     return `<text x="${x}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#475569">${et}</text>`
   }).join('')
 
-  const legend = subjects.map((sub, si) => {
-    const color = CHART_COLORS[si % CHART_COLORS.length]
-    const lx = P.left + si * 110
-    return `<line x1="${lx}" y1="10" x2="${lx + 16}" y2="10" stroke="${color}" stroke-width="2"/>
-      <text x="${lx + 20}" y="13" font-size="9" fill="#475569">${sub.name}</text>`
-  }).join('')
-
   return `
     <div class="rc-chart-wrap">
       <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
@@ -424,9 +420,24 @@ function buildTrendChartSvg(subjects, examTypes) {
         <line x1="${P.left}" y1="${P.top + cH}" x2="${W - P.right}" y2="${P.top + cH}" stroke="#94a3b8" stroke-width="1"/>
         ${xLabels}
         ${lines}
-        ${legend}
       </svg>
     </div>`
+}
+
+function buildTrendLegendHtml(subjects) {
+  if (subjects.length === 0) return ''
+  const chunks = []
+  for (let i = 0; i < subjects.length; i += 6) chunks.push(subjects.slice(i, i + 6))
+  const rows = chunks.map(chunk => {
+    const cells = chunk.map((sub, ci) => {
+      const gi = chunks.indexOf(chunk) * 6 + ci
+      const color = CHART_COLORS[gi % CHART_COLORS.length]
+      return `<td style="padding:4px 8px;border:1px solid #e2e8f0;white-space:nowrap"><span style="display:inline-block;width:10px;height:10px;background:${color};border-radius:2px;vertical-align:middle;margin-right:4px"></span><span style="font-weight:500;font-size:9px">${sub.name}</span></td>`
+    }).join('')
+    const pad = Array(6 - chunk.length).fill('<td style="border:1px solid #e2e8f0"></td>').join('')
+    return `<tr>${cells}${pad}</tr>`
+  }).join('')
+  return `<table style="width:100%;border-collapse:collapse;table-layout:fixed;margin:6px 0"><tbody>${rows}</tbody></table>`
 }
 
 function buildComparisonChartHtml(studentSubjects, classAverages) {
@@ -588,6 +599,7 @@ export function ReportCard({
             {trendSection && <>
               <div className="rc-section-title">Performance Trend</div>
               <div dangerouslySetInnerHTML={{ __html: trendSection }} />
+              <div dangerouslySetInnerHTML={{ __html: buildTrendLegendHtml(grouped.subjects) }} />
               <hr className="rc-hr-light" />
             </>}
 
@@ -743,10 +755,15 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
     ? buildTrendChartSvg(grouped.subjects, grouped.examTypes)
     : ''
 
+  const trendLegendHtml = grouped.subjects.length > 0
+    ? buildTrendLegendHtml(grouped.subjects)
+    : ''
+
   const trendSection = trendSvg ? `
     <hr class="rc-hr-light" />
     <div class="rc-section-title">Performance Trend</div>
-    ${trendSvg}` : ''
+    ${trendSvg}
+    ${trendLegendHtml}` : ''
 
   const comparisonHtml = extraData.classAverages && extraData.classAverages.length > 0
     ? buildComparisonChartHtml(grouped.subjects, extraData.classAverages)

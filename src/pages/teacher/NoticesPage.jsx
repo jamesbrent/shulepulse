@@ -19,7 +19,7 @@ const AUDIENCES = [
   { value: 'staff', label: 'Staff Only' },
 ]
 
-const CAN_CREATE = ['admin', 'hod', 'deputy_admin', 'superadmin']
+const CAN_CREATE = ['admin', 'hod', 'deputy_admin', 'superadmin', 'reception', 'registrar', 'bursar']
 
 export default function NoticesPage({ profile }) {
   const [notices, setNotices] = useState([])
@@ -68,10 +68,8 @@ export default function NoticesPage({ profile }) {
       school_id: profile.school_id,
       title: form.title.trim(),
       body: form.body.trim(),
-      content: form.body.trim(),
       category: form.category,
       target_audience: form.target_audience,
-      priority: form.priority,
       created_by: (await supabase.auth.getUser()).data.user.id,
     })
 

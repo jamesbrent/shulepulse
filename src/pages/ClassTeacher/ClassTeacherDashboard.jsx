@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { useNoticeCount } from '../../hooks/useNoticeCount'
 import { weightedScoreMean } from '../../services/grading'
 import ClassAttendance from './ClassAttendance'
 import './ClassAttendance.css'
@@ -45,6 +46,7 @@ export default function ClassTeacherDashboard() {
     averagePerformance: 0,
   })
   const [loading, setLoading] = useState(true)
+  const notifCount = useNoticeCount(authProfile?.school_id)
 
   useEffect(() => {
     fetchTeacherAndSchool()
@@ -312,6 +314,7 @@ export default function ClassTeacherDashboard() {
             >
               <span className="ct-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
+              {item.key === 'notices' && notifCount > 0 && <span className="nav-badge" style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: '10px', fontWeight: 700, padding: '1px 6px', marginLeft: 'auto' }}>{notifCount}</span>}
             </button>
           ))}
         </nav>

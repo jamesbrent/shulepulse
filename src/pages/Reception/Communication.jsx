@@ -54,10 +54,8 @@ export default function Communication({ profile }) {
       school_id: profile.school_id,
       title: form.title.trim(),
       body: form.body.trim(),
-      content: form.body.trim(),
       category: form.category,
       target_audience: form.target_audience,
-      priority: form.priority,
       created_by: user?.id,
     })
     setCreating(false)

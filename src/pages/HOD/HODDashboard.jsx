@@ -9,6 +9,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { useNoticeCount } from '../../hooks/useNoticeCount'
 import { weightedScoreMean } from '../../services/grading'
 import './HODDashboard.css'
 import SubjectPerformance from './SubjectPerformance'
@@ -39,6 +40,7 @@ export default function HODDashboard() {
   })
   const [subjectSummary, setSubjectSummary] = useState([])
   const [loading, setLoading] = useState(true)
+  const notifCount = useNoticeCount(authProfile?.school_id)
 
   useEffect(() => {
     fetchDashboardData()
@@ -154,7 +156,7 @@ export default function HODDashboard() {
       case 'notices':
         return <NoticesPage profile={authProfile} />
       case 'library':
-        return <LibraryContent schoolId={authProfile?.school_id} school={school} />
+        return <LibraryContent schoolId={authProfile?.school_id} school={school} profile={authProfile} />
       case 'support':
         return <SchoolSupportPage />
       default:
@@ -291,6 +293,7 @@ export default function HODDashboard() {
             >
               <span className="hod-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
+              {item.key === 'notices' && notifCount > 0 && <span className="nav-badge" style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: '10px', fontWeight: 700, padding: '1px 6px', marginLeft: 'auto' }}>{notifCount}</span>}
             </button>
           ))}
         </nav>

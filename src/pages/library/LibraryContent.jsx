@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   LayoutDashboard, BookOpen, ArrowLeftRight, Users, Clock,
-  BookMarked, BarChart3, Receipt
+  BookMarked, BarChart3, Receipt, Bell
 } from 'lucide-react'
 import './LibrarianDashboard.css'
 import LibraryOverview from './LibraryOverview'
@@ -13,8 +13,9 @@ import LibraryReservations from './LibraryReservations'
 import LibraryFines from './LibraryFines'
 import LibraryReports from './LibraryReports'
 import MemberProfile from './MemberProfile'
+import NoticesPage from '../teacher/NoticesPage'
 
-export default function LibraryContent({ schoolId, school }) {
+export default function LibraryContent({ schoolId, school, profile }) {
   const [tab, setTab] = useState('dashboard')
   const [profileMemberId, setProfileMemberId] = useState(null)
 
@@ -27,6 +28,7 @@ export default function LibraryContent({ schoolId, school }) {
     { key: 'reservations', label: 'Reservations', icon: <BookMarked size={15} /> },
     { key: 'fines', label: 'Fines', icon: <Receipt size={15} /> },
     { key: 'reports', label: 'Reports', icon: <BarChart3 size={15} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={15} /> },
   ]
 
   const renderContent = () => {
@@ -49,6 +51,7 @@ export default function LibraryContent({ schoolId, school }) {
       case 'reservations': return <LibraryReservations schoolId={schoolId} />
       case 'fines':        return <LibraryFines schoolId={schoolId} term={school?.current_term} year={school?.current_year} onOpenMember={setProfileMemberId} />
       case 'reports':      return <LibraryReports schoolId={schoolId} />
+      case 'notices':      return <NoticesPage profile={profile} />
       default:             return <LibraryOverview schoolId={schoolId} onNavigate={setTab} />
     }
   }

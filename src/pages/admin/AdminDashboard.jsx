@@ -59,6 +59,9 @@ import TeacherReview from '../HOD/TeacherReview'
 import DeptExams from '../HOD/DeptExams'
 import '../../pages/HOD/HODDashboard.css'
 
+import AdminNotifications from './AdminNotifications'
+import './AdminNotifications.css'
+
 import CBCCompetency from '../teacher/CBCCompetency'
 import '../../pages/teacher/CBCCompetency.css'
 
@@ -200,6 +203,7 @@ const pageTitles = {
   assets: 'Assets',
   finance_reports: 'Finance Reports',
   financial_statements: 'Financial Statements',
+  notifications: 'Notices',
 }
 
 const QUICK_ACTIONS = [
@@ -239,10 +243,22 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [pendingAp, setPendingAp] = useState(0)
+  const [notifCount, setNotifCount] = useState(0)
 
   useEffect(() => {
     fetchDashboardData()
   }, [currentTerm, currentYear])
+
+  useEffect(() => {
+    if (!authProfile?.school_id) return
+    const channel = supabase
+      .channel('admin-notices')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notices', filter: `school_id=eq.${authProfile.school_id}` }, () => {
+        setNotifCount(prev => prev + 1)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [authProfile?.school_id])
 
   const fetchDashboardData = async () => {
     setLoading(true)
@@ -365,6 +381,12 @@ export default function AdminDashboard() {
 
     setPendingAp((apInvRes.count || 0) + (apPayRes.count || 0) + (apCfgRes.count || 0))
 
+    const { count: notifRes } = await supabase
+      .from('notices')
+      .select('id', { count: 'exact', head: true })
+      .eq('school_id', schoolId)
+    setNotifCount(notifRes || 0)
+
     const enriched = await enrichWithStaffNames(recentRes.data || [])
     setRecentFees(enriched)
 
@@ -461,6 +483,8 @@ export default function AdminDashboard() {
       case 'reports':        return <ReportCenter />
       case 'teacher_review': return <TeacherReview />
       case 'cbc_competency': return <CBCCompetency mode="admin" />
+      case 'library':        return <LibraryContent schoolId={authProfile?.school_id} school={school} profile={authProfile} />
+      case 'notifications': return <AdminNotifications />
       default:               return renderDashboard()
     }
   }
@@ -740,27 +764,39 @@ export default function AdminDashboard() {
           const isOpen = expandedGroup === group.id
           const hasActive = isGroupActive(group)
           return (
-            <div key={group.id} className={`adm-group ${isOpen ? 'open' : ''} ${hasActive && !isOpen ? 'has-active' : ''}`}>
-              <button className="adm-group-header" onClick={() => toggleGroup(group.id)}>
-                <span className="adm-group-icon">{group.icon}</span>
-                <span className="adm-group-label">{group.label}</span>
-                <ChevronDown size={14} className="adm-group-chevron" />
-              </button>
-              <div className="adm-group-body">
-                <div className="adm-group-items">
-                  {group.items.map(item => (
-                    <button
-                      key={item.key}
-                      className={`adm-group-item ${activeNav === item.key ? 'active' : ''}`}
-                      onClick={() => handleNav(item.key)}
-                    >
-                      <span className="adm-item-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                      {item.key === 'ap' && pendingAp > 0 && <span className="adm-item-badge">{pendingAp}</span>}
-                    </button>
-                  ))}
+            <div key={group.id}>
+              <div className={`adm-group ${isOpen ? 'open' : ''} ${hasActive && !isOpen ? 'has-active' : ''}`}>
+                <button className="adm-group-header" onClick={() => toggleGroup(group.id)}>
+                  <span className="adm-group-icon">{group.icon}</span>
+                  <span className="adm-group-label">{group.label}</span>
+                  <ChevronDown size={14} className="adm-group-chevron" />
+                </button>
+                <div className="adm-group-body">
+                  <div className="adm-group-items">
+                    {group.items.map(item => (
+                      <button
+                        key={item.key}
+                        className={`adm-group-item ${activeNav === item.key ? 'active' : ''}`}
+                        onClick={() => handleNav(item.key)}
+                      >
+                        <span className="adm-item-icon">{item.icon}</span>
+                        <span>{item.label}</span>
+                        {item.key === 'ap' && pendingAp > 0 && <span className="adm-item-badge">{pendingAp}</span>}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+              {group.id === 'staff' && (
+                <button
+                  className={`adm-nav-top ${activeNav === 'notifications' ? 'active' : ''}`}
+                  onClick={() => handleNav('notifications')}
+                >
+                  <Bell size={16} />
+                  <span>Notices</span>
+                  {notifCount > 0 && <span className="adm-item-badge">{notifCount}</span>}
+                </button>
+              )}
             </div>
           )
         })}

@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, BookOpen, ArrowLeftRight, Users, Clock,
   BookMarked, Settings, BarChart3, LogOut, Menu, X, BookPlus,
-  Receipt
+  Receipt, Bell
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { useNoticeCount } from '../../hooks/useNoticeCount'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import { getSchoolId } from '../../lib/library'
 import './LibrarianDashboard.css'
@@ -22,6 +23,7 @@ import LibraryManagement from './LibraryManagement'
 import LibraryReports from './LibraryReports'
 import LibraryFines from './LibraryFines'
 import MemberProfile from './MemberProfile'
+import NoticesPage from '../teacher/NoticesPage'
 
 export default function LibrarianDashboard() {
   const { profile: authProfile } = useAuthStore()
@@ -31,6 +33,7 @@ export default function LibrarianDashboard() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [schoolId, setSchoolId] = useState(null)
   const [profileMemberId, setProfileMemberId] = useState(null)
+  const notifCount = useNoticeCount(authProfile?.school_id)
 
   useEffect(() => {
     getSchoolId().then(setSchoolId)
@@ -46,6 +49,7 @@ export default function LibrarianDashboard() {
     { key: 'fines', label: 'Fines', icon: <Receipt size={16} /> },
     { key: 'management', label: 'Management', icon: <Settings size={16} /> },
     { key: 'reports', label: 'Reports', icon: <BarChart3 size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
   ]
 
   const handleLogout = async () => {
@@ -63,6 +67,7 @@ export default function LibrarianDashboard() {
     fines: 'Fines & Payments',
     management: 'Library Management',
     reports: 'Library Reports',
+    notices: 'Notices',
   }
 
   const renderContent = () => {
@@ -88,6 +93,7 @@ export default function LibrarianDashboard() {
       case 'fines':        return <LibraryFines schoolId={schoolId} term={currentTerm} year={currentYear} onOpenMember={setProfileMemberId} />
       case 'management':   return <LibraryManagement schoolId={schoolId} />
       case 'reports':      return <LibraryReports schoolId={schoolId} />
+      case 'notices':      return <NoticesPage profile={authProfile} />
       default:             return <LibraryOverview schoolId={schoolId} onNavigate={setActiveNav} />
     }
   }
@@ -130,6 +136,7 @@ export default function LibrarianDashboard() {
             >
               <span className="lib-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
+              {item.key === 'notices' && notifCount > 0 && <span className="nav-badge" style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: '10px', fontWeight: 700, padding: '1px 6px', marginLeft: 'auto' }}>{notifCount}</span>}
             </button>
           ))}
         </nav>

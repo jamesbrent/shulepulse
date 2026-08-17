@@ -10,6 +10,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { useNoticeCount } from '../../hooks/useNoticeCount'
 import { fmt, fmtDate } from '../admin/fees/utils/feesHelpers'
 import FeesPage from './Fees'
 import './Fees.css'
@@ -164,6 +165,7 @@ export default function FinanceDashboard() {
   const [recentPayments, setRecentPayments] = useState([])
   const [cashStats, setCashStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const notifCount = useNoticeCount(authProfile?.school_id)
 
   useEffect(() => {
     if (activeItem?.page === 'dashboard') fetchBursarData()
@@ -476,6 +478,7 @@ export default function FinanceDashboard() {
                           >
                             <span className="b-nav-icon">{item.icon}</span>
                             <span>{item.label}</span>
+                            {item.key === 'notices' && notifCount > 0 && <span className="nav-badge" style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: '10px', fontWeight: 700, padding: '1px 6px', marginLeft: 'auto' }}>{notifCount}</span>}
                           </button>
                         ))}
                       </div>

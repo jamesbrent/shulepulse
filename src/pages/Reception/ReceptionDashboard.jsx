@@ -11,6 +11,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { useNoticeCount } from '../../hooks/useNoticeCount'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import './ReceptionDashboard.css'
 import Visitors from './Visitors'
@@ -74,6 +75,7 @@ export default function ReceptionDashboard() {
     openRequests: 0, prospects: 0, activeStudents: 0, upcomingEvents: 0,
   })
   const [recentActivity, setRecentActivity] = useState([])
+  const notifCount = useNoticeCount(authProfile?.school_id)
 
   useEffect(() => {
     fetchFrontDeskData()
@@ -398,6 +400,7 @@ export default function ReceptionDashboard() {
                 >
                   <span className="rcp-nav-icon">{item.icon}</span>
                   <span>{item.label}</span>
+                  {item.key === 'notices' && notifCount > 0 && <span className="nav-badge" style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: '10px', fontWeight: 700, padding: '1px 6px', marginLeft: 'auto' }}>{notifCount}</span>}
                 </button>
               ))}
             </div>
