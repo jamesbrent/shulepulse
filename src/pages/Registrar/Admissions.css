@@ -11,14 +11,14 @@
   --adm-text: #0F172A;
   --adm-text-sec: #64748B;
   --adm-text-muted: #94A3B8;
-  --adm-blue: #2563EB;
-  --adm-blue-hover: #1D4ED8;
+  --adm-blue: var(--color-primary);
+  --adm-blue-hover: color-mix(in srgb, var(--color-primary) 80%, black);
   --adm-red: #EF4444;
   --adm-red-light: #FEF2F2;
   --adm-red-border: #FCA5A5;
   --adm-green: #16A34A;
   --adm-green-light: #F0FDF4;
-  --adm-purple: #7C3AED;
+  --adm-purple: var(--color-secondary);
   --adm-amber: #F59E0B;
   --adm-amber-light: #FFFBEB;
   --adm-radius: 16px;
@@ -234,7 +234,7 @@
 .adm-btn--icon:hover:not(:disabled) { background: #F9FAFB; color: var(--adm-text); }
 
 .adm-btn--ghost { background: transparent; color: var(--adm-blue); border-color: transparent; padding: 0 8px; height: 28px; font-size: 12px; }
-.adm-btn--ghost:hover:not(:disabled) { background: #EFF6FF; }
+.adm-btn--ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 8%, white); }
 
 /* ══════ RECENT CARD (RIGHT 60%) ══════ */
 .adm-recent-card {
@@ -357,7 +357,7 @@
 
 .adm-badge--active { background: #DCFCE7; color: #16A34A; }
 .adm-badge--transferred { background: #FEF3C7; color: #D97706; }
-.adm-badge--alumni { background: #EDE9FE; color: #7C3AED; }
+.adm-badge--alumni { background: #EDE9FE; color: var(--color-secondary); }
 
 /* Pagination */
 .adm-pagination {

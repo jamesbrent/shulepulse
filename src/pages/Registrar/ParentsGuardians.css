@@ -10,11 +10,11 @@
   --pg-text: #0F172A;
   --pg-text-sec: #64748B;
   --pg-text-muted: #94A3B8;
-  --pg-blue: #2563EB;
+  --pg-blue: var(--color-primary);
   --pg-green: #16A34A;
   --pg-orange: #F59E0B;
   --pg-red: #EF4444;
-  --pg-purple: #7C3AED;
+  --pg-purple: var(--color-secondary);
   --pg-radius: 16px;
   --pg-radius-sm: 12px;
   --pg-radius-xs: 8px;
@@ -162,7 +162,7 @@
 .pg-btn--outline { background: var(--pg-surface); color: var(--pg-text); border-color: var(--pg-border); }
 .pg-btn--outline:hover:not(:disabled) { background: #F9FAFB; border-color: #CBD5E1; }
 .pg-btn--active { background: var(--pg-blue); color: #fff; border-color: var(--pg-blue); }
-.pg-btn--active:hover:not(:disabled) { background: #1D4ED8; }
+.pg-btn--active:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 /* ── Table ── */
 .pg-table-wrap {
@@ -268,7 +268,7 @@
   font-size: 11px; font-weight: 500; white-space: nowrap;
 }
 
-.pg-chip--more { background: #EFF6FF; color: var(--pg-blue); font-weight: 600; }
+.pg-chip--more { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--pg-blue); font-weight: 600; }
 
 /* ── Relationship Badge ── */
 .pg-rel-badge {
@@ -277,9 +277,9 @@
   font-size: 11px; font-weight: 600; white-space: nowrap;
 }
 
-.pg-rel--father { background: #EFF6FF; color: #2563EB; }
+.pg-rel--father { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .pg-rel--mother { background: #FDF2F8; color: #DB2777; }
-.pg-rel--guardian { background: #F5F3FF; color: #7C3AED; }
+.pg-rel--guardian { background: #F5F3FF; color: var(--color-secondary); }
 .pg-rel--sponsor { background: #ECFEFF; color: #0891B2; }
 .pg-rel--relative { background: #FFF7ED; color: #D97706; }
 .pg-rel--other { background: #F1F5F9; color: var(--pg-text-sec); }
@@ -295,7 +295,7 @@
 .pg-status--missing { background: #FEF3C7; color: #D97706; }
 .pg-status--inactive { background: #F1F5F9; color: #64748B; }
 .pg-status--duplicate { background: #FEE2E2; color: #DC2626; }
-.pg-status--unverified { background: #DBEAFE; color: #2563EB; }
+.pg-status--unverified { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
 
 /* ── Action Button ── */
 .pg-action-btn {

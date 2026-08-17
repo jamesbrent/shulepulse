@@ -364,12 +364,12 @@
   display: inline-flex;
   align-items: center;
   padding: 2px 10px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 600;
   border-radius: 99px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, white);
 }
 .adm-dash-school {
   font-size: 13px;
@@ -397,7 +397,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -407,7 +407,7 @@
   transition: background 0.15s;
   white-space: nowrap;
 }
-.adm-btn-primary:hover { background: #1d4ed8; }
+.adm-btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 .adm-btn-ghost {
   display: inline-flex;
@@ -432,13 +432,13 @@
   gap: 4px;
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   padding: 0;
 }
-.adm-btn-text:hover { color: #1d4ed8; }
+.adm-btn-text:hover { color: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 /* Legacy buttons */
 .btn-primary {
@@ -446,7 +446,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -455,7 +455,7 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .btn-secondary {
   display: flex;
   align-items: center;
@@ -473,7 +473,7 @@
 .admin-avatar {
   width: 36px;
   height: 36px;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -515,7 +515,7 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.adm-kpi-icon.blue { background: #eff6ff; color: #2563eb; }
+.adm-kpi-icon.blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .adm-kpi-icon.green { background: #f0fdf4; color: #16a34a; }
 .adm-kpi-icon.amber { background: #fffbeb; color: #f59e0b; }
 .adm-kpi-icon.red { background: #fef2f2; color: #ef4444; }
@@ -671,7 +671,7 @@
 }
 .severity-danger .adm-alert-icon { background: #fef2f2; color: #ef4444; }
 .severity-warning .adm-alert-icon { background: #fffbeb; color: #f59e0b; }
-.severity-info .adm-alert-icon { background: #eff6ff; color: #2563eb; }
+.severity-info .adm-alert-icon { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 
 .adm-alert-body { flex: 1; min-width: 0; }
 .adm-alert-label {
@@ -823,9 +823,9 @@
   border-color: #d1d5db;
 }
 .adm-page-btn.active {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 .adm-page-btn:disabled {
   opacity: 0.35;

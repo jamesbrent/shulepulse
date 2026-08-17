@@ -9,7 +9,7 @@
   --mc-text: #0F172A;
   --mc-text-sec: #64748B;
   --mc-text-muted: #94A3B8;
-  --mc-blue: #2563EB;
+  --mc-blue: var(--color-primary);
   --mc-radius: 14px;
   --mc-radius-sm: 10px;
   --mc-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
@@ -43,7 +43,7 @@
 }
 .mc-hdr-icon {
   width: 40px; height: 40px; border-radius: 10px;
-  background: #EFF6FF; color: var(--mc-blue);
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--mc-blue);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .mc-hdr-info { min-width: 0; }

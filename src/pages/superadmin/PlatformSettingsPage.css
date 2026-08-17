@@ -57,8 +57,8 @@
 }
 
 .ps-nav-item.active {
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-weight: 500;
 }
 
@@ -168,7 +168,7 @@
 }
 
 .ps-input:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   background: #fff;
 }
 
@@ -194,7 +194,7 @@
 }
 
 .ps-select:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   background-color: #fff;
 }
 
@@ -214,7 +214,7 @@
 }
 
 .ps-textarea:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   background: #fff;
 }
 
@@ -257,7 +257,7 @@
 }
 
 .ps-toggle.on {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .ps-toggle:hover {
@@ -334,8 +334,8 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   border-radius: 6px;
   font-size: 12px;
 }
@@ -344,7 +344,7 @@
   display: inline-flex;
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   padding: 0;
   opacity: 0.5;
@@ -376,9 +376,9 @@
 }
 
 .ps-tag-add:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, white);
+  color: var(--color-primary);
 }
 
 @media (max-width: 900px) {

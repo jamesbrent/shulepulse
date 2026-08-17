@@ -193,7 +193,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #7c3aed;
+  background: var(--color-secondary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -203,7 +203,7 @@
   transition: background 0.15s;
 }
 
-.da-btn-primary:hover { background: #6d28d9; }
+.da-btn-primary:hover { background: color-mix(in srgb, var(--color-secondary) 80%, black); }
 .da-btn-primary:disabled { background: #c4b5fd; cursor: not-allowed; }
 .da-btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -235,7 +235,7 @@
 .da-avatar {
   width: 38px;
   height: 38px;
-  background: #7c3aed;
+  background: var(--color-secondary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -315,7 +315,7 @@
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #7c3aed;
+  color: var(--color-secondary);
   background: none;
   border: none;
   cursor: pointer;
@@ -356,13 +356,13 @@
   font-size: 12px;
   font-weight: 500;
   background: #f3f0ff;
-  color: #7c3aed;
+  color: var(--color-secondary);
 }
 
 .da-badge-green { background: #dcfce7; color: #16a34a; }
 .da-badge-red { background: #fee2e2; color: #dc2626; }
 .da-badge-amber { background: #fef9c3; color: #ca8a04; }
-.da-badge-blue { background: #eff6ff; color: #2563eb; }
+.da-badge-blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 
 .da-loading-state {
   text-align: center;
@@ -436,7 +436,7 @@
   transition: border-color 0.15s;
 }
 
-.da-search-input:focus { border-color: #7c3aed; }
+.da-search-input:focus { border-color: var(--color-secondary); }
 
 .da-filter-select {
   padding: 8px 12px;
@@ -450,7 +450,7 @@
   transition: border-color 0.15s;
 }
 
-.da-filter-select:focus { border-color: #7c3aed; }
+.da-filter-select:focus { border-color: var(--color-secondary); }
 
 .da-toolbar {
   display: flex;
@@ -493,8 +493,8 @@
   gap: 14px;
 }
 
-.da-sum-card.purple svg { color: #7c3aed; }
-.da-sum-card.blue svg { color: #2563eb; }
+.da-sum-card.purple svg { color: var(--color-secondary); }
+.da-sum-card.blue svg { color: var(--color-primary); }
 .da-sum-card.green svg { color: #16a34a; }
 .da-sum-card.red svg { color: #dc2626; }
 .da-sum-card.amber svg { color: #d97706; }
@@ -507,7 +507,7 @@
   height: 34px;
   border-radius: 50%;
   background: #f3f0ff;
-  color: #7c3aed;
+  color: var(--color-secondary);
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -557,8 +557,8 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: 20px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 600;
 }
@@ -645,7 +645,7 @@
   background: #fff;
   transition: border-color 0.15s;
 }
-.form-input:focus { outline: none; border-color: #2563eb; }
+.form-input:focus { outline: none; border-color: var(--color-primary); }
 textarea.form-input { resize: vertical; min-height: 60px; }
 select.form-input { cursor: pointer; }
 
@@ -681,18 +681,18 @@ select.form-input { cursor: pointer; }
 
 /* ── Action buttons ───────────────────────────────── */
 .da-add-btn {
-  background: #2563eb !important;
+  background: var(--color-primary) !important;
   color: #fff !important;
-  border-color: #2563eb !important;
+  border-color: var(--color-primary) !important;
   font-weight: 600;
 }
-.da-add-btn:hover { background: #1d4ed8 !important; }
+.da-add-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black) !important; }
 .da-save-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 8px 16px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -701,7 +701,7 @@ select.form-input { cursor: pointer; }
   cursor: pointer;
   transition: background 0.15s;
 }
-.da-save-btn:hover { background: #1d4ed8; }
+.da-save-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .da-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .da-cancel-btn {
   display: inline-flex;

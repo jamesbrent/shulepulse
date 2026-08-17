@@ -64,7 +64,7 @@
 .fees-tab-btn:hover { color: #1e293b; background: #e2e8f0; }
 .fees-tab-btn.active {
   background: #fff;
-  color: #2563eb;
+  color: var(--color-primary);
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
@@ -99,7 +99,7 @@
   cursor: pointer;
   outline: none;
 }
-.filter-select:focus { border-color: #2563eb; }
+.filter-select:focus { border-color: var(--color-primary); }
 
 /* ───── Tab Content ───── */
 .tab-content { display: flex; flex-direction: column; gap: 20px; }
@@ -140,10 +140,10 @@
   width: 28px;
   height: 28px;
 }
-.fee-sum-card.blue .fee-sum-icon-wrap  { background: #eff6ff; color: #2563eb; }
+.fee-sum-card.blue .fee-sum-icon-wrap  { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .fee-sum-card.green .fee-sum-icon-wrap { background: #f0fdf4; color: #16a34a; }
 .fee-sum-card.red .fee-sum-icon-wrap   { background: #fef2f2; color: #dc2626; }
-.fee-sum-card.purple .fee-sum-icon-wrap{ background: #faf5ff; color: #7c3aed; }
+.fee-sum-card.purple .fee-sum-icon-wrap{ background: color-mix(in srgb, var(--color-secondary) 8%, white); color: var(--color-secondary); }
 .fee-sum-body {
   flex: 1;
   display: flex;
@@ -181,7 +181,7 @@
 }
 .rate-bar-fill {
   height: 100%;
-  background: #7c3aed;
+  background: var(--color-secondary);
   transition: width 0.4s;
 }
 
@@ -228,14 +228,14 @@
   color: #475569;
 }
 .seg-status-item.active .seg-count {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
 }
 
 .seg-status-item[data-status="paid"] .seg-dot { background: #16a34a; }
 .seg-status-item[data-status="partial"] .seg-dot { background: #f59e0b; }
 .seg-status-item[data-status="pending"] .seg-dot { background: #dc2626; }
-.seg-status-item[data-status="overpaid"] .seg-dot { background: #7c3aed; }
+.seg-status-item[data-status="overpaid"] .seg-dot { background: var(--color-secondary); }
 .seg-status-item[data-status="all"] .seg-dot { background: #64748b; }
 
 /* ───── Status Pills (legacy fallback) ───── */
@@ -283,15 +283,15 @@
 }
 .section-subtitle { font-size: 13px; color: #94a3b8; font-weight: 400; }
 .badge-count {
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 10px;
 }
 .refresh-ico { color: #94a3b8; }
-.refresh-ico:hover { color: #2563eb; }
+.refresh-ico:hover { color: var(--color-primary); }
 
 /* ───── Category Chips ───── */
 .cat-chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -305,7 +305,7 @@
   border: 1px solid #e5e7eb;
   background: #f8fafc;
 }
-.cat-chip.mandatory { border-color: #bfdbfe; background: #eff6ff; }
+.cat-chip.mandatory { border-color: color-mix(in srgb, var(--color-primary) 20%, white); background: color-mix(in srgb, var(--color-primary) 8%, white); }
 .cat-chip.optional  { border-color: #e5e7eb; background: #f8fafc; }
 .cat-chip-name { font-weight: 500; color: #1e293b; }
 .cat-chip {
@@ -332,7 +332,7 @@
   gap: 4px;
 }
 .cat-chip-tag { font-size: 11px; color: #64748b; }
-.cat-chip-tag.code { font-family: monospace; font-weight: 600; color: #7c3aed; }
+.cat-chip-tag.code { font-family: monospace; font-weight: 600; color: var(--color-secondary); }
 .cat-chip-tag.recurring { color: #0891b2; }
 .cat-chip.inactive { opacity: 0.5; }
 .cat-chip-tag.inactive-tag { color: #94a3b8; font-style: italic; }
@@ -406,7 +406,7 @@
   outline: none;
   color: #1e293b;
 }
-.search-input:focus { border-color: #2563eb; }
+.search-input:focus { border-color: var(--color-primary); }
 
 /* ───── Student Name Cell ───── */
 .sname { font-size: 14px; font-weight: 500; color: #0f172a; margin: 0; }
@@ -416,8 +416,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 700;
   display: flex;
@@ -452,9 +452,9 @@
   background: #f1f5f9;
   color: #0f172a;
 }
-.action-btn.receipt:hover { background: #eff6ff; color: #2563eb; }
+.action-btn.receipt:hover { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .action-btn.reverse:hover { background: #fef2f2; color: #dc2626; }
-.action-btn.audit:hover   { background: #faf5ff; color: #7c3aed; }
+.action-btn.audit:hover   { background: color-mix(in srgb, var(--color-secondary) 8%, white); color: var(--color-secondary); }
 .action-btn svg { width: 16px; height: 16px; }
 
 /* ───── Utilities ───── */
@@ -484,7 +484,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -494,7 +494,7 @@
   transition: background 0.15s, box-shadow 0.15s;
   white-space: nowrap;
 }
-.btn-primary:hover { background: #1d4ed8; box-shadow: 0 2px 6px rgba(37,99,235,0.25); }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); box-shadow: 0 2px 6px rgba(37,99,235,0.25); }
 .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; box-shadow: none; }
 .btn-primary.sm { padding: 6px 14px; font-size: 13px; }
 .btn-primary.green { background: #16a34a; }
@@ -561,7 +561,7 @@
   font-weight: 500;
 }
 .method-badge.mpesa { background: #f0fdf4; color: #16a34a; }
-.method-badge.bank  { background: #eff6ff; color: #2563eb; }
+.method-badge.bank  { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .method-badge.cash  { background: #fffbeb; color: #d97706; }
 .method-badge.cheque   { background: #f0fdf4; color: #16a34a; }
 .method-badge.waiver   { background: #fffbeb; color: #d97706; }
@@ -592,8 +592,8 @@
 }
 .entry-type.charge     { background: #fef2f2; color: #dc2626; }
 .entry-type.payment    { background: #f0fdf4; color: #16a34a; }
-.entry-type.discount   { background: #eff6ff; color: #2563eb; }
-.entry-type.scholarship{ background: #faf5ff; color: #7c3aed; }
+.entry-type.discount   { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
+.entry-type.scholarship{ background: color-mix(in srgb, var(--color-secondary) 8%, white); color: var(--color-secondary); }
 .entry-type.waiver     { background: #fffbeb; color: #d97706; }
 .entry-type.penalty    { background: #fef2f2; color: #b91c1c; }
 
@@ -610,9 +610,9 @@
   text-align: center;
 }
 .method-tab.active {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #2563eb;
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -643,7 +643,7 @@
   border-bottom: 1px solid #f8fafc;
 }
 .student-list-item:hover { background: #f8fafc; }
-.student-list-item.active { background: #eff6ff; border-left: 3px solid #2563eb; }
+.student-list-item.active { background: color-mix(in srgb, var(--color-primary) 8%, white); border-left: 3px solid var(--color-primary); }
 
 .payment-detail-panel { min-height: 300px; }
 
@@ -660,7 +660,7 @@
 }
 .student-avatar-lg {
   width: 44px; height: 44px; border-radius: 50%;
-  background: #eff6ff; color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary);
   font-size: 15px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; text-transform: uppercase;
@@ -775,7 +775,7 @@
 }
 .form-field input:focus,
 .form-field select:focus,
-.form-field textarea:focus { border-color: #2563eb; }
+.form-field textarea:focus { border-color: var(--color-primary); }
 .form-error {
   background: #fef2f2;
   color: #dc2626;
@@ -792,7 +792,7 @@
   color: #374151;
   cursor: pointer;
 }
-.checkbox-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #2563eb; }
+.checkbox-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-primary); }
 
 /* ───── Generate Assessment ───── */
 .gen-description { font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 16px; }
@@ -806,7 +806,7 @@
   margin-bottom: 16px;
 }
 .gen-result.success { background: #f0fdf4; color: #16a34a; }
-.gen-result.info    { background: #eff6ff; color: #2563eb; }
+.gen-result.info    { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 
 /* ───── Import Steps ───── */
 .import-steps {
@@ -821,7 +821,7 @@
 .receipt-logo {
   font-size: 20px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--color-primary);
   margin-bottom: 4px;
 }
 .receipt-title {
@@ -911,11 +911,11 @@
 }
 .pay-type-btn:hover { border-color: #93c5fd; background: #f8fafc; }
 .pay-type-btn.active {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #2563eb;
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-weight: 600;
-  box-shadow: 0 0 0 1px #2563eb;
+  box-shadow: 0 0 0 1px var(--color-primary);
 }
 .pay-type-icon { font-size: 20px; line-height: 1; }
 .pay-type-label { font-weight: 500; }
@@ -938,9 +938,9 @@
 }
 .provider-btn:hover { border-color: #93c5fd; }
 .provider-btn.active {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #2563eb;
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -963,9 +963,9 @@
 }
 .adj-type-btn:hover { border-color: #93c5fd; }
 .adj-type-btn.active {
-  border-color: #7c3aed;
-  background: #faf5ff;
-  color: #7c3aed;
+  border-color: var(--color-secondary);
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
+  color: var(--color-secondary);
   font-weight: 600;
 }
 .adj-notice {
@@ -999,8 +999,8 @@
 .pay-student-option:last-child { border-bottom: none; }
 .pay-student-option:hover { background: #f8fafc; }
 .pay-student-option.active {
-  background: #eff6ff;
-  border-left: 3px solid #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  border-left: 3px solid var(--color-primary);
   padding-left: 9px;
 }
 

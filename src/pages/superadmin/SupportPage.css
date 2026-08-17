@@ -35,8 +35,8 @@
 }
 
 .support-tab.active {
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
 }
 
 .ticket-count {
@@ -54,8 +54,8 @@
 }
 
 .support-tab.active .ticket-count {
-  background: #bfdbfe;
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--color-primary) 20%, white);
+  color: color-mix(in srgb, var(--color-primary) 80%, black);
 }
 
 /* Stats */
@@ -193,7 +193,7 @@
 
 .ticket-id.large {
   font-size: 14px;
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .ticket-subject {
@@ -398,7 +398,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   display: flex;
   align-items: center;
@@ -409,7 +409,7 @@
 }
 
 .support-msg.from-support .support-msg-avatar {
-  background: #7c3aed;
+  background: var(--color-secondary);
 }
 
 .support-msg-body {
@@ -421,7 +421,7 @@
 }
 
 .support-msg.from-support .support-msg-body {
-  background: #eff6ff;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 4px;
 }
@@ -474,7 +474,7 @@
 }
 
 .support-reply-box textarea:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 .support-reply-box .btn-primary {
@@ -564,7 +564,7 @@
 }
 
 .support-select:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 .support-priority-select {

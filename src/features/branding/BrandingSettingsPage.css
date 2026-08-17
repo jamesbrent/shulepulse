@@ -37,7 +37,7 @@
   display: flex; align-items: center; gap: 9px;
   margin-bottom: 6px;
 }
-.branding-card-header svg { color: #7c3aed; }
+.branding-card-header svg { color: var(--color-secondary); }
 .branding-card-header h3 { font-size: 15px; font-weight: 700; color: #0f172a; margin: 0; }
 .branding-card-desc { font-size: 13px; color: #64748b; margin: 0 0 18px; line-height: 1.5; }
 
@@ -48,12 +48,12 @@
 .btn-primary {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 9px 18px;
-  background: #2563eb; color: white;
+  background: var(--color-primary); color: white;
   border: none; border-radius: 8px;
   font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background 0.15s;
 }
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
 .btn-secondary {
   display: inline-flex; align-items: center; gap: 6px;
@@ -115,7 +115,7 @@
   color: #1e293b; width: 100px;
   outline: none;
 }
-.cp-hex-input:focus { border-color: #2563eb; }
+.cp-hex-input:focus { border-color: var(--color-primary); }
 
 /* ─── Logo Uploader ───────────────────────────────────────── */
 .logo-uploader { display: flex; flex-direction: column; gap: 10px; }
@@ -130,7 +130,7 @@
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
-.logo-dropzone:hover { border-color: #2563eb; background: #eff6ff; }
+.logo-dropzone:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, white); }
 .logo-drop-text { font-size: 14px; font-weight: 500; color: #374151; margin: 0; }
 .logo-drop-hint { font-size: 12px; color: #94a3b8; margin: 0; }
 

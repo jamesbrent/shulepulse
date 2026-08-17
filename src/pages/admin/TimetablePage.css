@@ -89,7 +89,7 @@
   margin-bottom: 8px;
 }
 
-.adm-tt-card-header svg { color: #2563eb; flex-shrink: 0; }
+.adm-tt-card-header svg { color: var(--color-primary); flex-shrink: 0; }
 
 .adm-tt-card-header h3 {
   font-size: 16px;
@@ -137,12 +137,12 @@
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.adm-tt-empty-btn:hover { background: #eff6ff; border-color: #bfdbfe; }
+.adm-tt-empty-btn:hover { background: color-mix(in srgb, var(--color-primary) 8%, white); border-color: color-mix(in srgb, var(--color-primary) 20%, white); }
 
 /* ── Shared form fields ───────────────────────────────────── */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -161,7 +161,7 @@
   transition: border-color 0.15s;
 }
 .form-field input:focus,
-.form-field select:focus { border-color: #2563eb; }
+.form-field select:focus { border-color: var(--color-primary); }
 
 /* ── Tags / pills ─────────────────────────────────────────── */
 .adm-tag {
@@ -172,11 +172,11 @@
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 99px;
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: color-mix(in srgb, var(--color-primary) 80%, black);
 }
 
-.adm-tag-teacher { background: #f3e8ff; color: #7e22ce; }
+.adm-tag-teacher { background: color-mix(in srgb, var(--color-secondary) 8%, white); color: #7e22ce; }
 .adm-tag-gray    { background: #f1f5f9; color: #64748b; }
 
 /* ── Action buttons strip ─────────────────────────────────── */
@@ -200,7 +200,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -211,7 +211,7 @@
   white-space: nowrap;
 }
 
-.adm-tt-new-btn:hover { background: #1d4ed8; }
+.adm-tt-new-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 .adm-tt-add-btn {
   display: flex;
@@ -299,10 +299,10 @@
 .adm-dash-stat-label { font-size: 11px; color: #64748b; }
 
 /* Stat colours */
-.adm-stat-blue   .adm-dash-stat-icon { background: #dbeafe; color: #2563eb; }
-.adm-stat-blue   .adm-dash-stat-value { color: #2563eb; }
-.adm-stat-purple .adm-dash-stat-icon { background: #ede9fe; color: #7c3aed; }
-.adm-stat-purple .adm-dash-stat-value { color: #7c3aed; }
+.adm-stat-blue   .adm-dash-stat-icon { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
+.adm-stat-blue   .adm-dash-stat-value { color: var(--color-primary); }
+.adm-stat-purple .adm-dash-stat-icon { background: #ede9fe; color: var(--color-secondary); }
+.adm-stat-purple .adm-dash-stat-value { color: var(--color-secondary); }
 .adm-stat-green  .adm-dash-stat-icon { background: #dcfce7; color: #16a34a; }
 .adm-stat-green  .adm-dash-stat-value { color: #16a34a; }
 .adm-stat-indigo .adm-dash-stat-icon { background: #e0e7ff; color: #4338ca; }
@@ -322,7 +322,7 @@
   align-items: start;
 }
 
-.adm-dash-generate { border-left: 4px solid #2563eb; }
+.adm-dash-generate { border-left: 4px solid var(--color-primary); }
 
 .adm-dash-gen-btns {
   display: flex;
@@ -336,7 +336,7 @@
   align-items: center;
   gap: 8px;
   padding: 11px 22px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -345,7 +345,7 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.adm-generate-btn:hover { background: #1d4ed8; }
+.adm-generate-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .adm-generate-btn:disabled { background: #93c5fd; cursor: not-allowed; }
 
 .adm-view-btn {
@@ -374,7 +374,7 @@
 }
 
 /* Checklist */
-.adm-dash-quicklinks { border-left: 4px solid #7c3aed; }
+.adm-dash-quicklinks { border-left: 4px solid var(--color-secondary); }
 
 .adm-checklist {
   display: flex;
@@ -420,7 +420,7 @@
 .adm-tab-link {
   background: transparent;
   border: none;
-  color: #2563eb;
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -510,7 +510,7 @@
   border-radius: 99px;
 }
 
-.cat-core            { background: #dbeafe; color: #1d4ed8; }
+.cat-core            { background: color-mix(in srgb, var(--color-primary) 15%, white); color: color-mix(in srgb, var(--color-primary) 80%, black); }
 .cat-elective        { background: #fef3c7; color: #b45309; }
 .cat-extracurricular { background: #dcfce7; color: #15803d; }
 .cat-practical       { background: #fae8ff; color: #9333ea; }
@@ -605,7 +605,7 @@
   border-radius: 99px;
 }
 
-.adm-limit-current { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.adm-limit-current { background: color-mix(in srgb, var(--color-primary) 8%, white); border-color: color-mix(in srgb, var(--color-primary) 20%, white); color: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 /* Subject assignment chips */
 .adm-teacher-subjects-section { border-top: 1px solid #f1f5f9; padding-top: 14px; }
@@ -639,7 +639,7 @@
   letter-spacing: 0.04em;
 }
 
-.adm-subj-chip:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+.adm-subj-chip:hover { border-color: var(--color-primary); color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, white); }
 .adm-subj-chip.assigned { background: #0f172a; color: #fff; border-color: #0f172a; }
 
 /* ═══════════════════════════════════════════════════════════
@@ -711,7 +711,7 @@
 .adm-cbc-hint button {
   background: transparent;
   border: none;
-  color: #2563eb;
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -755,12 +755,12 @@
   font-size: 13px;
   font-weight: 700;
   text-align: center;
-  color: #2563eb;
+  color: var(--color-primary);
   background: #fff;
   outline: none;
 }
 
-.adm-req-input:focus { border-color: #2563eb; }
+.adm-req-input:focus { border-color: var(--color-primary); }
 
 .adm-req-unit {
   font-size: 11px;
@@ -1021,8 +1021,8 @@
 .adm-tt-cell-class {
   font-size: 9px;
   font-weight: 600;
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: color-mix(in srgb, var(--color-primary) 80%, black);
   padding: 1px 5px;
   border-radius: 3px;
   letter-spacing: 0.03em;
@@ -1103,7 +1103,7 @@
 
 .adm-cg-error   { background: #fef2f2; color: #dc2626; }
 .adm-cg-warning { background: #fff7ed; color: #ea580c; }
-.adm-cg-info    { background: #eff6ff; color: #2563eb; }
+.adm-cg-info    { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 
 .adm-conflict-item {
   display: flex;
@@ -1116,7 +1116,7 @@
 
 .adm-conflict-error   { background: #fef2f2; border-color: #dc2626; }
 .adm-conflict-warning { background: #fff7ed; border-color: #f59e0b; }
-.adm-conflict-info    { background: #eff6ff; border-color: #2563eb; }
+.adm-conflict-info    { background: color-mix(in srgb, var(--color-primary) 8%, white); border-color: var(--color-primary); }
 
 .adm-conflict-type {
   font-size: 11px;
@@ -1139,7 +1139,7 @@
 .adm-conflict-more button {
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1240,7 +1240,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 20px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1250,7 +1250,7 @@
   transition: background 0.15s;
 }
 
-.adm-save-btn:hover { background: #1d4ed8; }
+.adm-save-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .adm-save-btn:disabled { background: #93c5fd; cursor: not-allowed; }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1289,9 +1289,9 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, white);
+  color: color-mix(in srgb, var(--color-primary) 80%, black);
   border-radius: 6px;
   padding: 5px 12px;
   font-size: 12px;

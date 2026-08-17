@@ -169,7 +169,7 @@
   transition: all 0.15s;
 }
 
-.users-action-btn:hover { background: #eff6ff; border-color: #bfdbfe; }
+.users-action-btn:hover { background: color-mix(in srgb, var(--color-primary) 8%, white); border-color: color-mix(in srgb, var(--color-primary) 20%, white); }
 .users-action-btn.warning { color: #ca8a04; }
 .users-action-btn.warning:hover { background: #fef9c3; border-color: #fde68a; }
 .users-action-btn.danger { color: #ef4444; }

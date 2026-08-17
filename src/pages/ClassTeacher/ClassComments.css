@@ -44,7 +44,7 @@
   transition: border-color 0.15s;
 }
 
-.ct-comment-textarea:focus { border-color: #2563eb; }
+.ct-comment-textarea:focus { border-color: var(--color-primary); }
 
 .ct-comment-form-actions {
   display: flex;
@@ -100,8 +100,8 @@
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: color-mix(in srgb, var(--color-primary) 80%, black);
 }
 
 .ct-comment-date {
@@ -159,7 +159,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -170,7 +170,7 @@
   white-space: nowrap;
 }
 
-.ct-btn-primary:hover { background: #1d4ed8; }
+.ct-btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .ct-btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
 
 .ct-filter-select {
@@ -184,7 +184,7 @@
   outline: none;
 }
 
-.ct-filter-select:focus { border-color: #2563eb; }
+.ct-filter-select:focus { border-color: var(--color-primary); }
 
 .ct-text-muted { color: #94a3b8; font-size: 13px; }
 

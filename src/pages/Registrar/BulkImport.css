@@ -9,8 +9,8 @@
   background: #f8fafc;
 }
 .reg-import-dropzone:hover {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
 }
 .reg-spin {
   animation: reg-spin 1s linear infinite;

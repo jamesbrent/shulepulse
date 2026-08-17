@@ -34,7 +34,7 @@
   position: absolute; bottom: 0; left: 0; right: 0;
   height: 4px; background: #f1f5f9;
 }
-.att-rate-fill { height: 100%; background: #2563eb; transition: width 0.4s; }
+.att-rate-fill { height: 100%; background: var(--color-primary); transition: width 0.4s; }
 .att-sum-rate { flex-direction: column; align-items: flex-start; gap: 6px; }
 
 /* Toolbar */
@@ -69,7 +69,7 @@
   outline: none;
   cursor: pointer;
 }
-.date-input:focus { border-color: #2563eb; }
+.date-input:focus { border-color: var(--color-primary); }
 
 /* Date label */
 .att-date-label {
@@ -116,7 +116,7 @@
 .att-badge.present { background: #dcfce7; color: #16a34a; }
 .att-badge.absent { background: #fee2e2; color: #dc2626; }
 .att-badge.late { background: #fef9c3; color: #ca8a04; }
-.att-badge.excused { background: #dbeafe; color: #2563eb; }
+.att-badge.excused { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
 
 /* Status buttons (edit mode) */
 .att-status-buttons {
@@ -143,7 +143,7 @@
 .att-status-btn.present.active { background: #dcfce7; color: #16a34a; border-color: #16a34a; }
 .att-status-btn.absent.active { background: #fee2e2; color: #dc2626; border-color: #dc2626; }
 .att-status-btn.late.active { background: #fef9c3; color: #ca8a04; border-color: #ca8a04; }
-.att-status-btn.excused.active { background: #dbeafe; color: #2563eb; border-color: #2563eb; }
+.att-status-btn.excused.active { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); border-color: var(--color-primary); }
 
 /* Notes input */
 .att-notes-input {
@@ -156,7 +156,7 @@
   width: 140px;
   font-family: inherit;
 }
-.att-notes-input:focus { border-color: #2563eb; }
+.att-notes-input:focus { border-color: var(--color-primary); }
 
 /* Bulk actions */
 .att-bulk-actions {
@@ -190,7 +190,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -200,7 +200,7 @@
   transition: all 0.15s;
   white-space: nowrap;
 }
-.att-save-btn:hover { background: #1d4ed8; }
+.att-save-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .att-save-btn:disabled { background: #93c5fd; cursor: not-allowed; }
 .att-saved-badge {
   background: #dcfce7;
@@ -244,7 +244,7 @@
 .student-name-cell { display: flex; align-items: center; gap: 10px; }
 .student-avatar-sm {
   width: 32px; height: 32px; border-radius: 50%;
-  background: #eff6ff; color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary);
   font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; text-transform: uppercase;
@@ -269,7 +269,7 @@
   font-size: 13px; width: 220px;
   outline: none; color: #1e293b;
 }
-.search-input:focus { border-color: #2563eb; }
+.search-input:focus { border-color: var(--color-primary); }
 .filter-select {
   padding: 8px 12px;
   border: 1px solid #e2e8f0;
@@ -277,7 +277,7 @@
   font-size: 13px; color: #374151;
   background: white; cursor: pointer; outline: none;
 }
-.filter-select:focus { border-color: #2563eb; }
+.filter-select:focus { border-color: var(--color-primary); }
 
 .loading-state {
   text-align: center;
@@ -309,10 +309,10 @@
   border-radius: 6px 6px 0 0;
   transition: color 0.15s, border-color 0.15s;
 }
-.att-tab:hover { color: #2563eb; background: #f1f5f9; }
+.att-tab:hover { color: var(--color-primary); background: #f1f5f9; }
 .att-tab.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   font-weight: 600;
   background: transparent;
 }
@@ -338,9 +338,9 @@
   border: 1px solid #fecaca;
 }
 .att-notification.info {
-  background: #dbeafe;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, white);
 }
 
 /* Override controls */
@@ -528,7 +528,7 @@
   font-family: inherit;
   background: #fff;
 }
-.att-ep-input:focus { border-color: #2563eb; }
+.att-ep-input:focus { border-color: var(--color-primary); }
 .att-ep-student-search { position: relative; display: flex; align-items: center; }
 .att-ep-search-icon { position: absolute; left: 10px; color: #94a3b8; pointer-events: none; z-index: 1; }
 .att-ep-student-search .att-ep-input { padding-left: 30px; padding-right: 30px; width: 100%; }
@@ -577,8 +577,8 @@
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;

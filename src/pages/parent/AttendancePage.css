@@ -19,14 +19,14 @@
 .att-sum-card.green svg { color: #16a34a; }
 .att-sum-card.red svg { color: #dc2626; }
 .att-sum-card.amber svg { color: #ca8a04; }
-.att-sum-card.blue svg { color: #2563eb; }
+.att-sum-card.blue svg { color: var(--color-primary); }
 .asc-label { font-size: 12px; color: #64748b; margin: 0 0 4px; }
 .asc-value { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0; }
 .att-rate-track {
   position: absolute; bottom: 0; left: 0; right: 0;
   height: 4px; background: #f1f5f9;
 }
-.att-rate-fill { height: 100%; background: #2563eb; transition: width 0.4s; }
+.att-rate-fill { height: 100%; background: var(--color-primary); transition: width 0.4s; }
 
 .att-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
@@ -50,7 +50,7 @@
   outline: none;
   cursor: pointer;
 }
-.date-input:focus { border-color: #2563eb; }
+.date-input:focus { border-color: var(--color-primary); }
 
 .att-date-label {
   display: flex; align-items: center; gap: 6px;
@@ -96,7 +96,7 @@
 .student-name-cell { display: flex; align-items: center; gap: 10px; }
 .student-avatar-sm {
   width: 32px; height: 32px; border-radius: 50%;
-  background: #eff6ff; color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary);
   font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; text-transform: uppercase;

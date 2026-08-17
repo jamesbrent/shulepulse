@@ -14,11 +14,11 @@
   --rcp-text-muted: #94A3B8;
   --rcp-teal: var(--color-primary);
   --rcp-teal-dk: #0F766E;
-  --rcp-blue: #2563EB;
+  --rcp-blue: var(--color-primary);
   --rcp-green: #16A34A;
   --rcp-orange: #D97706;
   --rcp-red: #DC2626;
-  --rcp-purple: #7C3AED;
+  --rcp-purple: var(--color-secondary);
   --rcp-cyan: #0891B2;
   --rcp-radius: 20px;
   --rcp-radius-sm: 12px;
@@ -141,7 +141,7 @@
   font-size: 12px; font-weight: 500; white-space: nowrap;
 }
 .rcp-pill--teal { background: #CCFBF1; color: #0F766E; }
-.rcp-pill--blue { background: #EFF6FF; color: #2563EB; }
+.rcp-pill--blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .rcp-pill--green { background: #DCFCE7; color: #16A34A; }
 .rcp-pill--amber { background: #FEF3C7; color: #D97706; }
 .rcp-pill--red { background: #FEE2E2; color: #DC2626; }
@@ -170,9 +170,9 @@
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .rcp-kpi-icon--teal { background: #CCFBF1; color: #0F766E; }
-.rcp-kpi-icon--blue { background: #EFF6FF; color: #2563EB; }
+.rcp-kpi-icon--blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .rcp-kpi-icon--green { background: #DCFCE7; color: #16A34A; }
-.rcp-kpi-icon--purple { background: #F5F3FF; color: #7C3AED; }
+.rcp-kpi-icon--purple { background: #F5F3FF; color: var(--color-secondary); }
 .rcp-kpi-icon--amber { background: #FFFBEB; color: #D97706; }
 .rcp-kpi-icon--cyan { background: #ECFEFF; color: #0891B2; }
 .rcp-kpi-icon--red { background: #FEF2F2; color: #DC2626; }
@@ -218,9 +218,9 @@
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .rcp-action-icon--teal { background: #CCFBF1; color: #0F766E; }
-.rcp-action-icon--blue { background: #EFF6FF; color: #2563EB; }
+.rcp-action-icon--blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .rcp-action-icon--green { background: #DCFCE7; color: #16A34A; }
-.rcp-action-icon--purple { background: #F5F3FF; color: #7C3AED; }
+.rcp-action-icon--purple { background: #F5F3FF; color: var(--color-secondary); }
 .rcp-action-icon--amber { background: #FFFBEB; color: #D97706; }
 .rcp-action-icon--cyan { background: #ECFEFF; color: #0891B2; }
 .rcp-action-icon--red { background: #FEF2F2; color: #DC2626; }
@@ -236,8 +236,8 @@
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .rcp-feed-icon--visitor { background: #CCFBF1; color: #0F766E; }
-.rcp-feed-icon--appointment { background: #EFF6FF; color: #2563EB; }
-.rcp-feed-icon--prospect { background: #F5F3FF; color: #7C3AED; }
+.rcp-feed-icon--appointment { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
+.rcp-feed-icon--prospect { background: #F5F3FF; color: var(--color-secondary); }
 .rcp-feed-icon--request { background: #FFFBEB; color: #D97706; }
 .rcp-feed-icon--event { background: #ECFEFF; color: #0891B2; }
 .rcp-feed-text { flex: 1; min-width: 0; }
@@ -292,11 +292,11 @@
   border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
 }
 .rcp-badge--teal { background: #CCFBF1; color: #0F766E; }
-.rcp-badge--blue { background: #EFF6FF; color: #1D4ED8; }
+.rcp-badge--blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: color-mix(in srgb, var(--color-primary) 80%, black); }
 .rcp-badge--green { background: #DCFCE7; color: #16A34A; }
 .rcp-badge--amber { background: #FEF3C7; color: #B45309; }
 .rcp-badge--red { background: #FEE2E2; color: #B91C1C; }
-.rcp-badge--purple { background: #F5F3FF; color: #6D28D9; }
+.rcp-badge--purple { background: #F5F3FF; color: color-mix(in srgb, var(--color-secondary) 80%, black); }
 .rcp-badge--gray { background: #F1F5F9; color: #64748B; }
 .rcp-action-btn {
   display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px;

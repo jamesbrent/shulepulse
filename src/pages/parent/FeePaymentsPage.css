@@ -18,7 +18,7 @@
 .att-sum-card.green svg { color: #16a34a; }
 .att-sum-card.red svg { color: #dc2626; }
 .att-sum-card.amber svg { color: #ca8a04; }
-.att-sum-card.blue svg { color: #2563eb; }
+.att-sum-card.blue svg { color: var(--color-primary); }
 .asc-label { font-size: 12px; color: #64748b; margin: 0 0 4px; }
 .asc-value { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0; }
 

@@ -88,7 +88,7 @@
   min-width: 90px;
   transition: border-color 0.15s;
 }
-.pay-filter-select:focus { border-color: #2563EB; }
+.pay-filter-select:focus { border-color: var(--color-primary); }
 .pay-search-wrap {
   position: relative;
   display: flex;
@@ -110,7 +110,7 @@
   color: #0F172A;
   transition: border-color 0.15s;
 }
-.pay-search-input:focus { border-color: #2563EB; }
+.pay-search-input:focus { border-color: var(--color-primary); }
 .pay-reset-btn {
   padding: 5px 10px;
   background: none;
@@ -160,10 +160,10 @@
   flex-shrink: 0;
 }
 .pay-kpi-icon-wrap svg { width: 24px; height: 24px; }
-.pay-kpi-card.blue .pay-kpi-icon-wrap  { background: #EFF6FF; color: #2563EB; }
+.pay-kpi-card.blue .pay-kpi-icon-wrap  { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .pay-kpi-card.green .pay-kpi-icon-wrap { background: #F0FDF4; color: #16A34A; }
 .pay-kpi-card.amber .pay-kpi-icon-wrap { background: #FFFBEB; color: #F59E0B; }
-.pay-kpi-card.purple .pay-kpi-icon-wrap { background: #F5F3FF; color: #7C3AED; }
+.pay-kpi-card.purple .pay-kpi-icon-wrap { background: #F5F3FF; color: var(--color-secondary); }
 .pay-kpi-card.red .pay-kpi-icon-wrap   { background: #FEF2F2; color: #EF4444; }
 .pay-kpi-body {
   flex: 1;
@@ -358,8 +358,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #EFF6FF;
-  color: #2563EB;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -399,7 +399,7 @@
   font-weight: 500;
 }
 .pay-method-chip.mpesa        { background: #DCFCE7; color: #16A34A; }
-.pay-method-chip.bank         { background: #DBEAFE; color: #2563EB; }
+.pay-method-chip.bank         { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
 .pay-method-chip.cash         { background: #F1F5F9; color: #475569; }
 .pay-method-chip.mobile_money { background: #DCFCE7; color: #16A34A; }
 .pay-method-chip.cheque       { background: #FEF3C7; color: #D97706; }
@@ -571,7 +571,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #2563EB;
+  background: var(--color-primary);
   color: #FFFFFF;
   border: none;
   border-radius: 10px;
@@ -581,7 +581,7 @@
   transition: background 0.15s, box-shadow 0.15s;
   white-space: nowrap;
 }
-.pay-btn-primary:hover { background: #1D4ED8; box-shadow: 0 2px 6px rgba(37,99,235,0.25); }
+.pay-btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); box-shadow: 0 2px 6px rgba(37,99,235,0.25); }
 .pay-btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
 
 .pay-btn-outline {

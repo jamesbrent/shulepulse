@@ -76,7 +76,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -86,7 +86,7 @@
   white-space: nowrap;
 }
 
-.adm-notif-btn-primary:hover { background: #1d4ed8; }
+.adm-notif-btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .adm-notif-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .adm-notif-btn-secondary {
@@ -161,7 +161,7 @@
 .adm-notif-form-group input:focus,
 .adm-notif-form-group select:focus,
 .adm-notif-form-group textarea:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 

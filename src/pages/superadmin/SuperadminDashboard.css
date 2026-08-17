@@ -45,7 +45,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: #7c3aed;
+  background: var(--color-secondary);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -153,7 +153,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -163,7 +163,7 @@
   transition: background 0.15s;
 }
 
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .btn-primary.small { padding: 6px 14px; font-size: 13px; }
 
 .btn-secondary {
@@ -260,7 +260,7 @@
 }
 
 .pie-legend .dot.basic { background: #16a34a; }
-.pie-legend .dot.pro { background: #2563eb; }
+.pie-legend .dot.pro { background: var(--color-primary); }
 .pie-legend .dot.enterprise { background: #ca8a04; }
 
 .su-stat-label {
@@ -326,7 +326,7 @@
   transition: border 0.15s;
 }
 
-.search-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+.search-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
 .schools-table {
   width: 100%;
@@ -360,8 +360,8 @@
 .school-icon {
   width: 30px;
   height: 30px;
-  background: #dbeafe;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: var(--color-primary);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -380,7 +380,7 @@
 }
 
 .plan-badge.basic { background: #f1f5f9; color: #475569; }
-.plan-badge.pro { background: #dbeafe; color: #2563eb; }
+.plan-badge.pro { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
 .plan-badge.enterprise { background: #fef9c3; color: #ca8a04; }
 
 .status-dot {
@@ -411,7 +411,7 @@
   transition: all 0.15s;
 }
 
-.action-btn:hover { background: #eff6ff; border-color: #bfdbfe; }
+.action-btn:hover { background: color-mix(in srgb, var(--color-primary) 8%, white); border-color: color-mix(in srgb, var(--color-primary) 20%, white); }
 .action-btn.danger { color: #ef4444; }
 .action-btn.danger:hover { background: #fef2f2; border-color: #fecaca; }
 
@@ -465,7 +465,7 @@
   width: 36px;
   height: 36px;
   background: #ede9fe;
-  color: #7c3aed;
+  color: var(--color-secondary);
   border-radius: 8px;
   display: flex;
   align-items: center;

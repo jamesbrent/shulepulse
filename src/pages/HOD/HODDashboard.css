@@ -74,7 +74,7 @@
 
 .hod-school-role {
   font-size: 11px;
-  color: #7c3aed;
+  color: var(--color-secondary);
   margin: 0;
   font-weight: 500;
 }
@@ -193,7 +193,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #7c3aed;
+  background: var(--color-secondary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -203,7 +203,7 @@
   transition: background 0.15s;
 }
 
-.hod-btn-primary:hover { background: #6d28d9; }
+.hod-btn-primary:hover { background: color-mix(in srgb, var(--color-secondary) 80%, black); }
 .hod-btn-primary.small { padding: 6px 14px; font-size: 13px; }
 
 .hod-btn-secondary {
@@ -242,7 +242,7 @@
 .hod-avatar {
   width: 38px;
   height: 38px;
-  background: #7c3aed;
+  background: var(--color-secondary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -322,7 +322,7 @@
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #7c3aed;
+  color: var(--color-secondary);
   background: none;
   border: none;
   cursor: pointer;
@@ -454,7 +454,7 @@
   transition: border-color 0.15s;
 }
 
-.hod-sp-select:focus { border-color: #7c3aed; }
+.hod-sp-select:focus { border-color: var(--color-secondary); }
 
 .hod-sp-search-input {
   padding: 8px 12px 8px 32px;
@@ -466,13 +466,13 @@
   color: #1e293b;
 }
 
-.hod-sp-search-input:focus { border-color: #7c3aed; }
+.hod-sp-search-input:focus { border-color: var(--color-secondary); }
 
 .hod-sp-term-badge {
   font-size: 12px;
   font-weight: 500;
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
+  color: var(--color-secondary);
   padding: 4px 12px;
   border-radius: 99px;
   white-space: nowrap;
@@ -601,7 +601,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #7c3aed;
+  background: var(--color-secondary);
   color: #fff;
   display: flex;
   align-items: center;
@@ -658,8 +658,8 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
+  color: var(--color-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -727,12 +727,12 @@
 .hod-exam-icon {
   width: 40px;
   height: 40px;
-  background: #f3e8ff;
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7c3aed;
+  color: var(--color-secondary);
 }
 
 .hod-exam-title {
@@ -899,7 +899,7 @@
   transition: color 0.15s;
 }
 
-.hod-quick-action-btn:hover .hod-quick-action-arrow { color: #7c3aed; }
+.hod-quick-action-btn:hover .hod-quick-action-arrow { color: var(--color-secondary); }
 
 /* ─── Sub-Tab Navigation ─── */
 .hod-tabs {
@@ -927,11 +927,11 @@
   gap: 8px;
 }
 
-.hod-tab:hover { color: #7c3aed; }
+.hod-tab:hover { color: var(--color-secondary); }
 
 .hod-tab.active {
-  color: #7c3aed;
-  border-bottom-color: #7c3aed;
+  color: var(--color-secondary);
+  border-bottom-color: var(--color-secondary);
   font-weight: 600;
 }
 
@@ -950,8 +950,8 @@
 }
 
 .hod-tab.active .hod-tab-badge {
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
+  color: var(--color-secondary);
 }
 
 /* ─── Section Headers ─── */
@@ -1006,10 +1006,10 @@
 
 /* ─── Status Badges (extended) ─── */
 .hod-badge-pending { background: #fef3c7; color: #92400e; }
-.hod-badge-active { background: #dbeafe; color: #1d4ed8; }
+.hod-badge-active { background: color-mix(in srgb, var(--color-primary) 15%, white); color: color-mix(in srgb, var(--color-primary) 80%, black); }
 .hod-badge-locked { background: #f1f5f9; color: #475569; }
 .hod-badge-draft { background: #f1f5f9; color: #64748b; }
-.hod-badge-reviewed { background: #dbeafe; color: #1d4ed8; }
+.hod-badge-reviewed { background: color-mix(in srgb, var(--color-primary) 15%, white); color: color-mix(in srgb, var(--color-primary) 80%, black); }
 .hod-badge-published { background: #dcfce7; color: #16a34a; }
 
 /* ─── Audit Timeline ─── */
@@ -1031,14 +1031,14 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #7c3aed;
+  background: var(--color-secondary);
   margin-top: 5px;
   flex-shrink: 0;
 }
 
 .hod-timeline-dot.approve { background: #16a34a; }
 .hod-timeline-dot.reject { background: #dc2626; }
-.hod-timeline-dot.submit { background: #2563eb; }
+.hod-timeline-dot.submit { background: var(--color-primary); }
 
 .hod-timeline-content {
   flex: 1;
@@ -1132,11 +1132,11 @@
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: #f3e8ff;
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7c3aed;
+  color: var(--color-secondary);
   font-weight: 700;
   font-size: 14px;
 }
@@ -1184,7 +1184,7 @@
   transition: border-color 0.15s;
 }
 
-.hod-form-input:focus { border-color: #7c3aed; }
+.hod-form-input:focus { border-color: var(--color-secondary); }
 
 .hod-form-hint {
   font-size: 12px;
@@ -1204,9 +1204,9 @@
 }
 
 .hod-callout.info {
-  background: #eff6ff;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
   border-color: #93c5fd;
-  color: #1e40af;
+  color: var(--color-primary);
 }
 
 .hod-callout.warning {
@@ -1235,7 +1235,7 @@
 }
 
 .hod-grade-a { background: #dcfce7; color: #166534; }
-.hod-grade-b { background: #dbeafe; color: #1e40af; }
+.hod-grade-b { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
 .hod-grade-c { background: #fef3c7; color: #92400e; }
 .hod-grade-d { background: #fee2e2; color: #991b1b; }
 .hod-grade-e { background: #fecaca; color: #7f1d1d; }
@@ -1281,8 +1281,8 @@
 }
 
 .hod-class-card.selected {
-  border-color: #7c3aed;
-  background: #faf5ff;
+  border-color: var(--color-secondary);
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
 }
 
 /* ─── Back Button ─── */

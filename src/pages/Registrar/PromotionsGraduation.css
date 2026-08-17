@@ -11,14 +11,14 @@
   --pg-text: #0F172A;
   --pg-text-sec: #64748B;
   --pg-text-muted: #94A3B8;
-  --pg-blue: #2563EB;
-  --pg-blue-hover: #1D4ED8;
+  --pg-blue: var(--color-primary);
+  --pg-blue-hover: color-mix(in srgb, var(--color-primary) 80%, black);
   --pg-red: #EF4444;
   --pg-red-light: #FEF2F2;
   --pg-red-border: #FCA5A5;
   --pg-green: #16A34A;
   --pg-green-light: #F0FDF4;
-  --pg-purple: #7C3AED;
+  --pg-purple: var(--color-secondary);
   --pg-amber: #F59E0B;
   --pg-radius: 16px;
   --pg-radius-sm: 12px;

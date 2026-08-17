@@ -34,8 +34,8 @@
   background: #F8FAFC;
 }
 .att-tab.active {
-  color: #2563EB;
-  border-bottom-color: #2563EB;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -62,7 +62,7 @@
 .att-chip.green svg { color: #16A34A; }
 .att-chip.red svg { color: #EF4444; }
 .att-chip.amber svg { color: #F59E0B; }
-.att-chip.blue svg { color: #2563EB; }
+.att-chip.blue svg { color: var(--color-primary); }
 .att-chip-val {
   font-weight: 700;
   color: #0F172A;
@@ -90,9 +90,9 @@
   border: 1px solid #FDE68A;
 }
 .att-notification.info {
-  background: #EFF6FF;
-  color: #1E40AF;
-  border: 1px solid #BFDBFE;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, white);
 }
 
 /* ── Unified Control Bar ── */
@@ -153,7 +153,7 @@
   font-family: inherit;
 }
 .att-date-input:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 .att-today-badge {
@@ -179,7 +179,7 @@
   font-family: inherit;
 }
 .att-filter-select:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -206,7 +206,7 @@
   font-family: inherit;
 }
 .att-search-input:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -277,10 +277,10 @@
   border-bottom: none;
 }
 .att-table tbody tr.att-row-selected {
-  background: #EFF6FF;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
 }
 .att-table tbody tr.att-row-selected:hover {
-  background: #DBEAFE;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
 }
 
 /* Check button */
@@ -309,8 +309,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #EFF6FF;
-  color: #2563EB;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -368,7 +368,7 @@
 .att-seg-btn.active.present { background: #16A34A; }
 .att-seg-btn.active.absent { background: #EF4444; }
 .att-seg-btn.active.late { background: #F59E0B; }
-.att-seg-btn.active.excused { background: #2563EB; }
+.att-seg-btn.active.excused { background: var(--color-primary); }
 
 /* Note input */
 .att-note-input {
@@ -383,7 +383,7 @@
   transition: border-color 0.15s;
 }
 .att-note-input:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 .att-note-input::placeholder {
@@ -404,7 +404,7 @@
 .att-badge.present { background: #DCFCE7; color: #16A34A; }
 .att-badge.absent { background: #FEE2E2; color: #EF4444; }
 .att-badge.late { background: #FEF3C7; color: #D97706; }
-.att-badge.excused { background: #EFF6FF; color: #2563EB; }
+.att-badge.excused { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 
 /* ── Sticky Save Bar ── */
 .att-save-bar {

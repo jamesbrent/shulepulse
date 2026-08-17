@@ -35,13 +35,13 @@
 }
 
 .ct-att-tab:hover {
-  color: #2563eb;
+  color: var(--color-primary);
   background: #f1f5f9;
 }
 
 .ct-att-tab.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   font-weight: 600;
   background: #fff;
 }
@@ -165,7 +165,7 @@
 }
 
 .ct-date-input:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -195,7 +195,7 @@
 }
 
 .ct-search-input:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   width: 220px;
 }
@@ -214,7 +214,7 @@
 }
 
 .ct-filter-select:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -257,9 +257,9 @@
 }
 
 .ct-att-notification.info {
-  background: #dbeafe;
-  color: #2563eb;
-  border-color: #bfdbfe;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, white);
 }
 
 /* ── Bulk Actions Dropdown ──────────────────────────── */
@@ -345,7 +345,7 @@
 }
 
 .ct-bulk-option:nth-child(4) {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .ct-bulk-option:last-child {
@@ -365,7 +365,7 @@
   align-items: center;
   gap: 5px;
   padding: 7px 14px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -377,7 +377,7 @@
 }
 
 .ct-save-btn:hover {
-  background: #1d4ed8;
+  background: color-mix(in srgb, var(--color-primary) 80%, black);
 }
 
 .ct-save-btn:disabled {
@@ -461,8 +461,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -532,8 +532,8 @@
 }
 
 .ct-seg-btn.excused.active {
-  background: #dbeafe;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: var(--color-primary);
 }
 
 /* ── Note Toggle ────────────────────────────────────── */
@@ -564,7 +564,7 @@
   right: 4px;
   width: 6px;
   height: 6px;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 50%;
 }
 
@@ -587,7 +587,7 @@
 }
 
 .ct-note-input:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -620,8 +620,8 @@
 }
 
 .ct-att-badge.excused {
-  background: #dbeafe;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: var(--color-primary);
 }
 
 /* ── Export Buttons ──────────────────────────────────── */

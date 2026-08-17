@@ -9,7 +9,7 @@
   --cmt-text: #0F172A;
   --cmt-text-sec: #64748B;
   --cmt-text-muted: #94A3B8;
-  --cmt-blue: #2563EB;
+  --cmt-blue: var(--color-primary);
   --cmt-radius: 14px;
   --cmt-radius-sm: 10px;
   --cmt-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
@@ -36,7 +36,7 @@
   font-size: 12px; color: var(--cmt-text); background: #fff;
   cursor: pointer; outline: none; min-width: 90px;
 }
-.cmt-select:focus { border-color: var(--cmt-blue); box-shadow: 0 0 0 2px #DBEAFE; }
+.cmt-select:focus { border-color: var(--cmt-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 15%, white); }
 .cmt-search {
   position: relative; display: flex; align-items: center; flex: 1; min-width: 140px;
 }
@@ -48,7 +48,7 @@
   border: 1px solid var(--cmt-border); border-radius: 8px;
   font-size: 12px; outline: none; color: var(--cmt-text);
 }
-.cmt-search-input:focus { border-color: var(--cmt-blue); box-shadow: 0 0 0 2px #DBEAFE; }
+.cmt-search-input:focus { border-color: var(--cmt-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 15%, white); }
 .cmt-save-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 7px 14px; border: none; border-radius: 8px;
@@ -56,7 +56,7 @@
   transition: all 0.15s; white-space: nowrap;
   background: var(--cmt-blue); color: #fff;
 }
-.cmt-save-btn:hover { background: #1D4ED8; }
+.cmt-save-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .cmt-save-btn:disabled { background: #93C5FD; cursor: not-allowed; }
 .cmt-save-btn--saved {
   background: #16A34A; color: #fff;
@@ -93,7 +93,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 20px; height: 20px; padding: 0 5px;
   border-radius: 20px; font-size: 11px; font-weight: 700;
-  background: #EFF6FF; color: var(--cmt-blue);
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--cmt-blue);
 }
 .cmt-students-list {
   flex: 1; overflow-y: auto;
@@ -108,16 +108,16 @@
   transition: all 0.12s;
 }
 .cmt-student:hover { background: #F8FAFC; }
-.cmt-student--active { background: #EFF6FF; }
-.cmt-student--active:hover { background: #DBEAFE; }
+.cmt-student--active { background: color-mix(in srgb, var(--color-primary) 8%, white); }
+.cmt-student--active:hover { background: color-mix(in srgb, var(--color-primary) 15%, white); }
 .cmt-avatar {
   width: 32px; height: 32px; border-radius: 8px;
-  background: #EFF6FF; color: var(--cmt-blue);
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--cmt-blue);
   font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; text-transform: uppercase;
 }
-.cmt-student--active .cmt-avatar { background: #DBEAFE; }
+.cmt-student--active .cmt-avatar { background: color-mix(in srgb, var(--color-primary) 15%, white); }
 .cmt-student-info { flex: 1; min-width: 0; }
 .cmt-student-name {
   font-size: 13px; font-weight: 500; color: var(--cmt-text);
@@ -165,7 +165,7 @@
 }
 .cmt-editor-avatar {
   width: 36px; height: 36px; border-radius: 8px;
-  background: #EFF6FF; color: var(--cmt-blue);
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--cmt-blue);
   font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -190,7 +190,7 @@
   color: var(--cmt-text); resize: vertical; outline: none;
 }
 .cmt-textarea:focus {
-  border-color: var(--cmt-blue); box-shadow: 0 0 0 2px #DBEAFE;
+  border-color: var(--cmt-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 15%, white);
 }
 .cmt-textarea::placeholder { color: var(--cmt-text-muted); }
 .cmt-textarea-footer {

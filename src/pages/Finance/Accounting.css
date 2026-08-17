@@ -8,7 +8,7 @@
 .acc-tabs { display: flex; gap: 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 6px; width: fit-content; max-width: 100%; overflow-x: auto; }
 .acc-tab { display: flex; align-items: center; gap: 7px; padding: 9px 16px; border: none; background: transparent; border-radius: 9px; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
 .acc-tab:hover { background: #f1f5f9; color: #0f172a; }
-.acc-tab.active { background: #2563eb; color: #fff; }
+.acc-tab.active { background: var(--color-primary); color: #fff; }
 
 /* ── Toolbar ── */
 .acc-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -20,8 +20,8 @@
 .acc-search-wrap-wide .acc-ledger-select { width: 100%; padding-left: 32px; }
 
 /* ── Buttons ── */
-.acc-btn-primary { display: inline-flex; align-items: center; gap: 7px; background: #2563eb; color: #fff; border: none; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-.acc-btn-primary:hover { background: #1d4ed8; }
+.acc-btn-primary { display: inline-flex; align-items: center; gap: 7px; background: var(--color-primary); color: #fff; border: none; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.acc-btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .acc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .acc-btn-outline { display: inline-flex; align-items: center; gap: 7px; background: #fff; color: #334155; border: 1px solid #e2e8f0; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .acc-btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
@@ -33,7 +33,7 @@
 .acc-add-line { margin-top: 10px; }
 
 /* ── Seed banner ── */
-.acc-seed-banner { display: flex; align-items: center; gap: 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 18px; color: #1e40af; }
+.acc-seed-banner { display: flex; align-items: center; gap: 14px; background: color-mix(in srgb, var(--color-primary) 8%, white); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, white); border-radius: 12px; padding: 16px 18px; color: var(--color-primary); }
 .acc-seed-banner p { margin: 2px 0 0; font-size: 13px; color: #3b82f6; }
 .acc-seed-banner .acc-btn-primary { margin-left: auto; }
 
@@ -42,10 +42,10 @@
 .acc-kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; }
 .acc-kpi-label { margin: 0; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .acc-kpi-value { margin: 6px 0 0; font-size: 20px; font-weight: 700; }
-.acc-kpi.blue .acc-kpi-value { color: #2563eb; }
+.acc-kpi.blue .acc-kpi-value { color: var(--color-primary); }
 .acc-kpi.green .acc-kpi-value { color: #16a34a; }
 .acc-kpi.amber .acc-kpi-value { color: #d97706; }
-.acc-kpi.purple .acc-kpi-value { color: #7c3aed; }
+.acc-kpi.purple .acc-kpi-value { color: var(--color-secondary); }
 
 /* ── Table card ── */
 .acc-table-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
@@ -74,7 +74,7 @@
 
 .acc-actions-cell { white-space: nowrap; }
 .acc-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: 8px; background: #f1f5f9; color: #475569; cursor: pointer; margin-right: 4px; transition: all 0.15s; }
-.acc-icon-btn:hover { background: #2563eb; color: #fff; }
+.acc-icon-btn:hover { background: var(--color-primary); color: #fff; }
 .acc-icon-btn.danger:hover { background: #dc2626; color: #fff; }
 
 .acc-empty { padding: 28px 16px; text-align: center; color: #94a3b8; font-size: 13px; margin: 0; }
@@ -94,10 +94,10 @@
 .acc-tb-field { display: flex; flex-direction: column; gap: 5px; }
 .acc-tb-field span { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
 .acc-tb-field select, .acc-tb-field input { border: 1px solid #cbd5e1; border-radius: 9px; padding: 8px 10px; font-size: 13px; color: #0f172a; background: #fff; outline: none; }
-.acc-tb-field select:focus, .acc-tb-field input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+.acc-tb-field select:focus, .acc-tb-field input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
 .acc-tb-mode { display: flex; gap: 4px; margin-left: auto; background: #eef2f7; padding: 4px; border-radius: 9px; }
 .acc-tb-mode-btn { border: none; background: transparent; padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; }
-.acc-tb-mode-btn.active { background: #fff; color: #2563eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.acc-tb-mode-btn.active { background: #fff; color: var(--color-primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
 .acc-tb-section td { background: #eef2f7; font-weight: 700; font-size: 11px; letter-spacing: 0.06em; color: #334155; text-transform: uppercase; }
 .acc-tb-head { justify-content: center; text-align: center; }
 .acc-tb-balance-bar { display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; }
@@ -120,7 +120,7 @@
 .acc-form-field { margin-top: 12px; }
 .acc-modal-body label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; }
 .acc-modal-body input, .acc-modal-body select { width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px; outline: none; background: #fff; box-sizing: border-box; }
-.acc-modal-body input:focus, .acc-modal-body select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+.acc-modal-body input:focus, .acc-modal-body select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
 
 .acc-detail-row { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 13px; border-bottom: 1px solid #f8fafc; }
 .acc-detail-label { color: #64748b; }

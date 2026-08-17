@@ -171,7 +171,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -181,7 +181,7 @@
   transition: background 0.15s;
 }
 
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 .btn-secondary {
   display: flex;
@@ -223,9 +223,9 @@
 }
 
 .child-btn.active {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 .parent-stats {
@@ -324,7 +324,7 @@
 }
 
 .grade-badge.a { background: #dcfce7; color: #16a34a; }
-.grade-badge.b { background: #dbeafe; color: #2563eb; }
+.grade-badge.b { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
 .grade-badge.c { background: #fef9c3; color: #ca8a04; }
 
 .trend { display: flex; align-items: center; }
@@ -371,7 +371,7 @@
   gap: 8px;
   width: 100%;
   padding: 11px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -381,7 +381,7 @@
   transition: background 0.15s;
 }
 
-.pay-btn:hover { background: #1d4ed8; }
+.pay-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 .notices-list {
   display: flex;
@@ -496,7 +496,7 @@
 }
 
 .sidebar-child-option:hover { background: #334155; }
-.sidebar-child-option.active { background: #2563eb; color: #fff; }
+.sidebar-child-option.active { background: var(--color-primary); color: #fff; }
 
 .child-option-avatar {
   width: 26px;
@@ -541,7 +541,7 @@
 }
 
 .notice-unread {
-  border-left: 3px solid #2563eb;
+  border-left: 3px solid var(--color-primary);
   background: #f0f7ff;
 }
 
@@ -549,7 +549,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -567,7 +567,7 @@
   box-sizing: border-box;
 }
 
-.input-field:focus { border-color: #2563eb; }
+.input-field:focus { border-color: var(--color-primary); }
 
 .overview-container {
   display: flex;

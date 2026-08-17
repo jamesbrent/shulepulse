@@ -99,7 +99,7 @@
 }
 
 .progress-step.done + .progress-step::before {
-  background: #2563eb;
+  background: var(--color-primary);
 }
 
 .step-indicator {
@@ -117,7 +117,7 @@
 }
 
 .progress-step.active .step-indicator {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
 }
 
@@ -213,7 +213,7 @@
 
 .form-field input:focus,
 .form-field select:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -233,12 +233,12 @@
 }
 
 .plan-card:hover {
-  border-color: #bfdbfe;
+  border-color: color-mix(in srgb, var(--color-primary) 20%, white);
 }
 
 .plan-card.selected {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
 }
 
 .plan-card.recommended {
@@ -342,7 +342,7 @@
 }
 
 .review-section h4 svg {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .review-row {
@@ -365,8 +365,8 @@
 
 .plan-tag {
   text-transform: capitalize;
-  background: #dbeafe;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: var(--color-primary);
   padding: 2px 10px;
   border-radius: 99px;
   font-size: 12px;
@@ -555,7 +555,7 @@
 }
 
 .sc-tab:hover { color: #374151; }
-.sc-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+.sc-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
 
 .sc-detail-body {
   overflow-y: auto;
@@ -657,7 +657,7 @@
 
 .sc-usage-fill {
   height: 100%;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 99px;
   transition: width 0.3s;
 }
@@ -738,7 +738,7 @@
   transition: all 0.15s;
 }
 
-.sc-mini-btn:hover { background: #eff6ff; border-color: #bfdbfe; }
+.sc-mini-btn:hover { background: color-mix(in srgb, var(--color-primary) 8%, white); border-color: color-mix(in srgb, var(--color-primary) 20%, white); }
 .sc-mini-btn.danger:hover { background: #fef2f2; border-color: #fecaca; color: #ef4444; }
 
 .sc-activity-list {

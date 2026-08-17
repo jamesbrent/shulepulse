@@ -10,7 +10,7 @@
   animation: fstToastIn 0.2s ease;
 }
 .fst-toast.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-.fst-toast.info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.fst-toast.info { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, white); }
 .fst-toast.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 @keyframes fstToastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -30,8 +30,8 @@
 .fst-card { margin-bottom: 14px; }
 .fst-section-title {
   padding: 12px 16px; font-size: 12px; font-weight: 700;
-  letter-spacing: 0.06em; color: #2563eb; text-transform: uppercase;
-  background: #eff6ff; border-bottom: 1px solid #e2e8f0;
+  letter-spacing: 0.06em; color: var(--color-primary); text-transform: uppercase;
+  background: color-mix(in srgb, var(--color-primary) 8%, white); border-bottom: 1px solid #e2e8f0;
 }
 .fst-table { min-width: 560px; }
 .fst-table th, .fst-table td { text-align: left; }

@@ -15,7 +15,7 @@
   position: relative;
   overflow: hidden;
 }
-.att-sum-card.purple svg { color: #7c3aed; }
+.att-sum-card.purple svg { color: var(--color-secondary); }
 .asc-label { font-size: 12px; color: #64748b; margin: 0 0 4px; }
 .asc-value { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0; }
 
@@ -64,7 +64,7 @@
   font-weight: 600;
 }
 .grade-badge.a { background: #dcfce7; color: #16a34a; }
-.grade-badge.b { background: #dbeafe; color: #2563eb; }
+.grade-badge.b { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
 .grade-badge.c { background: #fef9c3; color: #ca8a04; }
 
 .trend { display: flex; align-items: center; }

@@ -251,7 +251,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #7c3aed;
+  background: var(--color-secondary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -261,7 +261,7 @@
   transition: background 0.15s;
 }
 
-.b-btn-primary:hover { background: #6d28d9; }
+.b-btn-primary:hover { background: color-mix(in srgb, var(--color-secondary) 80%, black); }
 
 .b-btn-secondary {
   display: flex;
@@ -282,7 +282,7 @@
 .b-admin-avatar {
   width: 38px;
   height: 38px;
-  background: #7c3aed;
+  background: var(--color-secondary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -362,7 +362,7 @@
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #7c3aed;
+  color: var(--color-secondary);
   background: none;
   border: none;
   cursor: pointer;
@@ -549,7 +549,7 @@
 }
 
 .b-filter-select:focus {
-  border-color: #7c3aed;
+  border-color: var(--color-secondary);
 }
 
 .b-search-wrap {
@@ -576,7 +576,7 @@
 }
 
 .b-search-input:focus {
-  border-color: #7c3aed;
+  border-color: var(--color-secondary);
 }
 
 .b-table-wrap {
@@ -626,7 +626,7 @@
 .b-badge-success { background: #dcfce7; color: #16a34a; }
 .b-badge-warning { background: #fef9c3; color: #ca8a04; }
 .b-badge-danger { background: #fee2e2; color: #dc2626; }
-.b-badge-info { background: #dbeafe; color: #2563eb; }
+.b-badge-info { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); }
 
 .b-status-badge {
   padding: 3px 10px;

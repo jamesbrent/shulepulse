@@ -39,8 +39,8 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.grade-sum-card.blue   .gsc-icon { background: #EFF6FF; color: #2563EB; }
-.grade-sum-card.purple .gsc-icon { background: #F5F3FF; color: #7C3AED; }
+.grade-sum-card.blue   .gsc-icon { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
+.grade-sum-card.purple .gsc-icon { background: #F5F3FF; color: var(--color-secondary); }
 .grade-sum-card.green  .gsc-icon { background: #F0FDF4; color: #16A34A; }
 .grade-sum-card.red    .gsc-icon { background: #FEF2F2; color: #EF4444; }
 .grade-sum-card.amber  .gsc-icon { background: #FFFBEB; color: #F59E0B; }
@@ -113,7 +113,7 @@
   background: #E2E8F0;
 }
 .grades-tab.active {
-  color: #2563EB;
+  color: var(--color-primary);
   background: #FFFFFF;
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -178,7 +178,7 @@
   font-family: inherit;
 }
 .search-input:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 .filter-select {
@@ -195,7 +195,7 @@
   font-family: inherit;
 }
 .filter-select:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -207,7 +207,7 @@
   gap: 6px;
   padding: 0 18px;
   height: 44px;
-  background: #2563EB;
+  background: var(--color-primary);
   color: #FFFFFF;
   border: none;
   border-radius: 12px;
@@ -219,7 +219,7 @@
   font-family: inherit;
 }
 .btn-primary:hover {
-  background: #1D4ED8;
+  background: color-mix(in srgb, var(--color-primary) 80%, black);
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 .btn-primary:disabled {
@@ -311,9 +311,9 @@
   font-family: inherit;
 }
 .action-btn:hover {
-  background: #EFF6FF;
-  color: #2563EB;
-  border-color: #BFDBFE;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, white);
 }
 
 /* ── Table ───────────────────────────────────────────────── */
@@ -372,8 +372,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #EFF6FF;
-  color: #2563EB;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -429,9 +429,9 @@
   transition: all 0.15s;
 }
 .grade-records-action-btn:hover {
-  background: #EFF6FF;
-  border-color: #BFDBFE;
-  color: #2563EB;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, white);
+  color: var(--color-primary);
 }
 .pts-max {
   font-size: 11px;
@@ -457,21 +457,21 @@
 }
 /* Early Years */
 .cbe-badge.cbe-ee  { background: #DCFCE7; color: #15803D; }
-.cbe-badge.cbe-me  { background: #DBEAFE; color: #1D4ED8; }
+.cbe-badge.cbe-me  { background: color-mix(in srgb, var(--color-primary) 15%, white); color: color-mix(in srgb, var(--color-primary) 80%, black); }
 .cbe-badge.cbe-ae  { background: #FEF9C3; color: #A16207; }
 .cbe-badge.cbe-be  { background: #FEE2E2; color: #B91C1C; }
 /* Middle School (8-level) */
 .cbe-badge.cbe-ee1 { background: #14532D; color: #FFFFFF; }
 .cbe-badge.cbe-ee2 { background: #DCFCE7; color: #15803D; }
-.cbe-badge.cbe-me1 { background: #DBEAFE; color: #1D4ED8; }
-.cbe-badge.cbe-me2 { background: #EDE9FE; color: #6D28D9; }
+.cbe-badge.cbe-me1 { background: color-mix(in srgb, var(--color-primary) 15%, white); color: color-mix(in srgb, var(--color-primary) 80%, black); }
+.cbe-badge.cbe-me2 { background: #EDE9FE; color: color-mix(in srgb, var(--color-secondary) 80%, black); }
 .cbe-badge.cbe-ae1 { background: #FEF9C3; color: #A16207; }
 .cbe-badge.cbe-ae2 { background: #FED7AA; color: #C2410C; }
 .cbe-badge.cbe-be1 { background: #FEE2E2; color: #B91C1C; }
 .cbe-badge.cbe-be2 { background: #7F1D1D; color: #FFFFFF; }
 /* Senior School */
 .cbe-badge.cbe-sa     { background: #14532D; color: #FFFFFF; }
-.cbe-badge.cbe-sb     { background: #DBEAFE; color: #1D4ED8; }
+.cbe-badge.cbe-sb     { background: color-mix(in srgb, var(--color-primary) 15%, white); color: color-mix(in srgb, var(--color-primary) 80%, black); }
 .cbe-badge.cbe-sc     { background: #FEF9C3; color: #A16207; }
 .cbe-badge.cbe-sd     { background: #FEE2E2; color: #B91C1C; }
 .cbe-badge.cbe-se     { background: #7F1D1D; color: #FFFFFF; }
@@ -666,7 +666,7 @@
   color: #0F172A;
 }
 .gp-label  { color: #475569; font-size: 12px; }
-.gp-pts    { color: #7C3AED; font-weight: 600; font-size: 12px; }
+.gp-pts    { color: var(--color-secondary); font-weight: 600; font-size: 12px; }
 .gp-system {
   margin-left: auto;
   font-size: 11px;
@@ -822,7 +822,7 @@
   min-height: 132px;
 }
 .report-class-card:hover {
-  border-color: #BFDBFE;
+  border-color: color-mix(in srgb, var(--color-primary) 20%, white);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
   transform: translateY(-1px);
 }
@@ -843,13 +843,13 @@
   margin: 6px 0 0;
   font-size: 13px;
   font-weight: 600;
-  color: #2563EB;
+  color: var(--color-primary);
 }
 .report-class-view {
   margin-top: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #2563EB;
+  color: var(--color-primary);
 }
 .report-back-row {
   display: flex;
@@ -890,7 +890,7 @@
   transition: all 0.15s;
 }
 .report-student-card:hover {
-  border-color: #BFDBFE;
+  border-color: color-mix(in srgb, var(--color-primary) 20%, white);
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
@@ -1027,7 +1027,7 @@
 }
 .form-field input:focus,
 .form-field select:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 

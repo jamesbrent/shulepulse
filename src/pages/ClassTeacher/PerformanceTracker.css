@@ -54,8 +54,8 @@
 }
 
 .ct-perf-sum-card svg { flex-shrink: 0; }
-.ct-perf-sum-card.blue svg { color: #2563eb; }
-.ct-perf-sum-card.purple svg { color: #7c3aed; }
+.ct-perf-sum-card.blue svg { color: var(--color-primary); }
+.ct-perf-sum-card.purple svg { color: var(--color-secondary); }
 .ct-perf-sum-card.green svg { color: #16a34a; }
 .ct-perf-sum-card.red svg { color: #dc2626; }
 
@@ -93,8 +93,8 @@
 }
 
 .ct-perf-export-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-.ct-perf-export-btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-.ct-perf-export-btn.primary:hover { background: #1d4ed8; }
+.ct-perf-export-btn.primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.ct-perf-export-btn.primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 /* ── Filter Controls ── */
 .ct-search-wrap { position: relative; display: flex; align-items: center; }
@@ -112,7 +112,7 @@
   background: #fff;
 }
 
-.ct-search-input:focus { border-color: #2563eb; }
+.ct-search-input:focus { border-color: var(--color-primary); }
 
 .ct-filter-select {
   height: 44px;
@@ -126,7 +126,7 @@
   outline: none;
 }
 
-.ct-filter-select:focus { border-color: #2563eb; }
+.ct-filter-select:focus { border-color: var(--color-primary); }
 
 /* ── Grid Layout ── */
 .ct-perf-grid {
@@ -217,7 +217,7 @@
 .ct-student-name-cell { display: flex; align-items: center; gap: 10px; }
 .ct-student-avatar-sm {
   width: 32px; height: 32px; border-radius: 50%;
-  background: #eff6ff; color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary);
   font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; text-transform: uppercase;
@@ -254,7 +254,7 @@
   transition: all 0.15s;
 }
 
-.ct-perf-view-btn:hover { background: #f1f5f9; color: #2563eb; border-color: #2563eb; }
+.ct-perf-view-btn:hover { background: #f1f5f9; color: var(--color-primary); border-color: var(--color-primary); }
 
 /* ── Sidebar ── */
 .ct-perf-sidebar {
@@ -406,7 +406,7 @@
   background: #fff;
   width: 200px;
 }
-.ct-rank-search:focus { border-color: #2563eb; }
+.ct-rank-search:focus { border-color: var(--color-primary); }
 .ct-rank-select {
   height: 44px;
   padding: 0 12px;
@@ -418,7 +418,7 @@
   cursor: pointer;
   outline: none;
 }
-.ct-rank-select:focus { border-color: #2563eb; }
+.ct-rank-select:focus { border-color: var(--color-primary); }
 
 /* ── CBC Proficiency ── */
 .ct-cbc-metric-grid {
@@ -553,9 +553,9 @@
   transition: all 0.15s;
 }
 
-.ct-cbc-class-action-btn.subjects { background: #f3e8ff; color: #7c3aed; border-color: #ddd6fe; }
-.ct-cbc-class-action-btn.subjects:hover { background: #7c3aed; color: #fff; }
-.ct-cbc-class-action-btn.subjects.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+.ct-cbc-class-action-btn.subjects { background: color-mix(in srgb, var(--color-secondary) 8%, white); color: var(--color-secondary); border-color: color-mix(in srgb, var(--color-secondary) 20%, white); }
+.ct-cbc-class-action-btn.subjects:hover { background: var(--color-secondary); color: #fff; }
+.ct-cbc-class-action-btn.subjects.active { background: var(--color-secondary); color: #fff; border-color: var(--color-secondary); }
 .ct-cbc-class-action-btn.pdf { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
 .ct-cbc-class-action-btn.pdf:hover { background: #dc2626; color: #fff; }
 
@@ -611,7 +611,7 @@
 
 /* ── Expanded Class Detail ── */
 .ct-cbc-class-detail {
-  background: #faf5ff;
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
   border-top: 2px solid #e2e8f0;
   padding: 20px 24px;
 }

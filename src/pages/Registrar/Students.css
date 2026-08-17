@@ -11,13 +11,13 @@
   --stu-text: #0F172A;
   --stu-text-sec: #64748B;
   --stu-text-muted: #94A3B8;
-  --stu-blue: #2563EB;
-  --stu-blue-hover: #1D4ED8;
+  --stu-blue: var(--color-primary);
+  --stu-blue-hover: color-mix(in srgb, var(--color-primary) 80%, black);
   --stu-red: #EF4444;
   --stu-red-light: #FEF2F2;
   --stu-green: #16A34A;
   --stu-green-light: #F0FDF4;
-  --stu-purple: #7C3AED;
+  --stu-purple: var(--color-secondary);
   --stu-purple-light: #EDE9FE;
   --stu-amber: #F59E0B;
   --stu-amber-light: #FEF3C7;
@@ -264,7 +264,7 @@
 
 .stu-badge--active { background: #DCFCE7; color: #16A34A; }
 .stu-badge--transferred { background: #FEF3C7; color: #D97706; }
-.stu-badge--alumni { background: #EDE9FE; color: #7C3AED; }
+.stu-badge--alumni { background: #EDE9FE; color: var(--color-secondary); }
 .stu-badge--inactive { background: #F1F5F9; color: #64748B; }
 
 /* ══════ ROW DROPDOWN ══════ */
@@ -280,7 +280,7 @@
 }
 
 .stu-dd-trigger:hover { background: #F1F5F9; color: var(--stu-text); border-color: var(--stu-border); }
-.stu-dd-trigger--active { background: #EFF6FF; color: var(--stu-blue); border-color: #93C5FD; }
+.stu-dd-trigger--active { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--stu-blue); border-color: #93C5FD; }
 .stu-dd-trigger:focus-visible { outline: 2px solid var(--stu-blue); outline-offset: 2px; }
 
 .stu-dd-menu {
@@ -359,7 +359,7 @@
 }
 
 .stu-tab:hover { background: #F1F5F9; color: var(--stu-text); }
-.stu-tab--active { background: #EFF6FF; color: var(--stu-blue); border-color: #93C5FD; }
+.stu-tab--active { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--stu-blue); border-color: #93C5FD; }
 
 .stu-card {
   background: var(--stu-surface);

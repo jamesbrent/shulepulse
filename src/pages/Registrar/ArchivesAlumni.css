@@ -10,8 +10,8 @@
   --aa-text: #0F172A;
   --aa-text-sec: #64748B;
   --aa-text-muted: #94A3B8;
-  --aa-blue: #2563EB;
-  --aa-purple: #7C3AED;
+  --aa-blue: var(--color-primary);
+  --aa-purple: var(--color-secondary);
   --aa-orange: #F59E0B;
   --aa-green: #16A34A;
   --aa-red: #EF4444;
@@ -208,7 +208,7 @@
 .aa-btn--outline { background: var(--aa-surface); color: var(--aa-text); border-color: var(--aa-border); }
 .aa-btn--outline:hover:not(:disabled) { background: #F9FAFB; border-color: #CBD5E1; }
 .aa-btn--active { background: var(--aa-blue); color: #fff; border-color: var(--aa-blue); }
-.aa-btn--active:hover:not(:disabled) { background: #1D4ED8; }
+.aa-btn--active:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 /* ── Table ── */
 .aa-table-wrap {
@@ -295,7 +295,7 @@
   font-size: 11px; font-weight: 600; white-space: nowrap;
 }
 
-.aa-badge--alumni { background: #F5F3FF; color: #7C3AED; }
+.aa-badge--alumni { background: #F5F3FF; color: var(--color-secondary); }
 .aa-badge--archived { background: #F1F5F9; color: #64748B; }
 .aa-badge--withdrawn { background: #FEF3C7; color: #D97706; }
 

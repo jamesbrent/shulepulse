@@ -42,9 +42,9 @@
   color: var(--ad-text-sec);
   border: 1px solid var(--ad-border);
 }
-.ad-pill--blue { background: #EFF6FF; color: #2563EB; border-color: #BFDBFE; }
+.ad-pill--blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 20%, white); }
 .ad-pill--green { background: #F0FDF4; color: #16A34A; border-color: #BBF7D0; }
-.ad-pill--purple { background: #F5F3FF; color: #7C3AED; border-color: #DDD6FE; }
+.ad-pill--purple { background: #F5F3FF; color: var(--color-secondary); border-color: color-mix(in srgb, var(--color-secondary) 20%, white); }
 .ad-pill--amber { background: #FFFBEB; color: #D97706; border-color: #FDE68A; }
 
 /* ── KPI Grid (4 cards) ── */
@@ -77,7 +77,7 @@
 .ad-kpi-icon--green { background: #DCFCE7; color: #16A34A; }
 .ad-kpi-icon--red { background: #FEE2E2; color: #DC2626; }
 .ad-kpi-icon--amber { background: #FFFBEB; color: #D97706; }
-.ad-kpi-icon--blue { background: #EFF6FF; color: #2563EB; }
+.ad-kpi-icon--blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .ad-kpi-sub { font-size: 11px; color: var(--ad-text-muted); margin: 0; }
 
 /* ── Two-column layout ── */
@@ -122,15 +122,15 @@
   background: var(--ad-surf); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--ad-text);
   transition: all 0.15s; box-shadow: var(--ad-shadow);
 }
-.ad-qa-btn:hover { border-color: #2563EB; color: #2563EB; background: #F8FAFF; }
+.ad-qa-btn:hover { border-color: var(--color-primary); color: var(--color-primary); background: #F8FAFF; }
 .ad-qa-icon {
   width: 32px; height: 32px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  background: #EFF6FF; color: #2563EB;
+  background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary);
 }
 .ad-qa-btn:nth-child(2) .ad-qa-icon { background: #F0FDF4; color: #16A34A; }
 .ad-qa-btn:nth-child(3) .ad-qa-icon { background: #FFFBEB; color: #D97706; }
-.ad-qa-btn:nth-child(4) .ad-qa-icon { background: #F5F3FF; color: #7C3AED; }
+.ad-qa-btn:nth-child(4) .ad-qa-icon { background: #F5F3FF; color: var(--color-secondary); }
 .ad-qa-btn:nth-child(5) .ad-qa-icon { background: #FEF2F2; color: #DC2626; }
 
 /* ── Recent Activity ── */
@@ -147,7 +147,7 @@
   width: 8px; height: 8px; border-radius: 50%;
   margin-top: 5px; flex-shrink: 0;
 }
-.ad-feed-dot--blue { background: #2563EB; }
+.ad-feed-dot--blue { background: var(--color-primary); }
 .ad-feed-text { display: flex; flex-direction: column; gap: 2px; }
 .ad-feed-msg { font-size: 13px; font-weight: 500; color: var(--ad-text); }
 .ad-feed-time { font-size: 11px; color: var(--ad-text-muted); }
@@ -158,7 +158,7 @@
   padding: 8px 14px; border-radius: 8px;
   font-size: 13px; font-weight: 500;
 }
-.ad-notification--info { background: #DBEAFE; color: #2563EB; border: 1px solid #BFDBFE; }
+.ad-notification--info { background: color-mix(in srgb, var(--color-primary) 15%, white); color: var(--color-primary); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, white); }
 .ad-notification--warning { background: #FEF9C3; color: #CA8A04; border: 1px solid #FDE68A; }
 
 /* ── Buttons ── */
@@ -168,8 +168,8 @@
   font-size: 12px; font-weight: 500; cursor: pointer;
   transition: all 0.15s; white-space: nowrap;
 }
-.ad-btn--primary { background: #2563EB; color: #fff; }
-.ad-btn--primary:hover { background: #1D4ED8; }
+.ad-btn--primary { background: var(--color-primary); color: #fff; }
+.ad-btn--primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .ad-btn--primary:disabled { background: #93C5FD; cursor: not-allowed; }
 .ad-btn--lg { padding: 9px 18px; font-size: 13px; font-weight: 600; }
 .ad-saved-badge {
@@ -190,7 +190,7 @@
 }
 .ad-spin {
   width: 28px; height: 28px;
-  border: 3px solid #E2E8F0; border-top-color: #2563EB;
+  border: 3px solid #E2E8F0; border-top-color: var(--color-primary);
   border-radius: 50%; animation: ad-spin 0.6s linear infinite;
 }
 @keyframes ad-spin { to { transform: rotate(360deg); } }

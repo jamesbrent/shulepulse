@@ -33,7 +33,7 @@
   font-size: 12px;
   font-weight: 600;
   background: #F5F3FF;
-  color: #7C3AED;
+  color: var(--color-secondary);
   padding: 5px 14px;
   border-radius: 20px;
   white-space: nowrap;
@@ -109,13 +109,13 @@
   font-family: inherit;
 }
 .ma-tab:hover {
-  color: #7C3AED;
+  color: var(--color-secondary);
   background: #F5F3FF;
 }
 .ma-tab.active {
-  color: #7C3AED;
+  color: var(--color-secondary);
   background: #F5F3FF;
-  border-color: #DDD6FE;
+  border-color: color-mix(in srgb, var(--color-secondary) 20%, white);
   font-weight: 600;
 }
 
@@ -176,7 +176,7 @@
   font-family: inherit;
 }
 .ma-search-input:focus {
-  border-color: #7C3AED;
+  border-color: var(--color-secondary);
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 .ma-filter-select {
@@ -191,7 +191,7 @@
   font-family: inherit;
 }
 .ma-filter-select:focus {
-  border-color: #7C3AED;
+  border-color: var(--color-secondary);
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
@@ -203,7 +203,7 @@
   gap: 6px;
   padding: 0 18px;
   height: 44px;
-  background: #7C3AED;
+  background: var(--color-secondary);
   color: #FFFFFF;
   border: none;
   border-radius: 12px;
@@ -215,7 +215,7 @@
   font-family: inherit;
 }
 .ma-btn-primary:hover {
-  background: #6D28D9;
+  background: color-mix(in srgb, var(--color-secondary) 80%, black);
   box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
 .ma-btn-primary:disabled {
@@ -387,7 +387,7 @@
 .ma-avatar {
   border-radius: 50%;
   background: #F5F3FF;
-  color: #7C3AED;
+  color: var(--color-secondary);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -492,7 +492,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7C3AED;
+  color: var(--color-secondary);
 }
 .ma-exam-title {
   font-size: 16px;
@@ -554,7 +554,7 @@
   font-size: 12px;
   font-weight: 600;
   background: #F5F3FF;
-  color: #7C3AED;
+  color: var(--color-secondary);
   padding: 4px 12px;
   border-radius: 20px;
   white-space: nowrap;
@@ -649,7 +649,7 @@
 }
 .ma-form-input:focus,
 .ma-form-select:focus {
-  border-color: #7C3AED;
+  border-color: var(--color-secondary);
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
@@ -758,7 +758,7 @@
   font-family: inherit;
 }
 .ma-textarea:focus {
-  border-color: #7C3AED;
+  border-color: var(--color-secondary);
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 

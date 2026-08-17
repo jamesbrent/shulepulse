@@ -53,8 +53,8 @@
   white-space: nowrap;
 }
 .sp-btn-tool:hover { background: #f8fafc; border-color: #d1d5db; color: #0f172a; }
-.sp-btn-tool.accent { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-.sp-btn-tool.accent:hover { background: #dbeafe; }
+.sp-btn-tool.accent { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 20%, white); }
+.sp-btn-tool.accent:hover { background: color-mix(in srgb, var(--color-primary) 15%, white); }
 
 /* ── Filter Bar ───────────────────────────────────────────── */
 .sp-filter-bar {
@@ -83,7 +83,7 @@
   outline: none;
   transition: border-color 0.15s;
 }
-.sp-search-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+.sp-search-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
 .sp-search-input::placeholder { color: #94a3b8; }
 .sp-search-clear {
   position: absolute;
@@ -112,7 +112,7 @@
   outline: none;
   transition: border-color 0.15s;
 }
-.sp-filter-select:focus { border-color: #2563eb; }
+.sp-filter-select:focus { border-color: var(--color-primary); }
 .sp-clear-btn {
   display: inline-flex;
   align-items: center;
@@ -180,10 +180,10 @@
 .sp-sort-icon { opacity: 0.3; }
 
 .sp-th-check, .sp-td-check { width: 40px; text-align: center; }
-.sp-th-check input, .sp-td-check input { cursor: pointer; accent-color: #2563eb; }
+.sp-th-check input, .sp-td-check input { cursor: pointer; accent-color: var(--color-primary); }
 .sp-th-actions { width: 50px; text-align: center; }
 
-.sp-row-selected { background: #eff6ff !important; }
+.sp-row-selected { background: color-mix(in srgb, var(--color-primary) 8%, white) !important; }
 
 /* ── Student Cell (avatar + name + adm) ───────────────────── */
 .sp-student-cell {
@@ -200,8 +200,8 @@
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -219,7 +219,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sp-student-cell:hover .sp-student-name { color: #2563eb; }
+.sp-student-cell:hover .sp-student-name { color: var(--color-primary); }
 .sp-student-adm {
   font-size: 11px;
   color: #94a3b8;
@@ -293,7 +293,7 @@
 .sp-badge.inactive { background: #fef2f2; color: #ef4444; }
 .sp-badge.alumni { background: #fffbeb; color: #d97706; }
 .sp-badge.transferred { background: #fffbeb; color: #d97706; }
-.sp-badge.blue { background: #eff6ff; color: #2563eb; }
+.sp-badge.blue { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .sp-badge.cleared { background: #f0fdf4; color: #16a34a; }
 .sp-badge.partial { background: #fffbeb; color: #d97706; }
 .sp-badge.due { background: #fef2f2; color: #ef4444; }
@@ -327,7 +327,7 @@
   transition: all 0.15s;
 }
 .sp-page-btn:hover:not(:disabled):not(.active) { background: #f9fafb; border-color: #d1d5db; }
-.sp-page-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.sp-page-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
 .sp-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── Bulk Action Bar (sticky bottom) ──────────────────────── */
@@ -440,8 +440,8 @@
   white-space: nowrap;
   transition: all 0.15s;
 }
-.sp-tab:hover { color: #2563eb; }
-.sp-tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+.sp-tab:hover { color: var(--color-primary); }
+.sp-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
 
 .sp-tab-content { min-height: 200px; }
 .sp-section { display: flex; flex-direction: column; gap: 16px; }
@@ -510,7 +510,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -520,7 +520,7 @@
   transition: background 0.15s;
   white-space: nowrap;
 }
-.sp-btn-primary:hover { background: #1d4ed8; }
+.sp-btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .sp-btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
 
 .sp-btn-outline {
@@ -616,7 +616,7 @@
   transition: border-color 0.15s;
   background: #fff;
 }
-.sp-field input:focus, .sp-field select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+.sp-field input:focus, .sp-field select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
 .sp-form-error {
   background: #fef2f2; border: 1px solid #fecaca;
   color: #ef4444; padding: 10px 12px;
@@ -640,7 +640,7 @@
   color: #374151;
   cursor: pointer;
 }
-.sp-checkbox input { width: auto; cursor: pointer; accent-color: #2563eb; }
+.sp-checkbox input { width: auto; cursor: pointer; accent-color: var(--color-primary); }
 
 /* ═══════════════════════════════════════════════════════════
    MOBILE CARDS

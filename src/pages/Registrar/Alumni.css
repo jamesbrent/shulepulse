@@ -11,13 +11,13 @@
   --al-text: #0F172A;
   --al-text-sec: #64748B;
   --al-text-muted: #94A3B8;
-  --al-blue: #2563EB;
-  --al-blue-hover: #1D4ED8;
+  --al-blue: var(--color-primary);
+  --al-blue-hover: color-mix(in srgb, var(--color-primary) 80%, black);
   --al-red: #EF4444;
   --al-red-light: #FEF2F2;
   --al-green: #16A34A;
   --al-green-light: #F0FDF4;
-  --al-purple: #7C3AED;
+  --al-purple: var(--color-secondary);
   --al-amber: #F59E0B;
   --al-radius: 16px;
   --al-radius-sm: 12px;
@@ -485,7 +485,7 @@
 }
 
 .al-badge--success { background: #DCFCE7; color: #16A34A; }
-.al-badge--info { background: #EFF6FF; color: #2563EB; }
+.al-badge--info { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .al-badge--warning { background: #FEF3C7; color: #D97706; }
 .al-badge--danger { background: #FEE2E2; color: #DC2626; }
 

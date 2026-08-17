@@ -40,8 +40,8 @@
   border-radius: 10px;
   flex-shrink: 0;
 }
-.tp-sum-card.purple > svg { background: #F5F3FF; color: #7C3AED; }
-.tp-sum-card.blue   > svg { background: #EFF6FF; color: #2563EB; }
+.tp-sum-card.purple > svg { background: #F5F3FF; color: var(--color-secondary); }
+.tp-sum-card.blue   > svg { background: color-mix(in srgb, var(--color-primary) 8%, white); color: var(--color-primary); }
 .tp-sum-card.pink   > svg { background: #FDF2F8; color: #DB2777; }
 .tp-sum-card.green  > svg { background: #F0FDF4; color: #16A34A; }
 .tp-sum-card.amber  > svg { background: #FFFBEB; color: #F59E0B; }
@@ -98,12 +98,12 @@
   font-size: 13px;
 }
 .teachers-page .btn-primary {
-  background: #2563EB;
+  background: var(--color-primary);
   color: #FFFFFF;
   border: none;
   font-weight: 600;
 }
-.teachers-page .btn-primary:hover { background: #1D4ED8; }
+.teachers-page .btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .teachers-page .btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
 .teachers-page .btn-secondary {
   background: #FFFFFF;
@@ -140,7 +140,7 @@
 }
 .teachers-page .search-input:focus,
 .teachers-page .filter-select:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 .teachers-page .filter-select {
@@ -228,7 +228,7 @@
   height: 32px;
   border-radius: 50%;
   background: #F3F0FF;
-  color: #7C3AED;
+  color: var(--color-secondary);
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -284,8 +284,8 @@
   align-items: center;
   padding: 1px 7px;
   border-radius: 99px;
-  background: #EFF6FF;
-  color: #2563EB;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -298,7 +298,7 @@
   padding: 1px 7px;
   border-radius: 99px;
   background: #F3F0FF;
-  color: #7C3AED;
+  color: var(--color-secondary);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -464,12 +464,12 @@
   white-space: nowrap;
 }
 .dept-bar-track { flex: 1; height: 6px; background: #F1F5F9; border-radius: 99px; overflow: hidden; }
-.dept-bar-fill { height: 100%; background: #7C3AED; border-radius: 99px; transition: width 0.4s; }
+.dept-bar-fill { height: 100%; background: var(--color-secondary); border-radius: 99px; transition: width 0.4s; }
 .dept-bar-count { font-size: 12px; color: #64748B; width: 20px; text-align: right; flex-shrink: 0; }
 .emp-type-list { display: flex; flex-direction: column; gap: 8px; }
 .emp-type-row { display: flex; justify-content: space-between; align-items: center; }
 .emp-type-name { font-size: 13px; color: #374151; }
-.emp-type-count { font-size: 14px; font-weight: 700; color: #7C3AED; }
+.emp-type-count { font-size: 14px; font-weight: 700; color: var(--color-secondary); }
 .subj-coverage { display: flex; flex-wrap: wrap; gap: 6px; }
 .subj-cover-tag {
   display: inline-flex;
@@ -583,8 +583,8 @@
   transition: all 0.15s;
   font-family: inherit;
 }
-.teachers-page .profile-tab:hover { color: #7C3AED; }
-.teachers-page .profile-tab.active { color: #7C3AED; border-bottom-color: #7C3AED; font-weight: 600; }
+.teachers-page .profile-tab:hover { color: var(--color-secondary); }
+.teachers-page .profile-tab.active { color: var(--color-secondary); border-bottom-color: var(--color-secondary); font-weight: 600; }
 
 .teachers-page .profile-body {
   overflow-y: auto;
@@ -623,7 +623,7 @@
   padding: 12px;
   text-align: center;
 }
-.teachers-page .lsc-val { font-size: 22px; font-weight: 700; color: #7C3AED; margin: 0 0 3px; }
+.teachers-page .lsc-val { font-size: 22px; font-weight: 700; color: var(--color-secondary); margin: 0 0 3px; }
 .teachers-page .lsc-lbl { font-size: 12px; color: #64748B; margin: 0; }
 
 .teachers-page .overload-alert {
@@ -653,7 +653,7 @@
   align-items: center;
   gap: 8px;
   background: #F3F0FF;
-  border: 1px solid #DDD6FE;
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 20%, white);
   border-radius: 8px;
   padding: 6px 12px;
   font-size: 13px;
@@ -721,7 +721,7 @@
 .teachers-page .form-field input:focus,
 .teachers-page .form-field select:focus,
 .teachers-page .form-field textarea:focus {
-  border-color: #2563EB;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -748,8 +748,8 @@
   transition: all 0.15s;
   font-family: inherit;
 }
-.teachers-page .pick-btn:hover { border-color: #7C3AED; color: #7C3AED; }
-.teachers-page .pick-btn.selected { background: #7C3AED; color: #FFFFFF; border-color: #7C3AED; }
+.teachers-page .pick-btn:hover { border-color: var(--color-secondary); color: var(--color-secondary); }
+.teachers-page .pick-btn.selected { background: var(--color-secondary); color: #FFFFFF; border-color: var(--color-secondary); }
 
 /* ── Photo upload ────────────────────────────────────────── */
 .teachers-page .photo-upload-row {

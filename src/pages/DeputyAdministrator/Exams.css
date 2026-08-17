@@ -5,11 +5,11 @@
 /* ── Shared Buttons (for Modal component) ── */
 .btn-primary {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; background: #2563eb; color: #fff;
+  padding: 8px 16px; background: var(--color-primary); color: #fff;
   border: none; border-radius: 8px; font-size: 13px;
   font-weight: 600; cursor: pointer; transition: background 0.15s;
 }
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
 
 .btn-secondary {
@@ -55,8 +55,8 @@
   color: #334155;
 }
 .exam-tab--active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 .exam-tab-badge {
   background: #dc2626;
@@ -161,8 +161,8 @@
   color: #64748b;
 }
 .exam-pending-status {
-  background: #dbeafe;
-  color: #1e40af;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: var(--color-primary);
   font-size: 10px;
   font-weight: 600;
   padding: 3px 10px;
@@ -203,7 +203,7 @@
   gap: 4px;
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;

@@ -53,7 +53,7 @@
 .teacher-avatar {
   width: 36px;
   height: 36px;
-  background: #7c3aed;
+  background: var(--color-secondary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -179,7 +179,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -189,7 +189,7 @@
   transition: background 0.15s;
 }
 
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 .teacher-stats {
   display: grid;
@@ -272,9 +272,9 @@
 }
 
 .class-tab.active {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 .attendance-list {
@@ -303,8 +303,8 @@
 .student-avatar-sm {
   width: 32px;
   height: 32px;
-  background: #dbeafe;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
+  color: var(--color-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -349,7 +349,7 @@
   gap: 8px;
   width: 100%;
   padding: 12px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -359,7 +359,7 @@
   transition: background 0.15s;
 }
 
-.save-attendance-btn:hover { background: #1d4ed8; }
+.save-attendance-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .save-attendance-btn.saved { background: #16a34a; }
 .save-attendance-btn:disabled { background: #93c5fd; cursor: not-allowed; }
 
@@ -417,7 +417,7 @@
 
 .text-green { color: #16a34a; }
 .text-red { color: #dc2626; }
-.text-blue { color: #2563eb; }
+.text-blue { color: var(--color-primary); }
 
 .empty-state {
   text-align: center;

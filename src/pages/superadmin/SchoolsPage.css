@@ -196,7 +196,7 @@
   transition: all 0.15s;
 }
 
-.sc-action-btn:hover { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; }
+.sc-action-btn:hover { background: color-mix(in srgb, var(--color-primary) 8%, white); border-color: color-mix(in srgb, var(--color-primary) 20%, white); color: var(--color-primary); }
 
 .sc-action-menu-wrap {
   position: relative;
@@ -338,7 +338,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   display: flex;
   align-items: center;
@@ -388,7 +388,7 @@
   transition: all 0.15s;
 }
 
-.sc-admin-copy-btn:hover { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; }
+.sc-admin-copy-btn:hover { background: color-mix(in srgb, var(--color-primary) 8%, white); border-color: color-mix(in srgb, var(--color-primary) 20%, white); color: var(--color-primary); }
 
 .sc-admin-link-btn:hover { background: #fefce8; border-color: #fde68a; color: #ca8a04; }
 .sc-admin-link-btn:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -591,7 +591,7 @@
   margin-top: auto;
 }
 
-.sp-card-link:hover { color: #1d4ed8; }
+.sp-card-link:hover { color: color-mix(in srgb, var(--color-primary) 80%, black); }
 
 .sp-badge {
   background: #f1f5f9;
@@ -716,8 +716,8 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -917,7 +917,7 @@
 }
 
 .sp-message-mini:hover { background: #f8fafc; }
-.sp-message-mini.unread { background: #eff6ff; }
+.sp-message-mini.unread { background: color-mix(in srgb, var(--color-primary) 8%, white); }
 
 .sp-message-mini-avatar {
   width: 32px;
@@ -1005,7 +1005,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: #eff6ff;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
   border-radius: 10px;
   flex-shrink: 0;
 }
@@ -1013,7 +1013,7 @@
 .sp-event-mini-day {
   font-size: 16px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--color-primary);
   line-height: 1;
 }
 
@@ -1213,12 +1213,12 @@
 .sp-library-mini-cover {
   width: 48px;
   height: 48px;
-  background: #dbeafe;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .sp-library-mini-title {
@@ -1338,7 +1338,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7c3aed;
+  color: var(--color-secondary);
   flex-shrink: 0;
 }
 
@@ -1451,7 +1451,7 @@
   padding: 14px;
   background: #f8fafc;
   border-radius: 10px;
-  border-left: 3px solid #2563eb;
+  border-left: 3px solid var(--color-primary);
   transition: background 0.15s;
 }
 
@@ -1468,12 +1468,12 @@
 .sp-assignment-icon {
   width: 36px;
   height: 36px;
-  background: #eff6ff;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb;
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -1535,7 +1535,7 @@
 }
 
 .sp-message-row:hover { background: #f8fafc; }
-.sp-message-row.unread { background: #eff6ff; }
+.sp-message-row.unread { background: color-mix(in srgb, var(--color-primary) 8%, white); }
 
 .sp-message-avatar {
   width: 36px;
@@ -1586,7 +1586,7 @@
 .sp-unread-dot {
   width: 8px;
   height: 8px;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 50%;
   flex-shrink: 0;
   margin-top: 6px;
@@ -1616,7 +1616,7 @@
   justify-content: center;
   width: 56px;
   height: 56px;
-  background: #eff6ff;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
   border-radius: 12px;
   flex-shrink: 0;
 }
@@ -1624,7 +1624,7 @@
 .sp-event-day {
   font-size: 20px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--color-primary);
   line-height: 1;
 }
 
@@ -1679,12 +1679,12 @@
 .sp-book-cover {
   width: 48px;
   height: 56px;
-  background: #dbeafe;
+  background: color-mix(in srgb, var(--color-primary) 15%, white);
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb;
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -1873,7 +1873,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1884,7 +1884,7 @@
   transition: background 0.15s;
 }
 
-.sp-btn-primary:hover { background: #1d4ed8; }
+.sp-btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
 .sp-btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
 
 .sp-table-wrap { overflow-x: auto; }
@@ -1918,7 +1918,7 @@
 .sp-table tbody tr { transition: background 0.12s; }
 .sp-table tbody tr:hover { background: #f8fafc; }
 
-.sp-table tbody tr.sp-row-current { background: #eff6ff; }
+.sp-table tbody tr.sp-row-current { background: color-mix(in srgb, var(--color-primary) 8%, white); }
 
 .sp-table .sp-table-total {
   background: #f8fafc;
@@ -1965,8 +1965,8 @@
 .sp-chip {
   display: inline-flex;
   align-items: center;
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 500;
   padding: 5px 12px;
@@ -2027,7 +2027,7 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.sp-notice-card:hover { border-color: #bfdbfe; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08); }
+.sp-notice-card:hover { border-color: color-mix(in srgb, var(--color-primary) 20%, white); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08); }
 
 .sp-notice-card.unread { border-left: 3px solid #3b82f6; }
 
@@ -2123,7 +2123,7 @@
   border-radius: 8px;
 }
 
-.sp-tt-lesson:nth-child(odd) { border-left-color: #7c3aed; }
+.sp-tt-lesson:nth-child(odd) { border-left-color: var(--color-secondary); }
 
 .sp-tt-time {
   display: flex;

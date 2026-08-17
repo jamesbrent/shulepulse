@@ -14,7 +14,7 @@
   outline: none;
   background: white;
 }
-.reg-transfers .reg-form-field input:focus, .reg-transfers .reg-form-field select:focus { border-color: #2563eb; }
+.reg-transfers .reg-form-field input:focus, .reg-transfers .reg-form-field select:focus { border-color: var(--color-primary); }
 .reg-transfers .reg-form-field input:disabled { background: #f8fafc; color: #94a3b8; }
 .reg-transfers .reg-form-actions {
   display: flex;
