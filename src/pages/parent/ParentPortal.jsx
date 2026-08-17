@@ -13,7 +13,7 @@ const WhatsAppIcon = ({ size = 16 }) => (
 )
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
-import { useNoticeCount } from '../../hooks/useNoticeCount'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import './ParentPortal.css'
 import './AcademicResultsPage.css'
 import './AttendancePage.css'
@@ -37,8 +37,9 @@ export default function ParentPortal() {
   const [loading, setLoading] = useState(true)
   const [showChildDropdown, setShowChildDropdown] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [userId, setUserId] = useState(null)
   const { logoUrl, schoolName } = useBrandingStore()
-  const notifCount = useNoticeCount(school?.id)
+  const notifCount = useNoticeCount(school?.id, userId)
 
   useEffect(() => {
     fetchParentData()
@@ -47,6 +48,7 @@ export default function ParentPortal() {
   const fetchParentData = async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
+    setUserId(user.id)
     const { data: profile } = await supabase
       .from('profiles')
       .select('*, schools(*)')
@@ -183,7 +185,7 @@ export default function ParentPortal() {
             <button
               key={item.key}
               className={`nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
+              onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(userId); setMobileOpen(false) }}
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>

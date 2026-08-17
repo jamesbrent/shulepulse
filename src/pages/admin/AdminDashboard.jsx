@@ -49,6 +49,7 @@ import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import LibraryContent from '../library/LibraryContent'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 
 import ExamSetup from '../HOD/ExamSetup'
 import MarksApproval from '../HOD/MarksApproval'
@@ -243,22 +244,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [pendingAp, setPendingAp] = useState(0)
-  const [notifCount, setNotifCount] = useState(0)
+  const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
   useEffect(() => {
     fetchDashboardData()
   }, [currentTerm, currentYear])
-
-  useEffect(() => {
-    if (!authProfile?.school_id) return
-    const channel = supabase
-      .channel('admin-notices')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notices', filter: `school_id=eq.${authProfile.school_id}` }, () => {
-        setNotifCount(prev => prev + 1)
-      })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [authProfile?.school_id])
 
   const fetchDashboardData = async () => {
     setLoading(true)
@@ -381,12 +371,6 @@ export default function AdminDashboard() {
 
     setPendingAp((apInvRes.count || 0) + (apPayRes.count || 0) + (apCfgRes.count || 0))
 
-    const { count: notifRes } = await supabase
-      .from('notices')
-      .select('id', { count: 'exact', head: true })
-      .eq('school_id', schoolId)
-    setNotifCount(notifRes || 0)
-
     const enriched = await enrichWithStaffNames(recentRes.data || [])
     setRecentFees(enriched)
 
@@ -429,6 +413,7 @@ export default function AdminDashboard() {
     setActiveNav(key)
     setMobileOpen(false)
     setPage(1)
+    if (key === 'notifications') markNoticesSeen(authProfile?.id)
     const group = NAV_GROUPS.find(g => g.items.some(i => i.key === key))
     if (group) {
       setExpandedGroup(group.id)

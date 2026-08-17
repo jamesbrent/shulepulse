@@ -10,7 +10,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
-import { useNoticeCount } from '../../hooks/useNoticeCount'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import { fmt, fmtDate } from '../admin/fees/utils/feesHelpers'
 import FeesPage from './Fees'
 import './Fees.css'
@@ -43,6 +43,7 @@ import { computeAccountBalances, cashSummary } from './cashBankUtils'
 import { ensureAccounts } from './accountsUtils'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
+import DebtorsPage from './Debtors'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import './FinanceDashboard.css'
@@ -61,6 +62,7 @@ const NAV_SECTIONS = [
         items: [
           { key: 'fees', label: 'Fees', icon: <DollarSign size={15} />, page: 'fees' },
           { key: 'payments', label: 'Payments', icon: <CreditCard size={15} />, page: 'payments' },
+          { key: 'debtors', label: 'Debtors', icon: <Receipt size={15} />, page: 'debtors' },
           { key: 'receipts', label: 'Receipts', icon: <Receipt size={15} />, page: 'receipts' },
           { key: 'statements', label: 'Statements', icon: <FileText size={15} />, page: 'statements' },
         ],
@@ -165,7 +167,7 @@ export default function FinanceDashboard() {
   const [recentPayments, setRecentPayments] = useState([])
   const [cashStats, setCashStats] = useState(null)
   const [loading, setLoading] = useState(true)
-  const notifCount = useNoticeCount(authProfile?.school_id)
+  const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
   useEffect(() => {
     if (activeItem?.page === 'dashboard') fetchBursarData()
@@ -260,6 +262,7 @@ export default function FinanceDashboard() {
   const go = (item) => {
     setActiveItem(item)
     setMobileOpen(false)
+    if (item.key === 'notices') markNoticesSeen(authProfile?.id)
     const group = groupOfItem(item.key)
     if (group) setOpenGroup(group.key)
   }
@@ -277,6 +280,7 @@ export default function FinanceDashboard() {
     const page = activeItem?.page || 'dashboard'
     switch (page) {
       case 'fees': return <FeesPage />
+      case 'debtors': return <DebtorsPage />
       case 'payments': return <PaymentsPage showRecordPayment={openRecordPayment} onRecordPaymentClose={() => setOpenRecordPayment(false)} />
       case 'receipts': return <ReceiptsPage />
       case 'statements': return <StatementsPage />

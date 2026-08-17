@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useBrandingStore } from '../../features/branding/brandingStore'
-import { useNoticeCount } from '../../hooks/useNoticeCount'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import { weightedScoreMean } from '../../services/grading'
 import ClassAttendance from './ClassAttendance'
 import './ClassAttendance.css'
@@ -46,7 +46,7 @@ export default function ClassTeacherDashboard() {
     averagePerformance: 0,
   })
   const [loading, setLoading] = useState(true)
-  const notifCount = useNoticeCount(authProfile?.school_id)
+  const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
   useEffect(() => {
     fetchTeacherAndSchool()
@@ -310,7 +310,7 @@ export default function ClassTeacherDashboard() {
             <button
               key={item.key}
               className={`ct-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
+              onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(authProfile?.id); setMobileOpen(false) }}
             >
               <span className="ct-nav-icon">{item.icon}</span>
               <span>{item.label}</span>

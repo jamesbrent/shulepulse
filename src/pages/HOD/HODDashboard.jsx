@@ -9,7 +9,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
-import { useNoticeCount } from '../../hooks/useNoticeCount'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import { weightedScoreMean } from '../../services/grading'
 import './HODDashboard.css'
 import SubjectPerformance from './SubjectPerformance'
@@ -40,7 +40,7 @@ export default function HODDashboard() {
   })
   const [subjectSummary, setSubjectSummary] = useState([])
   const [loading, setLoading] = useState(true)
-  const notifCount = useNoticeCount(authProfile?.school_id)
+  const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
   useEffect(() => {
     fetchDashboardData()
@@ -289,7 +289,7 @@ export default function HODDashboard() {
             <button
               key={item.key}
               className={`hod-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
+              onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(authProfile?.id); setMobileOpen(false) }}
             >
               <span className="hod-nav-icon">{item.icon}</span>
               <span>{item.label}</span>

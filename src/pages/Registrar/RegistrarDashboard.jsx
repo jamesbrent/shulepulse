@@ -12,7 +12,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
-import { useNoticeCount } from '../../hooks/useNoticeCount'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import { fmtDate } from '../admin/fees/utils/feesHelpers'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import './RegistrarDashboard.css'
@@ -59,7 +59,7 @@ export default function RegistrarDashboard() {
   const [updatedAt, setUpdatedAt] = useState(null)
   const [loading, setLoading] = useState(true)
   const [overallPct, setOverallPct] = useState(0)
-  const notifCount = useNoticeCount(authProfile?.school_id)
+  const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
   useEffect(() => {
     fetchRegistrarData()
@@ -621,7 +621,7 @@ export default function RegistrarDashboard() {
             <button
               key={item.key}
               className={`reg-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
+              onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(authProfile?.id); setMobileOpen(false) }}
             >
               <span className="reg-nav-icon">{item.icon}</span>
               <span>{item.label}</span>

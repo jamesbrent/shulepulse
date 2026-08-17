@@ -9,7 +9,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
-import { useNoticeCount } from '../../hooks/useNoticeCount'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import { getSchoolId } from '../../lib/library'
 import './LibrarianDashboard.css'
@@ -33,7 +33,7 @@ export default function LibrarianDashboard() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [schoolId, setSchoolId] = useState(null)
   const [profileMemberId, setProfileMemberId] = useState(null)
-  const notifCount = useNoticeCount(authProfile?.school_id)
+  const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
   useEffect(() => {
     getSchoolId().then(setSchoolId)
@@ -132,7 +132,7 @@ export default function LibrarianDashboard() {
             <button
               key={item.key}
               className={`lib-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
+              onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(authProfile?.id); setMobileOpen(false) }}
             >
               <span className="lib-nav-icon">{item.icon}</span>
               <span>{item.label}</span>

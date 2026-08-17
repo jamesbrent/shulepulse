@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
-import { useNoticeCount } from '../../hooks/useNoticeCount'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import './DeputyAdminDashboard.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import Students from './Students'
@@ -37,7 +37,7 @@ export default function DeputyAdminDashboard() {
   })
   const [recentDiscipline, setRecentDiscipline] = useState([])
   const [loading, setLoading] = useState(true)
-  const notifCount = useNoticeCount(authProfile?.school_id)
+  const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
   useEffect(() => {
     fetchDashboardData()
@@ -248,7 +248,7 @@ export default function DeputyAdminDashboard() {
             <button
               key={item.key}
               className={`da-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
+              onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(authProfile?.id); setMobileOpen(false) }}
             >
               <span className="da-nav-icon">{item.icon}</span>
               <span>{item.label}</span>

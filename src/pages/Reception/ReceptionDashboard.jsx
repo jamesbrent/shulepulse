@@ -11,7 +11,7 @@ import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
-import { useNoticeCount } from '../../hooks/useNoticeCount'
+import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import './ReceptionDashboard.css'
 import Visitors from './Visitors'
@@ -75,7 +75,7 @@ export default function ReceptionDashboard() {
     openRequests: 0, prospects: 0, activeStudents: 0, upcomingEvents: 0,
   })
   const [recentActivity, setRecentActivity] = useState([])
-  const notifCount = useNoticeCount(authProfile?.school_id)
+  const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
   useEffect(() => {
     fetchFrontDeskData()
@@ -396,7 +396,7 @@ export default function ReceptionDashboard() {
                 <button
                   key={item.key}
                   className={`rcp-nav-item ${activeNav === item.key ? 'active' : ''}`}
-                  onClick={() => { setActiveNav(item.key); setMobileOpen(false) }}
+                  onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(authProfile?.id); setMobileOpen(false) }}
                 >
                   <span className="rcp-nav-icon">{item.icon}</span>
                   <span>{item.label}</span>
