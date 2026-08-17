@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload, X, AlertCircle, CheckCircle, Loader } from 'lucide-react'
+import { Upload, X, AlertCircle, CheckCircle, Loader, Download } from 'lucide-react'
 import { parseExcelFile, previewImport, executeImport } from '../../services/students/excelImportService'
 
 export function ImportExcelModal({ schoolId, onClose, onComplete }) {
@@ -53,6 +53,21 @@ export function ImportExcelModal({ schoolId, onClose, onComplete }) {
       <label htmlFor="import-file-input" className="btn-primary" style={{ cursor: 'pointer', marginTop: 12 }}>
         Choose File
       </label>
+      <button
+        type="button"
+        onClick={() => {
+          const headers = ['full_name','admission_number','class','stream','gender','date_of_birth','phone','email','address','county','sub_county','ward','guardian_name','guardian_phone','blood_group','allergies','special_needs']
+          const csv = headers.join(',') + '\n'
+          const blob = new Blob([csv], { type: 'text/csv' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url; a.download = 'student_import_template.csv'; a.click()
+          URL.revokeObjectURL(url)
+        }}
+        style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: '6px 12px', marginTop: 8, cursor: 'pointer', fontSize: 12, color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+      >
+        <Download size={12} /> Download CSV Template
+      </button>
       {file && <p className="import-filename">{file.name}</p>}
     </div>
   )
