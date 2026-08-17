@@ -5,9 +5,11 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
+import { useSchool } from './useSchool'
 
 export default function SettingsPage() {
   const { profile } = useAuthStore()
+  const { refresh: refreshSchool } = useSchool()
   const [activeTab, setActiveTab] = useState('school')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -38,20 +40,15 @@ export default function SettingsPage() {
   useEffect(() => { loadSchool(); fetchLookups() }, [])
 
   const fetchLookups = async () => {
-    const [{ data: grades }, { data: schools }] = await Promise.all([
-      supabase.from('grades').select('term, year').eq('school_id', profile.school_id),
-      supabase.from('schools').select('type').eq('id', profile.school_id),
-    ])
+    const { data: grades } = await supabase
+      .from('grades').select('term, year').eq('school_id', profile.school_id)
     if (grades) {
       const terms = [...new Set(grades.map(g => g.term).filter(Boolean))].sort()
       const years = [...new Set(grades.map(g => g.year).filter(Boolean))].sort()
       if (terms.length) setAvailableTerms(terms)
       if (years.length) setAvailableYears(years)
     }
-    if (schools) {
-      const types = [...new Set(schools.filter(s => s.type).map(s => s.type))].sort()
-      if (types.length) setSchoolTypes(types)
-    }
+    setSchoolTypes(['primary', 'secondary', 'mixed', 'boarding', 'day', 'international'])
   }
 
   const loadSchool = async () => {
@@ -101,6 +98,7 @@ export default function SettingsPage() {
       .eq('id', profile.school_id)
     setSaving(false)
     if (err) { setError(err.message); return }
+    refreshSchool()
     flash()
   }
 
@@ -113,6 +111,7 @@ export default function SettingsPage() {
       .eq('id', profile.school_id)
     setSaving(false)
     if (err) { setError(err.message); return }
+    refreshSchool()
     flash()
   }
 
@@ -391,13 +390,13 @@ export default function SettingsPage() {
               <div className="pwd-wrap">
                 <input
                   required
-                  type={showOldPwd ? 'text' : 'password'}
+                  type={showNewPwd ? 'text' : 'password'}
                   placeholder="Repeat new password"
                   value={pwdForm.confirm_password}
                   onChange={e => setPwdForm({ ...pwdForm, confirm_password: e.target.value })}
                 />
-                <button type="button" className="pwd-eye" onClick={() => setShowOldPwd(v => !v)}>
-                  {showOldPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+                <button type="button" className="pwd-eye" onClick={() => setShowNewPwd(v => !v)}>
+                  {showNewPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
