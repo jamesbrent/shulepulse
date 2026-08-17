@@ -5,6 +5,10 @@ import { useAuthStore } from '../../store/authStore'
 import { useBranding } from './useBranding'
 import LogoUploader from '../../components/branding/LogoUploader'
 import BrandPreview from '../../components/branding/BrandPreview'
+import ColorPicker from '../../components/branding/ColorPicker'
+
+const DEFAULT_PRIMARY = '#2563eb'
+const DEFAULT_SECONDARY = '#16a34a'
 
 export default function BrandingSettingsPage() {
   const { profile } = useAuthStore()
@@ -12,6 +16,8 @@ export default function BrandingSettingsPage() {
 
   const [logoUrl, setLogoUrl] = useState(null)
   const [schoolName, setSchoolName] = useState('')
+  const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY)
+  const [secondaryColor, setSecondaryColor] = useState(DEFAULT_SECONDARY)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
@@ -21,12 +27,14 @@ export default function BrandingSettingsPage() {
   const loadBranding = async () => {
     const { data, error } = await supabase
       .from('schools')
-      .select('name, logo_url')
+      .select('name, logo_url, primary_color, secondary_color')
       .eq('id', profile.school_id)
       .single()
     if (data) {
       setLogoUrl(data.logo_url || null)
       setSchoolName(data.name || '')
+      setPrimaryColor(data.primary_color || DEFAULT_PRIMARY)
+      setSecondaryColor(data.secondary_color || DEFAULT_SECONDARY)
     } else if (error) {
       console.error('[Branding] load error:', error)
     }
@@ -38,7 +46,11 @@ export default function BrandingSettingsPage() {
 
     const { data: saveData, error: err } = await supabase
       .from('schools')
-      .update({ logo_url: logoUrl })
+      .update({
+        logo_url: logoUrl,
+        primary_color: primaryColor,
+        secondary_color: secondaryColor,
+      })
       .eq('id', profile.school_id)
       .select()
 
@@ -49,13 +61,15 @@ export default function BrandingSettingsPage() {
       return
     }
 
-    applyBranding({ logoUrl, schoolName })
+    applyBranding({ logoUrl, schoolName, primaryColor, secondaryColor })
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
 
   const handleReset = () => {
     setLogoUrl(null)
+    setPrimaryColor(DEFAULT_PRIMARY)
+    setSecondaryColor(DEFAULT_SECONDARY)
   }
 
   return (
@@ -89,6 +103,29 @@ export default function BrandingSettingsPage() {
             />
           </div>
 
+          {/* Colors */}
+          <div className="branding-card">
+            <div className="branding-card-header">
+              <Palette size={17} />
+              <h3>School Colors</h3>
+            </div>
+            <p className="branding-card-desc">
+              Set your primary and secondary colors. These will be applied across all portals and user dashboards.
+            </p>
+            <div className="color-pickers">
+              <ColorPicker
+                label="Primary Color"
+                value={primaryColor}
+                onChange={setPrimaryColor}
+              />
+              <ColorPicker
+                label="Secondary Color"
+                value={secondaryColor}
+                onChange={setSecondaryColor}
+              />
+            </div>
+          </div>
+
           {/* Actions */}
           <div className="branding-actions">
             <button type="button" className="btn-secondary" onClick={handleReset}>
@@ -105,6 +142,8 @@ export default function BrandingSettingsPage() {
           <BrandPreview
             logoUrl={logoUrl}
             schoolName={schoolName}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
           />
         </div>
       </div>
