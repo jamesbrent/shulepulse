@@ -31,7 +31,7 @@
 .ct-sidebar-logo {
   width: 34px;
   height: 34px;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -107,7 +107,7 @@
 }
 
 .ct-nav-item.active {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
 }
 

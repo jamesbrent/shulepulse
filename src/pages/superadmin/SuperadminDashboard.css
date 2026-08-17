@@ -30,7 +30,7 @@
 .sidebar-logo {
   width: 34px;
   height: 34px;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -78,7 +78,7 @@
 }
 
 .nav-item:hover { background: #1e293b; color: #f1f5f9; }
-.nav-item.active { background: #2563eb; color: #fff; }
+.nav-item.active { background: var(--color-primary); color: #fff; }
 
 .nav-icon {
   display: flex;

@@ -31,7 +31,7 @@
 .b-sidebar-logo {
   width: 28px;
   height: 28px;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 7px;
   display: flex;
   align-items: center;
@@ -54,7 +54,7 @@
 .b-school-avatar {
   width: 28px;
   height: 28px;
-  background: #7c3aed;
+  background: var(--color-primary);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -112,7 +112,7 @@
 }
 
 .b-nav-item.active {
-  background: #7c3aed;
+  background: var(--color-primary);
   color: #fff;
 }
 

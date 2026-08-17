@@ -34,7 +34,7 @@
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   display: flex;
   align-items: center;
@@ -56,7 +56,7 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   display: flex;
   align-items: center;
@@ -97,7 +97,7 @@
   transition: all 0.15s;
 }
 .lib-nav-item:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
-.lib-nav-item.active { background: #2563eb; color: #fff; }
+.lib-nav-item.active { background: var(--color-primary); color: #fff; }
 .lib-nav-icon { display: flex; align-items: center; }
 
 /* ── Compact sidebar (matches admin / finance sizing) ── */

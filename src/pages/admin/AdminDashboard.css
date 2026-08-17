@@ -41,7 +41,7 @@
 .adm-brand-icon {
   width: 28px;
   height: 28px;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 7px;
   display: flex;
   align-items: center;
@@ -73,7 +73,7 @@
 .adm-ws-avatar {
   width: 28px;
   height: 28px;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -127,7 +127,7 @@
   margin-bottom: 8px;
 }
 .adm-nav-top:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
-.adm-nav-top.active { background: #2563eb; color: #fff; }
+.adm-nav-top.active { background: var(--color-primary); color: #fff; }
 
 /* ── Accordion Group ──────────────────────────────────────── */
 .adm-group { margin-bottom: 4px; }
@@ -197,8 +197,8 @@
 }
 .adm-group-item:hover { background: rgba(255,255,255,0.05); color: #cbd5e1; }
 .adm-group-item.active {
-  background: rgba(37,99,235,0.15);
-  color: #60a5fa;
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
   font-weight: 600;
 }
 .adm-item-icon { display: flex; align-items: center; flex-shrink: 0; }

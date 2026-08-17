@@ -31,7 +31,7 @@
 .hod-sidebar-logo {
   width: 34px;
   height: 34px;
-  background: #7c3aed;
+  background: var(--color-primary);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -54,7 +54,7 @@
 .hod-school-avatar {
   width: 36px;
   height: 36px;
-  background: #7c3aed;
+  background: var(--color-primary);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -108,7 +108,7 @@
 }
 
 .hod-nav-item.active {
-  background: #7c3aed;
+  background: var(--color-primary);
   color: #fff;
 }
 

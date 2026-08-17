@@ -46,7 +46,7 @@
 .sp-sidebar-logo-letter {
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: var(--color-primary);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -174,7 +174,7 @@
 }
 
 .sp-nav-item:hover { background: #1e293b; color: #f1f5f9; }
-.sp-nav-item.active { background: #1d4ed8; color: #fff; }
+.sp-nav-item.active { background: var(--color-primary); color: #fff; }
 
 .sp-nav-item-icon {
   display: flex;

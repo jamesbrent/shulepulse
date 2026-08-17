@@ -12,7 +12,7 @@
   --rcp-text: #0F172A;
   --rcp-text-sec: #64748B;
   --rcp-text-muted: #94A3B8;
-  --rcp-teal: #0D9488;
+  --rcp-teal: var(--color-primary);
   --rcp-teal-dk: #0F766E;
   --rcp-blue: #2563EB;
   --rcp-green: #16A34A;
@@ -46,7 +46,7 @@
   margin-bottom: 12px; padding: 0 10px;
 }
 .rcp-sidebar-logo {
-  width: 28px; height: 28px; background: var(--rcp-teal);
+  width: 28px; height: 28px; background: var(--color-primary);
   border-radius: 7px; display: flex; align-items: center;
   justify-content: center; font-size: 11px; font-weight: 700; color: #fff;
   flex-shrink: 0;
@@ -56,7 +56,7 @@
   background: #1e293b; border-radius: 8px; padding: 8px 10px; margin-bottom: 14px;
 }
 .rcp-school-avatar {
-  width: 28px; height: 28px; background: var(--rcp-teal); border-radius: 8px;
+  width: 28px; height: 28px; background: var(--color-primary); border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-weight: 700; font-size: 11px; flex-shrink: 0;
 }
@@ -78,7 +78,7 @@
   width: 100%; transition: all 0.15s;
 }
 .rcp-nav-item:hover { background: #1e293b; color: #f1f5f9; }
-.rcp-nav-item.active { background: var(--rcp-teal); color: #fff; }
+.rcp-nav-item.active { background: var(--color-primary); color: #fff; }
 .rcp-nav-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
 .rcp-sidebar-footer { padding-top: 16px; border-top: 1px solid #1e293b; margin-top: 8px; }
