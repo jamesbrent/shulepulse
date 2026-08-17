@@ -6,6 +6,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
+import { fetchSchoolTypes } from '../../features/onboarding/onboardingData'
 
 export default function SettingsPage() {
   const { profile } = useAuthStore()
@@ -40,21 +41,17 @@ export default function SettingsPage() {
   useEffect(() => { loadSchool(); fetchLookups() }, [])
 
   const fetchLookups = async () => {
-    const { data: grades } = await supabase
-      .from('grades').select('term, year').eq('school_id', profile.school_id)
+    const [{ data: grades }, types] = await Promise.all([
+      supabase.from('grades').select('term, year').eq('school_id', profile.school_id),
+      fetchSchoolTypes(),
+    ])
     if (grades) {
       const terms = [...new Set(grades.map(g => g.term).filter(Boolean))].sort()
       const years = [...new Set(grades.map(g => g.year).filter(Boolean))].sort()
       if (terms.length) setAvailableTerms(terms)
       if (years.length) setAvailableYears(years)
     }
-    setSchoolTypes([
-      { value: 'pre-primary', label: 'Pre-Primary Education (PP1–PP2)' },
-      { value: 'primary', label: 'Primary Education (Grades 1–6)' },
-      { value: 'junior-secondary', label: 'Junior Secondary School / JSS (Grades 7–9)' },
-      { value: 'senior-secondary', label: 'Senior Secondary School / SSS (Grades 10–12)' },
-      { value: 'mixed', label: 'Mixed (Primary + Secondary)' },
-    ])
+    if (types.length) setSchoolTypes(types)
   }
 
   const loadSchool = async () => {
