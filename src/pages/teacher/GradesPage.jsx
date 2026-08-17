@@ -759,10 +759,6 @@ export default function GradesPage({ profile }) {
                         )
                       })}
                     </div>
-                    <button className="gd-btn gd-btn--primary gd-btn--sm" style={{ width: '100%', marginTop: 12, justifyContent: 'center' }}
-                      onClick={() => setShowExportModal(true)} disabled={exporting}>
-                      <Download size={13} /> {exporting ? 'Exporting...' : 'Export PDF'}
-                    </button>
                   </div>
                 </div>
               </div>

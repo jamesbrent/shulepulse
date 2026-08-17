@@ -1001,14 +1001,6 @@ export default function GradesPage() {
                       }%
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn-secondary" onClick={() => setRejectModal({ open: true, examId: viewExam.id })} disabled={approving === viewExam.id}>
-                      <XCircle size={14} /> {approving === viewExam.id ? 'Processing...' : 'Reject'}
-                    </button>
-                    <button className="btn-primary" onClick={() => setConfirmApproveModal({ open: true, examId: viewExam.id })} disabled={approving === viewExam.id}>
-                      <CheckCircle size={14} /> {approving === viewExam.id ? 'Approving...' : 'Approve'}
-                    </button>
-                  </div>
                 </div>
 
                 <div style={{ overflowX: 'auto' }}>

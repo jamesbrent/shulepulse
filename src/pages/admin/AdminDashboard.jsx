@@ -502,12 +502,6 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="adm-dash-actions">
-            <button className="adm-btn-ghost">
-              <Upload size={15} /> Export
-            </button>
-            <button className="adm-btn-primary" onClick={goAddStudent}>
-              <UserPlus size={15} /> Add Student
-            </button>
             <div className="admin-avatar">
               {authProfile?.full_name?.[0]?.toUpperCase() || 'AD'}
             </div>
