@@ -379,14 +379,6 @@ export default function Exams() {
               <h3>{exam.subject} - {exam.examType}</h3>
               <p>{exam.teacherName ? `Teacher: ${exam.teacherName} · ` : ''}{exam.entries.length} students · Avg: {avg}%</p>
             </div>
-            <div className="exam-detail-actions">
-              <button className="da-btn da-btn-secondary" onClick={() => setRejectModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
-                <XCircle size={14} /> {approving === exam.id ? 'Processing...' : 'Reject'}
-              </button>
-              <button className="da-btn da-btn-primary" onClick={() => setConfirmApproveModal({ open: true, examId: exam.id })} disabled={approving === exam.id}>
-                <CheckCircle size={14} /> {approving === exam.id ? 'Approving...' : 'Approve'}
-              </button>
-            </div>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
