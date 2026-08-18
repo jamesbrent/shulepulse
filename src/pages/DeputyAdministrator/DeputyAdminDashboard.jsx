@@ -237,10 +237,10 @@ export default function DeputyAdminDashboard() {
           <span>{school?.name || 'School'}</span>
         </div>
         <div className="da-sidebar-school">
-          <div className="da-school-avatar">{school?.name?.[0] || 'D'}</div>
+          <div className="da-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
           <div>
-            <p className="da-school-name">{school?.name || 'Loading...'}</p>
-            <p className="da-school-role">Deputy Admin</p>
+            <p className="da-school-name">{authProfile?.full_name || 'User'}</p>
+            <p className="da-school-role">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Deputy Admin'}</p>
           </div>
         </div>
         <nav className="da-sidebar-nav">

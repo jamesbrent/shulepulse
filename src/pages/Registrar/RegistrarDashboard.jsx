@@ -610,10 +610,10 @@ export default function RegistrarDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="reg-sidebar-school">
-          <div className="reg-school-avatar">{school?.name?.[0] || 'R'}</div>
+          <div className="reg-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
           <div>
-            <p className="reg-school-name">{school?.name || 'Loading...'}</p>
-            <p className="reg-school-plan">{school?.plan || 'Basic'} Plan</p>
+            <p className="reg-school-name">{authProfile?.full_name || 'User'}</p>
+            <p className="reg-sidebar-plan">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Registrar'}</p>
           </div>
         </div>
         <nav className="reg-sidebar-nav">

@@ -382,10 +382,10 @@ export default function ReceptionDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="rcp-sidebar-school">
-          <div className="rcp-school-avatar">{school?.name?.[0] || 'R'}</div>
+          <div className="rcp-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
           <div>
-            <p className="rcp-school-name">{school?.name || 'Loading...'}</p>
-            <p className="rcp-school-plan">{school?.plan || 'Basic'} Plan</p>
+            <p className="rcp-school-name">{authProfile?.full_name || 'User'}</p>
+            <p className="rcp-school-plan">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Receptionist'}</p>
           </div>
         </div>
         <nav className="rcp-sidebar-nav">

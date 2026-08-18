@@ -427,10 +427,10 @@ export default function FinanceDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="b-sidebar-school">
-          <div className="b-school-avatar">{school?.name?.[0] || 'S'}</div>
+          <div className="b-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
           <div>
-            <p className="b-school-name">{school?.name || 'Loading...'}</p>
-            <p className="b-school-plan">{school?.plan || 'Basic'} Plan</p>
+            <p className="b-school-name">{authProfile?.full_name || 'User'}</p>
+            <p className="b-school-plan">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Bursar'}</p>
           </div>
         </div>
 

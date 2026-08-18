@@ -278,10 +278,10 @@ export default function HODDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="hod-sidebar-school">
-          <div className="hod-school-avatar">{school?.name?.[0] || 'H'}</div>
+          <div className="hod-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
           <div>
-            <p className="hod-school-name">{school?.name || 'Loading...'}</p>
-            <p className="hod-school-role">Head of Department</p>
+            <p className="hod-school-name">{authProfile?.full_name || 'User'}</p>
+            <p className="hod-school-role">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Head of Department'}</p>
           </div>
         </div>
         <nav className="hod-sidebar-nav">

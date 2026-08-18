@@ -121,10 +121,10 @@ export default function LibrarianDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="lib-sidebar-school">
-          <div className="lib-school-avatar">{school?.name?.[0] || 'L'}</div>
+          <div className="lib-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
           <div>
-            <p className="lib-school-name">{school?.name || 'Loading...'}</p>
-            <p className="lib-school-role">Library</p>
+            <p className="lib-school-name">{authProfile?.full_name || 'User'}</p>
+            <p className="lib-school-role">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Librarian'}</p>
           </div>
         </div>
         <nav className="lib-sidebar-nav">

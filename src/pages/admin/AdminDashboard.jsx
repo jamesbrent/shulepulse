@@ -722,10 +722,10 @@ export default function AdminDashboard() {
       </div>
 
       <div className="adm-workspace">
-        <div className="adm-ws-avatar">{school?.name?.[0] || 'S'}</div>
+        <div className="adm-ws-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
         <div className="adm-ws-info">
-          <p className="adm-ws-name">{school?.name || 'Loading...'}</p>
-          <p className="adm-ws-plan">{school?.plan || 'Basic'} Plan</p>
+          <p className="adm-ws-name">{authProfile?.full_name || 'User'}</p>
+          <p className="adm-ws-plan">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Admin'}</p>
         </div>
       </div>
 
