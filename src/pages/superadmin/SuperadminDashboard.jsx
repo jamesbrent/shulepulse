@@ -4,7 +4,7 @@ import {
   TrendingUp, Settings, LogOut, Plus, Search,
   Eye, Edit, Ban, Trash2, Building2, Download, CheckCircle,
   GraduationCap, UserCheck, DollarSign, Calendar,
-  Activity, ArrowUp, ArrowDown, History, MessageSquare, Menu, X
+  Activity, ArrowUp, ArrowDown, History, MessageSquare, Menu, X, ListTree
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -28,6 +28,8 @@ import AuditLogsPage from './AuditLogsPage'
 import './AuditLogsPage.css'
 import SupportPage from './SupportPage'
 import './SupportPage.css'
+import SchoolCategoriesPage from './SchoolCategoriesPage'
+import './SchoolCategoriesPage.css'
 import OnboardSchoolModal from '../../features/onboarding/OnboardSchoolModal'
 import '../../features/onboarding/OnboardSchoolModal.css'
 import SchoolDetailModal from '../../features/onboarding/SchoolDetailModal'
@@ -133,6 +135,7 @@ export default function SuperadminDashboard() {
     { key: 'audit', label: 'Audit Logs', icon: <History size={16} /> },
     { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
     { key: 'analytics', label: 'Payments', icon: <TrendingUp size={16} /> },
+    { key: 'categories', label: 'Categories', icon: <ListTree size={16} /> },
     { key: 'settings', label: 'Platform Settings', icon: <Settings size={16} /> },
   ]
 
@@ -144,6 +147,7 @@ export default function SuperadminDashboard() {
     audit: 'Audit Logs',
     support: 'Support',
     analytics: 'Payments',
+    categories: 'School Categories',
     settings: 'Platform Settings',
   }
 
@@ -155,6 +159,7 @@ export default function SuperadminDashboard() {
       case 'audit': return <AuditLogsPage />
       case 'support': return <SupportPage />
       case 'analytics': return <AnalyticsPage />
+      case 'categories': return <SchoolCategoriesPage />
       case 'settings': return <PlatformSettingsPage />
       default: return renderDashboard()
     }
