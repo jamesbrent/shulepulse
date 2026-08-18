@@ -4,7 +4,7 @@ import {
   BookOpen, Clock, Users, Edit2, X, Grid, List,
   Download, AlertTriangle, RefreshCw, User,
   ChevronDown, ChevronRight, ChevronLeft, Zap, Eye, Settings,
-  BarChart2, GraduationCap, Layers, Filter, MapPin
+  BarChart2, GraduationCap, Layers, Filter
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
@@ -396,18 +396,16 @@ const isCoreSubject = (subjectName) =>
   CORE_SUBJECTS.some(s => subjectName?.toLowerCase().includes(s.toLowerCase()))
 
 // ── CSP Timetable Engine ─────────────────────────────────────
-function buildTimetable(classes, teachers, subjects, subjectAssignments, classRequirements, teacherAssignments, rooms) {
+function buildTimetable(classes, teachers, subjects, subjectAssignments, classRequirements, teacherAssignments) {
   const slots = []
   const conflicts = []
   const teacherDayCount = {}   // teacherId -> day -> count
   const teacherWeekCount = {}  // teacherId -> count
   const classSlotMap = {}      // classId_day_period -> true (occupied)
   const teacherSlotMap = {}    // teacherId_day_period -> true (occupied)
-  const roomSlotMap = {}       // roomId_day_period -> true (occupied)
 
   const getKey = (classId, day, period) => `${classId}_${day}_${period}`
   const getTKey = (teacherId, day, period) => `${teacherId}_${day}_${period}`
-  const getRKey = (roomId, day, period) => `${roomId}_${day}_${period}`
 
   // Helper: check if a subject should be placed before a break (soft rule)
   const isCreativeOrPractical = (subjectName) => {
@@ -454,11 +452,11 @@ function buildTimetable(classes, teachers, subjects, subjectAssignments, classRe
 
       // Add double-lesson entries (each takes 2 consecutive periods)
       for (let i = 0; i < doublesCount; i++) {
-        lessonQueue.push({ subject: subj, eligibleTeachers, req, isDouble: true, preferredRoomId: req.preferred_room_id || null })
+        lessonQueue.push({ subject: subj, eligibleTeachers, req, isDouble: true })
       }
       // Add single-lesson entries
       for (let i = 0; i < singlesCount; i++) {
-        lessonQueue.push({ subject: subj, eligibleTeachers, req, isDouble: false, preferredRoomId: req.preferred_room_id || null })
+        lessonQueue.push({ subject: subj, eligibleTeachers, req, isDouble: false })
       }
     }
 
@@ -548,12 +546,6 @@ function buildTimetable(classes, teachers, subjects, subjectAssignments, classRe
           // Hard constraint: core subjects → morning periods only
           if (isCoreSubject(lesson.subject.name) && !classMorningPeriods.includes(ts.period)) continue
 
-          // Room conflict check: if a preferred room is set, check it's free
-          if (lesson.preferredRoomId) {
-            const rKey = getRKey(lesson.preferredRoomId, day, ts.period)
-            if (roomSlotMap[rKey]) continue
-          }
-
           candidates.push({ day, ts, score: scoreSlot(day, ts.period, lesson.subject) })
         }
       }
@@ -598,28 +590,6 @@ function buildTimetable(classes, teachers, subjects, subjectAssignments, classRe
 
       const lessonGroupId = lesson.isDouble ? crypto.randomUUID() : null
 
-      // Assign room: prefer preferred room, else any available room
-      let assignedRoom = null
-      if (lesson.preferredRoomId) {
-        const rKey = getRKey(lesson.preferredRoomId, day, ts.period)
-        if (!roomSlotMap[rKey]) {
-          assignedRoom = lesson.preferredRoomId
-          roomSlotMap[rKey] = true
-        }
-      }
-      if (!assignedRoom) {
-        // Try to find any free room
-        for (const room of (rooms || [])) {
-          if (!room.active) continue
-          const rKey = getRKey(room.id, day, ts.period)
-          if (!roomSlotMap[rKey]) {
-            assignedRoom = room.id
-            roomSlotMap[rKey] = true
-            break
-          }
-        }
-      }
-
       slots.push({
         class_id: cls.id,
         class_name: cls.class_name,
@@ -633,7 +603,6 @@ function buildTimetable(classes, teachers, subjects, subjectAssignments, classRe
         period: ts.period,
         start_time: ts.start,
         end_time: ts.end,
-        room_id: assignedRoom,
         is_double: lesson.isDouble,
         lesson_group_id: lessonGroupId,
         _key: cKey,
@@ -653,12 +622,6 @@ function buildTimetable(classes, teachers, subjects, subjectAssignments, classRe
             teacherWeekCount[assignedTeacher.id] = (teacherWeekCount[assignedTeacher.id] || 0) + 1
           }
 
-          // Block the same room for the next period too
-          if (assignedRoom) {
-            const nextRKey = getRKey(assignedRoom, day, nextTs.period)
-            roomSlotMap[nextRKey] = true
-          }
-
           slots.push({
             class_id: cls.id,
             class_name: cls.class_name,
@@ -672,7 +635,6 @@ function buildTimetable(classes, teachers, subjects, subjectAssignments, classRe
             period: nextTs.period,
             start_time: nextTs.start,
             end_time: nextTs.end,
-            room_id: assignedRoom,
             is_double: true,
             lesson_group_id: lessonGroupId,
             _key: nextCKey,
@@ -707,25 +669,6 @@ function buildTimetable(classes, teachers, subjects, subjectAssignments, classRe
       conflicts.push({
         type: 'teacher_conflict',
         message: `Teacher ${group[0].teacher_name} double-booked on ${group[0].day} period ${group[0].period}`,
-        severity: 'error',
-      })
-    }
-  }
-
-  // Detect room conflicts
-  const roomSlotGroups = {}
-  for (const slot of slots) {
-    if (!slot.room_id) continue
-    const key = `${slot.room_id}_${slot.day}_${slot.period}`
-    if (!roomSlotGroups[key]) roomSlotGroups[key] = []
-    roomSlotGroups[key].push(slot)
-  }
-  for (const [key, group] of Object.entries(roomSlotGroups)) {
-    if (group.length > 1) {
-      const room = (rooms || []).find(r => r.id === group[0].room_id)
-      conflicts.push({
-        type: 'room_conflict',
-        message: `Room ${room?.name || 'Unknown'} double-booked on ${group[0].day} period ${group[0].period}`,
         severity: 'error',
       })
     }
@@ -836,13 +779,6 @@ export default function AdminTimetablePage() {
   const [dragSlot, setDragSlot] = useState(null)
   const [editMode, setEditMode] = useState(false)
 
-  // Rooms
-  const [rooms, setRooms] = useState([])
-  const [roomForm, setRoomForm] = useState({ name: '', type: 'classroom', capacity: '' })
-  const [savingRoom, setSavingRoom] = useState(false)
-  const [editRoom, setEditRoom] = useState(null)
-  const [showRoomModal, setShowRoomModal] = useState(false)
-
   // Subject form
   const [subjectForm, setSubjectForm] = useState({ name: '', code: '', category: 'core', curriculum_level: 'all', lessons_per_week: '' })
   const [savingSubject, setSavingSubject] = useState(false)
@@ -867,7 +803,7 @@ export default function AdminTimetablePage() {
   // Slot form (manual edit)
   const [showSlotForm, setShowSlotForm] = useState(false)
   const [editSlot, setEditSlot] = useState(null)
-  const [slotForm, setSlotForm] = useState({ day: 'Monday', subject_id: '', class_id: '', teacher_id: '', start_time: '', end_time: '', room_id: '' })
+  const [slotForm, setSlotForm] = useState({ day: 'Monday', subject_id: '', class_id: '', teacher_id: '', start_time: '', end_time: '' })
 
   // Global timetable state
   const [globalFilterLevel, setGlobalFilterLevel] = useState('')
@@ -902,23 +838,20 @@ export default function AdminTimetablePage() {
       { data: crData },
       { data: ttData },
       { data: schoolData },
-      { data: roomData },
     ] = await Promise.all([
       supabase.from('subjects').select('*').eq('school_id', sid).order('name'),
       supabase.from('teachers').select('*').eq('school_id', sid).order('full_name'),
       supabase.from('classes').select('*').eq('school_id', sid).order('class_name'),
       supabase.from('teacher_subject_assignments').select('*').eq('school_id', sid),
       supabase.from('class_subject_requirements').select('*').eq('school_id', sid),
-      supabase.from('timetable_slots').select('*, teachers(full_name, staff_number), subjects(name, code), classes(class_name), rooms(name)').eq('school_id', sid),
+      supabase.from('timetable_slots').select('*, teachers(full_name, staff_number), subjects(name, code), classes(class_name)').eq('school_id', sid),
       supabase.from('schools').select('name').eq('id', sid).single(),
-      supabase.from('rooms').select('*').eq('school_id', sid).order('name'),
     ])
     setSubjects(subjData || [])
     setTeachers(teachData || [])
     setClasses(clsData || [])
     setSubjectAssignments(taData || [])
     setClassRequirements(crData || [])
-    setRooms(roomData || [])
     setTimetableSlots((ttData || []).map(s => ({
       ...s,
       teacher_name: s.teachers?.full_name,
@@ -926,7 +859,6 @@ export default function AdminTimetablePage() {
       subject_name: s.subjects?.name,
       subject_code: s.subjects?.code,
       class_name: s.classes?.class_name,
-      room_name: s.rooms?.name,
     })))
     if (schoolData?.name) setSchoolName(schoolData.name)
 
@@ -953,7 +885,7 @@ export default function AdminTimetablePage() {
 
     try {
       const { slots, conflicts: cspConflicts } = buildTimetable(
-        classes, teachers, subjects, subjectAssignments, classRequirements, subjectAssignments, rooms
+        classes, teachers, subjects, subjectAssignments, classRequirements, subjectAssignments
       )
 
       // Validate
@@ -998,7 +930,6 @@ export default function AdminTimetablePage() {
       period: s.period,
       start_time: s.start_time,
       end_time: s.end_time,
-      room_id: s.room_id || null,
       is_double: s.is_double || false,
       lesson_group_id: s.lesson_group_id || null,
     }))
@@ -1127,40 +1058,6 @@ export default function AdminTimetablePage() {
     fetchAll()
   }
 
-  // ── Room CRUD ──────────────────────────────────────────────
-  const openNewRoom = () => {
-    setEditRoom(null)
-    setRoomForm({ name: '', type: 'classroom', capacity: '' })
-    setShowRoomModal(true)
-  }
-
-  const openEditRoom = (r) => {
-    setEditRoom(r)
-    setRoomForm({ name: r.name, type: r.type, capacity: r.capacity || '' })
-    setShowRoomModal(true)
-  }
-
-  const saveRoom = async () => {
-    if (!roomForm.name.trim()) return
-    setSavingRoom(true)
-    const payload = { ...roomForm, school_id: profile.school_id, capacity: roomForm.capacity ? Number(roomForm.capacity) : 0 }
-    if (editRoom) {
-      await supabase.from('rooms').update(payload).eq('id', editRoom.id)
-    } else {
-      await supabase.from('rooms').insert(payload)
-    }
-    setSavingRoom(false)
-    setShowRoomModal(false)
-    showSuccess(editRoom ? 'Room updated!' : 'Room added!')
-    fetchAll()
-  }
-
-  const deleteRoom = async (id) => {
-    if (!confirm('Delete room?')) return
-    await supabase.from('rooms').delete().eq('id', id)
-    fetchAll()
-  }
-
   // ── Seed CBC Subjects ─────────────────────────────────────
   const handleSeedCBCSubjects = async () => {
     const { data, error } = await supabase.rpc('seed_cbc_subjects', { p_school_id: profile.school_id })
@@ -1183,7 +1080,6 @@ export default function AdminTimetablePage() {
       start_time: slot?.start_time || matchedSlot?.start || '',
       end_time: slot?.end_time || matchedSlot?.end || '',
       period: slot?.period || period,
-      room_id: slot?.room_id || '',
     })
     setShowSlotForm(true)
   }
@@ -1202,7 +1098,6 @@ export default function AdminTimetablePage() {
       period: ts?.period || slotForm.period,
       start_time: slotForm.start_time,
       end_time: slotForm.end_time,
-      room_id: slotForm.room_id || null,
     }
     if (editSlot?.id) {
       await supabase.from('timetable_slots').update(payload).eq('id', editSlot.id)
@@ -1303,9 +1198,8 @@ export default function AdminTimetablePage() {
     classes: classes.length,
     teachers: teachers.length,
     subjects: subjects.length,
-    rooms: rooms.length,
     lessons: timetableSlots.length,
-    conflicts: conflicts.filter(c => c.severity === 'error' || c.type === 'teacher_conflict' || c.type === 'room_conflict').length,
+    conflicts: conflicts.filter(c => c.severity === 'error' || c.type === 'teacher_conflict').length,
     warnings: conflicts.filter(c => c.severity === 'warning').length,
   }
 
@@ -1388,7 +1282,6 @@ export default function AdminTimetablePage() {
     { key: 'subjects',  label: 'Subjects',      icon: <BookOpen size={15} /> },
     { key: 'teachers',  label: 'Teachers',      icon: <User size={15} /> },
     { key: 'classes',   label: 'Classes',       icon: <GraduationCap size={15} /> },
-    { key: 'rooms',     label: 'Rooms',         icon: <MapPin size={15} /> },
     { key: 'grid',      label: 'Timetable',     icon: <Grid size={15} /> },
     { key: 'global',    label: 'Global Timetable', icon: <Eye size={15} /> },
     { key: 'conflicts', label: `Conflicts${conflicts.length ? ` (${conflicts.length})` : ''}`, icon: <AlertTriangle size={15} /> },
@@ -1425,7 +1318,6 @@ export default function AdminTimetablePage() {
               { label: 'Classes',    value: stats.classes,   icon: <GraduationCap size={20} />, color: 'blue' },
               { label: 'Teachers',   value: stats.teachers,  icon: <User size={20} />,          color: 'purple' },
               { label: 'Subjects',   value: stats.subjects,  icon: <BookOpen size={20} />,      color: 'green' },
-              { label: 'Rooms',      value: stats.rooms,     icon: <MapPin size={20} />,         color: 'teal' },
               { label: 'Lessons',    value: stats.lessons,   icon: <Calendar size={20} />,      color: 'indigo' },
               { label: 'Conflicts',  value: stats.conflicts, icon: <AlertTriangle size={20} />, color: stats.conflicts > 0 ? 'red' : 'gray' },
               { label: 'Warnings',   value: stats.warnings,  icon: <Zap size={20} />,           color: stats.warnings > 0 ? 'orange' : 'gray' },
@@ -1488,7 +1380,6 @@ export default function AdminTimetablePage() {
                   { label: `${stats.subjects} subject${stats.subjects !== 1 ? 's' : ''} added`, done: stats.subjects > 0, tab: 'subjects' },
                   { label: `${stats.teachers} teacher${stats.teachers !== 1 ? 's' : ''} added`, done: stats.teachers > 0, tab: 'teachers' },
                   { label: `${stats.classes} class${stats.classes !== 1 ? 'es' : ''} added`, done: stats.classes > 0, tab: 'classes' },
-                  { label: `${stats.rooms} room${stats.rooms !== 1 ? 's' : ''} added`, done: stats.rooms > 0, tab: 'rooms' },
                   { label: 'Weekly lesson requirements set', done: classRequirements.length > 0, tab: 'classes' },
                   { label: 'Teacher subjects assigned', done: subjectAssignments.length > 0, tab: 'teachers' },
                   { label: 'Timetable generated', done: stats.lessons > 0, tab: 'dashboard' },
@@ -1808,7 +1699,6 @@ export default function AdminTimetablePage() {
                                   lesson_type: req?.lesson_type || 'single',
                                   doubles_per_week: req?.doubles_per_week || 0,
                                   practical: req?.practical || false,
-                                  preferred_room_id: req?.preferred_room_id || null,
                                   consecutive_required: req?.consecutive_required || false,
                                 })}
                               />
@@ -1858,57 +1748,6 @@ export default function AdminTimetablePage() {
                   </div>
                 )
               })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════
-          ROOMS TAB
-      ══════════════════════════════════════════════ */}
-      {activeTab === 'rooms' && (
-        <div className="adm-tt-rooms">
-          <div className="adm-tt-day-bar">
-            <h3 className="adm-section-title"><MapPin size={16} /> Rooms ({rooms.length})</h3>
-            <button className="adm-tt-new-btn" onClick={openNewRoom}><Plus size={15} /> Add Room</button>
-          </div>
-
-          <div className="adm-tt-card" style={{ marginBottom: 16 }}>
-            <p className="adm-tt-card-desc">
-              Rooms are assigned automatically by the timetable generator. Practical/lab subjects
-              will be placed in the preferred room if available.
-            </p>
-          </div>
-
-          {rooms.length === 0 ? (
-            <div className="adm-tt-card">
-              <div className="adm-tt-empty"><MapPin size={32} /><p>No rooms yet.</p>
-                <button className="adm-tt-empty-btn" onClick={openNewRoom}><Plus size={14} /> Add first room</button>
-              </div>
-            </div>
-          ) : (
-            <div className="adm-teacher-list">
-              {rooms.map(r => (
-                <div key={r.id} className="adm-tt-card adm-teacher-card" style={{ padding: '12px 16px' }}>
-                  <div className="adm-teacher-header">
-                    <div className="adm-teacher-avatar" style={{ background: r.type === 'lab' ? '#7c3aed' : r.type === 'hall' ? '#059669' : '#2563eb' }}>
-                      <MapPin size={16} />
-                    </div>
-                    <div className="adm-teacher-info">
-                      <p className="adm-teacher-name">{r.name}</p>
-                      <div className="adm-teacher-meta">
-                        <span className="adm-tag">{r.type}</span>
-                        {r.capacity > 0 && <span className="adm-tag adm-tag-gray">Cap: {r.capacity}</span>}
-                        <span className={`adm-tag ${r.active ? 'adm-tag-teacher' : 'adm-tag-gray'}`}>{r.active ? 'Active' : 'Inactive'}</span>
-                      </div>
-                    </div>
-                    <div className="adm-slot-actions">
-                      <button onClick={() => openEditRoom(r)}><Edit2 size={14} /></button>
-                      <button className="del" onClick={() => deleteRoom(r.id)}><Trash2 size={14} /></button>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           )}
         </div>
@@ -2078,7 +1917,6 @@ export default function AdminTimetablePage() {
                                       title={`${cell.subject_name}${cell.class_name ? ' — ' + cell.class_name : ''}${cell.teacher_name ? ' — ' + cell.teacher_name : ''}`}
                                     >
                                       <span className="adm-tt-cell-code">{cell.subject_code || cell.subject_name?.slice(0,4)}</span>
-                                      {cell.room_name && <span className="adm-tt-cell-teacher" style={{ background: '#e0f2fe', color: '#0369a1' }}>{cell.room_name}</span>}
                                       {viewMode === 'teacher' && cell.class_name && <span className="adm-tt-cell-class">{cell.class_name}</span>}
                                       {cell.teacher_code && <span className="adm-tt-cell-teacher">{cell.teacher_code}</span>}
                                       {hasConflict && <span className="adm-cell-conflict-dot" />}
@@ -2459,52 +2297,6 @@ export default function AdminTimetablePage() {
       )}
 
       {/* ══════════════════════════════════════════════
-          ROOM EDIT MODAL
-      ══════════════════════════════════════════════ */}
-      {showRoomModal && (
-        <div className="adm-tt-overlay" onClick={e => e.target === e.currentTarget && setShowRoomModal(false)}>
-          <div className="adm-tt-modal">
-            <div className="adm-modal-header">
-              <h3>{editRoom ? 'Edit Room' : 'Add Room'}</h3>
-              <button onClick={() => setShowRoomModal(false)}><X size={18} /></button>
-            </div>
-            <div className="adm-modal-body">
-              <div className="form-grid">
-                <div className="form-field">
-                  <label>Room Name *</label>
-                  <input placeholder="e.g. Lab 1, Room A, Hall" value={roomForm.name}
-                    onChange={e => setRoomForm({ ...roomForm, name: e.target.value })} />
-                </div>
-                <div className="form-field">
-                  <label>Type</label>
-                  <select value={roomForm.type} onChange={e => setRoomForm({ ...roomForm, type: e.target.value })}>
-                    <option value="classroom">Classroom</option>
-                    <option value="lab">Science Lab</option>
-                    <option value="computer_lab">Computer Lab</option>
-                    <option value="hall">Hall</option>
-                    <option value="library">Library</option>
-                    <option value="playground">Playground</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div className="form-field">
-                  <label>Capacity</label>
-                  <input type="number" min="0" placeholder="0" value={roomForm.capacity}
-                    onChange={e => setRoomForm({ ...roomForm, capacity: e.target.value })} />
-                </div>
-              </div>
-            </div>
-            <div className="adm-modal-footer">
-              <button className="adm-cancel-btn" onClick={() => setShowRoomModal(false)}>Cancel</button>
-              <button className="adm-save-btn" onClick={saveRoom} disabled={savingRoom}>
-                <Save size={15} /> {savingRoom ? 'Saving…' : editRoom ? 'Update' : 'Add Room'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════
           SLOT EDIT MODAL
       ══════════════════════════════════════════════ */}
       {showSlotForm && (
@@ -2559,13 +2351,6 @@ export default function AdminTimetablePage() {
                   <select value={slotForm.teacher_id} onChange={e => setSlotForm({ ...slotForm, teacher_id: e.target.value })}>
                     <option value="">Unassigned</option>
                     {teachers.map(t => <option key={t.id} value={t.id}>{t.staff_number ? `${t.staff_number} – ` : ''}{t.full_name}</option>)}
-                  </select>
-                </div>
-                <div className="form-field full">
-                  <label>Room</label>
-                  <select value={slotForm.room_id} onChange={e => setSlotForm({ ...slotForm, room_id: e.target.value })}>
-                    <option value="">No room</option>
-                    {rooms.filter(r => r.active).map(r => <option key={r.id} value={r.id}>{r.name} ({r.type})</option>)}
                   </select>
                 </div>
               </div>

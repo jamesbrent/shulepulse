@@ -23,6 +23,7 @@ import Communication from './Communication'
 import CalendarView from './CalendarView'
 import Requests from './Requests'
 import Reports from './Reports'
+import NewAdmission from './NewAdmission'
 
 const NAV_GROUPS = [
   {
@@ -44,6 +45,7 @@ const NAV_GROUPS = [
       { key: 'students', label: 'Student Lookup', icon: <Users size={15} /> },
       { key: 'parents', label: 'Parents & Guardians', icon: <Shield size={15} /> },
       { key: 'admissions', label: 'Admissions Pipeline', icon: <UserPlus size={15} /> },
+      { key: 'new-admission', label: 'New Admission', icon: <UserPlus size={15} /> },
     ],
   },
   {
@@ -159,6 +161,7 @@ export default function ReceptionDashboard() {
     students: 'Student Lookup',
     parents: 'Parents & Guardians',
     admissions: 'Admissions Pipeline',
+    'new-admission': 'New Student Admission',
     notices: 'Notices & Announcements',
     calendar: 'School Calendar',
     requests: 'Requests & Routing',
@@ -172,6 +175,7 @@ export default function ReceptionDashboard() {
       case 'students': return <StudentsView />
       case 'parents': return <ParentsView />
       case 'admissions': return <Admissions onChanged={() => fetchFrontDeskData()} />
+      case 'new-admission': return <NewAdmission onSuccess={() => fetchFrontDeskData()} />
       case 'notices': return <Communication profile={authProfile} />
       case 'calendar': return <CalendarView onChanged={() => fetchFrontDeskData()} />
       case 'requests': return <Requests onChanged={() => fetchFrontDeskData()} />
@@ -246,6 +250,7 @@ export default function ReceptionDashboard() {
       { label: 'Book Appointment', desc: 'Schedule a meeting', icon: <CalendarDays size={18} />, iconCls: 'rcp-action-icon--blue', nav: 'appointments' },
       { label: 'Look Up Student', desc: 'Find a student record', icon: <Search size={18} />, iconCls: 'rcp-action-icon--green', nav: 'students' },
       { label: 'New Inquiry', desc: 'Admissions pipeline', icon: <UserPlus size={18} />, iconCls: 'rcp-action-icon--purple', nav: 'admissions' },
+      { label: 'New Admission', desc: 'Admit a student', icon: <UserPlus size={18} />, iconCls: 'rcp-action-icon--green', nav: 'new-admission' },
       { label: 'Route a Request', desc: 'Direct to a department', icon: <ClipboardList size={18} />, iconCls: 'rcp-action-icon--amber', nav: 'requests' },
       { label: 'Publish Notice', desc: 'Announcement for all', icon: <Bell size={18} />, iconCls: 'rcp-action-icon--cyan', nav: 'notices' },
       { label: 'Add Event', desc: 'School calendar', icon: <CalendarDays size={18} />, iconCls: 'rcp-action-icon--gray', nav: 'calendar' },

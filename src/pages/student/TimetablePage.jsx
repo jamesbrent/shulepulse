@@ -112,7 +112,7 @@ export default function TimetablePage({ student, school }) {
 
         let query = supabase
           .from('timetable_slots')
-          .select('*, subjects(name, code), teachers(full_name, staff_number), rooms(name)')
+          .select('*, subjects(name, code), teachers(full_name, staff_number)')
           .eq('school_id', schoolId)
 
         if (match) query = query.eq('class_id', match.id)
@@ -241,7 +241,6 @@ export default function TimetablePage({ student, school }) {
                               {cell ? (
                                 <div className="st-cell" style={{ background: cell.subjects?.name ? subjectColour(cell.subjects.name) : '#f1f5f9' }}>
                                   <span className="st-cell-code">{cell.subjects?.code || cell.subject_code || cell.subjects?.name?.slice(0, 4) || '—'}</span>
-                                  {cell.rooms?.name && <span className="st-cell-teacher" style={{ background: '#e0f2fe', color: '#0369a1' }}>{cell.rooms.name}</span>}
                                   {cell.teachers?.staff_number && <span className="st-cell-teacher">{cell.teachers.staff_number}</span>}
                                 </div>
                               ) : (
