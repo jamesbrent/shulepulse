@@ -44,6 +44,8 @@ import { ensureAccounts } from './accountsUtils'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import DebtorsPage from './Debtors'
+import CommentsPage from '../admin/Comments'
+import '../admin/Comments.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import './FinanceDashboard.css'
@@ -95,6 +97,7 @@ const NAV_SECTIONS = [
         key: 'payroll', label: null,
         items: [
           { key: 'payroll', label: 'Payroll', icon: <Wallet size={15} />, page: 'payroll' },
+          { key: 'staff_comments', label: 'Staff Comments', icon: <MessageSquare size={15} />, page: 'comments' },
         ],
       },
       {
@@ -294,6 +297,7 @@ export default function FinanceDashboard() {
       case 'reports': return <ReportsPage initialTab={activeItem.tab} />
       case 'financial_statements': return <FinancialStatementsPage />
       case 'notices': return <NoticesPage profile={authProfile} />
+      case 'comments': return <CommentsPage />
       case 'support': return <SchoolSupportPage />
       case 'coming-soon': return <ComingSoon title={activeItem.label} />
       default: return renderDashboard()

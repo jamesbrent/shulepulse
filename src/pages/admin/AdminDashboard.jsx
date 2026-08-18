@@ -41,6 +41,8 @@ import TimetablePage from './TimetablePage'
 import './TimetablePage.css'
 import StaffRoles from './StaffRoles'
 import './StaffRoles.css'
+import NonTeachingStaff from './NonTeachingStaff'
+import './NonTeachingStaff.css'
 import CommentsPage from './Comments'
 import './Comments.css'
 import AdminAlumni from './Alumni'
@@ -146,6 +148,7 @@ const NAV_GROUPS = [
     items: [
       { key: 'teachers', label: 'Teachers', icon: <GraduationCap size={14} /> },
       { key: 'staffroles', label: 'Staff Roles', icon: <Shield size={14} /> },
+      { key: 'non_teaching', label: 'Non-Teaching Staff', icon: <Briefcase size={14} /> },
       { key: 'comments', label: 'Comments', icon: <MessageSquare size={14} /> },
     ],
   },
@@ -181,6 +184,7 @@ const pageTitles = {
   teachers: 'Teachers',
   alumni: 'Alumni & Archives',
   staffroles: 'Staff Roles',
+  non_teaching: 'Non-Teaching Staff',
   comments: 'Comments',
   timetable: 'Timetable',
   branding: 'Branding',
@@ -455,6 +459,7 @@ export default function AdminDashboard() {
       case 'alumni':         return <AdminAlumni />
       case 'comments':       return <CommentsPage />
       case 'staffroles':     return <StaffRoles />
+      case 'non_teaching':   return <NonTeachingStaff />
       case 'timetable':      return <TimetablePage />
       case 'branding':       return <BrandingPage />
       case 'support':        return <SchoolSupportPage />
