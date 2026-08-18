@@ -393,11 +393,11 @@ export default function TeacherDashboard() {
         </div>
         <div className="teacher-profile">
           <div className="teacher-avatar">
-            {profile?.full_name?.[0] || 'T'}
+            {profile?.full_name?.[0]?.toUpperCase() || 'T'}
           </div>
           <div>
             <p className="teacher-name">{profile?.full_name || 'Teacher'}</p>
-            <p className="teacher-role">Teacher</p>
+            <p className="teacher-role">{profile?.role ? profile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Teacher'}</p>
           </div>
         </div>
         <nav className="sidebar-nav">

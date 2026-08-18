@@ -38,6 +38,7 @@ export default function ParentPortal() {
   const [showChildDropdown, setShowChildDropdown] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userId, setUserId] = useState(null)
+  const [profile, setProfile] = useState(null)
   const { logoUrl, schoolName } = useBrandingStore()
   const notifCount = useNoticeCount(school?.id, userId)
 
@@ -56,6 +57,7 @@ export default function ParentPortal() {
       .single()
 
     if (profile?.schools) setSchool(profile.schools)
+    setProfile(profile)
 
     const { data: childrenData } = await supabase
       .from('students')
@@ -133,10 +135,10 @@ export default function ParentPortal() {
 
         <div className="parent-profile">
           <div className="parent-avatar">
-            {school?.name?.[0] || 'P'}
+            {profile?.full_name?.[0]?.toUpperCase() || 'P'}
           </div>
           <div>
-            <p className="parent-name">Parent Portal</p>
+            <p className="parent-name">{profile?.full_name || 'Parent'}</p>
             <p className="parent-role">
               <Users size={11} /> {children.length} {children.length === 1 ? 'child' : 'children'}
             </p>

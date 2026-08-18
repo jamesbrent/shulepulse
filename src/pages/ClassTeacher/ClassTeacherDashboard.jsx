@@ -296,12 +296,12 @@ export default function ClassTeacherDashboard() {
         </div>
         <div className="ct-sidebar-user">
           <div className="ct-user-avatar">
-            {(teacherData?.full_name || teacherData?.name || 'T')?.[0]?.toUpperCase() || 'T'}
+            {authProfile?.full_name?.[0]?.toUpperCase() || 'T'}
           </div>
           <div>
-            <p className="ct-user-name">{teacherData?.full_name || teacherData?.name || 'Teacher'}</p>
+            <p className="ct-user-name">{authProfile?.full_name || teacherData?.full_name || 'Teacher'}</p>
             <p className="ct-user-role">
-              {getAssignedClasses(teacherData).length > 0 ? `${getAssignedClasses(teacherData).join(', ')} Teacher` : 'Class Teacher'}
+              {authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Class Teacher'}
             </p>
           </div>
         </div>
