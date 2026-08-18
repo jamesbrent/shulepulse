@@ -11,7 +11,7 @@ import {
   Bell, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronLeft, Activity, ArrowUpRight, ArrowDownRight,
   Plus, Banknote, FileOutput, ClipboardCheck, Users2,
-  Printer, Send, Download, Wallet, Landmark, PencilLine,
+  Printer, Send, Download, Wallet, Landmark, PencilLine, Briefcase,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
