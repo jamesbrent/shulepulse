@@ -729,6 +729,128 @@
   .sp-bulk-actions { width: 100%; justify-content: center; flex-wrap: wrap; }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   STUDENT DOCUMENTS
+   ═══════════════════════════════════════════════════════════ */
+.student-documents { display: flex; flex-direction: column; gap: 16px; }
+
+.doc-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.doc-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.doc-upload-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+}
+.doc-upload-btn:active { transform: translateY(0); }
+
+.empty-state-text {
+  text-align: center;
+  padding: 48px 24px;
+  color: #94a3b8;
+  font-size: 14px;
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  margin: 0;
+}
+
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+}
+.doc-item:hover {
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.doc-item svg:first-child { color: var(--color-primary); flex-shrink: 0; }
+
+.doc-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-size {
+  font-size: 12px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.doc-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: #64748b;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.doc-download:hover {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.doc-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.doc-delete:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
 @media (min-width: 769px) {
   .sp-mobile-cards { display: none; }
 }
