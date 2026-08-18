@@ -193,7 +193,8 @@ export default function TimetablePage({ profile }) {
         *,
         classes ( id, class_name, level, stream ),
         subjects ( id, name, code ),
-        teachers ( full_name, staff_number )
+        teachers ( full_name, staff_number ),
+        rooms ( name )
       `)
       .eq('teacher_id', teacherRec.id)
       .order('day')
@@ -208,6 +209,7 @@ export default function TimetablePage({ profile }) {
       class_stream: s.classes?.stream,
       teacher_name: s.teachers?.full_name,
       teacher_code: s.teachers?.staff_number,
+      room_name:    s.rooms?.name,
     }))
 
     // Build classId → class object lookup for band detection
@@ -415,6 +417,7 @@ export default function TimetablePage({ profile }) {
                                   {cell.class_name?.trim()}
                                   {cell.class_stream ? ` ${cell.class_stream}` : ''}
                                 </span>
+                                {cell.room_name && <span className="tt-cell-class" style={{ background: '#e0f2fe', color: '#0369a1' }}>{cell.room_name}</span>}
                               </div>
                             ) : (
                               <span className="tt-cell-dash">–</span>
@@ -450,6 +453,7 @@ export default function TimetablePage({ profile }) {
                       <span className="tt-today-cls">
                         {l.class_name}{l.class_stream ? ` ${l.class_stream}` : ''}
                       </span>
+                      {l.room_name && <span className="tt-today-cls" style={{ background: '#e0f2fe', color: '#0369a1' }}>{l.room_name}</span>}
                     </div>
                   ))}
               </div>
