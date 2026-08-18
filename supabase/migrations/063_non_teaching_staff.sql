@@ -27,9 +27,13 @@ CREATE TABLE IF NOT EXISTS non_teaching_staff (
 -- RLS: school-level access
 ALTER TABLE non_teaching_staff ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Staff see own school non_teaching_staff"
-  ON non_teaching_staff FOR ALL
-  USING (school_id = (SELECT school_id FROM profiles WHERE id = auth.uid()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Staff see own school non_teaching_staff' AND tablename = 'non_teaching_staff') THEN
+    CREATE POLICY "Staff see own school non_teaching_staff"
+      ON non_teaching_staff FOR ALL
+      USING (school_id = (SELECT school_id FROM profiles WHERE id = auth.uid()));
+  END IF;
+END $$;
 
 -- Index for fast lookups
 CREATE INDEX IF NOT EXISTS idx_nts_school ON non_teaching_staff(school_id);
