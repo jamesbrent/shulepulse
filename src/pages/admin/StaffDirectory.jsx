@@ -1,14 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
-  Search, Filter, Users, GraduationCap, Briefcase, Shield, UserCheck,
-  UserX, Eye, X, ChevronDown, Mail, Phone, Calendar, Building2,
-  BookOpen, Award, AlertTriangle, RefreshCw,
+  Search, Users, GraduationCap, Briefcase, Shield, UserCheck,
+  UserX, Eye, X, Mail, Phone, AlertTriangle, RefreshCw,
+  Download, UserPlus,
 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import useStaffDirectory from '../../hooks/useStaffDirectory'
 import './StaffDirectory.css'
 
 const CATEGORIES = ['All', 'Teaching', 'Non-Teaching', 'Administration']
-const EMPLOYMENT_TYPES = ['All', 'Teaching', 'Non-Teaching', 'Administration']
 const STATUS_OPTIONS = ['All', 'Active', 'Disabled', 'No Account']
 
 const STATUS_COLORS = {
@@ -38,14 +38,20 @@ function fmtDate(d) {
   try { return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) } catch { return '—' }
 }
 
+function generatePassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+}
+
 export default function StaffDirectory() {
   const { staff, stats, loading, error, refetch } = useStaffDirectory()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [department, setDepartment] = useState('All')
-  const [empType, setEmpType] = useState('All')
   const [loginStatus, setLoginStatus] = useState('All')
   const [detail, setDetail] = useState(null)
+  const [creatingAccount, setCreatingAccount] = useState(null)
+  const [showPassword, setShowPassword] = useState(null)
 
   const departments = useMemo(() => {
     const set = new Set(staff.map((s) => s.department).filter(Boolean))
@@ -68,13 +74,60 @@ export default function StaffDirectory() {
     })
   }, [staff, category, department, loginStatus, search])
 
+  const exportCsv = useCallback(() => {
+    const headers = ['Name', 'Email', 'Phone', 'Category', 'Position', 'Department', 'Employee No', 'Employment Type', 'Status', 'Login Account', 'Date of Hire']
+    const rows = filtered.map((s) => [
+      s.fullName, s.email, s.phone, s.staffCategory, s.position, s.department,
+      s.employeeNumber, s.employmentType, s.employmentStatus,
+      s.hasLoginAccount ? s.accountStatus : 'No Account', s.dateOfHire || '',
+    ])
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${(c || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `staff-directory-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [filtered])
+
+  const createLoginAccount = useCallback(async (rec) => {
+    if (!rec.email) return
+    setCreatingAccount(rec.sourceIds.teacherId || rec.sourceIds.nonTeachingStaffId)
+    const password = generatePassword()
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: rec.email,
+        password,
+        options: { data: { full_name: rec.fullName, role: rec.sourceType === 'teacher' ? 'teacher' : 'teacher' } },
+      })
+      if (signUpError && !signUpError.message?.includes('already registered')) throw signUpError
+      const userId = data?.user?.id
+      if (userId) {
+        await supabase.from('profiles').update({
+          full_name: rec.fullName,
+          role: 'teacher',
+          roles: ['teacher'],
+          school_id: rec.schoolId,
+        }).eq('id', userId)
+      }
+      if (rec.sourceType === 'teacher' && rec.sourceIds.teacherId) {
+        await supabase.from('teachers').update({ profile_id: userId }).eq('id', rec.sourceIds.teacherId)
+      } else if (rec.sourceType === 'non_teaching' && rec.sourceIds.nonTeachingStaffId) {
+        await supabase.from('non_teaching_staff').update({ profile_id: userId }).eq('id', rec.sourceIds.nonTeachingStaffId)
+      }
+      setShowPassword({ name: rec.fullName, email: rec.email, password })
+      refetch()
+    } catch (err) {
+      setShowPassword({ name: rec.fullName, email: rec.email, password: null, error: err.message })
+    }
+    setCreatingAccount(null)
+  }, [refetch])
+
   if (loading) {
     return (
       <div className="sd-root">
-        <div className="sd-loading">
-          <div className="sd-spinner" />
-          <p>Loading staff directory...</p>
-        </div>
+        <div className="sd-loading"><div className="sd-spinner" /><p>Loading staff directory...</p></div>
       </div>
     )
   }
@@ -94,43 +147,23 @@ export default function StaffDirectory() {
 
   return (
     <div className="sd-root">
-      {/* Header */}
       <div className="sd-header">
         <div className="sd-header-text">
           <h2>Staff Directory</h2>
           <p>Manage and view all employees in your school</p>
         </div>
+        <button className="sd-btn-export" onClick={exportCsv}><Download size={14} /> Export CSV</button>
       </div>
 
-      {/* Stats */}
       <div className="sd-stats">
-        <div className="sd-stat">
-          <div className="sd-stat-icon" style={{ background: '#eff6ff', color: '#2563eb' }}><Users size={16} /></div>
-          <div><p className="sd-stat-val">{stats.total}</p><p className="sd-stat-lbl">Total Staff</p></div>
-        </div>
-        <div className="sd-stat">
-          <div className="sd-stat-icon" style={{ background: '#dbeafe', color: '#1d4ed8' }}><GraduationCap size={16} /></div>
-          <div><p className="sd-stat-val">{stats.teaching}</p><p className="sd-stat-lbl">Teaching Staff</p></div>
-        </div>
-        <div className="sd-stat">
-          <div className="sd-stat-icon" style={{ background: '#fef3c7', color: '#92400e' }}><Briefcase size={16} /></div>
-          <div><p className="sd-stat-val">{stats.nonTeaching}</p><p className="sd-stat-lbl">Non-Teaching</p></div>
-        </div>
-        <div className="sd-stat">
-          <div className="sd-stat-icon" style={{ background: '#ede9fe', color: '#6d28d9' }}><Shield size={16} /></div>
-          <div><p className="sd-stat-val">{stats.admin}</p><p className="sd-stat-lbl">Administration</p></div>
-        </div>
-        <div className="sd-stat">
-          <div className="sd-stat-icon" style={{ background: '#dcfce7', color: '#15803d' }}><UserCheck size={16} /></div>
-          <div><p className="sd-stat-val">{stats.withLogin}</p><p className="sd-stat-lbl">With Login</p></div>
-        </div>
-        <div className="sd-stat">
-          <div className="sd-stat-icon" style={{ background: '#f1f5f9', color: '#64748b' }}><UserX size={16} /></div>
-          <div><p className="sd-stat-val">{stats.withoutLogin}</p><p className="sd-stat-lbl">No Login</p></div>
-        </div>
+        <div className="sd-stat"><div className="sd-stat-icon" style={{ background: '#eff6ff', color: '#2563eb' }}><Users size={16} /></div><div><p className="sd-stat-val">{stats.total}</p><p className="sd-stat-lbl">Total Staff</p></div></div>
+        <div className="sd-stat"><div className="sd-stat-icon" style={{ background: '#dbeafe', color: '#1d4ed8' }}><GraduationCap size={16} /></div><div><p className="sd-stat-val">{stats.teaching}</p><p className="sd-stat-lbl">Teaching</p></div></div>
+        <div className="sd-stat"><div className="sd-stat-icon" style={{ background: '#fef3c7', color: '#92400e' }}><Briefcase size={16} /></div><div><p className="sd-stat-val">{stats.nonTeaching}</p><p className="sd-stat-lbl">Non-Teaching</p></div></div>
+        <div className="sd-stat"><div className="sd-stat-icon" style={{ background: '#ede9fe', color: '#6d28d9' }}><Shield size={16} /></div><div><p className="sd-stat-val">{stats.admin}</p><p className="sd-stat-lbl">Administration</p></div></div>
+        <div className="sd-stat"><div className="sd-stat-icon" style={{ background: '#dcfce7', color: '#15803d' }}><UserCheck size={16} /></div><div><p className="sd-stat-val">{stats.withLogin}</p><p className="sd-stat-lbl">With Login</p></div></div>
+        <div className="sd-stat"><div className="sd-stat-icon" style={{ background: '#f1f5f9', color: '#64748b' }}><UserX size={16} /></div><div><p className="sd-stat-val">{stats.withoutLogin}</p><p className="sd-stat-lbl">No Login</p></div></div>
       </div>
 
-      {/* Toolbar */}
       <div className="sd-toolbar">
         <div className="sd-search-wrap">
           <Search size={15} className="sd-search-icon" />
@@ -147,7 +180,6 @@ export default function StaffDirectory() {
         </select>
       </div>
 
-      {/* Table */}
       {filtered.length === 0 ? (
         <div className="sd-empty">
           <Users size={40} />
@@ -155,86 +187,119 @@ export default function StaffDirectory() {
           <p>Staff records will appear here once teachers, administrators, or non-teaching employees have been added to the system.</p>
         </div>
       ) : (
-        <div className="sd-table-wrap">
-          <table className="sd-table">
-            <thead>
-              <tr>
-                <th>Staff Member</th>
-                <th>Category</th>
-                <th>Position / Role</th>
-                <th>Department</th>
-                <th>Contact</th>
-                <th>Employment</th>
-                <th>Login</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((s) => {
-                const catColor = CAT_COLORS[s.staffCategory] || CAT_COLORS['Non-Teaching']
-                const statColor = STATUS_COLORS[s.accountStatus] || STATUS_COLORS['No Account']
-                return (
-                  <tr key={`${s.sourceType}-${s.sourceIds.teacherId || s.sourceIds.nonTeachingStaffId || s.sourceIds.profileId}`}>
-                    <td>
-                      <div className="sd-name-cell">
-                        {s.photoUrl ? (
-                          <img src={s.photoUrl} alt="" className="sd-avatar-img" />
-                        ) : (
-                          <div className="sd-avatar">{initials(s.fullName)}</div>
-                        )}
-                        <div>
-                          <p className="sd-name">{s.fullName || 'Unnamed'}</p>
-                          {s.employeeNumber && <p className="sd-emp-no">{s.employeeNumber}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="sd-badge" style={{ background: catColor.bg, color: catColor.fg }}>
-                        {CAT_ICONS[s.staffCategory]} {s.staffCategory}
-                      </span>
-                    </td>
-                    <td>{s.position || '—'}</td>
-                    <td>{s.department || '—'}</td>
-                    <td>
-                      <div className="sd-contact">
-                        {s.phone && <span className="sd-contact-item"><Phone size={12} /> {s.phone}</span>}
-                        {s.email && <span className="sd-contact-item"><Mail size={12} /> {s.email}</span>}
-                        {!s.phone && !s.email && <span className="sd-contact-item sd-muted">—</span>}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="sd-emp-info">
-                        {s.employmentType && <span className="sd-cap">{s.employmentType}</span>}
-                        {s.employmentStatus && (
-                          <span className="sd-status-dot" style={{ color: s.employmentStatus === 'active' ? '#16a34a' : s.employmentStatus === 'on_leave' ? '#d97706' : '#dc2626' }}>
-                            {s.employmentStatus === 'active' ? 'Active' : s.employmentStatus === 'on_leave' ? 'On Leave' : s.employmentStatus === 'terminated' ? 'Terminated' : s.employmentStatus}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <span className="sd-badge sd-badge-sm" style={{ background: statColor.bg, color: statColor.fg }}>
-                        {s.accountStatus}
-                      </span>
-                    </td>
-                    <td>
-                      <button className="sd-btn-eye" onClick={() => setDetail(s)} title="View details">
-                        <Eye size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-          <div className="sd-table-footer">
-            <span className="sd-table-count">{filtered.length} staff member{filtered.length !== 1 ? 's' : ''}</span>
+        <>
+          {/* Desktop Table */}
+          <div className="sd-table-wrap sd-desktop-only">
+            <table className="sd-table">
+              <thead>
+                <tr>
+                  <th>Staff Member</th>
+                  <th>Category</th>
+                  <th>Position / Role</th>
+                  <th>Department</th>
+                  <th>Contact</th>
+                  <th>Employment</th>
+                  <th>Login</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((s) => (
+                  <StaffRow key={`${s.sourceType}-${s.sourceIds.teacherId || s.sourceIds.nonTeachingStaffId || s.sourceIds.profileId}`} staff={s} onDetail={setDetail} onCreateAccount={createLoginAccount} creatingAccount={creatingAccount} />
+                ))}
+              </tbody>
+            </table>
+            <div className="sd-table-footer">
+              <span className="sd-table-count">{filtered.length} staff member{filtered.length !== 1 ? 's' : ''}</span>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile Cards */}
+          <div className="sd-cards sd-mobile-only">
+            {filtered.map((s) => (
+              <StaffCard key={`card-${s.sourceType}-${s.sourceIds.teacherId || s.sourceIds.nonTeachingStaffId || s.sourceIds.profileId}`} staff={s} onDetail={setDetail} onCreateAccount={createLoginAccount} creatingAccount={creatingAccount} />
+            ))}
+            <div className="sd-cards-footer">{filtered.length} staff member{filtered.length !== 1 ? 's' : ''}</div>
+          </div>
+        </>
       )}
 
-      {/* Detail Modal */}
       {detail && <StaffDetailModal staff={detail} onClose={() => setDetail(null)} />}
+      {showPassword && <PasswordModal data={showPassword} onClose={() => setShowPassword(null)} />}
+    </div>
+  )
+}
+
+function StaffRow({ staff: s, onDetail, onCreateAccount, creatingAccount }) {
+  const catColor = CAT_COLORS[s.staffCategory] || CAT_COLORS['Non-Teaching']
+  const statColor = STATUS_COLORS[s.accountStatus] || STATUS_COLORS['No Account']
+  return (
+    <tr>
+      <td>
+        <div className="sd-name-cell">
+          {s.photoUrl ? <img src={s.photoUrl} alt="" className="sd-avatar-img" /> : <div className="sd-avatar">{initials(s.fullName)}</div>}
+          <div>
+            <p className="sd-name">{s.fullName || 'Unnamed'}</p>
+            {s.employeeNumber && <p className="sd-emp-no">{s.employeeNumber}</p>}
+          </div>
+        </div>
+      </td>
+      <td><span className="sd-badge" style={{ background: catColor.bg, color: catColor.fg }}>{CAT_ICONS[s.staffCategory]} {s.staffCategory}</span></td>
+      <td>{s.position || '—'}</td>
+      <td>{s.department || '—'}</td>
+      <td>
+        <div className="sd-contact">
+          {s.phone && <span className="sd-contact-item"><Phone size={12} /> {s.phone}</span>}
+          {s.email && <span className="sd-contact-item"><Mail size={12} /> {s.email}</span>}
+          {!s.phone && !s.email && <span className="sd-contact-item sd-muted">—</span>}
+        </div>
+      </td>
+      <td>
+        <div className="sd-emp-info">
+          {s.employmentType && <span className="sd-cap">{s.employmentType}</span>}
+          {s.employmentStatus && <span className="sd-status-dot" style={{ color: s.employmentStatus === 'active' ? '#16a34a' : s.employmentStatus === 'on_leave' ? '#d97706' : '#dc2626' }}>{s.employmentStatus === 'active' ? 'Active' : s.employmentStatus === 'on_leave' ? 'On Leave' : s.employmentStatus === 'terminated' ? 'Terminated' : s.employmentStatus}</span>}
+        </div>
+      </td>
+      <td><span className="sd-badge sd-badge-sm" style={{ background: statColor.bg, color: statColor.fg }}>{s.accountStatus}</span></td>
+      <td className="sd-actions-cell">
+        {!s.hasLoginAccount && s.email && (
+          <button className="sd-btn-create" disabled={creatingAccount === (s.sourceIds.teacherId || s.sourceIds.nonTeachingStaffId)} onClick={() => onCreateAccount(s)} title="Create login account">
+            <UserPlus size={13} />
+          </button>
+        )}
+        <button className="sd-btn-eye" onClick={() => onDetail(s)} title="View details"><Eye size={15} /></button>
+      </td>
+    </tr>
+  )
+}
+
+function StaffCard({ staff: s, onDetail, onCreateAccount, creatingAccount }) {
+  const catColor = CAT_COLORS[s.staffCategory] || CAT_COLORS['Non-Teaching']
+  const statColor = STATUS_COLORS[s.accountStatus] || STATUS_COLORS['No Account']
+  return (
+    <div className="sd-card">
+      <div className="sd-card-top">
+        {s.photoUrl ? <img src={s.photoUrl} alt="" className="sd-card-avatar-img" /> : <div className="sd-card-avatar">{initials(s.fullName)}</div>}
+        <div className="sd-card-info">
+          <p className="sd-card-name">{s.fullName || 'Unnamed'}</p>
+          <p className="sd-card-pos">{s.position || '—'}{s.department ? ` · ${s.department}` : ''}</p>
+        </div>
+        <button className="sd-btn-eye" onClick={() => onDetail(s)}><Eye size={15} /></button>
+      </div>
+      <div className="sd-card-meta">
+        <span className="sd-badge" style={{ background: catColor.bg, color: catColor.fg }}>{s.staffCategory}</span>
+        <span className="sd-badge sd-badge-sm" style={{ background: statColor.bg, color: statColor.fg }}>{s.accountStatus}</span>
+        {s.employeeNumber && <span className="sd-card-empno">{s.employeeNumber}</span>}
+      </div>
+      <div className="sd-card-contact">
+        {s.phone && <span><Phone size={11} /> {s.phone}</span>}
+        {s.email && <span><Mail size={11} /> {s.email}</span>}
+      </div>
+      {!s.hasLoginAccount && s.email && (
+        <button className="sd-btn-create-full" disabled={creatingAccount === (s.sourceIds.teacherId || s.sourceIds.nonTeachingStaffId)} onClick={() => onCreateAccount(s)}>
+          <UserPlus size={13} /> Create Login Account
+        </button>
+      )}
     </div>
   )
 }
@@ -249,195 +314,130 @@ function StaffDetailModal({ staff: s, onClose }) {
           <button className="sd-modal-close" onClick={onClose}><X size={16} /></button>
         </div>
         <div className="sd-modal-body">
-          {/* Profile Header */}
           <div className="sd-detail-header">
-            {s.photoUrl ? (
-              <img src={s.photoUrl} alt="" className="sd-detail-avatar-img" />
-            ) : (
-              <div className="sd-detail-avatar">{initials(s.fullName)}</div>
-            )}
+            {s.photoUrl ? <img src={s.photoUrl} alt="" className="sd-detail-avatar-img" /> : <div className="sd-detail-avatar">{initials(s.fullName)}</div>}
             <div>
               <h2 className="sd-detail-name">{s.fullName || 'Unnamed'}</h2>
               <div className="sd-detail-meta">
-                <span className="sd-badge" style={{ background: catColor.bg, color: catColor.fg }}>
-                  {CAT_ICONS[s.staffCategory]} {s.staffCategory}
-                </span>
+                <span className="sd-badge" style={{ background: catColor.bg, color: catColor.fg }}>{CAT_ICONS[s.staffCategory]} {s.staffCategory}</span>
                 {s.position && <span className="sd-detail-position">{s.position}</span>}
                 {s.employeeNumber && <span className="sd-detail-empno">{s.employeeNumber}</span>}
               </div>
             </div>
           </div>
 
-          {/* Personal Info */}
-          <div className="sd-section">
-            <h4 className="sd-section-title">Personal Information</h4>
-            <div className="sd-detail-grid">
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Full Name</span>
-                <span className="sd-detail-val">{s.fullName || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Email</span>
-                <span className="sd-detail-val">{s.email || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Phone</span>
-                <span className="sd-detail-val">{s.phone || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Gender</span>
-                <span className="sd-detail-val sd-cap">{s.gender || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Date of Birth</span>
-                <span className="sd-detail-val">{fmtDate(s.dateOfBirth)}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">National ID</span>
-                <span className="sd-detail-val">{s.idNumber || '—'}</span>
-              </div>
-            </div>
-          </div>
+          <Section title="Personal Information">
+            <DetailGrid items={[
+              { label: 'Full Name', value: s.fullName },
+              { label: 'Email', value: s.email },
+              { label: 'Phone', value: s.phone },
+              { label: 'Gender', value: s.gender, capitalize: true },
+              { label: 'Date of Birth', value: fmtDate(s.dateOfBirth) },
+              { label: 'National ID', value: s.idNumber },
+            ]} />
+          </Section>
 
-          {/* Employment Info */}
-          <div className="sd-section">
-            <h4 className="sd-section-title">Employment Information</h4>
-            <div className="sd-detail-grid">
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Employee Number</span>
-                <span className="sd-detail-val">{s.employeeNumber || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Position</span>
-                <span className="sd-detail-val">{s.position || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Department</span>
-                <span className="sd-detail-val">{s.department || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Employment Type</span>
-                <span className="sd-detail-val sd-cap">{s.employmentType || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Status</span>
-                <span className="sd-detail-val sd-cap">{s.employmentStatus || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Date of Hire</span>
-                <span className="sd-detail-val">{fmtDate(s.dateOfHire)}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Qualification</span>
-                <span className="sd-detail-val">{s.qualification || '—'}</span>
-              </div>
-              {s.salary != null && (
-                <div className="sd-detail-item">
-                  <span className="sd-detail-lbl">Salary</span>
-                  <span className="sd-detail-val">KSh {Number(s.salary).toLocaleString()}</span>
-                </div>
-              )}
-            </div>
-          </div>
+          <Section title="Employment Information">
+            <DetailGrid items={[
+              { label: 'Employee Number', value: s.employeeNumber },
+              { label: 'Position', value: s.position },
+              { label: 'Department', value: s.department },
+              { label: 'Employment Type', value: s.employmentType, capitalize: true },
+              { label: 'Status', value: s.employmentStatus, capitalize: true },
+              { label: 'Date of Hire', value: fmtDate(s.dateOfHire) },
+              { label: 'Qualification', value: s.qualification },
+              ...(s.salary != null ? [{ label: 'Salary', value: `KSh ${Number(s.salary).toLocaleString()}` }] : []),
+            ]} />
+          </Section>
 
-          {/* Teaching Info */}
           {s.sourceType === 'teacher' && (s.subjects.length > 0 || s.assignedClasses.length > 0 || s.hodDepartment || s.teachingLevel) && (
-            <div className="sd-section">
-              <h4 className="sd-section-title">Teaching Information</h4>
-              <div className="sd-detail-grid">
-                {s.subjects.length > 0 && (
-                  <div className="sd-detail-item sd-detail-item-full">
-                    <span className="sd-detail-lbl">Subjects</span>
-                    <span className="sd-detail-val">{s.subjects.join(', ')}</span>
-                  </div>
-                )}
-                {s.assignedClasses.length > 0 && (
-                  <div className="sd-detail-item sd-detail-item-full">
-                    <span className="sd-detail-lbl">Assigned Classes</span>
-                    <span className="sd-detail-val">{s.assignedClasses.join(', ')}</span>
-                  </div>
-                )}
-                {s.teachingLevel && (
-                  <div className="sd-detail-item">
-                    <span className="sd-detail-lbl">Teaching Level</span>
-                    <span className="sd-detail-val sd-cap">{s.teachingLevel}</span>
-                  </div>
-                )}
-                {s.hodDepartment && (
-                  <div className="sd-detail-item">
-                    <span className="sd-detail-lbl">HOD Department</span>
-                    <span className="sd-detail-val">{s.hodDepartment}</span>
-                  </div>
-                )}
-                {s.maximumLessonsPerWeek && (
-                  <div className="sd-detail-item">
-                    <span className="sd-detail-lbl">Max Lessons / Week</span>
-                    <span className="sd-detail-val">{s.maximumLessonsPerWeek}</span>
-                  </div>
-                )}
-                {s.maximumLessonsPerDay && (
-                  <div className="sd-detail-item">
-                    <span className="sd-detail-lbl">Max Lessons / Day</span>
-                    <span className="sd-detail-val">{s.maximumLessonsPerDay}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+            <Section title="Teaching Information">
+              <DetailGrid items={[
+                ...(s.subjects.length > 0 ? [{ label: 'Subjects', value: s.subjects.join(', '), full: true }] : []),
+                ...(s.assignedClasses.length > 0 ? [{ label: 'Assigned Classes', value: s.assignedClasses.join(', '), full: true }] : []),
+                ...(s.teachingLevel ? [{ label: 'Teaching Level', value: s.teachingLevel, capitalize: true }] : []),
+                ...(s.hodDepartment ? [{ label: 'HOD Department', value: s.hodDepartment }] : []),
+                ...(s.maximumLessonsPerWeek ? [{ label: 'Max Lessons / Week', value: s.maximumLessonsPerWeek }] : []),
+                ...(s.maximumLessonsPerDay ? [{ label: 'Max Lessons / Day', value: s.maximumLessonsPerDay }] : []),
+              ]} />
+            </Section>
           )}
 
-          {/* System Account */}
-          <div className="sd-section">
-            <h4 className="sd-section-title">System Account</h4>
-            <div className="sd-detail-grid">
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Login Account</span>
-                <span className="sd-detail-val">{s.hasLoginAccount ? 'Yes' : 'No'}</span>
-              </div>
-              {s.hasLoginAccount && (
-                <>
-                  <div className="sd-detail-item">
-                    <span className="sd-detail-lbl">Account Status</span>
-                    <span className="sd-detail-val">{s.accountStatus}</span>
-                  </div>
-                  {s.raw?.profile?.role && (
-                    <div className="sd-detail-item">
-                      <span className="sd-detail-lbl">Role</span>
-                      <span className="sd-detail-val sd-cap">{s.raw.profile.role.replace(/_/g, ' ')}</span>
-                    </div>
-                  )}
-                  {s.raw?.profile?.roles && s.raw.profile.roles.length > 0 && (
-                    <div className="sd-detail-item sd-detail-item-full">
-                      <span className="sd-detail-lbl">All Roles</span>
-                      <span className="sd-detail-val">{s.raw.profile.roles.map((r) => r.replace(/_/g, ' ')).join(', ')}</span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+          <Section title="System Account">
+            <DetailGrid items={[
+              { label: 'Login Account', value: s.hasLoginAccount ? 'Yes' : 'No' },
+              ...(s.hasLoginAccount ? [
+                { label: 'Account Status', value: s.accountStatus },
+                ...(s.raw?.profile?.role ? [{ label: 'Role', value: s.raw.profile.role.replace(/_/g, ' '), capitalize: true }] : []),
+                ...(s.raw?.profile?.roles?.length > 0 ? [{ label: 'All Roles', value: s.raw.profile.roles.map((r) => r.replace(/_/g, ' ')).join(', '), full: true }] : []),
+              ] : []),
+            ]} />
+          </Section>
 
-          {/* Debug: Source */}
-          <div className="sd-section sd-section-debug">
-            <h4 className="sd-section-title">Data Source (Debug)</h4>
-            <div className="sd-detail-grid">
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Source Type</span>
-                <span className="sd-detail-val">{s.sourceType}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Teacher ID</span>
-                <span className="sd-detail-val sd-mono">{s.sourceIds.teacherId || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">NTS ID</span>
-                <span className="sd-detail-val sd-mono">{s.sourceIds.nonTeachingStaffId || '—'}</span>
-              </div>
-              <div className="sd-detail-item">
-                <span className="sd-detail-lbl">Profile ID</span>
-                <span className="sd-detail-val sd-mono">{s.sourceIds.profileId || '—'}</span>
-              </div>
+          <Section title="Data Source" debug>
+            <DetailGrid items={[
+              { label: 'Source Type', value: s.sourceType },
+              { label: 'Teacher ID', value: s.sourceIds.teacherId || '—', mono: true },
+              { label: 'NTS ID', value: s.sourceIds.nonTeachingStaffId || '—', mono: true },
+              { label: 'Profile ID', value: s.sourceIds.profileId || '—', mono: true },
+            ]} />
+          </Section>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Section({ title, children, debug }) {
+  return (
+    <div className={`sd-section${debug ? ' sd-section-debug' : ''}`}>
+      <h4 className="sd-section-title">{title}</h4>
+      {children}
+    </div>
+  )
+}
+
+function DetailGrid({ items }) {
+  return (
+    <div className="sd-detail-grid">
+      {items.map((item, i) => (
+        <div key={i} className={`sd-detail-item${item.full ? ' sd-detail-item-full' : ''}`}>
+          <span className="sd-detail-lbl">{item.label}</span>
+          <span className={`sd-detail-val${item.capitalize ? ' sd-cap' : ''}${item.mono ? ' sd-mono' : ''}`}>{item.value || '—'}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PasswordModal({ data, onClose }) {
+  return (
+    <div className="sd-overlay" onClick={onClose}>
+      <div className="sd-modal sd-modal-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="sd-modal-head">
+          <h3>{data.error ? 'Account Creation Failed' : 'Login Credentials'}</h3>
+          <button className="sd-modal-close" onClick={onClose}><X size={16} /></button>
+        </div>
+        <div className="sd-modal-body">
+          {data.error ? (
+            <div className="sd-password-error">
+              <AlertTriangle size={20} />
+              <p>{data.error}</p>
+              {data.error.includes('already registered') && <p className="sd-hint">This email already has an account. The staff member can use their existing login.</p>}
             </div>
-          </div>
+          ) : (
+            <>
+              <p className="sd-password-info">Login credentials for <strong>{data.name}</strong>:</p>
+              <div className="sd-password-box">
+                <div className="sd-password-row"><span className="sd-password-lbl">Email</span><span className="sd-password-val">{data.email}</span></div>
+                <div className="sd-password-row"><span className="sd-password-lbl">Password</span><span className="sd-password-val sd-password-code">{data.password}</span></div>
+              </div>
+              <p className="sd-hint">Share these credentials securely with the staff member. They should change their password on first login.</p>
+            </>
+          )}
+        </div>
+        <div className="sd-modal-foot">
+          <button className="sd-btn-primary" onClick={onClose}>Done</button>
         </div>
       </div>
     </div>

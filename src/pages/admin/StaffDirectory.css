@@ -1,12 +1,14 @@
 .sd-root { padding: 0 0 24px; }
 
 /* Header */
-.sd-header { margin-bottom: 16px; }
+.sd-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
 .sd-header-text h2 { margin: 0; font-size: 20px; font-weight: 700; color: #0f172a; }
 .sd-header-text p { margin: 4px 0 0; font-size: 13px; color: #64748b; }
+.sd-btn-export { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #fff; color: #374151; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.sd-btn-export:hover { background: #f8fafc; border-color: #cbd5e1; }
 
 /* Stats */
-.sd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.sd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .sd-stat { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
 .sd-stat-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .sd-stat-val { font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.1; }
@@ -14,7 +16,7 @@
 
 /* Toolbar */
 .sd-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-.sd-search-wrap { position: relative; flex: 1; min-width: 200px; }
+.sd-search-wrap { position: relative; flex: 1; min-width: 180px; }
 .sd-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
 .sd-search { width: 100%; padding: 8px 10px 8px 32px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
 .sd-search:focus { border-color: var(--color-primary, #2563eb); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08); }
@@ -44,6 +46,7 @@
 .sd-table tr:hover td { background: #f8fafc; }
 .sd-table-footer { padding: 10px 14px; border-top: 1px solid #f1f5f9; }
 .sd-table-count { font-size: 12px; color: #94a3b8; }
+.sd-actions-cell { display: flex; align-items: center; gap: 4px; }
 
 /* Name cell */
 .sd-name-cell { display: flex; align-items: center; gap: 10px; }
@@ -66,18 +69,44 @@
 .sd-cap { text-transform: capitalize; }
 .sd-status-dot { font-size: 12px; font-weight: 500; }
 
-/* Eye button */
-.sd-btn-eye { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #64748b; }
+/* Action buttons */
+.sd-btn-eye { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #64748b; flex-shrink: 0; }
 .sd-btn-eye:hover { background: #f1f5f9; color: #0f172a; }
+.sd-btn-create { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: none; background: #eff6ff; color: #2563eb; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
+.sd-btn-create:hover { background: #dbeafe; }
+.sd-btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
+.sd-btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--color-primary, #2563eb); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.sd-btn-primary:hover { opacity: 0.9; }
+
+/* ═══════ Mobile Cards ═══════ */
+.sd-mobile-only { display: none; }
+.sd-cards { display: flex; flex-direction: column; gap: 10px; }
+.sd-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+.sd-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.sd-card-avatar { width: 36px; height: 36px; border-radius: 8px; background: var(--color-primary, #2563eb); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.sd-card-avatar-img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.sd-card-info { flex: 1; min-width: 0; }
+.sd-card-name { margin: 0; font-weight: 600; color: #0f172a; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sd-card-pos { margin: 2px 0 0; font-size: 12px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sd-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.sd-card-empno { font-size: 11px; color: #94a3b8; font-family: 'SF Mono', 'Cascadia Code', monospace; }
+.sd-card-contact { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+.sd-card-contact span { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #475569; }
+.sd-btn-create-full { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 8px; background: #eff6ff; color: #2563eb; border: 1px dashed #93c5fd; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.sd-btn-create-full:hover { background: #dbeafe; }
+.sd-btn-create-full:disabled { opacity: 0.5; cursor: not-allowed; }
+.sd-cards-footer { text-align: center; font-size: 12px; color: #94a3b8; padding: 8px 0; }
 
 /* ═══════ Detail Modal ═══════ */
 .sd-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
 .sd-modal { background: #fff; border-radius: 14px; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.sd-modal-sm { max-width: 420px; }
 .sd-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; background: #fff; border-radius: 14px 14px 0 0; z-index: 1; }
 .sd-modal-head h3 { margin: 0; font-size: 16px; font-weight: 700; }
 .sd-modal-close { background: none; border: none; cursor: pointer; color: #64748b; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 .sd-modal-close:hover { background: #f1f5f9; }
 .sd-modal-body { padding: 20px; }
+.sd-modal-foot { display: flex; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid #e2e8f0; }
 
 /* Detail Header */
 .sd-detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }
@@ -98,3 +127,31 @@
 .sd-detail-lbl { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.03em; }
 .sd-detail-val { font-size: 13px; color: #0f172a; font-weight: 500; word-break: break-word; }
 .sd-mono { font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 11px; color: #64748b; }
+
+/* Password Modal */
+.sd-password-info { margin: 0 0 12px; font-size: 13px; color: #475569; }
+.sd-password-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.sd-password-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+.sd-password-row + .sd-password-row { border-top: 1px solid #e2e8f0; }
+.sd-password-lbl { font-size: 12px; font-weight: 600; color: #64748b; }
+.sd-password-val { font-size: 13px; color: #0f172a; }
+.sd-password-code { font-family: 'SF Mono', 'Cascadia Code', monospace; font-weight: 700; color: var(--color-primary, #2563eb); letter-spacing: 0.5px; }
+.sd-hint { margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+.sd-password-error { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: #dc2626; }
+.sd-password-error p { margin: 0; font-size: 13px; color: #475569; }
+
+/* ═══════ Responsive ═══════ */
+@media (max-width: 768px) {
+  .sd-desktop-only { display: none; }
+  .sd-mobile-only { display: flex; }
+  .sd-stats { grid-template-columns: repeat(2, 1fr); }
+  .sd-stat { padding: 10px 12px; }
+  .sd-stat-val { font-size: 16px; }
+  .sd-toolbar { flex-direction: column; }
+  .sd-search-wrap { min-width: 100%; }
+  .sd-filter { width: 100%; }
+  .sd-detail-grid { grid-template-columns: 1fr; }
+}
+@media (min-width: 769px) {
+  .sd-mobile-only { display: none !important; }
+}

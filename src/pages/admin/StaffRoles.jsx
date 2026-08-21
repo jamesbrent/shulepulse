@@ -219,6 +219,7 @@ export default function StaffRoles() {
           email,
           teacher_code: teacherCode,
           school_id: schoolId,
+          profile_id: newUserId || null,
           departments: addForm.role === 'hod' ? [addForm.hod_department] : [],
           ...(addForm.role === 'hod' && addForm.hod_department ? { hod_department: addForm.hod_department } : {}),
           ...(addForm.role === 'class_teacher' && addForm.assigned_classes.length > 0 ? { class: addForm.assigned_classes[0], assigned_classes: addForm.assigned_classes } : {}),
