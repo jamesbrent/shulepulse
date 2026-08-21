@@ -73,6 +73,9 @@ import './StaffDirectory.css'
 import DepartmentsPage from './DepartmentsPage'
 import './DepartmentsPage.css'
 
+import SchoolSwitcher from '../../components/SchoolSwitcher'
+import '../../components/SchoolSwitcher.css'
+
 import PayrollPage from '../Finance/Payroll'
 import '../Finance/Payroll.css'
 
@@ -273,13 +276,7 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true)
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('school_id')
-      .eq('id', (await supabase.auth.getUser()).data.user.id)
-      .single()
-
-    const schoolId = profile?.school_id
+    const schoolId = authProfile?.school_id
     if (!schoolId) { setLoading(false); return }
 
     const [studentRes, feeRes, staffRes, attendanceRes, recentRes, pendingExamRes, pendingMarksRes, trendRes, apInvRes, apPayRes, apCfgRes] = await Promise.all([
@@ -743,6 +740,10 @@ export default function AdminDashboard() {
           <div className="adm-brand-icon">{schoolName?.[0] || 'S'}</div>
         )}
         <span className="adm-brand-text">{schoolName || 'School'}</span>
+      </div>
+
+      <div style={{ padding: '0 12px' }}>
+        <SchoolSwitcher />
       </div>
 
       <div className="adm-workspace">

@@ -2,10 +2,21 @@ import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { loadGradingConfig } from '../services/grading/config'
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: null,
   profile: null,
   loading: true,
+  selectedSchool: null,
+
+  selectSchool: async (school) => {
+    const { profile } = get()
+    if (school && profile) {
+      await supabase.from('profiles').update({ school_id: school.id }).eq('id', profile.id)
+      set({ selectedSchool: school, profile: { ...profile, school_id: school.id, schools: school } })
+    } else {
+      set({ selectedSchool: null })
+    }
+  },
 
   init: async () => {
     const { data: { session } } = await supabase.auth.getSession()

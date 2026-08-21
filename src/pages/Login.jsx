@@ -34,7 +34,7 @@ export default function Login() {
 
     const role = profile?.role || data.user?.user_metadata?.role
 
-    if (role === 'superadmin') window.location.href = basePath('/superadmin')
+    if (role === 'superadmin') window.location.href = basePath('/admin')
     else if (role === 'admin') window.location.href = basePath('/admin')
     else if (role === 'class_teacher') window.location.href = basePath('/class-teacher')
     else if (role === 'teacher') window.location.href = basePath('/teacher')
