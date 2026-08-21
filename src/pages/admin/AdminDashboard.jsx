@@ -833,7 +833,7 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="admin-main">
-        {activeNav !== 'dashboard' && activeNav !== 'alumni' && (
+        {activeNav !== 'dashboard' && activeNav !== 'alumni' && activeNav !== 'staff_directory' && activeNav !== 'departments' && (
           <header className="admin-header">
             <div>
               <h1>{pageTitles[activeNav] || 'Dashboard'}</h1>
