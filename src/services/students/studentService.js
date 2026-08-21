@@ -250,21 +250,32 @@ export async function bulkCreateStudentAuth(schoolId, defaultPassword = 'Student
 }
 
 export async function createParentAuth(parentEmail, parentName, schoolId, defaultPassword = 'Parent@123') {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) throw new Error('Not authenticated')
-
-  const { data, error } = await supabase.functions.invoke('create-parent-auth', {
-    body: {
-      email: parentEmail,
-      full_name: parentName,
-      school_id: schoolId,
-      password: defaultPassword,
+  const { data, error: signUpError } = await supabase.auth.signUp({
+    email: parentEmail,
+    password: defaultPassword,
+    options: {
+      data: { full_name: parentName, role: 'parent' },
+      emailRedirectTo: window.location.origin,
     },
   })
 
-  if (error) throw error
-  if (data?.error) throw new Error(data.error)
-  return { userId: data?.user_id, email: parentEmail, password: data?.password || defaultPassword }
+  if (signUpError && !signUpError.message?.includes('already registered')) throw signUpError
+
+  const userId = data?.user?.id
+
+  if (userId) {
+    await supabase.from('profiles').update({
+      school_id: schoolId,
+      full_name: parentName,
+      role: 'parent',
+      roles: ['parent'],
+    }).eq('id', userId)
+  } else {
+    const { data: existing } = await supabase.from('profiles').select('id').eq('email', parentEmail).single()
+    if (existing) return { userId: existing.id, email: parentEmail, password: defaultPassword }
+  }
+
+  return { userId, email: parentEmail, password: defaultPassword }
 }
 
 export async function bulkCreateParentAccounts(schoolId, defaultPassword = 'Parent@123') {
