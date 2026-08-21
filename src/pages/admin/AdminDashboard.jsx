@@ -807,6 +807,12 @@ export default function AdminDashboard() {
 
       <div className="adm-sidebar-bottom">
         <div className="adm-divider" />
+        {authProfile?.role === 'superadmin' && (
+          <button className="adm-nav-top" onClick={() => window.location.href = '/superadmin'} style={{ color: '#f59e0b' }}>
+            <Landmark size={16} />
+            <span>Platform Console</span>
+          </button>
+        )}
         <RoleSwitcher />
         <button className="adm-logout" onClick={handleLogout}>
           <LogOut size={16} />
