@@ -248,3 +248,87 @@ export async function bulkCreateStudentAuth(schoolId, defaultPassword = 'Student
 
   return { created, reset, skipped, errors }
 }
+
+export async function createParentAuth(parentEmail, parentName, schoolId, defaultPassword = 'Parent@123') {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) throw new Error('Not authenticated')
+
+  const { data, error } = await supabase.functions.invoke('create-parent-auth', {
+    body: {
+      email: parentEmail,
+      full_name: parentName,
+      school_id: schoolId,
+      password: defaultPassword,
+    },
+  })
+
+  if (error) throw error
+  if (data?.error) throw new Error(data.error)
+  return { userId: data?.user_id, email: parentEmail, password: data?.password || defaultPassword }
+}
+
+export async function bulkCreateParentAccounts(schoolId, defaultPassword = 'Parent@123') {
+  const { data: students, error: fetchErr } = await supabase
+    .from('students')
+    .select('id, full_name, parent_name, parent_email, parent_id')
+    .eq('school_id', schoolId)
+    .not('parent_email', 'is', null)
+    .neq('parent_email', '')
+  if (fetchErr) throw fetchErr
+
+  const parentByEmail = {}
+  for (const s of (students || [])) {
+    if (s.parent_email) {
+      if (!parentByEmail[s.parent_email]) {
+        parentByEmail[s.parent_email] = {
+          name: s.parent_name || s.parent_email.split('@')[0],
+          studentIds: [],
+        }
+      }
+      parentByEmail[s.parent_email].studentIds.push(s.id)
+    }
+  }
+
+  const { data: existingProfiles } = await supabase
+    .from('profiles')
+    .select('email, id')
+    .eq('role', 'parent')
+
+  const profileByEmail = {}
+  for (const p of (existingProfiles || [])) {
+    if (p.email) profileByEmail[p.email] = p.id
+  }
+
+  let created = 0
+  let skipped = 0
+  let linked = 0
+  const errors = []
+  const credentials = []
+
+  for (const [email, info] of Object.entries(parentByEmail)) {
+    try {
+      let userId = profileByEmail[email]
+
+      if (!userId) {
+        const result = await createParentAuth(email, info.name, schoolId, defaultPassword)
+        userId = result.userId
+        created++
+        credentials.push({ email, name: info.name, password: result.password })
+      }
+
+      if (userId) {
+        const { error: linkErr } = await supabase
+          .from('students')
+          .update({ parent_id: userId })
+          .in('id', info.studentIds)
+          .is('parent_id', null)
+        if (!linkErr) linked += info.studentIds.length
+      }
+    } catch (err) {
+      errors.push({ email, error: err.message })
+      skipped++
+    }
+  }
+
+  return { created, skipped, linked, errors, credentials, totalParents: Object.keys(parentByEmail).length }
+}

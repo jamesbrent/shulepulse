@@ -13,7 +13,7 @@ import * as XLSX from 'xlsx'
 import { ImportExcelModal } from '../../components/students/ImportExcelModal'
 import { exportToPDF } from '../../services/students/exportService'
 import { promoteStudentsAtomic, getGradeLevels } from '../../services/students/bulkPromotionService'
-import { createStudentAuth, bulkCreateStudentAuth, resetAllStudentPasswords } from '../../services/students/studentService'
+import { createStudentAuth, bulkCreateStudentAuth, resetAllStudentPasswords, bulkCreateParentAccounts } from '../../services/students/studentService'
 import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { ReportCard, fetchStudentComments, groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
 import { rankStudentsByGrades, findRank } from '../../services/grading'
@@ -129,6 +129,10 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
   const [loginResult, setLoginResult] = useState('')
   const [existingLogins, setExistingLogins] = useState(new Set())
   const [resettingPasswords, setResettingPasswords] = useState(false)
+
+  // Parent login creation
+  const [creatingParentLogins, setCreatingParentLogins] = useState(false)
+  const [parentLoginResult, setParentLoginResult] = useState('')
 
   // Actions dropdown
   const [openMenuId, setOpenMenuId] = useState(null)
@@ -285,6 +289,20 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
       setLoginResult(`Reset ${result.reset} passwords. ${result.failed} failed. All student passwords are now: Student@123`)
     } catch (err) { setLoginResult(`Error: ${err.message}`) }
     setResettingPasswords(false)
+  }
+
+  const handleBulkCreateParentLogins = async () => {
+    setCreatingParentLogins(true); setParentLoginResult('')
+    try {
+      const result = await bulkCreateParentAccounts(profile.school_id)
+      let msg = `Created ${result.created} parent accounts. Linked ${result.linked} students. ${result.skipped} failed.`
+      if (result.credentials?.length) {
+        msg += '\n\nCredentials:\n' + result.credentials.map(c => `${c.name} (${c.email}): ${c.password}`).join('\n')
+      }
+      setParentLoginResult(msg)
+      fetchStudents()
+    } catch (err) { setParentLoginResult(err.message) }
+    setCreatingParentLogins(false)
   }
 
   const openAddModal = () => {
@@ -1004,6 +1022,9 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
           <button className="sp-btn-tool" onClick={handleResetAllPasswords} disabled={resettingPasswords} title="Reset all student passwords to Student@123">
             <Key size={14} /> <span className="sp-tool-label">{resettingPasswords ? 'Resetting...' : 'Reset Passwords'}</span>
           </button>
+          <button className="sp-btn-tool" onClick={handleBulkCreateParentLogins} disabled={creatingParentLogins} title="Create parent portal accounts from parent emails">
+            <Key size={14} /> <span className="sp-tool-label">{creatingParentLogins ? 'Creating...' : 'Create Parent Logins'}</span>
+          </button>
           <button className="sp-btn-tool" onClick={handleExportExcel} title="Export Excel">
             <Download size={14} /> <span className="sp-tool-label">Excel</span>
           </button>
@@ -1065,8 +1086,15 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
 
       {loginResult && (
         <div className="sp-alert sp-alert--info" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 8, background: '#EFF6FF', color: '#1E40AF', marginBottom: 12 }}>
-          <Key size={14} /> {loginResult}
+          <Key size={14} /> <span style={{ whiteSpace: 'pre-wrap' }}>{loginResult}</span>
           <button onClick={() => setLoginResult('')} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: 16 }}>×</button>
+        </div>
+      )}
+
+      {parentLoginResult && (
+        <div className="sp-alert sp-alert--info" style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 16px', borderRadius: 8, background: '#F0FDF4', color: '#166534', marginBottom: 12 }}>
+          <Key size={14} style={{ marginTop: 2, flexShrink: 0 }} /> <span style={{ whiteSpace: 'pre-wrap' }}>{parentLoginResult}</span>
+          <button onClick={() => setParentLoginResult('')} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: 16, flexShrink: 0 }}>×</button>
         </div>
       )}
 
