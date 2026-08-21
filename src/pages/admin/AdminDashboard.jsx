@@ -67,6 +67,9 @@ import './AdminNotifications.css'
 import CBCCompetency from '../teacher/CBCCompetency'
 import '../../pages/teacher/CBCCompetency.css'
 
+import StaffDirectory from './StaffDirectory'
+import './StaffDirectory.css'
+
 import PayrollPage from '../Finance/Payroll'
 import '../Finance/Payroll.css'
 
@@ -153,6 +156,14 @@ const NAV_GROUPS = [
     ],
   },
   {
+    id: 'hr',
+    label: 'HR Management',
+    icon: <Users2 size={16} />,
+    items: [
+      { key: 'staff_directory', label: 'Staff Directory', icon: <Users size={14} /> },
+    ],
+  },
+  {
     id: 'reports',
     label: 'Reports',
     icon: <FileText size={16} />,
@@ -208,6 +219,7 @@ const pageTitles = {
   finance_reports: 'Finance Reports',
   financial_statements: 'Financial Statements',
   notifications: 'Notices',
+  staff_directory: 'Staff Directory',
 }
 
 const QUICK_ACTIONS = [
@@ -472,6 +484,7 @@ export default function AdminDashboard() {
       case 'reports':        return <ReportCenter />
       case 'teacher_review': return <TeacherReview />
       case 'cbc_competency': return <CBCCompetency mode="admin" />
+      case 'staff_directory': return <StaffDirectory />
       case 'library':        return <LibraryContent schoolId={authProfile?.school_id} school={school} profile={authProfile} />
       case 'notifications': return <AdminNotifications />
       default:               return renderDashboard()
