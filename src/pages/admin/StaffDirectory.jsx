@@ -2,9 +2,10 @@ import { useState, useMemo, useCallback } from 'react'
 import {
   Search, Users, GraduationCap, Briefcase, Shield, UserCheck,
   UserX, Eye, X, Mail, Phone, AlertTriangle, RefreshCw,
-  Download, UserPlus,
+  Download, UserPlus, ChevronRight, ChevronLeft, Check, Loader2,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useAuthStore } from '../../store/authStore'
 import useStaffDirectory from '../../hooks/useStaffDirectory'
 import './StaffDirectory.css'
 
@@ -52,6 +53,7 @@ export default function StaffDirectory() {
   const [detail, setDetail] = useState(null)
   const [creatingAccount, setCreatingAccount] = useState(null)
   const [showPassword, setShowPassword] = useState(null)
+  const [showAddStaff, setShowAddStaff] = useState(false)
 
   const departments = useMemo(() => {
     const set = new Set(staff.map((s) => s.department).filter(Boolean))
@@ -140,10 +142,368 @@ export default function StaffDirectory() {
           <h3>Failed to load staff</h3>
           <p>{error}</p>
           <button className="sd-btn-retry" onClick={refetch}><RefreshCw size={14} /> Retry</button>
+      </div>
+    </div>
+  )
+}
+
+const DEPARTMENTS = ['Administration', 'Finance', 'Kitchen', 'Transport', 'Security', 'Maintenance', 'ICT', 'HR', 'Cleaning', 'Sciences', 'Humanities', 'Languages', 'Technical', 'Arts', 'Physical Education', 'Other']
+const EMPLOYMENT_TYPES = ['permanent', 'contract', 'casual', 'intern']
+const TEACHING_EMPLOYMENT_TYPES = ['TSC', 'Board']
+const STATUS_OPTIONS_FORM = ['active', 'on_leave', 'suspended']
+
+const BLANK_FORM = {
+  full_name: '', email: '', phone: '', gender: '', date_of_birth: '',
+  staffCategory: 'Teaching', job_title: '', department: '',
+  employment_type: 'permanent', date_of_hire: '', qualification: '',
+  status: 'active', salary: '', createLogin: true,
+  subjects: '', assigned_classes: '', teaching_level: '', maximum_lessons_per_week: '30', maximum_lessons_per_day: '6',
+}
+
+function AddStaffModal({ onClose, onCreated }) {
+  const { profile } = useAuthStore()
+  const schoolId = profile?.school_id
+  const [step, setStep] = useState(0)
+  const [form, setForm] = useState({ ...BLANK_FORM })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState(null)
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const steps = ['Personal Details', 'Staff Category', form.staffCategory === 'Teaching' ? 'Teaching Details' : 'Position Details', 'Employment', 'Review']
+
+  const validateStep = () => {
+    if (step === 0) {
+      if (!form.full_name.trim()) return 'Full name is required'
+      if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Invalid email format'
+    }
+    if (step === 1) {
+      if (!form.staffCategory) return 'Select a staff category'
+    }
+    if (step === 2 && form.staffCategory === 'Non-Teaching') {
+      if (!form.job_title.trim()) return 'Job title is required'
+    }
+    if (step === 3) {
+      if (!form.date_of_hire) return 'Date of hire is required'
+    }
+    return null
+  }
+
+  const next = () => {
+    const err = validateStep()
+    if (err) { setError(err); return }
+    setError('')
+    setStep((s) => Math.min(s + 1, steps.length - 1))
+  }
+
+  const back = () => { setError(''); setStep((s) => Math.max(s - 1, 0)) }
+
+  const handleSubmit = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      let userId = null
+      if (form.createLogin && form.email) {
+        const tempPw = generatePassword()
+        const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+          email: form.email.trim().toLowerCase(),
+          password: tempPw,
+          options: { data: { full_name: form.full_name.trim(), role: form.staffCategory === 'Teaching' ? 'teacher' : 'teacher' } },
+        })
+        if (signUpErr && !signUpErr.message?.includes('already registered')) throw signUpErr
+        userId = signUpData?.user?.id
+        if (userId) {
+          await supabase.from('profiles').update({
+            full_name: form.full_name.trim(),
+            role: 'teacher',
+            roles: ['teacher'],
+            school_id: schoolId,
+            ...(form.phone ? { phone: form.phone.trim() } : {}),
+            ...(form.gender ? { gender: form.gender } : {}),
+            ...(form.date_of_birth ? { date_of_birth: form.date_of_birth } : {}),
+          }).eq('id', userId)
+        }
+      }
+
+      if (form.staffCategory === 'Teaching') {
+        const empType = TEACHING_EMPLOYMENT_TYPES.includes(form.employment_type) ? form.employment_type : 'Board'
+        const { error: teachErr } = await supabase.from('teachers').insert({
+          full_name: form.full_name.trim(),
+          email: form.email ? form.email.trim().toLowerCase() : '',
+          phone: form.phone || '',
+          school_id: schoolId,
+          profile_id: userId,
+          gender: form.gender || '',
+          date_of_birth: form.date_of_birth || null,
+          date_of_hire: form.date_of_hire || null,
+          qualification: form.qualification || '',
+          employment_type: empType,
+          status: form.status,
+          salary: form.salary ? Number(form.salary) : 0,
+          subjects: form.subjects ? form.subjects.split(',').map((s) => s.trim()).filter(Boolean) : [],
+          departments: form.department ? [form.department] : [],
+          assigned_classes: form.assigned_classes ? form.assigned_classes.split(',').map((s) => s.trim()).filter(Boolean) : [],
+          teaching_level: form.teaching_level || '',
+          maximum_lessons_per_week: Number(form.maximum_lessons_per_week) || 30,
+          maximum_lessons_per_day: Number(form.maximum_lessons_per_day) || 6,
+          active_status: form.status === 'active',
+        })
+        if (teachErr) throw teachErr
+      } else {
+        const empType = EMPLOYMENT_TYPES.includes(form.employment_type) ? form.employment_type : 'permanent'
+        const { error: ntsErr } = await supabase.from('non_teaching_staff').insert({
+          full_name: form.full_name.trim(),
+          email: form.email ? form.email.trim().toLowerCase() : '',
+          phone: form.phone || '',
+          school_id: schoolId,
+          profile_id: userId,
+          job_title: form.job_title || '',
+          department: form.department || '',
+          gender: form.gender || '',
+          date_of_birth: form.date_of_birth || null,
+          date_of_hire: form.date_of_hire || null,
+          qualification: form.qualification || '',
+          employment_type: empType,
+          status: form.status,
+          salary: form.salary ? Number(form.salary) : 0,
+        })
+        if (ntsErr) throw ntsErr
+      }
+
+      setResult({ success: true, name: form.full_name.trim() })
+    } catch (err) {
+      setError(err.message)
+    }
+    setSaving(false)
+  }
+
+  if (result) {
+    return (
+      <div className="sd-overlay" onClick={onClose}>
+        <div className="sd-modal sd-modal-sm" onClick={(e) => e.stopPropagation()}>
+          <div className="sd-modal-head"><h3>Staff Added</h3><button className="sd-modal-close" onClick={onClose}><X size={16} /></button></div>
+          <div className="sd-modal-body sd-success-body">
+            <div className="sd-success-icon"><Check size={28} /></div>
+            <h3>{result.name} has been added</h3>
+            <p className="sd-hint">{form.staffCategory === 'Teaching' ? 'Teaching' : 'Non-teaching'} staff record created{form.createLogin && form.email ? ' with login account' : ''}.</p>
+          </div>
+          <div className="sd-modal-foot">
+            <button className="sd-btn-primary" onClick={onCreated}>Done</button>
+          </div>
         </div>
       </div>
     )
   }
+
+  return (
+    <div className="sd-overlay" onClick={onClose}>
+      <div className="sd-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="sd-modal-head">
+          <h3>Add New Staff</h3>
+          <button className="sd-modal-close" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        {/* Step Indicator */}
+        <div className="sd-steps">
+          {steps.map((s, i) => (
+            <div key={i} className={`sd-step ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
+              <div className="sd-step-num">{i < step ? <Check size={12} /> : i + 1}</div>
+              <span className="sd-step-label">{s}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="sd-modal-body">
+          {error && <div className="sd-form-error"><AlertTriangle size={14} /> {error}</div>}
+
+          {/* Step 0: Personal Details */}
+          {step === 0 && (
+            <div className="sd-form-grid">
+              <label className="sd-field sd-field-full">
+                <span>Full Name *</span>
+                <input value={form.full_name} onChange={(e) => set('full_name', e.target.value)} placeholder="e.g. John Kamau" />
+              </label>
+              <label className="sd-field">
+                <span>Email</span>
+                <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="john@school.com" />
+              </label>
+              <label className="sd-field">
+                <span>Phone</span>
+                <input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="0712 345 678" />
+              </label>
+              <label className="sd-field">
+                <span>Gender</span>
+                <select value={form.gender} onChange={(e) => set('gender', e.target.value)}>
+                  <option value="">Select...</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </label>
+              <label className="sd-field">
+                <span>Date of Birth</span>
+                <input type="date" value={form.date_of_birth} onChange={(e) => set('date_of_birth', e.target.value)} />
+              </label>
+            </div>
+          )}
+
+          {/* Step 1: Category */}
+          {step === 1 && (
+            <div className="sd-category-select">
+              <button className={`sd-cat-option ${form.staffCategory === 'Teaching' ? 'selected' : ''}`} onClick={() => set('staffCategory', 'Teaching')}>
+                <GraduationCap size={24} />
+                <h4>Teaching Staff</h4>
+                <p>Teachers, HODs, Class Teachers</p>
+              </button>
+              <button className={`sd-cat-option ${form.staffCategory === 'Non-Teaching' ? 'selected' : ''}`} onClick={() => set('staffCategory', 'Non-Teaching')}>
+                <Briefcase size={24} />
+                <h4>Non-Teaching Staff</h4>
+                <p>Admin, Finance, Kitchen, Security, etc.</p>
+              </button>
+            </div>
+          )}
+
+          {/* Step 2: Teaching or Position Details */}
+          {step === 2 && form.staffCategory === 'Teaching' && (
+            <div className="sd-form-grid">
+              <label className="sd-field sd-field-full">
+                <span>Subjects</span>
+                <input value={form.subjects} onChange={(e) => set('subjects', e.target.value)} placeholder="Comma-separated, e.g. Mathematics, Physics" />
+              </label>
+              <label className="sd-field">
+                <span>Department</span>
+                <select value={form.department} onChange={(e) => set('department', e.target.value)}>
+                  <option value="">Select...</option>
+                  {['Sciences', 'Humanities', 'Languages', 'Technical', 'Arts', 'Physical Education'].map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </label>
+              <label className="sd-field">
+                <span>Teaching Level</span>
+                <select value={form.teaching_level} onChange={(e) => set('teaching_level', e.target.value)}>
+                  <option value="">Select...</option>
+                  <option value="primary">Primary</option>
+                  <option value="junior">Junior Secondary</option>
+                  <option value="senior">Senior Secondary</option>
+                  <option value="combined">Combined</option>
+                </select>
+              </label>
+              <label className="sd-field sd-field-full">
+                <span>Assigned Classes</span>
+                <input value={form.assigned_classes} onChange={(e) => set('assigned_classes', e.target.value)} placeholder="Comma-separated, e.g. Grade 7A, Grade 8B" />
+              </label>
+              <label className="sd-field">
+                <span>Max Lessons / Week</span>
+                <input type="number" min="1" value={form.maximum_lessons_per_week} onChange={(e) => set('maximum_lessons_per_week', e.target.value)} />
+              </label>
+              <label className="sd-field">
+                <span>Max Lessons / Day</span>
+                <input type="number" min="1" value={form.maximum_lessons_per_day} onChange={(e) => set('maximum_lessons_per_day', e.target.value)} />
+              </label>
+            </div>
+          )}
+          {step === 2 && form.staffCategory === 'Non-Teaching' && (
+            <div className="sd-form-grid">
+              <label className="sd-field sd-field-full">
+                <span>Job Title *</span>
+                <input value={form.job_title} onChange={(e) => set('job_title', e.target.value)} placeholder="e.g. Accountant, Cook, Driver" />
+              </label>
+              <label className="sd-field">
+                <span>Department</span>
+                <select value={form.department} onChange={(e) => set('department', e.target.value)}>
+                  <option value="">Select...</option>
+                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </label>
+            </div>
+          )}
+
+          {/* Step 3: Employment */}
+          {step === 3 && (
+            <div className="sd-form-grid">
+              <label className="sd-field">
+                <span>Date of Hire *</span>
+                <input type="date" value={form.date_of_hire} onChange={(e) => set('date_of_hire', e.target.value)} />
+              </label>
+              <label className="sd-field">
+                <span>Employment Type</span>
+                <select value={form.employment_type} onChange={(e) => set('employment_type', e.target.value)}>
+                  {(form.staffCategory === 'Teaching' ? TEACHING_EMPLOYMENT_TYPES : EMPLOYMENT_TYPES).map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                </select>
+              </label>
+              <label className="sd-field">
+                <span>Status</span>
+                <select value={form.status} onChange={(e) => set('status', e.target.value)}>
+                  {STATUS_OPTIONS_FORM.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>)}
+                </select>
+              </label>
+              <label className="sd-field">
+                <span>Salary (KSh)</span>
+                <input type="number" min="0" value={form.salary} onChange={(e) => set('salary', e.target.value)} placeholder="0" />
+              </label>
+              <label className="sd-field sd-field-full">
+                <span>Qualification</span>
+                <input value={form.qualification} onChange={(e) => set('qualification', e.target.value)} placeholder="e.g. B.Ed, Diploma" />
+              </label>
+              <label className="sd-check sd-field-full">
+                <input type="checkbox" checked={form.createLogin} onChange={(e) => set('createLogin', e.target.checked)} disabled={!form.email} />
+                Create login account{!form.email ? ' (enter email on Step 1 to enable)' : ''}
+              </label>
+            </div>
+          )}
+
+          {/* Step 4: Review */}
+          {step === 4 && (
+            <div className="sd-review">
+              <div className="sd-review-section">
+                <h4>Personal</h4>
+                <div className="sd-review-grid">
+                  <span><strong>Name:</strong> {form.full_name}</span>
+                  <span><strong>Email:</strong> {form.email || '—'}</span>
+                  <span><strong>Phone:</strong> {form.phone || '—'}</span>
+                  <span><strong>Gender:</strong> {form.gender || '—'}</span>
+                </div>
+              </div>
+              <div className="sd-review-section">
+                <h4>Staff Details</h4>
+                <div className="sd-review-grid">
+                  <span><strong>Category:</strong> {form.staffCategory}</span>
+                  {form.staffCategory === 'Non-Teaching' && <span><strong>Job Title:</strong> {form.job_title}</span>}
+                  <span><strong>Department:</strong> {form.department || '—'}</span>
+                  {form.staffCategory === 'Teaching' && <span><strong>Subjects:</strong> {form.subjects || '—'}</span>}
+                  {form.staffCategory === 'Teaching' && <span><strong>Level:</strong> {form.teaching_level || '—'}</span>}
+                </div>
+              </div>
+              <div className="sd-review-section">
+                <h4>Employment</h4>
+                <div className="sd-review-grid">
+                  <span><strong>Hire Date:</strong> {form.date_of_hire}</span>
+                  <span><strong>Type:</strong> {form.employment_type}</span>
+                  <span><strong>Status:</strong> {form.status}</span>
+                  <span><strong>Salary:</strong> {form.salary ? `KSh ${Number(form.salary).toLocaleString()}` : '—'}</span>
+                  <span><strong>Login Account:</strong> {form.createLogin && form.email ? 'Yes (will be created)' : 'No'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="sd-modal-foot">
+          {step > 0 && <button className="sd-btn-secondary" onClick={back}><ChevronLeft size={14} /> Back</button>}
+          <div className="sd-modal-foot-right">
+            <button className="sd-btn-secondary" onClick={onClose}>Cancel</button>
+            {step < steps.length - 1 ? (
+              <button className="sd-btn-primary" onClick={next}>Next <ChevronRight size={14} /></button>
+            ) : (
+              <button className="sd-btn-primary" disabled={saving} onClick={handleSubmit}>
+                {saving ? <><Loader2 size={14} className="sd-spin" /> Creating...</> : <><Check size={14} /> Create Staff</>}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
   return (
     <div className="sd-root">
@@ -152,7 +512,10 @@ export default function StaffDirectory() {
           <h2>Staff Directory</h2>
           <p>Manage and view all employees in your school</p>
         </div>
-        <button className="sd-btn-export" onClick={exportCsv}><Download size={14} /> Export CSV</button>
+        <div className="sd-header-actions">
+          <button className="sd-btn-export" onClick={exportCsv}><Download size={14} /> Export CSV</button>
+          <button className="sd-btn-add-staff" onClick={() => setShowAddStaff(true)}><UserPlus size={14} /> Add Staff</button>
+        </div>
       </div>
 
       <div className="sd-stats">
@@ -226,6 +589,7 @@ export default function StaffDirectory() {
 
       {detail && <StaffDetailModal staff={detail} onClose={() => setDetail(null)} />}
       {showPassword && <PasswordModal data={showPassword} onClose={() => setShowPassword(null)} />}
+      {showAddStaff && <AddStaffModal onClose={() => setShowAddStaff(false)} onCreated={() => { setShowAddStaff(false); refetch() }} />}
     </div>
   )
 }

@@ -11,7 +11,7 @@ import {
   Bell, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronLeft, Activity, ArrowUpRight, ArrowDownRight,
   Plus, Banknote, FileOutput, ClipboardCheck, Users2,
-  Printer, Send, Download, Wallet, Landmark, PencilLine, Briefcase,
+  Printer, Send, Download, Wallet, Landmark, PencilLine, Briefcase, Building2,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -69,6 +69,9 @@ import '../../pages/teacher/CBCCompetency.css'
 
 import StaffDirectory from './StaffDirectory'
 import './StaffDirectory.css'
+
+import DepartmentsPage from './DepartmentsPage'
+import './DepartmentsPage.css'
 
 import PayrollPage from '../Finance/Payroll'
 import '../Finance/Payroll.css'
@@ -161,6 +164,7 @@ const NAV_GROUPS = [
     icon: <Users2 size={16} />,
     items: [
       { key: 'staff_directory', label: 'Staff Directory', icon: <Users size={14} /> },
+      { key: 'departments', label: 'Departments', icon: <Building2 size={14} /> },
     ],
   },
   {
@@ -220,6 +224,7 @@ const pageTitles = {
   financial_statements: 'Financial Statements',
   notifications: 'Notices',
   staff_directory: 'Staff Directory',
+  departments: 'Departments',
 }
 
 const QUICK_ACTIONS = [
@@ -485,6 +490,7 @@ export default function AdminDashboard() {
       case 'teacher_review': return <TeacherReview />
       case 'cbc_competency': return <CBCCompetency mode="admin" />
       case 'staff_directory': return <StaffDirectory />
+      case 'departments':     return <DepartmentsPage />
       case 'library':        return <LibraryContent schoolId={authProfile?.school_id} school={school} profile={authProfile} />
       case 'notifications': return <AdminNotifications />
       default:               return renderDashboard()

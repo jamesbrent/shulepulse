@@ -155,3 +155,57 @@
 @media (min-width: 769px) {
   .sd-mobile-only { display: none !important; }
 }
+
+/* ═══════ Add Staff Button ═══════ */
+.sd-header-actions { display: flex; gap: 8px; }
+.sd-btn-add-staff { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--color-primary, #2563eb); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.sd-btn-add-staff:hover { opacity: 0.9; }
+
+/* ═══════ Steps ═══════ */
+.sd-steps { display: flex; align-items: center; gap: 2px; padding: 12px 20px; border-bottom: 1px solid #f1f5f9; overflow-x: auto; }
+.sd-step { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 12px; color: #94a3b8; white-space: nowrap; }
+.sd-step.active { background: #eff6ff; color: var(--color-primary, #2563eb); font-weight: 600; }
+.sd-step.done { color: #16a34a; }
+.sd-step-num { width: 20px; height: 20px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.sd-step.active .sd-step-num { background: var(--color-primary, #2563eb); color: #fff; }
+.sd-step.done .sd-step-num { background: #dcfce7; color: #16a34a; }
+.sd-step-label { font-size: 11px; }
+
+/* ═══════ Form ═══════ */
+.sd-form-error { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; font-size: 13px; margin-bottom: 14px; }
+.sd-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sd-field { display: flex; flex-direction: column; gap: 4px; }
+.sd-field span { font-size: 12px; font-weight: 600; color: #475569; }
+.sd-field input, .sd-field select { padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; }
+.sd-field input:focus, .sd-field select:focus { border-color: var(--color-primary, #2563eb); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08); }
+.sd-field-full { grid-column: 1 / -1; }
+.sd-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #475569; padding-top: 8px; }
+.sd-check input { width: 16px; height: 16px; accent-color: var(--color-primary, #2563eb); }
+
+/* ═══════ Category Select ═══════ */
+.sd-category-select { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sd-cat-option { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 16px; background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.15s; }
+.sd-cat-option:hover { border-color: #93c5fd; background: #f8fafc; }
+.sd-cat-option.selected { border-color: var(--color-primary, #2563eb); background: #eff6ff; color: var(--color-primary, #2563eb); }
+.sd-cat-option h4 { margin: 0; font-size: 14px; font-weight: 600; }
+.sd-cat-option p { margin: 0; font-size: 12px; color: #64748b; }
+
+/* ═══════ Review ═══════ */
+.sd-review { display: flex; flex-direction: column; gap: 14px; }
+.sd-review-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; }
+.sd-review-section h4 { margin: 0 0 8px; font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+.sd-review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 13px; }
+.sd-review-grid span { color: #374151; }
+
+/* ═══════ Modal Footer ═══════ */
+.sd-modal-foot-right { display: flex; gap: 8px; margin-left: auto; }
+.sd-btn-secondary { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #fff; color: #374151; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.sd-btn-secondary:hover { background: #f8fafc; }
+
+/* ═══════ Success ═══════ */
+.sd-success-body { text-align: center; padding: 24px 20px; }
+.sd-success-icon { width: 48px; height: 48px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.sd-success-body h3 { margin: 0 0 8px; font-size: 16px; color: #0f172a; }
+
+/* ═══════ Spin animation ═══════ */
+.sd-spin { animation: sd-spin 0.7s linear infinite; }
