@@ -88,6 +88,7 @@ export default function useStaffDirectory() {
 
     for (const p of profiles) {
       if (matchedProfileIds.has(p.id)) continue
+      if (!p.school_id) continue
       const role = p.role || (p.roles && p.roles[0]) || ''
       const isAdminRole = ADMIN_ROLES.has(role)
       all.push({
