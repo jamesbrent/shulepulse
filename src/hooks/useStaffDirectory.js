@@ -14,7 +14,7 @@ export default function useStaffDirectory() {
   const [error, setError] = useState(null)
 
   const fetchAll = useCallback(async () => {
-    if (!schoolId) return
+    if (!schoolId) { setLoading(false); return }
     setLoading(true)
     setError(null)
     const [profRes, teachRes, ntsRes] = await Promise.all([

@@ -21,7 +21,7 @@ export default function DepartmentsPage() {
   const [error, setError] = useState('')
 
   const fetchDepts = async () => {
-    if (!schoolId) return
+    if (!schoolId) { setLoading(false); return }
     setLoading(true)
     const { data } = await supabase.from('departments').select('*').eq('school_id', schoolId).order('category').order('name')
     setDepartments(data || [])
