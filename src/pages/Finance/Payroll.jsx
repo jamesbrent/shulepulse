@@ -78,6 +78,7 @@ export default function PayrollPage({ initialTab }) {
   const [fixPreview, setFixPreview] = useState(null)
   const [staff, setStaff] = useState([])
   const [teachers, setTeachers] = useState([])
+  const [nonTeaching, setNonTeaching] = useState([])
 
   const [search, setSearch] = useState('')
   const [selectedRun, setSelectedRun] = useState(null)
@@ -131,6 +132,11 @@ export default function PayrollPage({ initialTab }) {
         .from('teachers')
         .select('id, full_name, email, staff_number, employee_number')
         .eq('school_id', schoolId)
+      const { data: ntsRes } = await supabase
+        .from('non_teaching_staff')
+        .select('*')
+        .eq('school_id', schoolId)
+        .order('full_name')
       const { data: reqRes } = await supabase
         .from('payroll_payment_requests')
         .select('*, payroll_runs(run_label, journal_entry_id)')
@@ -180,6 +186,7 @@ export default function PayrollPage({ initialTab }) {
       setPayRequests(reqRes || [])
       setStaff((staffRes || []).filter((s) => s.role !== 'student' && s.role !== 'parent'))
       setTeachers(teacherRes || [])
+      setNonTeaching(ntsRes || [])
       setGlAccounts(coaRes || [])
       setAcctMap(Object.fromEntries((mapRes || []).map((r) => [r.item, r.account_id])))
     } catch (e) {
@@ -199,6 +206,7 @@ export default function PayrollPage({ initialTab }) {
   }, [items])
 
   const staffOptions = staff.filter((s) => !employees.some((e) => e.profile_id === s.id) || empModal?.employee?.profile_id === s.id)
+  const ntsOptions = nonTeaching.filter((n) => !employees.some((e) => e.nts_id === n.id) || empModal?.employee?.nts_id === n.id)
 
   const empById = Object.fromEntries(employees.map((e) => [e.id, e]))
 
@@ -226,6 +234,7 @@ export default function PayrollPage({ initialTab }) {
 
   const roster = useMemo(() => {
     const empByProfile = Object.fromEntries(employees.map((e) => [e.profile_id, e]))
+    const empByNts = Object.fromEntries(employees.filter((e) => e.nts_id).map((e) => [e.nts_id, e]))
     const staffById = Object.fromEntries(staff.map((s) => [s.id, s]))
     const teacherByEmail = Object.fromEntries(teachers.map((t) => [(t.email || '').toLowerCase(), t]))
     const rows = []
@@ -245,15 +254,29 @@ export default function PayrollPage({ initialTab }) {
     }
     for (const e of employees) {
       if (staffById[e.profile_id]) continue
-      const t = teacherByEmail[((e.profiles?.email) || '').toLowerCase()]
-      rows.push({ ...e, isPayroll: true, staffRole: e.profiles?.role, staffNo: t?.employee_number || '', tscNo: t?.staff_number || '' })
+      if (!e.nts_id) {
+        const t = teacherByEmail[((e.profiles?.email) || '').toLowerCase()]
+        rows.push({ ...e, isPayroll: true, staffRole: e.profiles?.role, staffNo: t?.employee_number || '', tscNo: t?.staff_number || '' })
+      }
+    }
+    for (const n of nonTeaching) {
+      const emp = empByNts[n.id]
+      rows.push(emp
+        ? { ...emp, isPayroll: true, staffRole: 'non_teaching', full_name: n.full_name }
+        : {
+            id: n.id, nts_id: n.id, employee_no: '', full_name: n.full_name,
+            staff_type: 'non_teaching', job_title: n.job_title || '', department: n.department || '',
+            basic_salary: 0, bank_name: '', bank_account: '', kra_pin: '', shif_no: '', nssf_no: '',
+            helb_number: '', active: null, items: [], isPayroll: false, staffRole: 'non_teaching',
+            profiles: { phone: n.phone },
+          })
     }
     rows.sort((a, b) => {
       if (a.isPayroll !== b.isPayroll) return a.isPayroll ? -1 : 1
       return (a.full_name || '').localeCompare(b.full_name || '')
     })
     return rows
-  }, [staff, employees, teachers])
+  }, [staff, employees, teachers, nonTeaching])
 
   const filteredEmployees = roster.filter((e) => {
     const q = search.toLowerCase()
@@ -266,22 +289,26 @@ export default function PayrollPage({ initialTab }) {
 
   // ─── Employee CRUD ─────────────────────────────────────────────────────────
   const openAddEmployee = async (staffMember = null) => {
-    setEmpForm({ ...blankEmployee(), employee_no: await nextEmployeeNo(supabase, schoolId), profile_id: staffMember?.id || '' })
+    setEmpForm({ ...blankEmployee(), employee_no: await nextEmployeeNo(supabase, schoolId), profile_id: staffMember?.id || '', nts_id: staffMember?.nts_id || '' })
     setEmpModal({ employee: null })
   }
 
   const openEditEmployee = (e) => {
-    setEmpForm({ ...e })
+    setEmpForm({ ...e, nts_id: e.nts_id || '', profile_id: e.profile_id || '' })
     setEmpModal({ employee: e })
   }
 
   const saveEmployee = async () => {
-    if (!empForm.profile_id) return showToast('Select a staff member', false)
+    if (!empForm.profile_id && !empForm.nts_id) return showToast('Select a staff member', false)
     if (Number(empForm.basic_salary) < 0) return showToast('Basic salary cannot be negative', false)
-    const COLUMNS = ['profile_id', 'employee_no', 'staff_type', 'job_title', 'department', 'basic_salary',
+    const COLUMNS = ['profile_id', 'nts_id', 'employee_no', 'staff_type', 'job_title', 'department', 'basic_salary',
       'kra_pin', 'shif_no', 'nssf_no', 'helb_number', 'sacco_name', 'union_name',
-      'bank_name', 'bank_account', 'pay_method', 'active', 'notes']
-    const payload = { ...Object.fromEntries(COLUMNS.map((k) => [k, empForm[k]])), basic_salary: Number(empForm.basic_salary || 0) }
+      'bank_name', 'bank_account', 'pay_method', 'active', 'notes', 'direct_name']
+    const payload = { ...Object.fromEntries(COLUMNS.map((k) => [k, empForm[k] || null])), basic_salary: Number(empForm.basic_salary || 0) }
+    if (empForm.nts_id && !empForm.profile_id) {
+      const nts = nonTeaching.find((n) => n.id === empForm.nts_id)
+      payload.direct_name = nts?.full_name || empForm.direct_name || null
+    }
     const { error } = empModal?.employee
       ? await supabase.from('payroll_employees').update(payload).eq('id', empModal.employee.id)
       : await supabase.from('payroll_employees').insert({ ...payload, school_id: schoolId, created_by: userId })
@@ -906,7 +933,7 @@ export default function PayrollPage({ initialTab }) {
                         <td>—</td>
                         <td><span className="prl-badge" style={{ background: '#d977061a', color: '#d97706' }}>Not on payroll</span></td>
                         <td className="prl-actions-cell">
-                          <button className="prl-btn-secondary" onClick={() => openAddEmployee(staffMember)}><UserPlus size={14} /> Add to Payroll</button>
+                          <button className="prl-btn-secondary" onClick={() => openAddEmployee(staffMember || { id: e.id, nts_id: e.nts_id })}><UserPlus size={14} /> Add to Payroll</button>
                         </td>
                       </tr>
                     )
@@ -1356,9 +1383,20 @@ export default function PayrollPage({ initialTab }) {
             <div className="prl-form-grid">
               <label className="prl-field prl-field-full">
                 <span>Staff Member *</span>
-                <select value={empForm.profile_id || ''} onChange={(e) => setEmpForm({ ...empForm, profile_id: e.target.value })}>
+                <select value={empForm.profile_id || empForm.nts_id || ''} onChange={(e) => {
+                  const val = e.target.value
+                  const isNts = ntsOptions.some((n) => n.id === val) || nonTeaching.some((n) => n.id === val)
+                  if (isNts) {
+                    setEmpForm({ ...empForm, nts_id: val, profile_id: '' })
+                  } else {
+                    setEmpForm({ ...empForm, profile_id: val, nts_id: '' })
+                  }
+                }}>
                   <option value="">Select a staff member...</option>
+                  {staffOptions.length > 0 && <optgroup label="Teaching / Profiled Staff" />}
                   {staffOptions.map((s) => <option key={s.id} value={s.id}>{s.full_name}{s.phone ? ` · ${s.phone}` : ''} ({s.role})</option>)}
+                  {ntsOptions.length > 0 && <optgroup label="Non-Teaching Staff" />}
+                  {ntsOptions.map((n) => <option key={n.id} value={n.id}>{n.full_name} ({n.job_title || 'Staff'} · {n.department || ''})</option>)}
                 </select>
               </label>
               <label className="prl-field">
