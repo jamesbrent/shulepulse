@@ -1,25 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  X, School, CreditCard, ArrowUp, ArrowDown,
+  X, CreditCard,
   Loader, AlertTriangle, CheckCircle
 } from 'lucide-react'
-import { changeSchoolPlan, getPlanPrice, getPriceDiff } from '../superadmin/subscriptionService'
+import { changeSchoolPlan, getPriceDiff } from '../superadmin/subscriptionService'
+import { fetchAllPlans } from '../access/featureAccessService'
 
-const PLANS = [
-  { key: 'basic', label: 'Basic', price: 2500, color: '#475569' },
-  { key: 'pro', label: 'Pro', price: 5000, color: '#2563eb' },
-  { key: 'enterprise', label: 'Enterprise', price: 10000, color: '#ca8a04' },
-]
+const PLAN_COLORS = {
+  basic: '#475569',
+  pro: '#2563eb',
+  enterprise: '#ca8a04',
+}
 
 export default function PlanChangeModal({ school, onClose, onChanged }) {
+  const [plans, setPlans] = useState([])
   const [selectedPlan, setSelectedPlan] = useState(school.plan)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  useEffect(() => {
+    fetchAllPlans().then(setPlans).catch(() => {})
+  }, [])
+
   const currentPlan = school.plan
-  const diff = getPriceDiff(currentPlan, selectedPlan)
+  const currentPrice = plans.find((p) => p.key === currentPlan)?.monthly_price || 0
+  const selectedPrice = plans.find((p) => p.key === selectedPlan)?.monthly_price || 0
+  const diff = selectedPrice - currentPrice
   const isDowngrade = diff < 0
   const isUpgrade = diff > 0
   const noChange = selectedPlan === currentPlan
@@ -63,7 +71,8 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-            {PLANS.map((p) => {
+            {plans.filter((p) => p.is_active !== false).map((p) => {
+              const color = PLAN_COLORS[p.key] || '#475569'
               const isCurrent = p.key === currentPlan
               const isSelected = p.key === selectedPlan
               return (
@@ -76,8 +85,8 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
                     justifyContent: 'space-between',
                     padding: '14px 16px',
                     borderRadius: 10,
-                    border: `2px solid ${isSelected ? p.color : '#e2e8f0'}`,
-                    background: isSelected ? `${p.color}08` : '#fff',
+                    border: `2px solid ${isSelected ? color : '#e2e8f0'}`,
+                    background: isSelected ? `${color}08` : '#fff',
                     cursor: saving ? 'not-allowed' : 'pointer',
                     textAlign: 'left',
                     transition: 'all 0.15s',
@@ -86,7 +95,7 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
                 >
                   <div>
                     <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: 2 }}>{p.label}</div>
-                    <div style={{ fontSize: 12, color: '#64748b' }}>KES {p.price.toLocaleString()}/mo</div>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>KES {(p.monthly_price || 0).toLocaleString()}/mo</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {isCurrent && (
