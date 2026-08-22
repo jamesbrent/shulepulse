@@ -293,7 +293,8 @@ export default function PlanManagementPage() {
                   {modules.map((mod) => {
                     const modFeatures = catalog.filter((f) => f.module === mod && f.status !== 'unavailable')
                     if (modFeatures.length === 0) return null
-                    const isModExpanded = expandedModule[${plan.key}_]
+                    const modKey = plan.key + '_' + mod
+                    const isModExpanded = expandedModule[modKey]
                     const enabledInModule = modFeatures.filter((f) => (planFeatures[plan.key] || []).includes(f.feature_key)).length
 
                     return (
@@ -302,7 +303,7 @@ export default function PlanManagementPage() {
                           className="plan-module-header"
                           onClick={() => setExpandedModule((prev) => ({
                             ...prev,
-                            [${plan.key}_]: !prev[${plan.key}_],
+                            [modKey]: !prev[modKey],
                           }))}
                         >
                           <span className="plan-module-toggle">
