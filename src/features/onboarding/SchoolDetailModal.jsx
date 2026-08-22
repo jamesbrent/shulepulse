@@ -60,10 +60,6 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
     setLoading(false)
   }
 
-  const daysLeft = school.subscription_end
-    ? Math.ceil((new Date(school.subscription_end) - new Date()) / (1000 * 60 * 60 * 24))
-    : null
-
   const showToast = (type, message) => {
     setToast({ type, message })
     setTimeout(() => setToast(null), 3000)
@@ -175,8 +171,6 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
   const daysLeft = school.subscription_end
     ? Math.ceil((new Date(school.subscription_end) - new Date()) / (1000 * 60 * 60 * 24))
     : null
-
-  const tabs = ['overview', 'modules', 'subscription', 'admins', 'activity']
 
   const schoolInfo = [
     { label: 'County', value: school.county, icon: MapPin },

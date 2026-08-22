@@ -96,7 +96,7 @@ export default function PlanManagementPage() {
     setSaving(true)
     try {
       await setPlanFeatures(planKey, planFeatures[planKey] || [])
-      setToast({ type: 'success', message: ${planKey} plan features saved })
+      setToast({ type: 'success', message: `${planKey} plan features saved` })
       setTimeout(() => setToast(null), 3000)
     } catch (err) {
       setToast({ type: 'error', message: err.message })
@@ -119,7 +119,7 @@ export default function PlanManagementPage() {
         recommended: plan.recommended,
       })
       setEditingPlan(null)
-      setToast({ type: 'success', message: ${plan.label} updated })
+      setToast({ type: 'success', message: `${plan.label} updated` })
       setTimeout(() => setToast(null), 3000)
       loadData()
     } catch (err) {
