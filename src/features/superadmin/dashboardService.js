@@ -1,5 +1,4 @@
 import { supabase } from '../../lib/supabase'
-import { getPlanPrice } from './subscriptionService'
 
 export async function fetchDashboardStats() {
   const [
@@ -28,14 +27,17 @@ export async function fetchDashboardStats() {
     supabase.from('schools').select('plan'),
     supabase.from('schools').select('created_at').order('created_at', { ascending: true }),
     supabase.rpc('get_monthly_revenue'),
+    supabase.from('plans').select('key, monthly_price'),
   ])
 
   const totalRevenue = (revenueData || []).reduce((sum, r) => sum + (r.amount || 0), 0)
-  const planCounts = { basic: 0, pro: 0, enterprise: 0 }
+  const planCounts = {}
   ;(schoolsByPlan || []).forEach((s) => {
-    if (planCounts[s.plan] !== undefined) planCounts[s.plan]++
+    planCounts[s.plan] = (planCounts[s.plan] || 0) + 1
   })
-  const mrr = (planCounts.basic * getPlanPrice('basic')) + (planCounts.pro * getPlanPrice('pro')) + (planCounts.enterprise * getPlanPrice('enterprise'))
+  const planPrices = {}
+  ;(plansData || []).forEach((p) => { planPrices[p.key] = p.monthly_price || 0 })
+  const mrr = Object.entries(planCounts).reduce((sum, [plan, count]) => sum + count * (planPrices[plan] || 0), 0)
 
   const schoolGrowthMap = {}
   ;(signups || []).forEach((s) => {
@@ -69,9 +71,9 @@ export async function fetchDashboardStats() {
 
 export async function fetchSubscriptionBreakdown() {
   const { data } = await supabase.from('schools').select('plan')
-  const counts = { basic: 0, pro: 0, enterprise: 0 }
+  const counts = {}
   ;(data || []).forEach((s) => {
-    if (counts[s.plan] !== undefined) counts[s.plan]++
+    counts[s.plan] = (counts[s.plan] || 0) + 1
   })
   return Object.entries(counts).map(([name, value]) => ({ name, value }))
 }

@@ -1,0 +1,117 @@
+.feature-locked-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 32px;
+}
+
+.feature-locked-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 48px 40px;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.feature-locked-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #dc2626;
+  margin-bottom: 20px;
+}
+
+.feature-locked-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.feature-locked-description {
+  font-size: 14px;
+  color: #475569;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.feature-locked-plan-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.feature-locked-current,
+.feature-locked-required {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.feature-locked-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.feature-locked-plan-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.feature-locked-plan-badge.current {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.feature-locked-plan-badge.required {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.feature-locked-arrow {
+  color: #94a3b8;
+}
+
+.feature-locked-help {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 16px;
+}
+
+.feature-locked-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--color-primary, #2563eb);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.feature-locked-contact:hover {
+  opacity: 0.9;
+}

@@ -3,19 +3,15 @@ import {
   CreditCard, School, DollarSign, Users, Calendar,
   ArrowUp, ArrowDown, Edit3, Loader, TrendingUp
 } from 'lucide-react'
-import { fetchSubscriptionStats, fetchUpcomingRenewals, getPlanPrice } from '../../features/superadmin/subscriptionService'
+import { fetchSubscriptionStats, fetchUpcomingRenewals } from '../../features/superadmin/subscriptionService'
+import { fetchAllPlans } from '../../features/access/featureAccessService'
 import PlanChangeModal from '../../features/subscription/PlanChangeModal'
 import './BillingPage.css'
-
-const PLAN_META = {
-  basic: { label: 'Basic', color: '#475569', bg: '#f1f5f9' },
-  pro: { label: 'Pro', color: '#2563eb', bg: '#dbeafe' },
-  enterprise: { label: 'Enterprise', color: '#ca8a04', bg: '#fef9c3' },
-}
 
 export default function BillingPage() {
   const [data, setData] = useState(null)
   const [renewals, setRenewals] = useState([])
+  const [plansMeta, setPlansMeta] = useState({})
   const [loading, setLoading] = useState(true)
   const [changePlanSchool, setChangePlanSchool] = useState(null)
 
@@ -26,12 +22,18 @@ export default function BillingPage() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [stats, upcoming] = await Promise.all([
+      const [stats, upcoming, plansData] = await Promise.all([
         fetchSubscriptionStats(),
         fetchUpcomingRenewals(60),
+        fetchAllPlans(),
       ])
       setData(stats)
       setRenewals(upcoming)
+      const meta = {}
+      plansData.forEach((p) => {
+        meta[p.key] = { label: p.label, color: p.color, bg: p.bg, monthly_price: p.monthly_price }
+      })
+      setPlansMeta(meta)
     } catch (err) {
       console.error('[Billing] load error:', err)
     }
@@ -43,6 +45,7 @@ export default function BillingPage() {
 
   const totalSchools = data.schools.length
   const planEntries = Object.entries(data.planGroups)
+  const getPrice = (planKey) => plansMeta[planKey]?.monthly_price || 0
 
   return (
     <div className="billing-page">
@@ -61,7 +64,7 @@ export default function BillingPage() {
           </div>
           <p className="su-stat-label">Schools by Plan</p>
           <p className="su-stat-value" style={{ color: '#16a34a' }}>
-            {planEntries.map(([key, list]) => `${PLAN_META[key]?.label}: ${list.length}`).join(' · ')}
+            {planEntries.map(([key, list]) => `${plansMeta[key]?.label || key}: ${list.length}`).join(' · ')}
           </p>
           <p className="su-stat-sub">{totalSchools} total schools</p>
         </div>
@@ -104,7 +107,7 @@ export default function BillingPage() {
                   </td>
                   <td><span className={`plan-badge ${s.plan}`}>{s.plan}</span></td>
                   <td>{s.subscription_end ? new Date(s.subscription_end).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
-                  <td>KES {getPlanPrice(s.plan).toLocaleString()}</td>
+                  <td>KES {getPrice(s.plan).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -120,13 +123,13 @@ export default function BillingPage() {
           <div key={planKey} style={{ marginBottom: 24 }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
-              padding: '8px 12px', borderRadius: 8, background: PLAN_META[planKey]?.bg,
+              padding: '8px 12px', borderRadius: 8, background: plansMeta[planKey]?.bg || '#f1f5f9',
             }}>
-              <span style={{ fontWeight: 600, fontSize: 14, color: PLAN_META[planKey]?.color, textTransform: 'capitalize' }}>
-                {PLAN_META[planKey]?.label}
+              <span style={{ fontWeight: 600, fontSize: 14, color: plansMeta[planKey]?.color || '#64748b', textTransform: 'capitalize' }}>
+                {plansMeta[planKey]?.label || planKey}
               </span>
               <span style={{ fontSize: 12, color: '#64748b' }}>
-                ({schools.length} schools · KES {getPlanPrice(planKey).toLocaleString()}/mo each)
+                ({schools.length} schools · KES {getPrice(planKey).toLocaleString()}/mo each)
               </span>
             </div>
             {schools.length === 0 ? (

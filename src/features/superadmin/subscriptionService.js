@@ -1,19 +1,28 @@
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../audit/auditService'
 
-const PLAN_PRICES = { basic: 2500, pro: 5000, enterprise: 10000 }
+let _planPrices = null
 
-export function getPlanPrice(plan) {
-  return PLAN_PRICES[plan] || 0
+async function getPlanPrices() {
+  if (_planPrices) return _planPrices
+  const { data } = await supabase.from('plans').select('key, monthly_price')
+  _planPrices = {}
+  ;(data || []).forEach((p) => { _planPrices[p.key] = p.monthly_price || 0 })
+  return _planPrices
 }
 
-export function getPriceDiff(currentPlan, newPlan) {
-  return getPlanPrice(newPlan) - getPlanPrice(currentPlan)
+export async function getPlanPrice(plan) {
+  const prices = await getPlanPrices()
+  return prices[plan] || 0
+}
+
+export async function getPriceDiff(currentPlan, newPlan) {
+  return (await getPlanPrice(newPlan)) - (await getPlanPrice(currentPlan))
 }
 
 export async function changeSchoolPlan(schoolId, schoolName, currentPlan, newPlan) {
   const now = new Date().toISOString()
-  const diff = getPriceDiff(currentPlan, newPlan)
+  const diff = await getPriceDiff(currentPlan, newPlan)
 
   const { error } = await supabase
     .from('schools')
@@ -41,19 +50,20 @@ export async function changeSchoolPlan(schoolId, schoolName, currentPlan, newPla
 }
 
 export async function fetchSubscriptionStats() {
-  const { data: schools, error } = await supabase
-    .from('schools')
-    .select('*')
-    .order('name')
+  const [{ data: schools, error }, prices] = await Promise.all([
+    supabase.from('schools').select('*').order('name'),
+    getPlanPrices(),
+  ])
 
   if (error) throw new Error(error.message)
 
-  const planGroups = { basic: [], pro: [], enterprise: [] }
+  const planGroups = {}
   let totalMrr = 0
 
   schools.forEach((s) => {
-    if (planGroups[s.plan]) planGroups[s.plan].push(s)
-    totalMrr += getPlanPrice(s.plan)
+    if (!planGroups[s.plan]) planGroups[s.plan] = []
+    planGroups[s.plan].push(s)
+    totalMrr += prices[s.plan] || 0
   })
 
   return { schools, planGroups, totalMrr }

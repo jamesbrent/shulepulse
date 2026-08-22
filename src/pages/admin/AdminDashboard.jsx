@@ -1,6 +1,6 @@
 import FeesPage from './fees/FeesPage'
 import './FeesPage.css'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   LayoutDashboard, Users, DollarSign, ClipboardList,
   BarChart2, BarChart3, GraduationCap, Palette, Settings, LogOut,
@@ -56,6 +56,9 @@ import ExamSetup from '../HOD/ExamSetup'
 import MarksApproval from '../HOD/MarksApproval'
 import DeptAnalytics from '../HOD/DeptAnalytics'
 import ReportCenter from '../HOD/ReportCenter'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
+import { ADMIN_NAV_FEATURES } from '../../features/access/featureMap'
+import FeatureGate from '../../features/access/FeatureGate'
 import SubjectPerformance from '../HOD/SubjectPerformance'
 import TeacherReview from '../HOD/TeacherReview'
 import DeptExams from '../HOD/DeptExams'
@@ -247,6 +250,7 @@ export default function AdminDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
+  const { features, isSuperadmin } = useFeatureAccess()
   const [activeNav, setActiveNav] = useState('dashboard')
   const [studentAddPending, setStudentAddPending] = useState(false)
   const goAddStudent = () => { setStudentAddPending(true); handleNav('students') }
@@ -268,6 +272,26 @@ export default function AdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState(null)
   const [pendingAp, setPendingAp] = useState(0)
   const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
+
+  const filteredNavGroups = useMemo(() => {
+    if (isSuperadmin) return NAV_GROUPS
+    return NAV_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        const required = ADMIN_NAV_FEATURES[item.key]
+        if (!required) return true
+        return required.some((f) => features.includes(f))
+      }),
+    })).filter((group) => group.items.length > 0)
+  }, [features, isSuperadmin])
+
+  useEffect(() => {
+    if (isSuperadmin || activeNav === 'dashboard') return
+    const required = ADMIN_NAV_FEATURES[activeNav]
+    if (required && !required.some((f) => features.includes(f))) {
+      setActiveNav('dashboard')
+    }
+  }, [features, activeNav, isSuperadmin])
 
   useEffect(() => {
     fetchDashboardData()
@@ -763,7 +787,7 @@ export default function AdminDashboard() {
           <span>Dashboard</span>
         </button>
 
-        {NAV_GROUPS.map(group => {
+        {filteredNavGroups.map(group => {
           const isOpen = expandedGroup === group.id
           const hasActive = isGroupActive(group)
           return (
@@ -807,12 +831,6 @@ export default function AdminDashboard() {
 
       <div className="adm-sidebar-bottom">
         <div className="adm-divider" />
-        {authProfile?.role === 'superadmin' && (
-          <button className="adm-nav-top" onClick={() => window.location.href = '/superadmin'} style={{ color: '#f59e0b' }}>
-            <Landmark size={16} />
-            <span>Platform Console</span>
-          </button>
-        )}
         <RoleSwitcher />
         <button className="adm-logout" onClick={handleLogout}>
           <LogOut size={16} />
@@ -860,7 +878,9 @@ export default function AdminDashboard() {
           </header>
         )}
 
-        {renderContent()}
+        <FeatureGate feature={ADMIN_NAV_FEATURES[activeNav]?.[0]}>
+          {renderContent()}
+        </FeatureGate>
       </main>
     </div>
   )

@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import ProtectedRoute from './components/ProtectedRoute'
 import BrandingProvider from './features/branding/BrandingProvider'
+import { FeatureAccessProvider } from './features/access/FeatureAccessContext'
+import './features/access/FeatureLocked.css'
 import { basePath } from './lib/paths'
 
 import Login from './pages/Login'
@@ -31,6 +33,7 @@ export default function App() {
   return (
     <BrowserRouter basename={basePath()}>
       <BrandingProvider>
+      <FeatureAccessProvider>
       <Routes>
         {/* Public */}
         <Route path="/" element={<Login />} />
@@ -102,6 +105,7 @@ export default function App() {
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </FeatureAccessProvider>
       </BrandingProvider>
     </BrowserRouter>
   )

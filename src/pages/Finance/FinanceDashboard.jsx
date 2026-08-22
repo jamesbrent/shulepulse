@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, DollarSign, CreditCard, Receipt, FileText,
   BarChart3, LogOut, ChevronRight, Upload, UserPlus, Bell, MessageSquare, Menu, X,
@@ -49,6 +49,9 @@ import '../admin/Comments.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import './FinanceDashboard.css'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
+import { FINANCE_NAV_FEATURES } from '../../features/access/featureMap'
+import FeatureGate from '../../features/access/FeatureGate'
 
 const DASHBOARD_ITEM = { key: 'dashboard', label: 'Dashboard', page: 'dashboard' }
 
@@ -156,6 +159,7 @@ export default function FinanceDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
+  const { features, isSuperadmin } = useFeatureAccess()
   const [activeItem, setActiveItem] = useState(DASHBOARD_ITEM)
   const [openGroup, setOpenGroup] = useState(DEFAULT_OPEN)
   const [openRecordPayment, setOpenRecordPayment] = useState(false)
@@ -171,6 +175,32 @@ export default function FinanceDashboard() {
   const [cashStats, setCashStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
+
+  const filteredNavSections = useMemo(() => {
+    if (isSuperadmin) return NAV_SECTIONS
+    return NAV_SECTIONS.map((section) => ({
+      ...section,
+      groups: section.groups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => {
+            const required = FINANCE_NAV_FEATURES[item.key] || FINANCE_NAV_FEATURES[item.page]
+            if (!required) return true
+            return required.some((f) => features.includes(f))
+          }),
+        }))
+        .filter((group) => group.items.length > 0),
+    })).filter((section) => section.groups.length > 0)
+  }, [features, isSuperadmin])
+
+  useEffect(() => {
+    if (isSuperadmin || activeItem.key === 'dashboard') return
+    const page = activeItem.page || activeItem.key
+    const required = FINANCE_NAV_FEATURES[page] || FINANCE_NAV_FEATURES[activeItem.key]
+    if (required && !required.some((f) => features.includes(f))) {
+      setActiveItem(DASHBOARD_ITEM)
+    }
+  }, [features, activeItem, isSuperadmin])
 
   useEffect(() => {
     if (activeItem?.page === 'dashboard') fetchBursarData()
@@ -447,7 +477,7 @@ export default function FinanceDashboard() {
             <span>Dashboard</span>
           </button>
 
-          {NAV_SECTIONS.map((section) => (
+          {filteredNavSections.map((section) => (
             <div className="b-nav-section" key={section.label}>
               <p className="b-nav-section-label">{section.label}</p>
               {section.groups.map((group) => {
@@ -526,7 +556,9 @@ export default function FinanceDashboard() {
           </div>
         </header>
 
-        {renderContent()}
+        <FeatureGate feature={FINANCE_NAV_FEATURES[activeItem.page] || FINANCE_NAV_FEATURES[activeItem.key]?.[0]}>
+          {renderContent()}
+        </FeatureGate>
       </main>
     </div>
   )

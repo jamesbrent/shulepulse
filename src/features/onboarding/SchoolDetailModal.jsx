@@ -5,15 +5,29 @@ import {
   CheckCircle, XCircle, Clock, HardDrive, MessageSquare,
   Activity, Zap, Shield, RefreshCw, AlertTriangle,
   Download, ArrowUp, ArrowDown, Lock, Unlock, Edit,
-  ToggleLeft, ToggleRight, DollarSign, Building2
+  ToggleLeft, ToggleRight, DollarSign, Building2, Loader, Save, Pause, Play
 } from 'lucide-react'
 import { fetchSchoolStats, fetchSchoolRecentActivity, getModulesConfig } from '../superadmin/schoolService'
+import { supabase } from '../../lib/supabase'
+import {
+  fetchAllPlans, fetchSchoolFeatures, fetchFeatureCatalog,
+  fetchSchoolOverrides, setSchoolOverride, removeSchoolOverride,
+  updateSchoolPlan, suspendSchool, reactivateSchool, setTrialSchool,
+  invalidateCache
+} from '../access/featureAccessService'
 
-export default function SchoolDetailModal({ school, onClose, onEdit }) {
+export default function SchoolDetailModal({ school: initialSchool, onClose, onEdit }) {
+  const [school, setSchool] = useState(initialSchool)
   const [stats, setStats] = useState(null)
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const [plans, setPlans] = useState([])
+  const [catalog, setCatalog] = useState([])
+  const [schoolFeatures, setSchoolFeatures] = useState([])
+  const [overrides, setOverrides] = useState([])
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null)
   const modules = getModulesConfig(school)
 
   useEffect(() => {
@@ -22,14 +36,141 @@ export default function SchoolDetailModal({ school, onClose, onEdit }) {
 
   const loadData = async () => {
     setLoading(true)
-    const [s, a] = await Promise.all([
-      fetchSchoolStats(school.id),
-      fetchSchoolRecentActivity(school.id),
-    ])
-    setStats(s)
-    setActivity(a)
+    try {
+      const [s, a, plansData, catalogData] = await Promise.all([
+        fetchSchoolStats(school.id),
+        fetchSchoolRecentActivity(school.id),
+        fetchAllPlans(),
+        fetchFeatureCatalog(),
+      ])
+      setStats(s)
+      setActivity(a)
+      setPlans(plansData)
+      setCatalog(catalogData)
+
+      const [features, overridesData] = await Promise.all([
+        fetchSchoolFeatures(school.id),
+        fetchSchoolOverrides(school.id),
+      ])
+      setSchoolFeatures(features)
+      setOverrides(overridesData)
+    } catch (err) {
+      console.error('[SchoolDetail] load error:', err)
+    }
     setLoading(false)
   }
+
+  const daysLeft = school.subscription_end
+    ? Math.ceil((new Date(school.subscription_end) - new Date()) / (1000 * 60 * 60 * 24))
+    : null
+
+  const showToast = (type, message) => {
+    setToast({ type, message })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const handlePlanChange = async (newPlanKey) => {
+    setSaving(true)
+    try {
+      await updateSchoolPlan(school.id, newPlanKey)
+      setSchool((prev) => ({ ...prev, plan: newPlanKey }))
+      invalidateCache()
+      await loadData()
+      showToast('success', `Plan changed to ${newPlanKey}`)
+    } catch (err) {
+      showToast('error', err.message)
+    }
+    setSaving(false)
+  }
+
+  const handleSuspend = async () => {
+    setSaving(true)
+    try {
+      await suspendSchool(school.id)
+      setSchool((prev) => ({ ...prev, subscription_status: 'suspended' }))
+      invalidateCache()
+      showToast('success', 'School suspended')
+    } catch (err) {
+      showToast('error', err.message)
+    }
+    setSaving(false)
+  }
+
+  const handleReactivate = async () => {
+    setSaving(true)
+    try {
+      await reactivateSchool(school.id, school.plan || 'basic')
+      setSchool((prev) => ({ ...prev, subscription_status: 'active' }))
+      invalidateCache()
+      showToast('success', 'School reactivated')
+    } catch (err) {
+      showToast('error', err.message)
+    }
+    setSaving(false)
+  }
+
+  const handleTrial = async (days = 14) => {
+    setSaving(true)
+    try {
+      await setTrialSchool(school.id, school.plan || 'basic', days)
+      const end = new Date()
+      end.setDate(end.getDate() + days)
+      setSchool((prev) => ({ ...prev, subscription_status: 'trial', subscription_end: end.toISOString() }))
+      invalidateCache()
+      showToast('success', `Trial started (${days} days)`)
+    } catch (err) {
+      showToast('error', err.message)
+    }
+    setSaving(false)
+  }
+
+  const handleExtend = async (days = 30) => {
+    setSaving(true)
+    try {
+      const currentEnd = school.subscription_end ? new Date(school.subscription_end) : new Date()
+      if (currentEnd < new Date()) currentEnd.setTime(Date.now())
+      currentEnd.setDate(currentEnd.getDate() + days)
+      const { error } = await supabase.from('schools').update({ subscription_end: currentEnd.toISOString() }).eq('id', school.id)
+      if (error) throw new Error(error.message)
+      setSchool((prev) => ({ ...prev, subscription_end: currentEnd.toISOString() }))
+      showToast('success', `Extended by ${days} days`)
+    } catch (err) {
+      showToast('error', err.message)
+    }
+    setSaving(false)
+  }
+
+  const handleOverrideToggle = async (featureKey, currentEnabled) => {
+    setSaving(true)
+    try {
+      const isPlanFeature = (planFeatures || []).includes(featureKey)
+      if (isPlanFeature && currentEnabled) {
+        await setSchoolOverride(school.id, featureKey, false)
+      } else if (!isPlanFeature && !currentEnabled) {
+        await removeSchoolOverride(school.id, featureKey)
+      } else if (!currentEnabled) {
+        await setSchoolOverride(school.id, featureKey, true)
+      } else {
+        await removeSchoolOverride(school.id, featureKey)
+      }
+      const [features, overridesData] = await Promise.all([
+        fetchSchoolFeatures(school.id),
+        fetchSchoolOverrides(school.id),
+      ])
+      setSchoolFeatures(features)
+      setOverrides(overridesData)
+      invalidateCache()
+    } catch (err) {
+      showToast('error', err.message)
+    }
+    setSaving(false)
+  }
+
+  const planFeatures = schoolFeatures
+
+  const activePlan = plans.find((p) => p.key === school.plan)
+
+  const tabs = ['overview', 'modules', 'subscription', 'features', 'admins', 'activity']
 
   const daysLeft = school.subscription_end
     ? Math.ceil((new Date(school.subscription_end) - new Date()) / (1000 * 60 * 60 * 24))
@@ -179,48 +320,168 @@ export default function SchoolDetailModal({ school, onClose, onEdit }) {
             </div>
           ) : activeTab === 'subscription' ? (
             <div className="sc-detail-section">
-              <h4>Subscription Information</h4>
+              {toast && (
+                <div className={`sc-toast ${toast.type}`}>
+                  {toast.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                  {toast.message}
+                </div>
+              )}
+              <h4>Subscription Management</h4>
               <div className="sc-info-grid">
                 <div className="sc-info-item">
                   <CreditCard size={14} />
                   <span className="sc-info-label">Plan</span>
-                  <span className={`plan-badge ${school.plan}`}>{school.plan}</span>
+                  <span className={`plan-badge ${school.plan}`}>{school.plan || 'none'}</span>
                 </div>
                 <div className="sc-info-item">
                   <RefreshCw size={14} />
-                  <span className="sc-info-label">Billing Cycle</span>
-                  <span className="sc-info-value">{school.billing_cycle || 'Monthly'}</span>
+                  <span className="sc-info-label">Status</span>
+                  <span className={`sc-status-badge ${school.subscription_status || 'active'}`}>
+                    {school.subscription_status || 'active'}
+                  </span>
                 </div>
                 <div className="sc-info-item">
                   <DollarSign size={14} />
                   <span className="sc-info-label">Amount</span>
                   <span className="sc-info-value">
-                    KES {school.plan === 'basic' ? '2,500' : school.plan === 'pro' ? '5,000' : school.plan === 'enterprise' ? '10,000' : '—'}
-                    /mo
+                    KES {(activePlan?.monthly_price || 0).toLocaleString()}/mo
                   </span>
                 </div>
                 <div className="sc-info-item">
                   <Calendar size={14} />
-                  <span className="sc-info-label">Next Due</span>
+                  <span className="sc-info-label">Started</span>
                   <span className="sc-info-value">
-                    {school.subscription_end
-                      ? new Date(school.subscription_end).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
+                    {school.subscription_start
+                      ? new Date(school.subscription_start).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
                       : '—'}
                   </span>
                 </div>
                 <div className="sc-info-item">
-                  <CheckCircle size={14} />
-                  <span className="sc-info-label">Payment Status</span>
-                  <span className="sc-info-value" style={{ color: daysLeft && daysLeft > 0 ? '#16a34a' : '#ef4444' }}>
-                    {daysLeft && daysLeft > 0 ? 'Paid' : daysLeft === 0 ? 'Due' : '—'}
+                  <Calendar size={14} />
+                  <span className="sc-info-label">Expires</span>
+                  <span className="sc-info-value" style={{ color: daysLeft !== null && daysLeft <= 7 ? '#ef4444' : undefined }}>
+                    {school.subscription_end
+                      ? new Date(school.subscription_end).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
+                      : 'No expiry'}
+                  </span>
+                </div>
+                <div className="sc-info-item">
+                  <Clock size={14} />
+                  <span className="sc-info-label">Days Left</span>
+                  <span className="sc-info-value" style={{
+                    color: daysLeft === null ? '#64748b' : daysLeft <= 0 ? '#ef4444' : daysLeft <= 7 ? '#ca8a04' : '#16a34a'
+                  }}>
+                    {daysLeft === null ? '—' : daysLeft <= 0 ? 'Expired' : `${daysLeft} days`}
                   </span>
                 </div>
               </div>
-              <div className="sc-detail-actions" style={{ marginTop: 16 }}>
-                <button className="btn-primary"><RefreshCw size={14} /> Renew</button>
-                <button className="btn-secondary"><ArrowUp size={14} /> Upgrade</button>
-                <button className="btn-secondary"><ArrowDown size={14} /> Downgrade</button>
+
+              <div className="sc-sub-section" style={{ marginTop: 20 }}>
+                <h5>Change Plan</h5>
+                <div className="sc-plan-options">
+                  {plans.filter((p) => p.is_active !== false).map((p) => (
+                    <button
+                      key={p.key}
+                      className={`sc-plan-option ${school.plan === p.key ? 'current' : ''}`}
+                      onClick={() => handlePlanChange(p.key)}
+                      disabled={saving || school.plan === p.key}
+                    >
+                      <span className="sc-plan-option-name">{p.label}</span>
+                      <span className="sc-plan-option-price">KES {(p.monthly_price || 0).toLocaleString()}/mo</span>
+                      {school.plan === p.key && <CheckCircle size={14} color="#16a34a" />}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              <div className="sc-sub-section" style={{ marginTop: 20 }}>
+                <h5>Subscription Actions</h5>
+                <div className="sc-detail-actions" style={{ flexWrap: 'wrap' }}>
+                  {school.subscription_status === 'suspended' ? (
+                    <button className="btn-primary" onClick={handleReactivate} disabled={saving}>
+                      {saving ? <Loader size={14} className="spin" /> : <Play size={14} />} Reactivate
+                    </button>
+                  ) : (
+                    <button className="btn-secondary" onClick={handleSuspend} disabled={saving} style={{ color: '#ef4444' }}>
+                      <Pause size={14} /> Suspend
+                    </button>
+                  )}
+                  <button className="btn-secondary" onClick={() => handleTrial(14)} disabled={saving}>
+                    <Calendar size={14} /> Start Trial (14d)
+                  </button>
+                  <button className="btn-secondary" onClick={() => handleExtend(30)} disabled={saving}>
+                    <RefreshCw size={14} /> Extend 30 Days
+                  </button>
+                  <button className="btn-secondary" onClick={() => handleExtend(90)} disabled={saving}>
+                    <RefreshCw size={14} /> Extend 90 Days
+                  </button>
+                </div>
+              </div>
+
+              <div className="sc-sub-section" style={{ marginTop: 20 }}>
+                <h5>Enabled Features ({schoolFeatures.length})</h5>
+                <div className="sc-feature-tags">
+                  {schoolFeatures.map((fk) => {
+                    const feat = catalog.find((f) => f.feature_key === fk)
+                    return (
+                      <span key={fk} className="sc-feature-tag enabled">
+                        {feat?.label || fk}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : activeTab === 'features' ? (
+            <div className="sc-detail-section">
+              {toast && (
+                <div className={`sc-toast ${toast.type}`}>
+                  {toast.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                  {toast.message}
+                </div>
+              )}
+              <h4>Feature Access Control</h4>
+              <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>
+                Toggle features on/off for this school. Overrides the plan defaults.
+              </p>
+              {[...new Set(catalog.map((f) => f.module))].map((mod) => {
+                const modFeatures = catalog.filter((f) => f.module === mod)
+                if (modFeatures.length === 0) return null
+                return (
+                  <div key={mod} className="sc-feature-module">
+                    <div className="sc-feature-module-title">{mod}</div>
+                    <div className="sc-feature-module-list">
+                      {modFeatures.map((feat) => {
+                        const isEnabled = schoolFeatures.includes(feat.feature_key)
+                        const isPlanDefault = (planFeatures || []).includes(feat.feature_key)
+                        const override = overrides.find((o) => o.feature_key === feat.feature_key)
+                        const isOverridden = !!override
+
+                        return (
+                          <div
+                            key={feat.feature_key}
+                            className={`sc-feature-toggle-item ${isEnabled ? 'enabled' : 'disabled'} ${isOverridden ? 'overridden' : ''}`}
+                          >
+                            <div className="sc-feature-toggle-info">
+                              <span className="sc-feature-toggle-label">{feat.label}</span>
+                              <span className="sc-feature-toggle-meta">
+                                {isPlanDefault ? 'Plan default' : isOverridden ? (override.enabled ? 'Override: ON' : 'Override: OFF') : 'Not in plan'}
+                              </span>
+                            </div>
+                            <button
+                              className={`sc-feature-toggle-btn ${isEnabled ? 'on' : 'off'}`}
+                              onClick={() => handleOverrideToggle(feat.feature_key, isEnabled)}
+                              disabled={saving}
+                            >
+                              {isEnabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           ) : activeTab === 'admins' ? (
             <div className="sc-detail-section">
