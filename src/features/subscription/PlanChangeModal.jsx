@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   X, School, CreditCard, ArrowUp, ArrowDown,
   Loader, AlertTriangle, CheckCircle
@@ -40,7 +41,7 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
     setSaving(false)
   }
 
-  return (
+  return createPortal(
     <div className="onboard-overlay" onClick={onClose}>
       <div className="onboard-modal" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
         <div className="onboard-header">
@@ -131,6 +132,7 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
