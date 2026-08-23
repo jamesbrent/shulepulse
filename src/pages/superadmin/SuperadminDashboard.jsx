@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   LayoutDashboard, School, CreditCard, Users,
   TrendingUp, Settings, LogOut, Plus, Search,
   Eye, Edit, Ban, Trash2, Building2, Download, CheckCircle,
   GraduationCap, UserCheck, DollarSign, Calendar,
-  Activity, ArrowUp, ArrowDown, History, MessageSquare, Menu, X, ListTree
+  Activity, ArrowUp, ArrowDown, History, MessageSquare, Menu, X, ListTree,
+  ChevronDown, ArrowRight
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
+import AvatarUpload from '../../components/AvatarUpload'
 import { basePath } from '../../lib/paths'
 import './SuperadminDashboard.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
@@ -30,6 +32,8 @@ import SupportPage from './SupportPage'
 import './SupportPage.css'
 import SchoolCategoriesPage from './SchoolCategoriesPage'
 import './SchoolCategoriesPage.css'
+import PlanManagementPage from './PlanManagementPage'
+import './PlanManagementPage.css'
 import OnboardSchoolModal from '../../features/onboarding/OnboardSchoolModal'
 import '../../features/onboarding/OnboardSchoolModal.css'
 import SchoolDetailModal from '../../features/onboarding/SchoolDetailModal'
@@ -37,6 +41,7 @@ import EditSchoolModal from '../../features/onboarding/EditSchoolModal'
 import { fetchDashboardStats, fetchActiveUserStats } from '../../features/superadmin/dashboardService'
 import { deleteSchool, toggleSchoolStatus } from '../../features/superadmin/schoolService'
 import { logAction } from '../../features/audit/auditService'
+import { useAuthStore } from '../../store/authStore'
 
 const PIE_COLORS = ['#16a34a', '#2563eb', '#ca8a04']
 
@@ -52,6 +57,9 @@ export default function SuperadminDashboard() {
   const [editSchool, setEditSchool] = useState(null)
   const [toast, setToast] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [showSchoolPicker, setShowSchoolPicker] = useState(false)
+  const schoolPickerRef = useRef(null)
+  const { selectSchool } = useAuthStore()
 
   useEffect(() => {
     loadAll()
@@ -83,6 +91,18 @@ export default function SuperadminDashboard() {
     await supabase.auth.signOut()
     window.location.href = basePath('/')
   }
+
+  const goToSchool = async (school) => {
+    await selectSchool(school)
+    window.location.href = basePath('/admin')
+  }
+
+  useEffect(() => {
+    if (!showSchoolPicker) return
+    const handler = (e) => { if (schoolPickerRef.current && !schoolPickerRef.current.contains(e.target)) setShowSchoolPicker(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showSchoolPicker])
 
   const handleExport = () => {
     const headers = ['Name', 'County', 'Type', 'Plan', 'Status', 'Phone', 'Email', 'Address']
@@ -131,6 +151,7 @@ export default function SuperadminDashboard() {
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
     { key: 'schools', label: 'All Schools', icon: <School size={16} /> },
     { key: 'billing', label: 'Billing', icon: <CreditCard size={16} /> },
+    { key: 'plans', label: 'Plan Management', icon: <ListTree size={16} /> },
     { key: 'users', label: 'Users', icon: <Users size={16} /> },
     { key: 'audit', label: 'Audit Logs', icon: <History size={16} /> },
     { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
@@ -143,6 +164,7 @@ export default function SuperadminDashboard() {
     dashboard: 'Platform Overview',
     schools: 'All Schools',
     billing: 'Billing',
+    plans: 'Plan Management',
     users: 'Users',
     audit: 'Audit Logs',
     support: 'Support',
@@ -155,6 +177,7 @@ export default function SuperadminDashboard() {
     switch (activeNav) {
       case 'schools': return <SchoolsPage onOnboard={() => setShowOnboard(true)} />
       case 'billing': return <BillingPage />
+      case 'plans': return <PlanManagementPage />
       case 'users': return <UsersPage />
       case 'audit': return <AuditLogsPage />
       case 'support': return <SupportPage />
@@ -411,6 +434,13 @@ export default function SuperadminDashboard() {
           ))}
         </nav>
         <RoleSwitcher />
+        <div className="sidebar-user-section">
+          <AvatarUpload size={36} />
+          <div className="sidebar-user-info">
+            <p className="sidebar-user-name">{useAuthStore.getState().profile?.full_name || 'Admin'}</p>
+            <p className="sidebar-user-role">Superadmin</p>
+          </div>
+        </div>
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={() => { setMobileOpen(false); handleLogout() }}>
             <LogOut size={16} />
@@ -426,6 +456,21 @@ export default function SuperadminDashboard() {
             <p>ShulePulse · {new Date().toLocaleDateString('en-KE', { month: 'long', year: 'numeric' })}</p>
           </div>
           <div className="header-actions">
+            <div className="school-admin-picker" ref={schoolPickerRef}>
+              <button className="btn-secondary" onClick={() => setShowSchoolPicker(!showSchoolPicker)}>
+                <Building2 size={15} /> School Admin <ChevronDown size={14} />
+              </button>
+              {showSchoolPicker && (
+                <div className="school-admin-dropdown">
+                  {schools.map((s) => (
+                    <button key={s.id} className="school-admin-option" onClick={() => goToSchool(s)}>
+                      <span>{s.name}</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button className="btn-secondary" onClick={() => { setMobileOpen(false); handleExport() }}>
               <Download size={15} /> Export Data
             </button>

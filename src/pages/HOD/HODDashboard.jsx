@@ -7,6 +7,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
+import AvatarUpload from '../../components/AvatarUpload'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
@@ -278,7 +279,7 @@ export default function HODDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="hod-sidebar-school">
-          <div className="hod-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
+          <AvatarUpload className="hod-school-avatar" size={36} />
           <div>
             <p className="hod-school-name">{authProfile?.full_name || 'User'}</p>
             <p className="hod-school-role">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Head of Department'}</p>

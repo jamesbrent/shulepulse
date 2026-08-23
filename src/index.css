@@ -18,3 +18,23 @@ body {
   background-color: #f8fafc;
   color: #1e293b;
 }
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }
+
+.avatar-upload-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 50%;
+  color: #fff;
+}
+[class*="avatar"]:hover > .avatar-upload-overlay,
+div:hover > .avatar-upload-overlay {
+  opacity: 1;
+}

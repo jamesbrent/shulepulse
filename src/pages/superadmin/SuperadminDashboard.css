@@ -96,6 +96,19 @@
 .nav-item { padding: 8px 12px; font-size: 13px; font-weight: 500; border-radius: 7px; }
 .logout-btn { padding: 8px 12px; font-size: 13px; }
 
+.sidebar-user-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+}
+.sidebar-user-section .sidebar-user-info { flex: 1; min-width: 0; }
+.sidebar-user-name { color: #f1f5f9; font-size: 13px; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-user-role { color: #94a3b8; font-size: 11px; margin: 0; }
+
 .sidebar-footer {
   padding-top: 16px;
   border-top: 1px solid #1e293b;
@@ -674,3 +687,18 @@
   .su-stat-value { font-size: 22px; }
   .header-actions .btn-secondary { display: none; }
 }
+
+/* School Admin Picker */
+.school-admin-picker { position: relative; }
+.school-admin-dropdown {
+  position: absolute; top: 100%; right: 0; margin-top: 4px; min-width: 240px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 100;
+  max-height: 280px; overflow-y: auto;
+}
+.school-admin-option {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 10px 14px; background: none; border: none;
+  font-size: 13px; color: #374151; cursor: pointer; text-align: left;
+}
+.school-admin-option:hover { background: #f8fafc; color: var(--color-primary, #2563eb); }

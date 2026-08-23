@@ -7,6 +7,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
+import AvatarUpload from '../../components/AvatarUpload'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import { weightedScoreMean } from '../../services/grading'
@@ -295,9 +296,7 @@ export default function ClassTeacherDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="ct-sidebar-user">
-          <div className="ct-user-avatar">
-            {authProfile?.full_name?.[0]?.toUpperCase() || 'T'}
-          </div>
+          <AvatarUpload className="ct-user-avatar" size={36} fallbackChar="T" />
           <div>
             <p className="ct-user-name">{authProfile?.full_name || teacherData?.full_name || 'Teacher'}</p>
             <p className="ct-user-role">

@@ -7,6 +7,7 @@ import {
   Mail, MessageSquare
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import AvatarUpload from '../../components/AvatarUpload'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
@@ -387,7 +388,7 @@ export default function ReceptionDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="rcp-sidebar-school">
-          <div className="rcp-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
+          <AvatarUpload className="rcp-school-avatar" size={36} />
           <div>
             <p className="rcp-school-name">{authProfile?.full_name || 'User'}</p>
             <p className="rcp-school-plan">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Receptionist'}</p>

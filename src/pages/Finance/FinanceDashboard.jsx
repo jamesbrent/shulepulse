@@ -8,6 +8,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
+import AvatarUpload from '../../components/AvatarUpload'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
@@ -461,7 +462,7 @@ export default function FinanceDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="b-sidebar-school">
-          <div className="b-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
+          <AvatarUpload className="b-school-avatar" size={36} />
           <div>
             <p className="b-school-name">{authProfile?.full_name || 'User'}</p>
             <p className="b-school-plan">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Bursar'}</p>

@@ -18,6 +18,7 @@ import {
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
+import AvatarUpload from '../../components/AvatarUpload'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
 import { fmt, fmtDate } from './fees/utils/feesHelpers'
@@ -771,7 +772,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="adm-workspace">
-        <div className="adm-ws-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
+        <AvatarUpload className="adm-ws-avatar" size={36} />
         <div className="adm-ws-info">
           <p className="adm-ws-name">{authProfile?.full_name || 'User'}</p>
           <p className="adm-ws-plan">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Admin'}</p>

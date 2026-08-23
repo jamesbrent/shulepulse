@@ -7,6 +7,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import './TeacherDashboard.css'
+import AvatarUpload from '../../components/AvatarUpload'
 import AttendancePage from './AttendancePage'
 import './AttendancePage.css'
 import GradesPage from './GradesPage'
@@ -392,9 +393,7 @@ export default function TeacherDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="teacher-profile">
-          <div className="teacher-avatar">
-            {profile?.full_name?.[0]?.toUpperCase() || 'T'}
-          </div>
+          <AvatarUpload className="teacher-avatar" size={40} fallbackChar="T" />
           <div>
             <p className="teacher-name">{profile?.full_name || 'Teacher'}</p>
             <p className="teacher-role">{profile?.role ? profile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Teacher'}</p>
