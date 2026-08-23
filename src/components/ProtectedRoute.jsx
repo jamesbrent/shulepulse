@@ -1,25 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-
-const ROLE_ROUTES = {
-  superadmin: '/superadmin',
-  admin: '/admin',
-  deputy_administrator: '/deputy-admin',
-  bursar: '/bursar',
-  registrar: '/registrar',
-  reception: '/reception',
-  hod: '/hod',
-  teacher: '/teacher',
-  class_teacher: '/class-teacher',
-  parent: '/parent',
-  student: '/student',
-  librarian: '/library',
-}
-
-function hasRole(profile, role) {
-  return profile?.role === role || profile?.roles?.includes(role)
-}
+import { ROLE_ROUTES, hasRole } from '../utils/roles'
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const { user, profile, loading } = useAuthStore()

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, UserPlus, Users, ArrowRight, Upload,
   LogOut, Download, GraduationCap, FileText, Archive, Shield,
@@ -40,11 +40,15 @@ import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import LibraryContent from '../library/LibraryContent'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
+import { REGISTRAR_NAV_FEATURES } from '../../features/access/featureMap'
+import FeatureGate from '../../features/access/FeatureGate'
 
 export default function RegistrarDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
+  const { features, isSuperadmin } = useFeatureAccess()
   const [activeNav, setActiveNav] = useState('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [stats, setStats] = useState({
@@ -65,6 +69,39 @@ export default function RegistrarDashboard() {
   useEffect(() => {
     fetchRegistrarData()
   }, [currentTerm, currentYear])
+
+  const navItems = [
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'admissions', label: 'Admissions', icon: <UserPlus size={16} /> },
+    { key: 'students', label: 'Students', icon: <Users size={16} /> },
+    { key: 'guardians', label: 'Parents & Guardians', icon: <Shield size={16} /> },
+    { key: 'transfers', label: 'Transfers', icon: <ArrowRight size={16} /> },
+    { key: 'promotions', label: 'Promotions & Graduation', icon: <GraduationCap size={16} /> },
+    { key: 'documents', label: 'Documents & Certificates', icon: <FileText size={16} /> },
+    { key: 'alumni', label: 'Alumni Records', icon: <GraduationCap size={16} /> },
+    { key: 'bulk-import', label: 'Bulk Import', icon: <Upload size={16} /> },
+    { key: 'archives', label: 'Archives & Alumni', icon: <Archive size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
+  ]
+
+  const filteredNavItems = useMemo(() => {
+    if (isSuperadmin) return navItems
+    return navItems.filter((item) => {
+      const required = REGISTRAR_NAV_FEATURES[item.key]
+      if (!required) return true
+      return required.some((f) => features.includes(f))
+    })
+  }, [features, isSuperadmin])
+
+  useEffect(() => {
+    if (isSuperadmin || activeNav === 'dashboard') return
+    const required = REGISTRAR_NAV_FEATURES[activeNav]
+    if (required && !required.some((f) => features.includes(f))) {
+      setActiveNav('dashboard')
+    }
+  }, [features, activeNav, isSuperadmin])
 
   const fetchRegistrarData = async () => {
     setLoading(true)
@@ -180,22 +217,6 @@ export default function RegistrarDashboard() {
   }
 
   const fetchSchoolId = async () => authProfile?.school_id
-
-  const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
-    { key: 'admissions', label: 'Admissions', icon: <UserPlus size={16} /> },
-    { key: 'students', label: 'Students', icon: <Users size={16} /> },
-    { key: 'guardians', label: 'Parents & Guardians', icon: <Shield size={16} /> },
-    { key: 'transfers', label: 'Transfers', icon: <ArrowRight size={16} /> },
-    { key: 'promotions', label: 'Promotions & Graduation', icon: <GraduationCap size={16} /> },
-    { key: 'documents', label: 'Documents & Certificates', icon: <FileText size={16} /> },
-    { key: 'alumni', label: 'Alumni Records', icon: <GraduationCap size={16} /> },
-    { key: 'bulk-import', label: 'Bulk Import', icon: <Upload size={16} /> },
-    { key: 'archives', label: 'Archives & Alumni', icon: <Archive size={16} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
-    { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
-  ]
 
   const handleLogout = async () => {
     setMobileOpen(false)
@@ -618,7 +639,7 @@ export default function RegistrarDashboard() {
           </div>
         </div>
         <nav className="reg-sidebar-nav">
-          {navItems.map(item => (
+          {filteredNavItems.map(item => (
             <button
               key={item.key}
               className={`reg-nav-item ${activeNav === item.key ? 'active' : ''}`}
@@ -660,7 +681,9 @@ export default function RegistrarDashboard() {
           </div>
         </header>
 
-        {renderContent()}
+        <FeatureGate feature={REGISTRAR_NAV_FEATURES[activeNav]?.[0]}>
+          {renderContent()}
+        </FeatureGate>
       </main>
     </div>
   )

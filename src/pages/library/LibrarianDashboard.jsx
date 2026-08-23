@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, BookOpen, ArrowLeftRight, Users, Clock,
   BookMarked, Settings, BarChart3, LogOut, Menu, X, BookPlus,
@@ -7,6 +7,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
 import { useAuthStore } from '../../store/authStore'
+import AvatarUpload from '../../components/AvatarUpload'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
@@ -24,11 +25,15 @@ import LibraryReports from './LibraryReports'
 import LibraryFines from './LibraryFines'
 import MemberProfile from './MemberProfile'
 import NoticesPage from '../teacher/NoticesPage'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
+import { LIBRARY_NAV_FEATURES } from '../../features/access/featureMap'
+import FeatureGate from '../../features/access/FeatureGate'
 
 export default function LibrarianDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
+  const { features, isSuperadmin } = useFeatureAccess()
   const [activeNav, setActiveNav] = useState('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [schoolId, setSchoolId] = useState(null)
@@ -51,6 +56,23 @@ export default function LibrarianDashboard() {
     { key: 'reports', label: 'Reports', icon: <BarChart3 size={16} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
   ]
+
+  const filteredNavItems = useMemo(() => {
+    if (isSuperadmin) return navItems
+    return navItems.filter((item) => {
+      const required = LIBRARY_NAV_FEATURES[item.key]
+      if (!required) return true
+      return required.some((f) => features.includes(f))
+    })
+  }, [features, isSuperadmin])
+
+  useEffect(() => {
+    if (isSuperadmin || activeNav === 'dashboard') return
+    const required = LIBRARY_NAV_FEATURES[activeNav]
+    if (required && !required.some((f) => features.includes(f))) {
+      setActiveNav('dashboard')
+    }
+  }, [features, activeNav, isSuperadmin])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -121,14 +143,14 @@ export default function LibrarianDashboard() {
           <span>{schoolName || 'School'}</span>
         </div>
         <div className="lib-sidebar-school">
-          <div className="lib-school-avatar">{authProfile?.full_name?.[0]?.toUpperCase() || 'U'}</div>
+          <AvatarUpload className="lib-school-avatar" size={36} />
           <div>
             <p className="lib-school-name">{authProfile?.full_name || 'User'}</p>
             <p className="lib-school-role">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Librarian'}</p>
           </div>
         </div>
         <nav className="lib-sidebar-nav">
-          {navItems.map(item => (
+          {filteredNavItems.map(item => (
             <button
               key={item.key}
               className={`lib-nav-item ${activeNav === item.key ? 'active' : ''}`}
@@ -165,7 +187,9 @@ export default function LibrarianDashboard() {
           </div>
         </header>
 
-        {renderContent()}
+        <FeatureGate feature={LIBRARY_NAV_FEATURES[activeNav]?.[0]}>
+          {renderContent()}
+        </FeatureGate>
       </main>
     </div>
   )

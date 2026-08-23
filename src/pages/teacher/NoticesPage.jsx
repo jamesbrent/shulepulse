@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Bell, Calendar, User, Plus, X, Send, Tag, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { NOTICE_CREATE_ROLES } from '../../utils/roles'
 
 const CATEGORIES = [
   { value: 'general', label: 'General', color: '#64748b' },
@@ -19,8 +20,6 @@ const AUDIENCES = [
   { value: 'staff', label: 'Staff Only' },
 ]
 
-const CAN_CREATE = ['admin', 'hod', 'deputy_admin', 'superadmin', 'reception', 'registrar', 'bursar']
-
 export default function NoticesPage({ profile }) {
   const [notices, setNotices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -30,7 +29,7 @@ export default function NoticesPage({ profile }) {
   const [filterCategory, setFilterCategory] = useState('all')
   const [userRole, setUserRole] = useState('')
 
-  const canCreateNotice = CAN_CREATE.includes(userRole)
+  const canCreateNotice = NOTICE_CREATE_ROLES.includes(userRole)
 
   useEffect(() => {
     if (!profile?.school_id) return

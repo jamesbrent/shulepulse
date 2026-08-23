@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, BarChart2, GraduationCap, ClipboardList,
   LogOut, Upload, ChevronRight, BookOpen, Settings, ShieldCheck,
@@ -26,11 +26,15 @@ import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import LibraryContent from '../library/LibraryContent'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
+import { HOD_NAV_FEATURES } from '../../features/access/featureMap'
+import FeatureGate from '../../features/access/FeatureGate'
 
 export default function HODDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
+  const { features, isSuperadmin } = useFeatureAccess()
   const [activeNav, setActiveNav] = useState('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [stats, setStats] = useState({
@@ -46,6 +50,35 @@ export default function HODDashboard() {
   useEffect(() => {
     fetchDashboardData()
   }, [currentTerm, currentYear])
+
+  const navItems = [
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'exam_setup', label: 'Exam Setup', icon: <Settings size={16} /> },
+    { key: 'marks_approval', label: 'Marks Approval', icon: <ShieldCheck size={16} /> },
+    { key: 'analytics', label: 'Performance Analytics', icon: <BarChart2 size={16} /> },
+    { key: 'reports', label: 'Reports & Results', icon: <FileBarChart size={16} /> },
+    { key: 'teacher_review', label: 'Teacher Review', icon: <GraduationCap size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
+    { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
+  ]
+
+  const filteredNavItems = useMemo(() => {
+    if (isSuperadmin) return navItems
+    return navItems.filter((item) => {
+      const required = HOD_NAV_FEATURES[item.key]
+      if (!required) return true
+      return required.some((f) => features.includes(f))
+    })
+  }, [features, isSuperadmin])
+
+  useEffect(() => {
+    if (isSuperadmin || activeNav === 'dashboard') return
+    const required = HOD_NAV_FEATURES[activeNav]
+    if (required && !required.some((f) => features.includes(f))) {
+      setActiveNav('dashboard')
+    }
+  }, [features, activeNav, isSuperadmin])
 
   const fetchDashboardData = async () => {
     setLoading(true)
@@ -106,18 +139,6 @@ export default function HODDashboard() {
     setSubjectSummary(summary)
     setLoading(false)
   }
-
-  const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
-    { key: 'exam_setup', label: 'Exam Setup', icon: <Settings size={16} /> },
-    { key: 'marks_approval', label: 'Marks Approval', icon: <ShieldCheck size={16} /> },
-    { key: 'analytics', label: 'Performance Analytics', icon: <BarChart2 size={16} /> },
-    { key: 'reports', label: 'Reports & Results', icon: <FileBarChart size={16} /> },
-    { key: 'teacher_review', label: 'Teacher Review', icon: <GraduationCap size={16} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
-    { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
-  ]
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -286,7 +307,7 @@ export default function HODDashboard() {
           </div>
         </div>
         <nav className="hod-sidebar-nav">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <button
               key={item.key}
               className={`hod-nav-item ${activeNav === item.key ? 'active' : ''}`}
@@ -326,7 +347,9 @@ export default function HODDashboard() {
           </div>
         </header>
 
-        {renderContent()}
+        <FeatureGate feature={HOD_NAV_FEATURES[activeNav]?.[0]}>
+          {renderContent()}
+        </FeatureGate>
       </main>
     </div>
   )

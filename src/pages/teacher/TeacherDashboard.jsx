@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, ClipboardList, BarChart2, Calendar,
   Bell, LogOut, Save, CheckCircle, XCircle, MessageSquare,
@@ -30,6 +30,9 @@ import { useBrandingStore } from '../../features/branding/brandingStore'
 import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
+import { TEACHER_NAV_FEATURES } from '../../features/access/featureMap'
+import FeatureGate from '../../features/access/FeatureGate'
 
 export default function TeacherDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard')
@@ -46,11 +49,43 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const { logoUrl, schoolName } = useBrandingStore()
+  const { features, isSuperadmin } = useFeatureAccess()
   const notifCount = useNoticeCount(profile?.school_id, profile?.id)
 
   useEffect(() => {
     fetchTeacherData()
   }, [])
+
+  const navItems = [
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+    { key: 'attendance', label: 'Attendance', icon: <ClipboardList size={16} /> },
+    { key: 'grades', label: 'Grades', icon: <BarChart2 size={16} /> },
+    { key: 'timetable', label: 'Timetable', icon: <Calendar size={16} /> },
+    { key: 'myclasses', label: 'My Classes', icon: <BookOpen size={16} /> },
+    { key: 'marks', label: 'Marks Entry', icon: <BarChart2 size={16} /> },
+    { key: 'cbc', label: 'CBC Competency', icon: <Award size={16} /> },
+    { key: 'comments', label: 'Comments', icon: <MessageSquare size={16} /> },
+    { key: 'library', label: 'Library', icon: <Library size={16} /> },
+    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
+    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
+  ]
+
+  const filteredNavItems = useMemo(() => {
+    if (isSuperadmin) return navItems
+    return navItems.filter((item) => {
+      const required = TEACHER_NAV_FEATURES[item.key]
+      if (!required) return true
+      return required.some((f) => features.includes(f))
+    })
+  }, [features, isSuperadmin])
+
+  useEffect(() => {
+    if (isSuperadmin || activeNav === 'dashboard') return
+    const required = TEACHER_NAV_FEATURES[activeNav]
+    if (required && !required.some((f) => features.includes(f))) {
+      setActiveNav('dashboard')
+    }
+  }, [features, activeNav, isSuperadmin])
 
   useEffect(() => {
     if (activeClass) fetchStudents(activeClass)
@@ -174,20 +209,6 @@ export default function TeacherDashboard() {
     await supabase.auth.signOut()
     window.location.href = basePath('/')
   }
-
-  const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
-    { key: 'attendance', label: 'Attendance', icon: <ClipboardList size={16} /> },
-    { key: 'grades', label: 'Grades', icon: <BarChart2 size={16} /> },
-    { key: 'timetable', label: 'Timetable', icon: <Calendar size={16} /> },
-    { key: 'myclasses', label: 'My Classes', icon: <BookOpen size={16} /> },
-    { key: 'marks', label: 'Marks Entry', icon: <BarChart2 size={16} /> },
-    { key: 'cbc', label: 'CBC Competency', icon: <Award size={16} /> },
-    { key: 'comments', label: 'Comments', icon: <MessageSquare size={16} /> },
-    { key: 'library', label: 'Library', icon: <Library size={16} /> },
-    { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
-    { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
-  ]
 
   const pageTitles = {
     dashboard: 'Teacher Dashboard',
@@ -400,7 +421,7 @@ export default function TeacherDashboard() {
           </div>
         </div>
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <button
               key={item.key}
               className={`nav-item ${activeNav === item.key ? 'active' : ''}`}
@@ -435,7 +456,9 @@ export default function TeacherDashboard() {
           </div>
         </header>
 
-        {renderContent()}
+        <FeatureGate feature={TEACHER_NAV_FEATURES[activeNav]?.[0]}>
+          {renderContent()}
+        </FeatureGate>
       </main>
     </div>
   )

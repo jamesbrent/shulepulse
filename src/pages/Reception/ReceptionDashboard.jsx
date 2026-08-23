@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, Users, UserPlus, ClipboardList, PhoneCall, FileText,
   CalendarDays, Bell, BookOpen, ChevronRight, LogOut, RefreshCw, Printer,
@@ -25,6 +25,9 @@ import CalendarView from './CalendarView'
 import Requests from './Requests'
 import Reports from './Reports'
 import NewAdmission from './NewAdmission'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
+import { RECEPTION_NAV_FEATURES } from '../../features/access/featureMap'
+import FeatureGate from '../../features/access/FeatureGate'
 
 const NAV_GROUPS = [
   {
@@ -69,6 +72,7 @@ export default function ReceptionDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { school, currentTerm, currentYear } = useSchool()
   const { logoUrl, schoolName } = useBrandingStore()
+  const { features, isSuperadmin } = useFeatureAccess()
   const [activeNav, setActiveNav] = useState('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -83,6 +87,26 @@ export default function ReceptionDashboard() {
   useEffect(() => {
     fetchFrontDeskData()
   }, [currentTerm, currentYear])
+
+  const filteredNavGroups = useMemo(() => {
+    if (isSuperadmin) return NAV_GROUPS
+    return NAV_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        const required = RECEPTION_NAV_FEATURES[item.key]
+        if (!required) return true
+        return required.some((f) => features.includes(f))
+      }),
+    })).filter((group) => group.items.length > 0)
+  }, [features, isSuperadmin])
+
+  useEffect(() => {
+    if (isSuperadmin || activeNav === 'dashboard') return
+    const required = RECEPTION_NAV_FEATURES[activeNav]
+    if (required && !required.some((f) => features.includes(f))) {
+      setActiveNav('dashboard')
+    }
+  }, [features, activeNav, isSuperadmin])
 
   const fetchFrontDeskData = async () => {
     setLoading(true)
@@ -363,8 +387,6 @@ export default function ReceptionDashboard() {
     )
   }
 
-  const flatNav = NAV_GROUPS.flatMap(g => g.items)
-
   return (
     <div className="rcp-root">
       <button className="rcp-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
@@ -395,7 +417,7 @@ export default function ReceptionDashboard() {
           </div>
         </div>
         <nav className="rcp-sidebar-nav">
-          {NAV_GROUPS.map(group => (
+          {filteredNavGroups.map(group => (
             <div key={group.label} className="rcp-nav-group">
               <div className="rcp-nav-group-label">{group.label}</div>
               {group.items.map(item => (
@@ -439,7 +461,9 @@ export default function ReceptionDashboard() {
           </div>
         </header>
 
-        {renderContent()}
+        <FeatureGate feature={RECEPTION_NAV_FEATURES[activeNav]?.[0]}>
+          {renderContent()}
+        </FeatureGate>
       </main>
     </div>
   )

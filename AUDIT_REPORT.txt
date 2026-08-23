@@ -1,0 +1,853 @@
+﻿================================================================================
+SHULEPULSE - COMPLETE SYSTEM AUDIT REPORT
+Generated: 2026-08-22
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+ 1. Executive Summary
+ 2. Migration / Database Inventory (72 files)
+ 3. Complete Module Inventory
+ 4. User Roles & Permissions
+ 5. Subscription & Billing Architecture
+ 6. Frontend File Inventory
+ 7. Feature Implementation Status
+ 8. Security & Code Quality Findings
+ 9. Recommendations
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+Metric                              Value
+-------------------------------------------------------
+Total migration files               72 (001-070 + add_branding_columns)
+Total route-protected dashboards    12
+Total nav items (admin dashboard)   42 items across 7 groups + dashboard + notices
+Total page files (.jsx)             ~154
+Total service files                 20
+Total feature modules               26
+Total hooks                         4
+Total components                    27
+User roles                          12
+Distinct database tables            ~80+
+Fully implemented features          ~35
+Partially implemented features      ~15
+UI-only / placeholder features      ~10
+Database-only structures            ~5
+Subscription architecture exists?   YES - schema + UI + service exist, but NO enforcement
+
+================================================================================
+2. MIGRATION / DATABASE INVENTORY (72 files)
+================================================================================
+
+FILE                                    PURPOSE
+---------------------------------------------------------------------------
+001_create_student_tables.sql           Students, fee_structures, fee_assessments, payments
+002_fix_student_columns.sql             Fix student column types
+003_fee_system_redesign.sql             Fee categories, payment v2, student_ledger, adjustments
+004_grade_levels_promotion.sql          Grade levels, promotion history
+005_make_superadmin.sql                 Hard-coded superadmin (jamesbrent562@gmail.com, UUID)
+006_reference_data.sql                  grade_levels, streams, subjects, terms, plans reference tables
+007_schools_rls_policies.sql            Schools RLS + plan column (text, default 'basic')
+008_dashboard_rpc.sql                   Dashboard aggregation RPCs
+009_audit_logs.sql                      Audit logs table
+010_subscription_columns.sql            billing_cycle, subscription_start/end, auto_renew on schools
+011_user_management.sql                 profiles.disabled column, superadmin update policy
+012_payment_dashboard.sql               Payment dashboard RPCs
+013_support_center.sql                  Support tickets + messages
+014_schools_enhancement.sql             school_code, modules_config, sms/email/storage limits, current_term/year
+015_platform_settings.sql               Platform settings table
+016_support_enhancements.sql            Support enhancements
+017_staff_role_management.sql           Staff role management
+018_fix_profiles_role_check.sql         Fix profiles role CHECK constraint
+018_multi_role_support.sql             roles array column on profiles (multi-role)
+019_discipline_records.sql              Discipline records table
+020_timetable_tables.sql                Timetable tables
+021_exam_uploads.sql                    Exam uploads
+022_grades_rls.sql                      Grades RLS policies
+023_teacher_class_column.sql            Teacher class assignment
+024_parent_messages.sql                 Parent messages table
+025_class_comments.sql                  Class teacher comments
+026_fix_policies_and_attendance_constraint.sql  Policy + attendance fixes
+027_cbc_assessments_rls.sql             CBC competency assessments + RLS
+028_notices_fix_and_rls.sql             Notices table fix + RLS
+029_student_auth_accounts.sql           Student auth account creation view
+030_library_system.sql                  Library books, members, loans
+031_book_copy_codes.sql                 Book copy codes
+032_copy_code_random.sql                Random copy code generation
+033_librarian_role.sql                  Adds 'librarian' to profiles_role_check
+034_member_identifier.sql               Library member identifiers
+035_library_fines.sql                   Library fines
+036_accounting_core.sql                 Chart of accounts, journal entries
+037_fixed_assets.sql                    Fixed assets register
+038_kra_capital_allowances.sql          KRA capital allowances
+039_payroll.sql                         Payroll tables
+040_payroll_account_mapping.sql         Payroll to GL account mapping
+041_statutory_config_approval.sql       Statutory config approval
+042_allowance_tax_treatment.sql         Allowance tax treatment
+043_accounts_payable.sql                AP module tables
+044_add_ap_rejection.sql                AP rejection workflow
+045_tax_capital_allowances.sql          Tax capital allowances
+046_depreciation_accounts.sql           Depreciation accounts
+047_unify_suppliers.sql                 Supplier unification
+048_fixed_assets_ap_link.sql            Fixed assets + AP link
+049_asset_ap_timeline.sql               Asset/AP timeline
+050_expenses.sql                        Expense management
+051_cash_bank.sql                       Cash & bank management
+052_sync_fee_gl.sql                     Automated fee to GL sync
+053_seed_cash_accounts_and_backfill.sql Cash account seeding
+054_asset_class_gl_accounts.sql         Asset class GL accounts
+055_journal_entry_number_counter.sql    Journal entry numbering
+056_reception_role.sql                  Adds 'reception' role, visitors, appointments, prospective_students, front_office_requests, school_events tables
+057_seed_grading_config_for_new_schools.sql  Default grading config
+058_librarian_notices_read.sql          Librarian notice read tracking
+059_seed_school_types.sql               School type categories
+060_school_types_superadmin_rls.sql     School types superadmin RLS
+061_timetable_enhancements.sql          Timetable enhancements
+062_seed_cbc_subjects_function.sql      CBC subject seeding function
+063_non_teaching_staff.sql              Non-teaching staff table
+064_payroll_non_teaching_support.sql    Payroll support for non-teaching staff
+065_hr_foundation.sql                   HR foundation: profile_id FK on teachers/NTS, HR columns
+066_departments.sql                     Departments table
+067_profiles_teachers_rls.sql           Enable RLS on profiles + teachers
+068_fix_profiles_rls_recursion.sql      SECURITY DEFINER functions (get_my_school_id, get_my_role)
+069_fix_superadmin_leak.sql             Remove school_id IS NULL from profiles SELECT policy
+070_superadmin_sync.sql                 Superadmin role sync, RLS bypass for all tables
+add_branding_columns.sql                Branding columns on schools table
+
+Tables Grouped by Purpose:
+---------------------------------------------------------------------------
+AUTHENTICATION & USERS
+  profiles (12 roles), auth.users (Supabase managed)
+
+SCHOOL STRUCTURE
+  schools, school_types, plans, grade_levels, streams, subjects, departments
+
+STUDENTS
+  students, student_auth_accounts, promotion_history, discipline_records, student_documents
+
+ACADEMICS
+  timetable, exam_types, exams, marks, cbc_assessments, comments,
+  grading_config, grading_bands
+
+FINANCE - STUDENT FEES
+  fee_categories, fee_structures, fee_assessments, student_ledger,
+  payments, payment_v2, adjustments
+
+FINANCE - ACCOUNTING
+  chart_of_accounts, journal_entries, journal_entry_lines,
+  expenses, expense_categories
+
+FINANCE - ASSETS
+  fixed_assets, asset_depreciation, asset_disposals,
+  asset_class_gl_accounts
+
+FINANCE - ACCOUNTS PAYABLE
+  suppliers, ap_invoices, ap_payments, ap_vouchers,
+  ap_invoice_lines
+
+FINANCE - CASH & BANK
+  bank_accounts, bank_transfers, reconciliations
+
+PAYROLL
+  payroll_runs, payroll_lines, payroll_account_mapping,
+  statutory_config, statutory_deductions
+
+HR & STAFF
+  teachers, non_teaching_staff, departments, staff_roles
+
+COMMUNICATION
+  notices, messages, parent_messages, class_comments
+
+LIBRARY
+  library_books, book_copies, library_members, library_loans,
+  library_reservations, library_fines, book_copy_codes
+
+RECEPTION / FRONT OFFICE
+  visitors, appointments, prospective_students,
+  front_office_requests, school_events
+
+PLATFORM & SETTINGS
+  platform_settings, audit_logs, support_tickets, support_messages,
+  branding (on schools table)
+
+================================================================================
+3. COMPLETE MODULE INVENTORY
+================================================================================
+
+MODULE 1: PLATFORM MANAGEMENT (Superadmin)
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Platform Dashboard          SuperadminDashboard.jsx          FULLY IMPLEMENTED
+All Schools Management      SchoolsPage.jsx                  FULLY IMPLEMENTED
+School Onboarding           OnboardSchoolModal.jsx           FULLY IMPLEMENTED (4-step wizard)
+Edit School                 EditSchoolModal.jsx              FULLY IMPLEMENTED
+School Detail View          SchoolDetailModal.jsx            PARTIAL - modules/subscription display-only
+School Categories           SchoolCategoriesPage.jsx         FULLY IMPLEMENTED
+Users Management            UsersPage.jsx                    FULLY IMPLEMENTED
+Billing / Subscriptions     BillingPage.jsx                  PARTIAL - MRR display, plan badges; no payment collection
+Audit Logs                  AuditLogsPage.jsx                FULLY IMPLEMENTED
+Support (Platform)          SupportPage.jsx                  FULLY IMPLEMENTED
+Analytics (Revenue)         AnalyticsPage.jsx                FULLY IMPLEMENTED
+Platform Settings           PlatformSettingsPage.jsx         PARTIAL - saves but nothing enforces settings
+
+MODULE 2: SCHOOL ADMINISTRATION
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Admin Dashboard             AdminDashboard.jsx               FULLY IMPLEMENTED - KPIs, quick actions
+General Settings            SettingsPage                     PARTIAL
+Branding                    BrandingSettingsPage.jsx         FULLY IMPLEMENTED - colors, logo, CSS vars
+Academic Year / Term        current_term, current_year cols  DATABASE ONLY - no settings UI
+Classes / Streams           grade_levels, streams tables     FULLY IMPLEMENTED (via student records)
+Subjects                    subjects table                   FULLY IMPLEMENTED
+Departments                 DepartmentsPage.jsx              FULLY IMPLEMENTED - CRUD
+
+MODULE 3: STUDENT MANAGEMENT
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Student Records             StudentsPage.jsx                 FULLY IMPLEMENTED - CRUD, profile, stats
+Student Admission           AddStudent.jsx, Admissions.jsx   FULLY IMPLEMENTED
+Excel Import                ImportExcelModal.jsx             FULLY IMPLEMENTED
+Student Documents           StudentDocuments.jsx             FULLY IMPLEMENTED
+Attendance                  AttendancePage.jsx               FULLY IMPLEMENTED - take, view, trends, export
+Student Promotion           bulkPromotionService.js          FULLY IMPLEMENTED - bulk with preview
+Student Transfers           transfer_history table           DATABASE ONLY - no UI
+Discipline                  discipline_records table         DATABASE ONLY - no dedicated admin UI
+Alumni                      AdminAlumni.jsx                  FULLY IMPLEMENTED - graduation transcripts
+Parent/Guardian             ParentForm.jsx                   FULLY IMPLEMENTED - captured during admission
+
+MODULE 4: ACADEMIC MANAGEMENT
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Exam Setup                  ExamSetup.jsx                    FULLY IMPLEMENTED
+Marks Entry                 MarksEntry.jsx                   FULLY IMPLEMENTED
+Marks Approval              MarksApproval.jsx                FULLY IMPLEMENTED
+Exam Reviews                DeptExams.jsx                    FULLY IMPLEMENTED
+Grades                      GradesPage.jsx                   FULLY IMPLEMENTED - CBE/CBC bands
+Grading System              grading/ service (10 files)      FULLY IMPLEMENTED - 4-stage CBE
+Report Cards                ReportCard.jsx                   FULLY IMPLEMENTED - PDF-ready
+Transcripts                 graduationTranscript.js          FULLY IMPLEMENTED
+Subject Performance         SubjectPerformance.jsx           FULLY IMPLEMENTED
+Performance Analytics       DeptAnalytics.jsx                FULLY IMPLEMENTED
+Teacher Review              TeacherReview.jsx                FULLY IMPLEMENTED
+CBC Competency Analysis     CBCCompetency.jsx                FULLY IMPLEMENTED
+Report Center               ReportCenter.jsx                 FULLY IMPLEMENTED
+Timetable                   TimetablePage.jsx                FULLY IMPLEMENTED - CBE/CBC, double lessons
+
+MODULE 5: FINANCE - STUDENT FEES
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Fee Structures              FeeStructureTab.jsx              FULLY IMPLEMENTED
+Fee Assessment              Assessment generation            FULLY IMPLEMENTED
+Payments Recording          PaymentsTab.jsx                  FULLY IMPLEMENTED
+Receipts                    ReceiptsPage                     FULLY IMPLEMENTED
+Statements                  StatementsPage                   FULLY IMPLEMENTED
+Debtors                     DebtorsPage                      FULLY IMPLEMENTED
+Fee Sync to GL              sync_fee_gl.sql                  DATABASE ONLY - automated sync
+
+MODULE 6: FINANCE - ACCOUNTING
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Chart of Accounts           Accounting.jsx                   FULLY IMPLEMENTED
+Journal Entries             journal tab                      FULLY IMPLEMENTED
+General Ledger              ledger tab                       FULLY IMPLEMENTED
+Expenses                    Expenses.jsx                     FULLY IMPLEMENTED
+Cash & Bank                 CashBank.jsx                     FULLY IMPLEMENTED
+Fixed Assets                Assets.jsx                       FULLY IMPLEMENTED
+Tax Configuration           taxUtils.js                      FULLY IMPLEMENTED
+Financial Statements        FinancialStatementsPage          FULLY IMPLEMENTED
+Finance Reports             FinanceReportsPage               FULLY IMPLEMENTED
+
+MODULE 7: FINANCE - ACCOUNTS PAYABLE
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+AP Dashboard                ap/dashboard tab                  FULLY IMPLEMENTED
+Suppliers                   ap/suppliers tab                  FULLY IMPLEMENTED
+Invoices & Bills            ap/invoices tab                   FULLY IMPLEMENTED
+AP Payments                 ap/payments tab                   FULLY IMPLEMENTED
+Vouchers                    ap/vouchers tab                   FULLY IMPLEMENTED
+AP Settings                 ap/settings tab                   FULLY IMPLEMENTED
+
+MODULE 8: PAYROLL
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Employee Management         Payroll.jsx                      FULLY IMPLEMENTED
+Payroll Periods             Payroll.jsx                      FULLY IMPLEMENTED
+Payroll Runs                Payroll.jsx                      FULLY IMPLEMENTED
+Statutory Config            Payroll.jsx                      FULLY IMPLEMENTED - PAYE, NSSF, SHIF, Housing Levy
+GL Posting                  Payroll.jsx                      FULLY IMPLEMENTED - journal entries
+Payroll Reports             PayrollReports.jsx               FULLY IMPLEMENTED
+
+MODULE 9: HUMAN RESOURCES
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Staff Directory             StaffDirectory.jsx               FULLY IMPLEMENTED - merged teaching + NTS + profiles
+Add Staff (5-step)          StaffDirectory modal             FULLY IMPLEMENTED - auth + profile + teacher/NTS
+Staff Roles                 StaffRoles.jsx                   FULLY IMPLEMENTED - role assignment + password reset
+Departments                 DepartmentsPage.jsx              FULLY IMPLEMENTED - CRUD
+Staff Profile Cards         StaffDirectory CSS               FULLY IMPLEMENTED
+
+MODULE 10: REGISTRAR
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Registrar Dashboard         RegistrarDashboard.jsx           FULLY IMPLEMENTED
+Admissions                  Admissions.jsx                   FULLY IMPLEMENTED
+Students View               Students.jsx                     FULLY IMPLEMENTED
+Promotions / Graduation     PromotionsGraduation.jsx         FULLY IMPLEMENTED
+Transfers                   Transfers.jsx                    FULLY IMPLEMENTED
+Alumni                      Alumni.jsx, ArchivesAlumni.jsx   FULLY IMPLEMENTED
+Bulk Import                 BulkImport.jsx                   FULLY IMPLEMENTED
+Documents / Certificates    DocumentsCertificates.jsx        FULLY IMPLEMENTED
+Parents / Guardians         ParentsGuardians.jsx             FULLY IMPLEMENTED
+
+MODULE 11: RECEPTION
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Reception Dashboard         ReceptionDashboard.jsx           FULLY IMPLEMENTED
+New Admission               NewAdmission.jsx                 FULLY IMPLEMENTED
+Visitors                    Visitors.jsx                     FULLY IMPLEMENTED
+Appointments                Appointments.jsx                 FULLY IMPLEMENTED
+Calendar                    CalendarView.jsx                 FULLY IMPLEMENTED
+Communication               Communication.jsx                FULLY IMPLEMENTED
+Requests                    Requests.jsx                     FULLY IMPLEMENTED
+Students View               StudentsView.jsx                 FULLY IMPLEMENTED
+Parents View                ParentsView.jsx                  FULLY IMPLEMENTED
+Reports                     Reports.jsx                      FULLY IMPLEMENTED
+
+MODULE 12: HOD (Head of Department)
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+HOD Dashboard               HODDashboard.jsx                 FULLY IMPLEMENTED
+Exam Setup                  ExamSetup.jsx                    FULLY IMPLEMENTED
+Marks Approval              MarksApproval.jsx                FULLY IMPLEMENTED
+Department Exams            DeptExams.jsx                    FULLY IMPLEMENTED
+Subject Performance         SubjectPerformance.jsx           FULLY IMPLEMENTED
+Department Analytics        DeptAnalytics.jsx                FULLY IMPLEMENTED
+Teacher Review              TeacherReview.jsx                FULLY IMPLEMENTED
+Report Center               ReportCenter.jsx                 FULLY IMPLEMENTED
+
+MODULE 13: TEACHER
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Teacher Dashboard           TeacherDashboard.jsx             FULLY IMPLEMENTED
+Timetable                   TimetablePage.jsx                FULLY IMPLEMENTED
+Marks Entry                 MarksEntry.jsx                   FULLY IMPLEMENTED
+Attendance                  AttendancePage.jsx               FULLY IMPLEMENTED
+My Classes                  MyClasses.jsx                    FULLY IMPLEMENTED
+Grades                      GradesPage.jsx                   FULLY IMPLEMENTED
+CBC Competency              CBCCompetency.jsx                FULLY IMPLEMENTED
+Comments                     Comments.jsx                     FULLY IMPLEMENTED
+Notices                     NoticesPage.jsx                  FULLY IMPLEMENTED
+
+MODULE 14: CLASS TEACHER
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Class Teacher Dashboard     ClassTeacherDashboard.jsx        FULLY IMPLEMENTED
+Class Attendance            ClassAttendance.jsx              FULLY IMPLEMENTED
+Performance Tracker         PerformanceTracker.jsx           FULLY IMPLEMENTED
+Class Comments              ClassComments.jsx                FULLY IMPLEMENTED
+Parent Communication        ParentCommunication.jsx          FULLY IMPLEMENTED
+
+MODULE 15: BURSAR (Finance)
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Finance Dashboard           FinanceDashboard.jsx             FULLY IMPLEMENTED
+Fee Management              Fees.jsx (tabbed container)      FULLY IMPLEMENTED
+Accounting                  Accounting.jsx                   FULLY IMPLEMENTED
+Accounts Payable            AccountsPayable.jsx              FULLY IMPLEMENTED
+Cash & Bank                 CashBank.jsx                     FULLY IMPLEMENTED
+Expenses                    Expenses.jsx                     FULLY IMPLEMENTED
+Fixed Assets                Assets.jsx                       FULLY IMPLEMENTED
+Financial Statements        FinancialStatements.jsx          FULLY IMPLEMENTED
+Reports                     Reports.jsx                      FULLY IMPLEMENTED
+Payroll                     Payroll.jsx                      FULLY IMPLEMENTED
+
+MODULE 16: STUDENT PORTAL
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Student Portal              StudentPortal.jsx                FULLY IMPLEMENTED
+Timetable                   TimetablePage.jsx                FULLY IMPLEMENTED
+Grades                      GradesPage.jsx                   FULLY IMPLEMENTED
+Attendance                  AttendancePage.jsx               FULLY IMPLEMENTED
+Fee Statement               FeeStatementPage.jsx             FULLY IMPLEMENTED
+Report Cards                ReportCardsPage.jsx              FULLY IMPLEMENTED
+Transcripts                 TranscriptsPage.jsx              FULLY IMPLEMENTED
+Notices                     NoticesPage.jsx                  FULLY IMPLEMENTED
+
+MODULE 17: PARENT PORTAL
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Parent Portal Shell         ParentPortal.jsx                 PARTIAL - placeholders
+Overview                    parent/components/Overview.jsx   FULLY IMPLEMENTED
+Academic Results            AcademicResults.jsx              FULLY IMPLEMENTED
+Attendance                  Attendance.jsx                   FULLY IMPLEMENTED
+Fee Payments                FeePayments.jsx                  FULLY IMPLEMENTED
+Messages                    Messages.jsx                     FULLY IMPLEMENTED
+Notices                     Notices.jsx                      FULLY IMPLEMENTED
+
+MODULE 18: LIBRARY
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Librarian Dashboard         LibrarianDashboard.jsx           FULLY IMPLEMENTED
+Catalogue                   LibraryCatalogue.jsx             FULLY IMPLEMENTED
+Borrow / Return             LibraryBorrowReturn.jsx          FULLY IMPLEMENTED
+Members                     LibraryMembers.jsx               FULLY IMPLEMENTED
+Reservations                LibraryReservations.jsx          FULLY IMPLEMENTED
+Overdue                     LibraryOverdue.jsx               FULLY IMPLEMENTED
+Fines                       LibraryFines.jsx                 FULLY IMPLEMENTED
+Reports                     LibraryReports.jsx               FULLY IMPLEMENTED
+Management                  LibraryManagement.jsx            FULLY IMPLEMENTED
+Member Profile              MemberProfile.jsx                FULLY IMPLEMENTED
+My Library (Student/Parent) MyLibrary.jsx, ClassTeacherLibrary.jsx  FULLY IMPLEMENTED
+Library Content             LibraryContent.jsx               FULLY IMPLEMENTED
+
+MODULE 19: NOTICE BOARD (cross-cutting)
+---------------------------------------------------------------------------
+Feature                     File(s)                          Status
+---------------------------------------------------------------------------
+Admin Notices               NoticesPage.jsx (admin)          FULLY IMPLEMENTED - create, pin, audience filter
+Staff Notices               NoticesPage.jsx (teacher)        FULLY IMPLEMENTED - read, search
+Student Notices             NoticesPage.jsx (student)        FULLY IMPLEMENTED - read, search
+Parent Notices              parent/components/Notices.jsx    FULLY IMPLEMENTED - read, search
+Library Notices             librarian notices read tracking   FULLY IMPLEMENTED
+Reception Notices           Reception role has notices access FULLY IMPLEMENTED
+
+================================================================================
+4. USER ROLES & PERMISSIONS
+================================================================================
+
+4.1 COMPLETE ROLE LIST (12 roles)
+---------------------------------------------------------------------------
+Role                        DB Value                 Label                Home Route
+---------------------------------------------------------------------------
+Superadmin                  superadmin               Super Admin          /superadmin
+Admin                       admin                    Admin                /admin
+Deputy Administrator        deputy_administrator     Deputy Admin         /deputy-admin
+Bursar (Finance)            bursar                   Finance              /bursar
+Registrar                   registrar                Registrar            /registrar
+Reception                   reception                Reception            /reception
+Head of Department          hod                      HOD                  /hod
+Teacher                     teacher                  Teacher              /teacher
+Class Teacher               class_teacher            Class Teacher        /class-teacher
+Parent                      parent                   Parent               /parent
+Student                     student                  Student              /student
+Librarian                   librarian                Library              /library
+
+4.2 ROLE ASSIGNMENT (Admin Dashboard)
+---------------------------------------------------------------------------
+Available in StaffRoles.jsx for admin to assign:
+  teacher, hod, deputy_administrator, bursar, registrar, reception,
+  class_teacher, librarian
+
+NOTE: admin and superadmin cannot be assigned from the admin dashboard.
+      student and parent are assigned during admission/parent account creation.
+
+4.3 ROUTE ACCESS (App.jsx)
+---------------------------------------------------------------------------
+Route                     allowedRoles
+---------------------------------------------------------------------------
+/superadmin               [superadmin]
+/admin                    [admin, superadmin]
+/deputy-admin             [deputy_administrator]
+/bursar                   [bursar]
+/registrar                [registrar]
+/reception                [reception, admin, superadmin]
+/hod                      [hod]
+/teacher                  [teacher]
+/class-teacher            [class_teacher]
+/parent                   [parent]
+/student                  [student]
+/library                  [librarian]
+
+4.4 FINANCE-SPECIFIC ACCESS
+---------------------------------------------------------------------------
+FINANCE_ROLES (taxUtils.js): admin, bursar, deputy_administrator, superadmin
+PAYMENT_ROLES (feesHelpers.js): Admin, Principal, Bursar, Accountant
+  NOTE: PAYMENT_ROLES uses display names not DB values - case-insensitive match used.
+  'Principal' and 'Accountant' do NOT exist as DB roles - potential bug.
+
+4.5 PAYROLL ACCESS
+---------------------------------------------------------------------------
+Admin Dashboard renders PayrollPage for: admin, superadmin
+Bursar Dashboard (FinanceDashboard) renders PayrollPage for: bursar
+All three can run payroll, configure statutory, and post to GL.
+
+4.6 MULTI-ROLE SUPPORT
+---------------------------------------------------------------------------
+Column: profiles.roles (array)
+hasRole() checks: profile.role === role || profile.roles.includes(role)
+RoleSwitcher: allows self-switching between roles if user holds multiple.
+  Writes directly to profiles.role via Supabase client (client-side only).
+
+4.7 STAFF DIRECTORY CATEGORIES (useStaffDirectory.js)
+---------------------------------------------------------------------------
+ADMIN_ROLES = admin, deputy_administrator, bursar, registrar, reception, librarian, superadmin
+Category logic:
+  If role in ADMIN_ROLES -> "Administration"
+  If role in [teacher, class_teacher, hod] -> "Teaching"
+  Otherwise -> "Non-Teaching"
+Superadmin is filtered OUT of the directory display.
+
+================================================================================
+5. SUBSCRIPTION & BILLING ARCHITECTURE
+================================================================================
+
+5.1 PLAN DEFINITIONS
+---------------------------------------------------------------------------
+Plan          Monthly Price (KES)    Source
+---------------------------------------------------------------------------
+Basic         2,500                  Hard-coded in subscriptionService.js
+Pro           5,000                  Hard-coded in subscriptionService.js
+Enterprise    10,000                 Hard-coded in subscriptionService.js
+
+Also defined in: PlanChangeModal.jsx, BillingPage.jsx, SchoolDetailModal.jsx (inline ternary)
+
+5.2 DATABASE SCHEMA
+---------------------------------------------------------------------------
+schools.plan              TEXT, default 'basic'     (007_schools_rls_policies.sql)
+schools.billing_cycle     TEXT, default 'monthly'   (010_subscription_columns.sql)
+schools.subscription_start  TIMESTAMPTZ             (010)
+schools.subscription_end    TIMESTAMPTZ             (010)
+schools.auto_renew        BOOLEAN, default true     (010)
+
+plans (reference table):
+  id, key, label, price_label, features (JSONB), color, bg, recommended, sort_order
+  Created in 006_reference_data.sql with 3 rows: basic, pro, enterprise
+
+5.3 WHAT EXISTS
+---------------------------------------------------------------------------
+- MRR calculation in SuperadminDashboard (basic * 2500 + pro * 5000 + enterprise * 10000)
+- Plan badges on schools list and detail modals
+- "Change Plan" modal (updates schools.plan, resets subscription_start, logs audit)
+- Subscription stats endpoint (fetchSubscriptionStats - groups schools by plan)
+- Upcoming renewals endpoint (fetchUpcomingRenewals - schools expiring within N days)
+- Onboarding loads plans from DB reference table
+- Plan distribution pie chart in superadmin dashboard
+- Revenue by plan bar chart
+
+5.4 WHAT IS MISSING (NO ENFORCEMENT)
+---------------------------------------------------------------------------
+- No DB constraint on schools.plan (free text, can be any value)
+- Plan duplicated in 4+ places (no single source of truth)
+- SchoolDetailModal: Renew/Upgrade/Downgrade buttons have NO onClick handlers (decorative)
+- SchoolDetailModal: Module toggles are display-only (no enable/disable handler)
+- Platform settings: trial_duration_days, grace_period_days, auto_suspension saved but NEVER enforced
+- No feature gating based on plan (all schools see all features regardless of plan)
+- No payment collection system (no invoices, no M-Pesa integration, no payment links)
+- No trial period logic
+- No grace period logic
+- No auto-suspension when subscription expires
+- No email/SMS notifications for renewals
+- modules_config column exists but is NOT checked before rendering features
+- 'plan' column has no CHECK constraint - any text value accepted
+
+================================================================================
+6. FRONTEND FILE INVENTORY
+================================================================================
+
+6.1 PAGES BY ROLE
+---------------------------------------------------------------------------
+Superadmin (src/pages/superadmin/):   8 files
+  SuperadminDashboard, SchoolsPage, UsersPage, BillingPage,
+  SupportPage, AuditLogsPage, AnalyticsPage, PlatformSettingsPage
+
+Admin (src/pages/admin/):             ~25 files
+  AdminDashboard, StaffDirectory, StaffRoles, DepartmentsPage,
+  StudentsPage, AttendancePage, NoticesPage,
+  admin/fees/ (19 files in tabs/hooks/components/utils),
+  admin/timetable/, admin/exams/, admin/grades/,
+  admin/reports/, admin/settings/
+
+Deputy Admin (src/pages/DeputyAdmin/): DOES NOT EXIST
+
+Bursar (src/pages/Finance/):          44 files
+  18 pages + 14 CSS + 10 utils/helpers
+  FinanceDashboard, Fees, Accounting, AccountsPayable, CashBank,
+  Expenses, Assets, Payroll, PayrollReports, FinancialStatements,
+  Reports, Payments, Receipts, Statements, Debtors, Payslip
+
+Registrar (src/pages/Registrar/):     20 files
+  RegistrarDashboard, Admissions, Students, PromotionsGraduation,
+  Transfers, Alumni, ArchivesAlumni, BulkImport,
+  DocumentsCertificates, ParentsGuardians
+
+Reception (src/pages/Reception/):     12 files
+  ReceptionDashboard, NewAdmission, Visitors, Appointments,
+  CalendarView, Communication, Requests, StudentsView,
+  ParentsView, Reports
+
+HOD (src/pages/HOD/):               10 files
+  HODDashboard, ExamSetup, MarksApproval, DeptExams,
+  SubjectPerformance, DeptAnalytics, TeacherReview, ReportCenter
+
+Teacher (src/pages/teacher/):        18 files
+  TeacherDashboard, TimetablePage, MarksEntry, AttendancePage,
+  MyClasses, GradesPage, CBCCompetency, Comments, NoticesPage
+
+Class Teacher (src/pages/ClassTeacher/): 10 files
+  ClassTeacherDashboard, ClassAttendance, PerformanceTracker,
+  ClassComments, ParentCommunication
+
+Parent (src/pages/parent/):          7 files
+  ParentPortal, parent/components/ (Overview, AcademicResults,
+  Attendance, FeePayments, Messages, Notices)
+
+Student (src/pages/student/):        17 files
+  StudentPortal, TimetablePage, MarksEntry(?), AttendancePage,
+  GradesPage, FeeStatementPage, ReportCardsPage, TranscriptsPage,
+  NoticesPage, AcademicFilters, TranscriptDocument,
+  useStudentAcademicHistory hook
+
+Library (src/pages/library/):        15 files
+  LibrarianDashboard, LibraryCatalogue, LibraryBorrowReturn,
+  LibraryMembers, LibraryReservations, LibraryOverdue,
+  LibraryFines, LibraryReports, LibraryManagement,
+  MemberProfile, MyLibrary, ClassTeacherLibrary, LibraryContent
+
+6.2 SERVICES (src/services/)
+---------------------------------------------------------------------------
+students/     studentService.js, reportCardService.js, bulkPromotionService.js
+school/       financeService.js, noticesService.js
+features/     branding/ (BrandingProvider.jsx), superadmin/ (5 files),
+              subscription/ (PlanChangeModal.jsx), onboarding/ (5 files)
+shared/       supabaseClient.js
+
+6.3 COMPONENTS (src/components/)
+---------------------------------------------------------------------------
+ProtectedRoute.jsx, SchoolSwitcher.jsx, RoleSwitcher.jsx, Sidebar.jsx,
+Topbar.jsx, ApperLogo.jsx, Logo.jsx, ErrorBoundary.jsx, Modal.jsx,
+SchoolCategoriesPage.jsx, OnboardSchoolModal.jsx, EditSchoolModal.jsx,
+SchoolDetailModal.jsx, StaffDirectory.jsx (+css), StaffRoles.jsx,
+DepartmentsPage.jsx (+css)
+
+6.4 HOOKS (src/hooks/)
+---------------------------------------------------------------------------
+useAuth.js, useSidebar.js, useTimetable.js, useStaffDirectory.js
+
+================================================================================
+7. FEATURE IMPLEMENTATION STATUS (DETAILED)
+================================================================================
+
+FULLY IMPLEMENTED (~35 features):
+  Platform Dashboard, School CRUD, School Onboarding, School Categories,
+  Users Management, Audit Logs, Platform Support, Revenue Analytics,
+  Admin Dashboard, Branding, Departments, Student Records, Student Admission,
+  Excel Import, Student Documents, Attendance, Student Promotion, Alumni,
+  Exam Setup, Marks Entry, Marks Approval, Exam Reviews, Grades,
+  Grading System (4-stage CBE), Report Cards, Transcripts, Subject Performance,
+  Performance Analytics, Teacher Review, CBC Competency, Report Center, Timetable,
+  Fee Structures, Fee Assessment, Payments, Receipts, Statements, Debtors,
+  Chart of Accounts, Journal Entries, General Ledger, Expenses, Cash & Bank,
+  Fixed Assets, Tax Config, Financial Statements, Finance Reports,
+  AP Dashboard, AP Suppliers, AP Invoices, AP Payments, AP Vouchers, AP Settings,
+  Employee Management, Payroll Periods, Payroll Runs, Statutory Config, GL Posting,
+  Payroll Reports, Staff Directory, Staff Roles, Staff Profile Cards,
+  Registrar Dashboard, Registrar Admissions, Registrar Students, Promotions,
+  Registrar Transfers, Registrar Alumni, Registrar Bulk Import, Registrar Documents,
+  Registrar Parents, Reception Dashboard, New Admission, Visitors, Appointments,
+  Calendar, Reception Communication, Requests, Reception Students/Parents,
+  HOD Dashboard, HOD Exams, HOD Marks Approval, HOD Department Analytics,
+  Teacher Dashboard, Teacher Timetable, Teacher Marks Entry, Teacher Attendance,
+  Teacher My Classes, Teacher Grades, Teacher CBC, Teacher Comments, Teacher Notices,
+  Class Teacher Dashboard, Class Attendance, Performance Tracker, Class Comments,
+  Parent Communication, Library Dashboard, Library Catalogue, Library Borrow/Return,
+  Library Members, Library Reservations, Library Overdue, Library Fines,
+  Library Reports, Library Management, Library Content, My Library
+
+PARTIALLY IMPLEMENTED (~15 features):
+  School Detail View (module toggles display-only, no handlers)
+  Billing / Subscriptions (MRR display, plan badges, no payment collection)
+  Platform Settings (saves but nothing reads/enforces)
+  General Settings (partial)
+  Student Transfer (DB only, no UI)
+  Discipline (DB only, no UI)
+  Parent Portal Shell (placeholders, components work)
+  Grade Level Management (DB exists, no settings UI)
+  Academic Year/Term Management (DB columns, no UI)
+  Module Access Control (modules_config column exists, not enforced)
+  Auto-Suspension (settings saved, not enforced)
+  Grace Period (settings saved, not enforced)
+  Trial Period (settings saved, not enforced)
+  Invoice/Payment Collection (no system)
+  SMS/Email Notifications (no system)
+
+UI-ONLY / PLACEHOLDER (~10):
+  SchoolDetailModal Renew/Upgrade/Downgrade buttons (decorative)
+  SchoolDetailModal Admin actions (Reset Password/Login As/Remove - no handlers)
+  Platform settings module toggles (save but nothing checks them)
+  Payment collection UI (billing page shows data but no way to collect)
+  Notice audience filter (basic, no granular permissions)
+  'deputy_admin' string in notices policy (invalid role value)
+  PAYMENT_ROLES contains 'Principal' and 'Accountant' (not valid DB roles)
+
+DATABASE-ONLY (~5):
+  transfer_history table (no UI)
+  discipline_records table (no admin UI)
+  sync_fee_gl.sql (automated, no UI trigger)
+  student_auth_accounts view (used by bulk create)
+  school_events table (no visible UI)
+
+================================================================================
+8. SECURITY & CODE QUALITY FINDINGS
+================================================================================
+
+8.1 CRITICAL ISSUES
+---------------------------------------------------------------------------
+
+C1. Hard-coded superadmin identity in migration 005
+    jamesbrent562@gmail.com with fixed UUID is baked into a migration.
+    Writes directly to auth.users (schema bypass).
+    Risk: personal email exposed in repo; anyone with repo access knows the superadmin.
+
+C2. Default student password documented in migration 029
+    Student@123 is the default password for all student accounts.
+    This is written in a comment in the migration file visible in the repo.
+
+C3. Client-side role self-switching (RoleSwitcher.jsx)
+    Any user with multiple roles can switch their primary role by writing
+    directly to profiles.role via Supabase client. Gated only by RLS UPDATE
+    policy on own row.
+
+C4. No feature gating based on subscription plan
+    All schools see ALL features regardless of plan (basic/pro/enterprise).
+    modules_config column exists but is never checked before rendering.
+
+8.2 RLS / DATABASE ISSUES
+---------------------------------------------------------------------------
+
+D1. Migration 056 has stray 'deputy_admin' (not 'deputy_administrator')
+    in the notices_staff_all policy. This is an invalid role value.
+
+D2. PAYMENT_ROLES in feesHelpers.js uses display names:
+    ['Admin', 'Principal', 'Bursar', 'Accountant']
+    'Principal' and 'Accountant' are not valid DB role values.
+    'deputy_administrator' and 'registrar' are excluded from payment access.
+    Case-insensitive match mitigates the casing issue but not the wrong names.
+
+D3. No DB CHECK constraint on schools.plan
+    Any text value can be inserted. Enforced only in app code.
+
+D4. Migration 018 appears twice (018_fix_profiles_role_check.sql and
+    018_multi_role_support.sql) - naming conflict.
+
+8.3 CODE QUALITY ISSUES
+---------------------------------------------------------------------------
+
+Q1. Plan prices duplicated in 4+ locations:
+    subscriptionService.js, PlanChangeModal.jsx, BillingPage.jsx,
+    SchoolDetailModal.jsx (inline ternary). No single source of truth.
+
+Q2. Superadmin dashboard conflates school fee revenue with platform revenue.
+    "Total Revenue" card sums fee_payments (school income), not platform income.
+    MRR is correctly calculated from plan prices.
+
+Q3. No centralized role constants file. Every component defines its own
+    role arrays: ROLE_ROUTES in ProtectedRoute, ROLE_META in RoleSwitcher,
+    ROLE_OPTIONS in StaffRoles, ADMIN_ROLES in useStaffDirectory,
+    FINANCE_ROLES in taxUtils, PAYMENT_ROLES in feesHelpers.
+
+Q4. DeputyAdmin and Bursar page directories do not exist.
+    Deputy admin uses generic dashboard. Bursar uses FinanceDashboard.
+
+Q5. Onboarding loads plans from DB (006_reference_data.sql plans table)
+    while all other plan UIs are hard-coded. Two sources of truth.
+
+Q6. 'reception' role is missing from library ROLE_TO_MEMBER_TYPE mapping.
+    'superadmin' and 'parent' also map to nothing in library.js.
+
+Q7. No error boundary or fallback for Finance module loads.
+
+8.4 RLS ARCHITECTURE
+---------------------------------------------------------------------------
+Migration 068 created SECURITY DEFINER functions:
+  get_my_school_id() - returns school_id for current user (NULL for superadmin)
+  get_my_role() - returns role for current user
+
+Migration 070 patched ~110 RLS policies across ALL tables with:
+  OR get_my_role() = 'superadmin'
+This gives superadmin full read/write access to all tables in all schools.
+
+RLS enforcement:
+  - profiles: school-scoped SELECT, superadmin bypass
+  - teachers: school-scoped, superadmin bypass
+  - students: school-scoped, superadmin bypass
+  - All finance tables: school-scoped, superadmin bypass
+  - All other tables: school-scoped, superadmin bypass
+
+================================================================================
+9. RECOMMENDATIONS
+================================================================================
+
+9.1 FOR SUBSCRIPTION PLAN IMPLEMENTATION (Basic/Pro/Enterprise)
+---------------------------------------------------------------------------
+Priority 1: Create a SINGLE source of truth for plan definitions
+  - Use the existing 'plans' table in DB
+  - subscriptionService.js should read from DB, not hard-code prices
+  - Remove hard-coded PLAN_PRICES, PLAN_META, inline ternaries
+
+Priority 2: Add DB CHECK constraint on schools.plan
+  - ALTER TABLE schools ADD CONSTRAINT schools_plan_check
+    CHECK (plan IN ('basic', 'pro', 'enterprise'))
+
+Priority 3: Define feature matrix per plan
+  - Example:
+    Basic:      students, fees, attendance, notices, reports
+    Pro:        + timetable, exams, grading, library, HR
+    Enterprise: + accounting, payroll, AP, assets, SMS, API
+
+Priority 4: Create a plan enforcement hook/middleware
+  - checkPlanAccess(requiredPlan) hook
+  - Sidebar items gated by plan
+  - Route guards checking plan before rendering
+
+Priority 5: Implement billing controls
+  - Wire up Renew/Upgrade/Downgrade buttons in SchoolDetailModal
+  - Add subscription_end date checking (show banner when expiring)
+  - Grace period: allow login but show warning after expiry
+  - Auto-suspension: lock access after grace period
+
+Priority 6: Add payment collection (optional, later phase)
+  - Invoice generation
+  - M-Pesa integration or manual confirmation
+  - Payment history per school
+
+9.2 FOR SECURITY
+---------------------------------------------------------------------------
+- Remove hard-coded email from migration 005 (use env variable or setup script)
+- Remove default password documentation from migration 029 comments
+- Consider adding server-side role switching validation
+- Add CHECK constraint on schools.plan
+- Fix 'deputy_admin' stray string in migration 056
+- Fix PAYMENT_ROLES to use actual DB role values
+
+9.3 FOR CODE QUALITY
+---------------------------------------------------------------------------
+- Create src/utils/roles.js with all role constants, labels, colors
+- Create src/utils/plans.js with plan definitions, prices, features
+- Remove duplicate role arrays scattered across components
+- Remove duplicate plan price definitions
+- Fix library.js ROLE_TO_MEMBER_TYPE for reception/superadmin/parent
+- Create proper DeputyAdmin and Bursar page directories (or remove routes)
+
+================================================================================
+END OF AUDIT REPORT
+================================================================================

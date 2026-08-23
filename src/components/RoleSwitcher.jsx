@@ -4,22 +4,8 @@ import { useAuthStore } from '../store/authStore'
 import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
 import { Shield, ChevronDown, LogOut } from 'lucide-react'
+import { ROLE_META } from '../utils/roles'
 import './RoleSwitcher.css'
-
-const ROLE_META = {
-  superadmin:            { label: 'Super Admin',      color: '#0f172a', route: '/superadmin' },
-  admin:                { label: 'Admin',             color: '#2563eb', route: '/admin' },
-  deputy_administrator: { label: 'Deputy Admin',      color: '#2563eb', route: '/deputy-admin' },
-  bursar:               { label: 'Finance',           color: '#16a34a', route: '/bursar' },
-  registrar:            { label: 'Registrar',         color: '#ca8a04', route: '/registrar' },
-  reception:            { label: 'Reception',          color: '#0d9488', route: '/reception' },
-  hod:                  { label: 'HOD',               color: '#7c3aed', route: '/hod' },
-  teacher:              { label: 'Teacher',           color: '#64748b', route: '/teacher' },
-  class_teacher:        { label: 'Class Teacher',     color: '#dc2626', route: '/class-teacher' },
-  parent:               { label: 'Parent',            color: '#0891b2', route: '/parent' },
-  student:              { label: 'Student',           color: '#d97706', route: '/student' },
-  librarian:            { label: 'Library',            color: '#16a34a', route: '/library' },
-}
 
 export default function RoleSwitcher() {
   const { profile } = useAuthStore()
