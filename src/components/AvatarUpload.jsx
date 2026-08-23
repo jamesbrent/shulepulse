@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Camera, Loader } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore'
+import { supabase } from '../lib/supabase'
+import { useAuthStore } from '../store/authStore'
 
 export default function AvatarUpload({ className, size = 36, fallbackChar = 'U' }) {
   const { profile, user } = useAuthStore()
