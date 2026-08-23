@@ -14,6 +14,7 @@ export async function fetchDashboardStats() {
     { data: schoolsByPlan },
     { data: signups },
     { data: revenueByMonth },
+    { data: plansData },
   ] = await Promise.all([
     supabase.from('schools').select('*', { count: 'exact', head: true }),
     supabase.from('schools').select('*', { count: 'exact', head: true }).eq('status', 'active'),
@@ -29,7 +30,6 @@ export async function fetchDashboardStats() {
     supabase.rpc('get_monthly_revenue'),
     supabase.from('plans').select('key, monthly_price'),
   ])
-
   const totalRevenue = (revenueData || []).reduce((sum, r) => sum + (r.amount || 0), 0)
   const planCounts = {}
   ;(schoolsByPlan || []).forEach((s) => {

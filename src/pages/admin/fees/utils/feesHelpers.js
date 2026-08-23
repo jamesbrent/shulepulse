@@ -72,4 +72,4 @@ export const CHEQUE_STATUSES = [
 export const ADJUSTMENT_TYPES = ['discount', 'scholarship', 'waiver', 'penalty']
 
 // Role-based access levels
-export const PAYMENT_ROLES = ['Admin', 'Principal', 'Bursar', 'Accountant']
+export const PAYMENT_ROLES = ['admin', 'bursar', 'deputy_administrator', 'superadmin']

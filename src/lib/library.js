@@ -127,6 +127,9 @@ const ROLE_TO_MEMBER_TYPE = {
   deputy_administrator: 'admin',
   bursar: 'admin',
   registrar: 'admin',
+  reception: 'staff',
+  superadmin: 'admin',
+  parent: null,
   librarian: 'librarian',
 }
 

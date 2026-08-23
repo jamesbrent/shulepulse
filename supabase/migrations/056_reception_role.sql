@@ -38,7 +38,7 @@ CREATE POLICY "notices_staff_all"
   USING (
     school_id = (SELECT school_id FROM profiles WHERE id = auth.uid())
     AND (SELECT role FROM profiles WHERE id = auth.uid())
-        IN ('admin', 'teacher', 'hod', 'deputy_admin', 'deputy_administrator',
+        IN ('admin', 'teacher', 'hod', 'deputy_administrator',
             'class_teacher', 'registrar', 'reception', 'bursar', 'superadmin')
   );
 
