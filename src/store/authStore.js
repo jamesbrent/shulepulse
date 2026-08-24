@@ -69,6 +69,26 @@ export const useAuthStore = create((set, get) => ({
         set({ user: null, profile: null, loading: false })
       }
     })
+
+    // Real-time: kick disabled users immediately (VULN-55)
+    const currentUser = get().user
+    if (currentUser) {
+      const channel = supabase
+        .channel('profile-disabled-watch')
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${currentUser.id}`,
+        }, async (payload) => {
+          if (payload.new?.disabled) {
+            console.warn('[AuthStore] Account disabled — signing out')
+            await supabase.auth.signOut()
+            set({ user: null, profile: null, selectedSchool: null })
+          }
+        })
+        .subscribe()
+    }
   },
 
   logout: async () => {

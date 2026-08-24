@@ -350,8 +350,10 @@ export async function recomputeInvoicePaid(supabase, { schoolId, invoiceId }) {
 
 // ─── Attachments ───────────────────────────────────────────────────────────
 
-export function attachmentPublicUrl(supabase, storagePath) {
-  return supabase.storage.from('finance-attachments').getPublicUrl(storagePath).data.publicUrl
+export async function attachmentSignedUrl(supabase, storagePath) {
+  const { data, error } = await supabase.storage.from('finance-attachments').createSignedUrl(storagePath, 3600)
+  if (error || !data?.signedUrl) return null
+  return data.signedUrl
 }
 
 export async function uploadAttachment(supabase, { schoolId, userId, entityType, entityId, file }) {

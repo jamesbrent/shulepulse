@@ -199,8 +199,14 @@ export default function TeachersPage() {
     const { error: upErr } = await supabase.storage
       .from('school-assets').upload(path, file, { upsert: true })
     if (upErr) { setError(upErr.message); setPhotoUploading(false); return }
-    const { data: urlData } = supabase.storage.from('school-assets').getPublicUrl(path)
-    setForm(f => ({ ...f, photo_url: urlData.publicUrl }))
+    const { data: urlData, error: urlErr } = await supabase.storage
+      .from('school-assets').createSignedUrl(path, 3600)
+    if (urlErr || !urlData?.signedUrl) {
+      setError('Photo uploaded but its link could not be generated. Please retry.')
+      setPhotoUploading(false)
+      return
+    }
+    setForm(f => ({ ...f, photo_url: urlData.signedUrl }))
     setPhotoUploading(false)
   }
 

@@ -50,17 +50,30 @@ export function StudentDocuments({ studentId }) {
     const path = `${schoolId || 'default'}/students/${studentId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const { error: uploadErr } = await supabase.storage.from('documents').upload(path, file)
     if (uploadErr) { setUploading(false); return }
-    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
+    const { data: urlData, error: urlErr } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(path, 3600)
     await supabase.from('student_documents').insert({
       student_id: studentId,
       name: file.name,
       file_path: path,
-      file_url: publicUrl,
+      file_url: (!urlErr && urlData?.signedUrl) ? urlData.signedUrl : null,
       file_type: file.type,
       file_size: file.size,
     })
     setUploading(false)
     fetchDocuments()
+  }
+
+  const handleDownload = async (doc) => {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(doc.file_path, 3600)
+    if (error || !data?.signedUrl) {
+      alert('Unable to open document. Please try again later.')
+      return
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
   }
 
   const handleDelete = async (doc) => {
@@ -90,7 +103,7 @@ export function StudentDocuments({ studentId }) {
               <FileText size={16} />
               <span className="doc-name">{doc.name}</span>
               <span className="doc-size">{(doc.file_size / 1024).toFixed(0)} KB</span>
-              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="doc-download">
+              <a href="#" onClick={(e) => { e.preventDefault(); handleDownload(doc) }} className="doc-download">
                 <Download size={14} />
               </a>
               <button className="doc-delete" onClick={() => handleDelete(doc)}>

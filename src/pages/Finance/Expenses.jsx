@@ -9,7 +9,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { fmt, fmtDate, fmtDateTime, downloadFile } from '../admin/fees/utils/feesHelpers'
 import { writeAudit, apDebitAccountOptions } from './accountsUtils'
-import { reverseJournalEntry } from './apUtils'
+import { reverseJournalEntry, attachmentSignedUrl } from './apUtils'
 import {
   EXPENSE_STATUSES, EXPENSE_PAYMENT_STATUSES, EXPENSE_PAYEE_TYPES, EXPENSE_PAYMENT_METHODS,
   expStatus, payStatus, nextExpenseNo, expenseTotals, expenseOutstanding,
@@ -30,6 +30,26 @@ const blankExpense = () => ({
 })
 
 const blankLine = () => ({ account_id: '', description: '', amount: '', department: '', cost_centre: '' })
+
+function AttachmentLink({ storagePath, fileName }) {
+  const [url, setUrl] = useState(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setUrl(null); setFailed(false)
+    attachmentSignedUrl(supabase, storagePath).then((u) => {
+      if (cancelled) return
+      if (u) setUrl(u)
+      else setFailed(true)
+    })
+    return () => { cancelled = true }
+  }, [storagePath])
+
+  if (failed) return <span className="prl-norows" title="File link unavailable">{fileName} — unavailable</span>
+  if (!url) return <span>{fileName}</span>
+  return <a href={url} target="_blank" rel="noreferrer">{fileName}</a>
+}
 
 const ReportTable = ({ data, money = true }) => (
   <table className="prl-table" style={{ minWidth: 240 }}>
@@ -371,7 +391,7 @@ export default function ExpensesPage({ initialTab, openExpenseId, onOpenExpenseD
             {list.map((a) => (
               <div className="ap-att-item" key={a.id}>
                 <FileText size={14} />
-                <a href={supabase.storage.from('finance-attachments').getPublicUrl(a.storage_path).data.publicUrl} target="_blank" rel="noreferrer">{a.file_name}</a>
+                <AttachmentLink storagePath={a.storage_path} fileName={a.file_name} />
                 <span>{Math.round((a.file_size || 0) / 1024)} KB</span>
                 <button className="ap-btn-danger-ghost" onClick={() => removeAttachment(a)}><Trash2 size={12} /></button>
               </div>

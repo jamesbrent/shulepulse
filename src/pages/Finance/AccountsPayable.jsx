@@ -16,7 +16,7 @@ import {
   voucherNo, supplierOf, invoiceLinesOf, attachmentsOf, invoiceOutstanding,
   effectivePaymentIds, paidByInvoice, postInvoiceJournal, postPaymentJournal, reverseJournalEntry,
   recomputeInvoicePaid, saveApConfig, decideApConfig, uploadAttachment, deleteAttachment,
-  attachmentPublicUrl, apSummary, buildSupplierStatement, logInvoiceToAssets, logPaymentToAssets,
+  attachmentSignedUrl, apSummary, buildSupplierStatement, logInvoiceToAssets, logPaymentToAssets,
 } from './apUtils'
 import { generatePaymentVoucherPdf } from './generatePaymentVoucherPdf'
 import './AccountsPayable.css'
@@ -36,6 +36,26 @@ const blankInvoice = () => ({
 })
 
 const blankLine = () => ({ description: '', quantity: '1', unit_price: '', discount_amount: '0' })
+
+function AttachmentLink({ storagePath, fileName }) {
+  const [url, setUrl] = useState(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setUrl(null); setFailed(false)
+    attachmentSignedUrl(supabase, storagePath).then((u) => {
+      if (cancelled) return
+      if (u) setUrl(u)
+      else setFailed(true)
+    })
+    return () => { cancelled = true }
+  }, [storagePath])
+
+  if (failed) return <span className="ap-norows" title="File link unavailable">{fileName} — unavailable</span>
+  if (!url) return <span>{fileName}</span>
+  return <a href={url} target="_blank" rel="noreferrer">{fileName}</a>
+}
 
 const blankPayment = () => ({
   payment_type: 'invoice', supplier_id: '', payee_name: '', payee_type: '',
@@ -493,7 +513,7 @@ export default function AccountsPayablePage({ initialTab }) {
             {list.map((a) => (
               <div className="ap-att-item" key={a.id}>
                 <FileText size={14} />
-                <a href={attachmentPublicUrl(supabase, a.storage_path)} target="_blank" rel="noreferrer">{a.file_name}</a>
+                <AttachmentLink storagePath={a.storage_path} fileName={a.file_name} />
                 <span>{Math.round((a.file_size || 0) / 1024)} KB</span>
                 <button className="ap-btn-danger-ghost" onClick={() => removeAttachment(a)}><Trash2 size={12} /></button>
               </div>
