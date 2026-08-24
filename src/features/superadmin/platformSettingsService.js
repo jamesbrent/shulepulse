@@ -162,27 +162,18 @@ const DEFAULT_SETTINGS = {
 }
 
 export async function fetchPlatformSettings() {
-  const { data, error } = await supabase
-    .from('platform_settings')
-    .select('*')
-    .eq('id', 1)
-    .single()
-
+  // Use masked RPC to prevent secrets from reaching the browser (VULN-49)
+  const { data, error } = await supabase.rpc('get_platform_settings_safe')
   if (error && error.code !== 'PGRST116') throw error
   return data || { id: 1, ...DEFAULT_SETTINGS }
 }
 
 export async function updatePlatformSettings(section, values) {
-  const update = {}
-  update[section] = values
-  update.updated_at = new Date().toISOString()
-
-  const { data, error } = await supabase
-    .from('platform_settings')
-    .upsert({ id: 1, ...update }, { onConflict: 'id' })
-    .select()
-    .single()
-
+  // Use safe RPC that strips masked values before saving (VULN-49)
+  const { data, error } = await supabase.rpc('update_platform_settings_safe', {
+    p_section: section,
+    p_values: values,
+  })
   if (error) throw error
   return data
 }
