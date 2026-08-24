@@ -7,6 +7,7 @@ import {
   Activity, ArrowUp, ArrowDown, History, MessageSquare, Menu, X, ListTree,
   ChevronDown, ArrowRight
 } from 'lucide-react'
+import logoImg from '../../assets/logo.png'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
@@ -418,7 +419,7 @@ export default function SuperadminDashboard() {
           </button>
         )}
         <div className="sidebar-brand">
-          <div className="sidebar-logo">SP</div>
+          <div className="sidebar-logo"><img src={logoImg} alt="ShulePulse" /></div>
           <span>ShulePulse</span>
         </div>
         <div className="super-badge">
