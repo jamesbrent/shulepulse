@@ -12,6 +12,31 @@
   justify-content: center;
   padding: 60px 56px;
   color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cloud data streams animation — behind all login-left content */
+.cds-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.login-left > *:not(.cds-svg) {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cds-svg animateMotion,
+  .cds-svg animate {
+    dur: 0s;
+    repeatCount: 1;
+  }
 }
 
 .login-brand {

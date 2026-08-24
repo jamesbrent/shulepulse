@@ -2,6 +2,7 @@
 import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
 import logoImg from '../assets/logo.png'
+import CloudDataStreams from '../components/CloudDataStreams'
 import './Login.css'
 
 export default function Login() {
@@ -63,6 +64,7 @@ export default function Login() {
   return (
     <div className="login-root">
       <div className="login-left">
+        <CloudDataStreams />
         <div className="login-brand">
           <div className="login-logo"><img src={logoImg} alt="ShulePulse" /></div>
           <span className="login-brand-name">ShulePulse</span>
