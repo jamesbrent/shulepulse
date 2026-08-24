@@ -2,206 +2,179 @@ export default function CloudDataStreams() {
   return (
     <svg
       className="cds-svg"
-      viewBox="0 0 500 700"
+      viewBox="0 0 600 700"
       preserveAspectRatio="xMidYMid slice"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
       <defs>
-        <filter id="cds-glow">
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
+        <filter id="cds-blur">
+          <feGaussianBlur stdDeviation="0.8" />
         </filter>
       </defs>
 
-      {/* ── Cloud shape (top-left area) ── */}
-      <g opacity="0.12">
-        <ellipse cx="120" cy="80" rx="55" ry="30" fill="white" />
-        <ellipse cx="90" cy="75" rx="35" ry="25" fill="white" />
-        <ellipse cx="155" cy="78" rx="30" ry="22" fill="white" />
-        <ellipse cx="120" cy="95" rx="60" ry="18" fill="white" />
-      </g>
+      {/* ── Faded continents ── */}
 
-      {/* ── ShulePulse system box (bottom-right area) ── */}
-      <g opacity="0.1">
-        <rect x="330" y="560" width="120" height="60" rx="8" fill="none" stroke="white" strokeWidth="1" />
-        <text x="390" y="586" textAnchor="middle" fill="white" fontSize="8" fontFamily="system-ui" fontWeight="600" opacity="0.9">ShulePulse</text>
-        <text x="390" y="600" textAnchor="middle" fill="white" fontSize="5" fontFamily="system-ui" opacity="0.6">School System</text>
-        {/* Small indicator dots inside the box */}
-        <circle cx="352" cy="608" r="1.5" fill="white" opacity="0.4">
-          <animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="362" cy="608" r="1.5" fill="white" opacity="0.4">
-          <animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" begin="0.8s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="372" cy="608" r="1.5" fill="white" opacity="0.4">
-          <animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" begin="1.6s" repeatCount="indefinite" />
-        </circle>
-      </g>
-
-      {/* ── Data stream paths: Cloud → ShulePulse ── */}
-
-      {/* Stream 1 — main diagonal */}
+      {/* Africa */}
       <path
-        id="cds-path-1"
-        d="M160,105 C200,200 280,350 340,560"
-        fill="none"
-        stroke="white"
-        strokeWidth="0.8"
-        strokeOpacity="0.15"
-        strokeDasharray="4 6"
+        d="M295,240 C300,235 315,230 325,235 C335,240 340,255 342,270 C344,285 348,300 345,320 C342,340 335,360 325,375 C315,390 305,400 298,405 C290,408 282,400 278,390 C274,380 270,365 268,350 C266,335 265,315 268,300 C270,285 275,270 280,260 C285,250 290,245 295,240Z"
+        fill="white"
+        opacity="0.06"
+        filter="url(#cds-blur)"
       />
-      <circle r="2" fill="white" opacity="0.2" filter="url(#cds-glow)">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="0s">
-          <mpath href="#cds-path-1" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.25;0.25;0" dur="8s" repeatCount="indefinite" begin="0s" />
+
+      {/* Europe */}
+      <path
+        d="M280,170 C285,165 295,160 305,162 C315,164 320,170 318,178 C316,186 310,192 302,195 C294,198 286,195 282,188 C278,181 278,175 280,170Z"
+        fill="white"
+        opacity="0.05"
+        filter="url(#cds-blur)"
+      />
+
+      {/* Asia */}
+      <path
+        d="M340,160 C355,155 375,150 395,155 C415,160 430,170 435,185 C440,200 435,215 425,225 C415,235 400,240 385,238 C370,236 355,230 345,220 C335,210 332,195 335,180 C337,170 338,165 340,160Z"
+        fill="white"
+        opacity="0.05"
+        filter="url(#cds-blur)"
+      />
+
+      {/* South America */}
+      <path
+        d="M180,340 C188,335 198,338 202,348 C206,358 208,375 205,395 C202,415 195,430 185,440 C175,448 165,445 160,435 C155,425 152,410 153,395 C154,380 158,365 165,355 C170,348 175,343 180,340Z"
+        fill="white"
+        opacity="0.05"
+        filter="url(#cds-blur)"
+      />
+
+      {/* North America */}
+      <path
+        d="M120,180 C135,170 155,165 175,170 C195,175 205,185 210,200 C215,215 210,230 200,240 C190,250 175,255 160,252 C145,249 132,240 125,228 C118,216 115,200 118,190 C119,185 120,182 120,180Z"
+        fill="white"
+        opacity="0.05"
+        filter="url(#cds-blur)"
+      />
+
+      {/* Australia */}
+      <path
+        d="M410,380 C420,375 435,378 440,388 C445,398 442,410 435,415 C428,420 418,418 412,410 C406,402 405,390 408,384 C409,381 410,379 410,380Z"
+        fill="white"
+        opacity="0.04"
+        filter="url(#cds-blur)"
+      />
+
+      {/* ── Data stream paths between continents ── */}
+
+      {/* Africa → Europe */}
+      <path
+        id="cds-ae"
+        d="M305,240 C300,220 295,200 295,185"
+        fill="none" stroke="white" strokeWidth="0.7" strokeOpacity="0.14" strokeDasharray="3 5"
+      />
+      <circle r="1.8" fill="white" opacity="0.2">
+        <animateMotion dur="4s" repeatCount="indefinite" begin="0s"><mpath href="#cds-ae" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.22;0.22;0" dur="4s" repeatCount="indefinite" begin="0s" />
       </circle>
+      <circle r="1.2" fill="white" opacity="0.12">
+        <animateMotion dur="4s" repeatCount="indefinite" begin="2s"><mpath href="#cds-ae" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.15;0.15;0" dur="4s" repeatCount="indefinite" begin="2s" />
+      </circle>
+
+      {/* Europe → Asia */}
+      <path
+        id="cds-ea"
+        d="M315,175 C335,168 355,162 375,162"
+        fill="none" stroke="white" strokeWidth="0.6" strokeOpacity="0.1" strokeDasharray="2 7"
+      />
       <circle r="1.5" fill="white" opacity="0.15">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3s">
-          <mpath href="#cds-path-1" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.18;0.18;0" dur="8s" repeatCount="indefinite" begin="3s" />
+        <animateMotion dur="5s" repeatCount="indefinite" begin="1s"><mpath href="#cds-ea" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.18;0.18;0" dur="5s" repeatCount="indefinite" begin="1s" />
       </circle>
 
-      {/* Stream 2 — wider arc */}
+      {/* Africa → South America */}
       <path
-        id="cds-path-2"
-        d="M80,110 C60,250 200,400 350,555"
-        fill="none"
-        stroke="white"
-        strokeWidth="0.6"
-        strokeOpacity="0.1"
-        strokeDasharray="3 8"
-      />
-      <circle r="1.8" fill="white" opacity="0.15" filter="url(#cds-glow)">
-        <animateMotion dur="10s" repeatCount="indefinite" begin="1.5s">
-          <mpath href="#cds-path-2" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.2;0.2;0" dur="10s" repeatCount="indefinite" begin="1.5s" />
-      </circle>
-      <circle r="1.2" fill="white" opacity="0.1">
-        <animateMotion dur="10s" repeatCount="indefinite" begin="6s">
-          <mpath href="#cds-path-2" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.15;0.15;0" dur="10s" repeatCount="indefinite" begin="6s" />
-      </circle>
-
-      {/* Stream 3 — steep curve */}
-      <path
-        id="cds-path-3"
-        d="M140,95 C180,180 300,300 380,555"
-        fill="none"
-        stroke="white"
-        strokeWidth="0.5"
-        strokeOpacity="0.08"
-        strokeDasharray="2 10"
-      />
-      <circle r="1.5" fill="white" opacity="0.12">
-        <animateMotion dur="12s" repeatCount="indefinite" begin="4s">
-          <mpath href="#cds-path-3" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.15;0.15;0" dur="12s" repeatCount="indefinite" begin="4s" />
-      </circle>
-
-      {/* Stream 4 — left-side sweep */}
-      <path
-        id="cds-path-4"
-        d="M100,120 C80,300 150,450 335,565"
-        fill="none"
-        stroke="white"
-        strokeWidth="0.7"
-        strokeOpacity="0.12"
-        strokeDasharray="5 7"
-      />
-      <circle r="2" fill="white" opacity="0.18" filter="url(#cds-glow)">
-        <animateMotion dur="9s" repeatCount="indefinite" begin="2s">
-          <mpath href="#cds-path-4" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.22;0.22;0" dur="9s" repeatCount="indefinite" begin="2s" />
-      </circle>
-      <circle r="1" fill="white" opacity="0.1">
-        <animateMotion dur="9s" repeatCount="indefinite" begin="5.5s">
-          <mpath href="#cds-path-4" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.12;0.12;0" dur="9s" repeatCount="indefinite" begin="5.5s" />
-      </circle>
-
-      {/* Stream 5 — tight center path */}
-      <path
-        id="cds-path-5"
-        d="M155,100 C220,220 310,380 395,555"
-        fill="none"
-        stroke="white"
-        strokeWidth="0.4"
-        strokeOpacity="0.08"
-        strokeDasharray="2 12"
+        id="cds-as"
+        d="M275,320 C250,330 220,340 200,350"
+        fill="none" stroke="white" strokeWidth="0.5" strokeOpacity="0.08" strokeDasharray="2 8"
       />
       <circle r="1.2" fill="white" opacity="0.1">
-        <animateMotion dur="11s" repeatCount="indefinite" begin="7s">
-          <mpath href="#cds-path-5" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.13;0.13;0" dur="11s" repeatCount="indefinite" begin="7s" />
+        <animateMotion dur="6s" repeatCount="indefinite" begin="2.5s"><mpath href="#cds-as" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.12;0.12;0" dur="6s" repeatCount="indefinite" begin="2.5s" />
       </circle>
 
-      {/* ── Reverse streams: ShulePulse → Cloud (data coming back) ── */}
-
+      {/* North America → Europe */}
       <path
-        id="cds-path-r1"
-        d="M380,560 C320,380 200,220 130,105"
-        fill="none"
-        stroke="white"
-        strokeWidth="0.5"
-        strokeOpacity="0.08"
-        strokeDasharray="3 9"
+        id="cds-ne"
+        d="M210,195 C235,185 260,178 285,175"
+        fill="none" stroke="white" strokeWidth="0.6" strokeOpacity="0.12" strokeDasharray="3 6"
       />
-      <circle r="1.5" fill="white" opacity="0.12">
-        <animateMotion dur="9.5s" repeatCount="indefinite" begin="5s">
-          <mpath href="#cds-path-r1" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.15;0.15;0" dur="9.5s" repeatCount="indefinite" begin="5s" />
+      <circle r="1.5" fill="white" opacity="0.16">
+        <animateMotion dur="5.5s" repeatCount="indefinite" begin="0.5s"><mpath href="#cds-ne" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.18;0.18;0" dur="5.5s" repeatCount="indefinite" begin="0.5s" />
+      </circle>
+      <circle r="1" fill="white" opacity="0.08">
+        <animateMotion dur="5.5s" repeatCount="indefinite" begin="3.5s"><mpath href="#cds-ne" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.1;0.1;0" dur="5.5s" repeatCount="indefinite" begin="3.5s" />
       </circle>
 
+      {/* Asia → Australia */}
       <path
-        id="cds-path-r2"
-        d="M350,570 C250,420 120,280 95,115"
-        fill="none"
-        stroke="white"
-        strokeWidth="0.4"
-        strokeOpacity="0.06"
-        strokeDasharray="2 11"
+        id="cds-aa"
+        d="M420,235 C425,280 420,330 418,380"
+        fill="none" stroke="white" strokeWidth="0.5" strokeOpacity="0.08" strokeDasharray="2 9"
+      />
+      <circle r="1.2" fill="white" opacity="0.1">
+        <animateMotion dur="7s" repeatCount="indefinite" begin="3s"><mpath href="#cds-aa" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.12;0.12;0" dur="7s" repeatCount="indefinite" begin="3s" />
+      </circle>
+
+      {/* South America → North America */}
+      <path
+        id="cds-sn"
+        d="M175,340 C165,310 150,270 145,230"
+        fill="none" stroke="white" strokeWidth="0.4" strokeOpacity="0.07" strokeDasharray="2 10"
       />
       <circle r="1" fill="white" opacity="0.08">
-        <animateMotion dur="13s" repeatCount="indefinite" begin="8s">
-          <mpath href="#cds-path-r2" />
-        </animateMotion>
-        <animate attributeName="opacity" values="0;0.1;0.1;0" dur="13s" repeatCount="indefinite" begin="8s" />
+        <animateMotion dur="6.5s" repeatCount="indefinite" begin="4s"><mpath href="#cds-sn" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.1;0.1;0" dur="6.5s" repeatCount="indefinite" begin="4s" />
       </circle>
 
-      {/* ── Ambient floating particles (background depth) ── */}
+      {/* Africa → Asia (long arc) */}
+      <path
+        id="cds-al"
+        d="M335,270 C355,250 380,230 400,210"
+        fill="none" stroke="white" strokeWidth="0.5" strokeOpacity="0.09" strokeDasharray="3 7"
+      />
+      <circle r="1.3" fill="white" opacity="0.12">
+        <animateMotion dur="6s" repeatCount="indefinite" begin="1.5s"><mpath href="#cds-al" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.14;0.14;0" dur="6s" repeatCount="indefinite" begin="1.5s" />
+      </circle>
+
+      {/* Europe → Australia (long arc) */}
+      <path
+        id="cds-eau"
+        d="M310,195 C340,250 380,320 415,385"
+        fill="none" stroke="white" strokeWidth="0.4" strokeOpacity="0.06" strokeDasharray="2 11"
+      />
+      <circle r="1" fill="white" opacity="0.08">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="5s"><mpath href="#cds-eau" /></animateMotion>
+        <animate attributeName="opacity" values="0;0.1;0.1;0" dur="8s" repeatCount="indefinite" begin="5s" />
+      </circle>
+
+      {/* ── Ambient floating dots ── */}
       {[
-        { cx: 60,  cy: 200, r: 1.5, dur: '7s',  delay: '0s' },
-        { cx: 420, cy: 300, r: 1,   dur: '9s',  delay: '2s' },
-        { cx: 200, cy: 450, r: 1.2, dur: '11s', delay: '1s' },
-        { cx: 350, cy: 150, r: 0.8, dur: '8s',  delay: '4s' },
-        { cx: 100, cy: 500, r: 1.3, dur: '10s', delay: '3s' },
-        { cx: 300, cy: 250, r: 0.7, dur: '12s', delay: '5s' },
-        { cx: 450, cy: 450, r: 1,   dur: '9s',  delay: '6s' },
-        { cx: 180, cy: 350, r: 0.9, dur: '11s', delay: '2.5s' },
+        { cx: 80,  cy: 300, dur: '9s',  d: '0s' },
+        { cx: 500, cy: 250, dur: '11s', d: '2s' },
+        { cx: 250, cy: 500, dur: '10s', d: '1s' },
+        { cx: 450, cy: 150, dur: '12s', d: '3s' },
+        { cx: 150, cy: 450, dur: '8s',  d: '4s' },
+        { cx: 380, cy: 500, dur: '10s', d: '5s' },
+        { cx: 50,  cy: 180, dur: '11s', d: '1.5s' },
+        { cx: 520, cy: 400, dur: '9s',  d: '3.5s' },
       ].map((p, i) => (
-        <circle
-          key={i}
-          cx={p.cx}
-          cy={p.cy}
-          r={p.r}
-          fill="white"
-          opacity="0"
-        >
-          <animate attributeName="opacity" values="0;0.1;0.1;0" dur={p.dur} begin={p.delay} repeatCount="indefinite" />
-          <animate attributeName="cy" values={`${p.cy};${p.cy - 15};${p.cy}`} dur={p.dur} begin={p.delay} repeatCount="indefinite" />
+        <circle key={i} cx={p.cx} cy={p.cy} r="1" fill="white" opacity="0">
+          <animate attributeName="opacity" values="0;0.08;0.08;0" dur={p.dur} begin={p.d} repeatCount="indefinite" />
+          <animate attributeName="cy" values={`${p.cy};${p.cy - 12};${p.cy}`} dur={p.dur} begin={p.d} repeatCount="indefinite" />
         </circle>
       ))}
     </svg>
