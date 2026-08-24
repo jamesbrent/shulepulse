@@ -50,97 +50,37 @@ GRANT EXECUTE ON FUNCTION switch_school TO authenticated;
 
 -- ──────────────────────────────────────────────────────────
 -- VULN-12: Add SET search_path to SECURITY DEFINER functions
--- that are missing it
 -- ──────────────────────────────────────────────────────────
 
--- 004: promote_students function
+-- 004: promote_students(p_school_id UUID, p_student_ids UUID[], p_promoted_by UUID)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'promote_students') THEN
-    ALTER FUNCTION promote_students(p_class_id UUID, p_academic_year INT, p_school_id UUID)
-      SET search_path = public;
+    ALTER FUNCTION promote_students(UUID, UUID[], UUID) SET search_path = public;
   END IF;
 END $$;
 
--- 031: generate_book_copy_code
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'generate_book_copy_code') THEN
-    ALTER FUNCTION generate_book_copy_code(p_book_id UUID)
-      SET search_path = public;
-  END IF;
-END $$;
-
--- 032: generate_random_copy_code
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'generate_random_copy_code') THEN
-    ALTER FUNCTION generate_random_copy_code()
-      SET search_path = public;
-  END IF;
-END $$;
-
--- 055: next_journal_entry_number
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'next_journal_entry_number') THEN
-    ALTER FUNCTION next_journal_entry_number(p_school_id UUID)
-      SET search_path = public;
-  END IF;
-END $$;
-
--- 068: get_my_school_id and get_my_role
+-- 068: get_my_school_id() and get_my_role()
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'get_my_school_id') THEN
-    ALTER FUNCTION get_my_school_id()
-      SET search_path = public;
+    ALTER FUNCTION get_my_school_id() SET search_path = public;
   END IF;
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'get_my_role') THEN
-    ALTER FUNCTION get_my_role()
-      SET search_path = public;
+    ALTER FUNCTION get_my_role() SET search_path = public;
   END IF;
 END $$;
 
--- 070: sync_superadmin_school
+-- 070: _patch_rls_add_superadmin
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'sync_superadmin_school') THEN
-    ALTER FUNCTION sync_superadmin_school()
-      SET search_path = public;
-  END IF;
-END $$;
-
--- 074: next_receipt_number and audit_log_trigger
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'next_receipt_number') THEN
-    ALTER FUNCTION next_receipt_number(p_school_id UUID)
-      SET search_path = public;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'audit_log_trigger') THEN
-    ALTER FUNCTION audit_log_trigger()
-      SET search_path = public;
-  END IF;
-END $$;
-
--- 075: record_fee_payment
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'record_fee_payment') THEN
-    ALTER FUNCTION record_fee_payment(
-      p_school_id UUID, p_student_id UUID, p_amount NUMERIC,
-      p_payment_type TEXT, p_payment_method TEXT, p_provider TEXT,
-      p_reference TEXT, p_receipt_number TEXT, p_received_by UUID,
-      p_transaction_date DATE, p_term TEXT, p_year INT, p_description TEXT
-    ) SET search_path = public;
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = '_patch_rls_add_superadmin') THEN
+    ALTER FUNCTION _patch_rls_add_superadmin(text, text, text, text) SET search_path = public;
   END IF;
 END $$;
 
 -- ──────────────────────────────────────────────────────────
--- VULN-21: Verify RLS policies don't use auth.jwt()->>'role'
--- All policies should use get_my_role() (SECURITY DEFINER)
--- This is a safety net — any policy using auth.jwt()->>'role' is flagged
+-- VULN-21: Audit RLS policies for auth.jwt() usage
 -- ──────────────────────────────────────────────────────────
 DO $$
 DECLARE
@@ -158,7 +98,6 @@ END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- VULN-22: CHECK constraints on journal_entry_lines
--- Ensure debit/credit are non-negative
 -- ──────────────────────────────────────────────────────────
 DO $$
 BEGIN
