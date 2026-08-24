@@ -21,11 +21,30 @@ export function StudentDocuments({ studentId }) {
     setLoading(false)
   }
 
+  const ALLOWED_TYPES = [
+    'application/pdf',
+    'image/png', 'image/jpeg', 'image/webp',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv',
+  ]
+  const MAX_SIZE_MB = 10
+
   const handleUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert(`File type "${file.type || file.name.split('.').pop()}" is not allowed. Accepted: PDF, Word, Excel, CSV, PNG, JPEG, WEBP.`)
+      return
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      alert(`File is ${(file.size / 1024 / 1024).toFixed(1)} MB. Maximum allowed is ${MAX_SIZE_MB} MB.`)
+      return
+    }
     setUploading(true)
-    const path = `students/${studentId}/${Date.now()}_${file.name}`
+    const path = `students/${studentId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const { error: uploadErr } = await supabase.storage.from('documents').upload(path, file)
     if (uploadErr) { setUploading(false); return }
     const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
@@ -55,7 +74,8 @@ export function StudentDocuments({ studentId }) {
       <div className="doc-upload-area">
         <label className="doc-upload-btn">
           <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload Document'}
-          <input type="file" onChange={handleUpload} hidden disabled={uploading} />
+          <input type="file" onChange={handleUpload} hidden disabled={uploading}
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx,.csv" />
         </label>
       </div>
       {docs.length === 0 ? (

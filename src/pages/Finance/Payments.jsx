@@ -152,43 +152,30 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
       return
     }
 
-    const paymentRecord = {
-      school_id: profile.school_id,
-      student_id: payForm.student.id,
-      amount,
-      payment_type: payForm.payment_type,
-      payment_method: payForm.payment_type,
-      provider: payForm.provider || null,
-      reference: payForm.reference || null,
-      receipt_number: receiptNumber,
-      received_by: profile.id,
-      transaction_date: payForm.transaction_date || TODAY,
-      term: payForm.term,
-      year: parseInt(payForm.year),
-    }
+    // Atomic payment + ledger recording via RPC (prevents partial writes)
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc('record_fee_payment', {
+      p_school_id: profile.school_id,
+      p_student_id: payForm.student.id,
+      p_amount: amount,
+      p_payment_type: payForm.payment_type,
+      p_payment_method: payForm.payment_type,
+      p_provider: payForm.provider || null,
+      p_reference: payForm.reference || null,
+      p_receipt_number: receiptNumber,
+      p_received_by: profile.id,
+      p_transaction_date: payForm.transaction_date || TODAY,
+      p_term: payForm.term,
+      p_year: parseInt(payForm.year),
+      p_description: `Payment received via ${payForm.payment_type}`,
+    })
 
-    const { data: payData, error: payErr } = await supabase
-      .from('fee_payments')
-      .insert(paymentRecord)
-      .select()
-      .single()
-
-    if (payErr) {
-      setPayError(payErr.message)
+    if (rpcErr || !rpcResult?.success) {
+      setPayError(rpcErr?.message || rpcResult?.error || 'Payment recording failed')
       setSaving(false)
       return
     }
 
-    await supabase.from('student_ledger').insert({
-      school_id: profile.school_id,
-      student_id: payForm.student.id,
-      entry_type: 'payment',
-      amount,
-      term: payForm.term,
-      year: parseInt(payForm.year),
-      description: `Payment received via ${payForm.payment_type}`,
-      reference_id: payData.id,
-    })
+    const payData = { id: rpcResult.payment_id, receipt_number: receiptNumber, student: payForm.student }
 
     try {
       await postFeePaymentToGL(supabase, {

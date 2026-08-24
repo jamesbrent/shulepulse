@@ -364,6 +364,10 @@ export default function PlatformSettingsPage() {
 
   const renderPaymentGateways = () => (
     <>
+      <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#92400e', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <Shield size={16} style={{ marginTop: 2, flexShrink: 0 }} />
+        <div><strong>Security Notice:</strong> API keys and secrets are stored in the database. Ensure your Supabase project has Row Level Security enforced and restrict access to platform_settings to superadmin only. Consider migrating sensitive keys to Supabase Vault for production use.</div>
+      </div>
       <h4 className="ps-subsection">M-Pesa</h4>
       <Field label="Consumer Key">
         <TextInput value={s.payment_gateways.mpesa_consumer_key} onChange={(v) => updateField('payment_gateways', 'mpesa_consumer_key', v)} password />

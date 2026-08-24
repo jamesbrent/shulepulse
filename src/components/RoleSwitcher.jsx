@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
 import { Shield, ChevronDown, LogOut } from 'lucide-react'
 import { ROLE_META } from '../utils/roles'
+import { logAction } from '../features/audit/auditService'
 import './RoleSwitcher.css'
 
 export default function RoleSwitcher() {
@@ -28,11 +29,24 @@ export default function RoleSwitcher() {
 
   const switchRole = async (newRole) => {
     if (newRole === profile?.role) { setOpen(false); return }
+    const oldRole = profile?.role
     const { error } = await supabase
       .from('profiles')
       .update({ role: newRole })
       .eq('id', profile.id)
     if (error) { console.error('Role switch failed:', error); return }
+
+    logAction({
+      schoolId: profile.school_id,
+      action: 'role_switch',
+      details: {
+        user_id: profile.id,
+        user_name: profile.full_name,
+        from_role: oldRole,
+        to_role: newRole,
+      },
+    })
+
     setOpen(false)
     window.location.href = basePath(ROLE_META[newRole]?.route || '/')
   }
