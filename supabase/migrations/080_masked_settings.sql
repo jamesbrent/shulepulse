@@ -45,6 +45,10 @@ BEGIN
        AND (result->'payment_gateways'->>'pesapal_consumer_secret') != '' THEN
       result := jsonb_set(result, '{payment_gateways,pesapal_consumer_secret}', '"••••••••"');
     END IF;
+    IF (result->'payment_gateways'->>'flutterwave_secret_key') IS NOT NULL
+       AND (result->'payment_gateways'->>'flutterwave_secret_key') != '' THEN
+      result := jsonb_set(result, '{payment_gateways,flutterwave_secret_key}', '"••••••••"');
+    END IF;
   END IF;
 
   -- Mask SMS API key
@@ -85,7 +89,7 @@ DECLARE
   merged JSONB;
   secret_keys TEXT[] := ARRAY[
     'mpesa_consumer_key', 'mpesa_consumer_secret',
-    'stripe_secret_key', 'pesapal_consumer_secret',
+    'stripe_secret_key', 'pesapal_consumer_secret', 'flutterwave_secret_key',
     'api_key', 'email_password'
   ];
   k TEXT;

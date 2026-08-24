@@ -366,7 +366,7 @@ export default function PlatformSettingsPage() {
     <>
       <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#92400e', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
         <Shield size={16} style={{ marginTop: 2, flexShrink: 0 }} />
-        <div><strong>Security Notice:</strong> API keys and secrets are stored in the database. Ensure your Supabase project has Row Level Security enforced and restrict access to platform_settings to superadmin only. Consider migrating sensitive keys to Supabase Vault for production use.</div>
+        <div><strong>Security Notice:</strong> API secrets are masked for security — they never leave the server. To update a secret, clear the field and type a new value. Leaving it masked preserves the existing value.</div>
       </div>
       <h4 className="ps-subsection">M-Pesa</h4>
       <Field label="Consumer Key">
