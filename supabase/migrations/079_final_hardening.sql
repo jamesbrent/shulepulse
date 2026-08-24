@@ -73,18 +73,27 @@ BEGIN
   END IF;
 END $$;
 
--- student_documents: admin/deputy/teacher can write
+-- student_documents: admin/deputy/teacher can write (no school_id column — use subquery)
 DO $$
 BEGIN
   IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'student_documents') THEN
     EXECUTE 'DROP POLICY IF EXISTS student_documents_school_isolation ON student_documents';
-    EXECUTE 'CREATE POLICY "student_documents_select" ON student_documents FOR SELECT USING (school_id = get_my_school_id() OR get_my_role() = ''superadmin'')';
+    EXECUTE 'CREATE POLICY "student_documents_select" ON student_documents FOR SELECT USING (
+      student_id IN (SELECT id FROM students WHERE school_id = get_my_school_id())
+      OR get_my_role() = ''superadmin''
+    )';
     EXECUTE 'CREATE POLICY "student_documents_insert_role_gated" ON student_documents FOR INSERT WITH CHECK (
-      (school_id = get_my_school_id() AND get_my_role() IN (''admin'', ''deputy_administrator'', ''teacher'', ''class_teacher'', ''registrar'', ''superadmin''))
+      (
+        student_id IN (SELECT id FROM students WHERE school_id = get_my_school_id())
+        AND get_my_role() IN (''admin'', ''deputy_administrator'', ''teacher'', ''class_teacher'', ''registrar'', ''superadmin'')
+      )
       OR get_my_role() = ''superadmin''
     )';
     EXECUTE 'CREATE POLICY "student_documents_delete_role_gated" ON student_documents FOR DELETE USING (
-      (school_id = get_my_school_id() AND get_my_role() IN (''admin'', ''deputy_administrator'', ''superadmin''))
+      (
+        student_id IN (SELECT id FROM students WHERE school_id = get_my_school_id())
+        AND get_my_role() IN (''admin'', ''deputy_administrator'', ''superadmin'')
+      )
       OR get_my_role() = ''superadmin''
     )';
   END IF;

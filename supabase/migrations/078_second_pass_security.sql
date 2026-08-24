@@ -182,7 +182,7 @@ CREATE VIEW students_without_logins
 -- VULN-44: Block payroll recalculation of posted/approved runs
 -- Add a trigger that prevents status changes on completed runs
 -- ──────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION prevent_posted_payroll modification()
+CREATE OR REPLACE FUNCTION prevent_posted_payroll_modification()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -203,7 +203,7 @@ DROP TRIGGER IF EXISTS trg_protect_posted_payroll ON payroll_runs;
 CREATE TRIGGER trg_protect_posted_payroll
   BEFORE UPDATE ON payroll_runs
   FOR EACH ROW
-  EXECUTE FUNCTION prevent_posted_payroll modification();
+  EXECUTE FUNCTION prevent_posted_payroll_modification();
 
 -- ──────────────────────────────────────────────────────────
 -- VULN-46: Server-side approval enforcement
