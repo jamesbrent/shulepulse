@@ -16,8 +16,8 @@
   overflow: hidden;
 }
 
-/* Cloud data streams animation — behind all login-left content */
-.cds-svg {
+/* Animated dotted world map — behind all login-left content */
+.adm-map-svg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -32,8 +32,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cds-svg animateMotion,
-  .cds-svg animate {
+  .adm-map-svg animateMotion,
+  .adm-map-svg animate {
     dur: 0s;
     repeatCount: 1;
   }
