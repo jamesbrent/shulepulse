@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import * as XLSX from 'xlsx'
 
 function collectFields(students) {
@@ -85,14 +86,14 @@ export function exportToPDF(students, { title = 'Student List', school, filters 
       .footer { text-align:center; font-size:10px; color:#999; margin-top:12px; }
     </style></head><body>
     <div class="pdf-header">
-      ${logoUrl ? `<img src="${logoUrl}" alt="logo" />` : ''}
-      <h2>${schoolName}</h2>
+      ${logoUrl ? `<img src="${esc(logoUrl)}" alt="logo" />` : ''}
+      <h2>${esc(schoolName)}</h2>
     </div>
-    <div class="pdf-sub">${title}${filterLabel}</div>
+    <div class="pdf-sub">${esc(title)}${esc(filterLabel)}</div>
     <table><thead><tr>
-      <th>No.</th>${Object.keys(rows[0] || {}).map(k => `<th>${k}</th>`).join('')}
+      <th>No.</th>${Object.keys(rows[0] || {}).map(k => `<th>${esc(k)}</th>`).join('')}
     </tr></thead><tbody>
-      ${rows.map((r, i) => `<tr><td style="text-align:center">${i + 1}</td>${Object.values(r).map(v => `<td>${v || '—'}</td>`).join('')}</tr>`).join('')}
+      ${rows.map((r, i) => `<tr><td style="text-align:center">${i + 1}</td>${Object.values(r).map(v => `<td>${esc(v) || '—'}</td>`).join('')}</tr>`).join('')}
     </tbody></table>
     <div class="footer">Generated on ${new Date().toLocaleDateString()} | ${rows.length} student${rows.length === 1 ? '' : 's'}</div>
     </body></html>

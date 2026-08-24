@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}))
     const { email, full_name, school_id, password: pw, user_id } = body
 
-    const password = pw || 'Student@123'
+    const password = pw || crypto.randomUUID().slice(0, 12)
     const schoolId = school_id || callerProfile.school_id
 
     if (user_id) {

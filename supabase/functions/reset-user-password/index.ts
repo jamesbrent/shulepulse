@@ -72,7 +72,7 @@ serve(async (req) => {
     return json({ error: 'user_id and new_password are required' }, 400)
   }
 
-  if (body.new_password.length < 6) {
+  if (body.new_password.length < 8) {
     return json({ error: 'Password must be at least 6 characters' }, 400)
   }
 

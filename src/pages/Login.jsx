@@ -21,7 +21,7 @@ export default function Login() {
     })
 
     if (error) {
-      setError(error.message)
+      setError('Invalid email or password. Please try again.')
       setLoading(false)
       return
     }

@@ -54,6 +54,9 @@ Deno.serve(async (req) => {
       })
     }
 
+    const body = await req.json().catch(() => ({}))
+    const password = body.password || crypto.randomUUID().slice(0, 12)
+
     const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers({
       perPage: 1000,
     })
@@ -69,7 +72,6 @@ Deno.serve(async (req) => {
       u.user_metadata?.role === 'student' || u.email?.includes('adm-') || u.email?.includes('@student.')
     )
 
-    const password = 'Student@123'
     let reset = 0
     let failed = 0
     const errors = []

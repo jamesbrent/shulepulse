@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 
 /* ── Legacy export (simple Excel/CSV by filename) ── */
 export function exportAttendanceCSV(records, filename = 'attendance_export.csv') {
@@ -265,7 +266,7 @@ export async function exportAttendancePDF(records, { school, title = 'Attendance
         cells += `<td class="${cls}" style="text-align:center;font-size:7px;padding:1px 2px">${code}</td>`
       })
       const pct = marked > 0 ? Math.round((present / marked) * 100) + '%' : '—'
-      return `<tr><td style="font-size:8px">${s.name}</td><td style="font-size:8px">${s.adm}</td>${cells}<td style="text-align:center;font-size:8px">${pct}</td></tr>`
+      return `<tr><td style="font-size:8px">${esc(s.name)}</td><td style="font-size:8px">${esc(s.adm)}</td>${cells}<td style="text-align:center;font-size:8px">${pct}</td></tr>`
     }).join('')
   } else {
     tableHead = `<tr>
@@ -284,13 +285,13 @@ export async function exportAttendancePDF(records, { school, title = 'Attendance
       const statusLabel = r.status ? r.status.charAt(0).toUpperCase() + r.status.slice(1) : '—'
       return `<tr>
         <td style="text-align:center">${i + 1}</td>
-        <td>${r.students?.full_name || '—'}</td>
-        <td>${r.students?.admission_number || '—'}</td>
-        <td>${r.students?.class || '—'}${r.students?.stream ? ` ${r.students.stream}` : ''}</td>
-        <td>${r.date || '—'}</td>
-        <td class="status-${statusClass}">${statusLabel}</td>
-        <td>${r.notes || '—'}</td>
-        <td>${r.teacher_name || '—'}</td>
+        <td>${esc(r.students?.full_name) || '—'}</td>
+        <td>${esc(r.students?.admission_number) || '—'}</td>
+        <td>${esc(r.students?.class) || '—'}${r.students?.stream ? ` ${esc(r.students.stream)}` : ''}</td>
+        <td>${esc(r.date) || '—'}</td>
+        <td class="status-${esc(statusClass)}">${esc(statusLabel)}</td>
+        <td>${esc(r.notes) || '—'}</td>
+        <td>${esc(r.teacher_name) || '—'}</td>
       </tr>`
     }).join('')
   }
@@ -323,11 +324,11 @@ export async function exportAttendancePDF(records, { school, title = 'Attendance
       </head>
       <body>
         <div class="header">
-          ${logoUrl ? `<img src="${logoUrl}" alt="Logo" />` : ''}
-          <h1>${schoolName}</h1>
+          ${logoUrl ? `<img src="${esc(logoUrl)}" alt="Logo" />` : ''}
+          <h1>${esc(schoolName)}</h1>
         </div>
-        <div class="sub-title">${title}</div>
-        <div class="date-line">${dateLabel}${termInfo ? ` &mdash; ${termInfo}` : ''}</div>
+        <div class="sub-title">${esc(title)}</div>
+        <div class="date-line">${esc(dateLabel)}${termInfo ? ` &mdash; ${esc(termInfo)}` : ''}</div>
 
         <div class="summary-grid">
           <div class="summary-item">Total <div class="num">${summary.total}</div></div>

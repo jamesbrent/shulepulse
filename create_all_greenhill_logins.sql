@@ -1,8 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
---  CREATE/RESET LOGINS FOR ALL GREENHILL USERS
+--  CREATE LOGINS FOR ALL GREENHILL USERS
 --  Run this in the Supabase SQL Editor.
---  - Creates a login for every Greenhill profile missing one
---  - Resets the password of every user (existing or new) to: 123@ShulePulse
+--  - Creates an auth login for every Greenhill profile missing one
+--  - Does NOT change passwords of users who already have a login
+--  - Default passwords: students = Student@123, staff/others = Staff@123
 -- ════════════════════════════════════════════════════════════════════════
 
 CREATE TEMP TABLE IF NOT EXISTS login_results (
@@ -14,7 +15,7 @@ DECLARE
   school RECORD;
   p RECORD;
   uid uuid;
-  pw text := '123@ShulePulse';
+  pw text;
 BEGIN
   SELECT * INTO school FROM public.schools
   WHERE name ILIKE '%greenhill%' OR email ILIKE '%greenhill%'
@@ -35,6 +36,8 @@ BEGIN
       CONTINUE;
     END IF;
 
+    IF p.role = 'student' THEN pw := 'Student@123'; ELSE pw := 'Staff@123'; END IF;
+
     SELECT id INTO uid FROM auth.users WHERE email = p.email LIMIT 1;
 
     IF uid IS NULL THEN
@@ -53,12 +56,7 @@ BEGIN
       );
       INSERT INTO login_results VALUES (p.email, p.full_name, p.role, 'LOGIN CREATED', pw);
     ELSE
-      UPDATE auth.users
-      SET encrypted_password = crypt(pw, gen_salt('bf')),
-          email_confirmed_at = COALESCE(email_confirmed_at, now()),
-          updated_at = now()
-      WHERE id = uid;
-      INSERT INTO login_results VALUES (p.email, p.full_name, p.role, 'PASSWORD RESET', pw);
+      INSERT INTO login_results VALUES (p.email, p.full_name, p.role, 'ALREADY HAS LOGIN (password unchanged)', NULL);
     END IF;
   END LOOP;
 END $$;

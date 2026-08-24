@@ -129,8 +129,8 @@ export default function SettingsPage() {
       setError('New passwords do not match.')
       return
     }
-    if (pwdForm.new_password.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (pwdForm.new_password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
     setSaving(true)

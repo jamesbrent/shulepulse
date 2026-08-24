@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}))
     const { email, full_name, school_id, password: pw } = body
 
-    const password = pw || 'Parent@123'
+    const password = pw || crypto.randomUUID().slice(0, 12)
     const schoolId = school_id || callerProfile.school_id
 
     if (!email || !full_name) {
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
         .eq('id', newUser.user.id)
     }
 
-    return new Response(JSON.stringify({ success: true, user_id: newUser?.user?.id, email, password }), {
+    return new Response(JSON.stringify({ success: true, user_id: newUser?.user?.id, email }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })

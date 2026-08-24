@@ -248,6 +248,8 @@ export async function postToJournal(supabase, {
   schoolId, userId, entry_date, description, source = 'manual',
   reference_type = null, reference_id = null, lines,
 }) {
+  const balErr = balanceError(lines)
+  if (balErr) throw new Error(`Journal entry rejected: ${balErr}`)
   const entry_no = await nextJournalNumber(supabase, schoolId)
   const { data: je, error } = await supabase
     .from('journal_entries')

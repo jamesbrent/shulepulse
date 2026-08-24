@@ -32,16 +32,42 @@ serve(async (req) => {
     return json({ error: 'Invalid JSON body' }, 400)
   }
 
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) {
+    return json({ error: 'Unauthorized' }, 401)
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+  if (!supabaseUrl || !supabaseKey) {
+    return json({ error: 'Server configuration error' }, 500)
+  }
+
+  const userClient = createClient(supabaseUrl, anonKey || supabaseKey, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false },
+  })
+
+  const { data: { user }, error: authError } = await userClient.auth.getUser()
+  if (authError || !user) {
+    return json({ error: 'Unauthorized' }, 401)
+  }
+
+  const { data: callerProfile } = await userClient
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!callerProfile || callerProfile.role !== 'superadmin') {
+    return json({ error: 'Superadmin only' }, 403)
+  }
+
   if (typeof body.school_id !== 'string' || !body.school_id.trim()) {
     return json({ error: 'school_id is required and must be a string' }, 400)
   }
   const school_id = body.school_id.trim()
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  if (!supabaseUrl || !supabaseKey) {
-    return json({ error: 'Server configuration error' }, 500)
-  }
 
   const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false },

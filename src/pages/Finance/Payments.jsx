@@ -141,7 +141,9 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
       .eq('transaction_date', payForm.transaction_date || TODAY)
       .limit(1)
     if (duplicateCheck?.length) {
-      setPayError(`Possible duplicate: a payment of KES ${amount.toFixed(2)} for this student/term already exists (Receipt: ${duplicateCheck[0].receipt_number}). Proceed only if intentional.`)
+      setPayError(`Possible duplicate: a payment of KES ${amount.toFixed(2)} for this student/term already exists (Receipt: ${duplicateCheck[0].receipt_number}). This payment was NOT recorded.`)
+      setSaving(false)
+      return
     }
 
     // Use atomic server-side receipt number generation (migration 074)
