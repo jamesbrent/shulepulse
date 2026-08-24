@@ -98,19 +98,26 @@ BEGIN
     RETURN '{"error": "forbidden"}'::jsonb;
   END IF;
 
-  -- Get existing section value
-  SELECT p_section::jsonb INTO existing
-  FROM platform_settings WHERE id = 1;
+  -- Get existing section value (extract the jsonb column named by p_section)
+  SELECT to_jsonb(ps) -> p_section INTO existing
+  FROM platform_settings AS ps WHERE id = 1;
 
-  IF existing IS NULL THEN existing := '{}'::jsonb; END IF;
+  IF existing IS NULL OR jsonb_typeof(existing) != 'object' THEN
+    existing := '{}'::jsonb;
+  END IF;
 
   -- Merge new values
   merged := existing || p_values;
 
-  -- Strip out any secret keys that are still masked
+  -- Restore real values for any secret keys still masked, so saving an
+  -- untouched masked field preserves the stored secret instead of deleting it
   FOREACH k IN ARRAY secret_keys LOOP
     IF merged ->> k = '••••••••' THEN
-      merged := merged - k;
+      IF existing ? k AND existing ->> k IS NOT NULL AND existing ->> k != '' THEN
+        merged := jsonb_set(merged, ARRAY[k], existing -> k);
+      ELSE
+        merged := merged - k;
+      END IF;
     END IF;
   END LOOP;
 

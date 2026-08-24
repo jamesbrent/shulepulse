@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ListTree, Plus, Pencil, Trash2, Check, X, Loader } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, Loader } from 'lucide-react'
 import { fetchSchoolTypes, addSchoolType, updateSchoolType, deleteSchoolType } from '../../features/superadmin/lookupService'
 import { logAction } from '../../features/audit/auditService'
 
@@ -78,13 +78,6 @@ export default function SchoolCategoriesPage() {
 
   return (
     <div className="sa-categories">
-      <div className="sa-categories-header">
-        <div>
-          <h2><ListTree size={18} /> School Categories</h2>
-          <p className="sa-categories-desc">Manage the categories shown when onboarding or editing a school.</p>
-        </div>
-      </div>
-
       {error && <div className="sa-categories-error">{error}</div>}
 
       {/* Add form */}

@@ -160,7 +160,7 @@ export async function createPlan({ key, label, monthly_price, annual_price, desc
 
 export async function updatePlan(planId, updates) {
   const payload = { ...updates }
-  if (payload.monthy_price !== undefined) {
+  if (payload.monthly_price !== undefined) {
     payload.price_label = `KES ${Number(payload.monthly_price).toLocaleString()}`
   }
 

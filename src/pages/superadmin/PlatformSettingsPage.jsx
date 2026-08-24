@@ -74,19 +74,20 @@ function Select({ value, onChange, options }) {
 
 function TagInput({ values, onChange, placeholder }) {
   const [input, setInput] = useState('')
+  const list = Array.isArray(values) ? values : []
   const add = () => {
-    if (input.trim() && !values.includes(input.trim())) {
-      onChange([...values, input.trim()])
+    if (input.trim() && !list.includes(input.trim())) {
+      onChange([...list, input.trim()])
     }
     setInput('')
   }
   return (
     <div className="ps-tag-wrap">
       <div className="ps-tag-list">
-        {values.map((v, i) => (
+        {list.map((v, i) => (
           <span key={i} className="ps-tag">
             {v}
-            <button type="button" onClick={() => onChange(values.filter((_, j) => j !== i))}><X size={12} /></button>
+            <button type="button" onClick={() => onChange(list.filter((_, j) => j !== i))}><X size={12} /></button>
           </span>
         ))}
       </div>

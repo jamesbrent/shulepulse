@@ -161,11 +161,43 @@ const DEFAULT_SETTINGS = {
   },
 }
 
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+// Deep merge: DB values override defaults, null/undefined fall back to
+// defaults, and object defaults are never replaced by scalars/arrays so
+// every section always exposes every field the UI expects.
+function deepMergeSection(defaults, overrides) {
+  const merged = { ...defaults }
+  if (!isPlainObject(overrides)) return merged
+  for (const [key, dbValue] of Object.entries(overrides)) {
+    const defaultValue = merged[key]
+    if (isPlainObject(defaultValue) && isPlainObject(dbValue)) {
+      merged[key] = deepMergeSection(defaultValue, dbValue)
+    } else if (
+      dbValue !== null &&
+      dbValue !== undefined &&
+      !(isPlainObject(defaultValue) && Array.isArray(dbValue)) &&
+      !(Array.isArray(defaultValue) && isPlainObject(dbValue))
+    ) {
+      merged[key] = dbValue
+    }
+  }
+  return merged
+}
+
 export async function fetchPlatformSettings() {
   // Use masked RPC to prevent secrets from reaching the browser (VULN-49)
   const { data, error } = await supabase.rpc('get_platform_settings_safe')
   if (error && error.code !== 'PGRST116') throw error
-  return data || { id: 1, ...DEFAULT_SETTINGS }
+
+  const dbSettings = isPlainObject(data) ? data : {}
+  const merged = {}
+  for (const [section, defaults] of Object.entries(DEFAULT_SETTINGS)) {
+    merged[section] = deepMergeSection(defaults, dbSettings[section])
+  }
+  return { id: dbSettings.id || 1, ...merged }
 }
 
 export async function updatePlatformSettings(section, values) {

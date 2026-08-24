@@ -141,7 +141,7 @@ export default function PlanManagementPage() {
   return (
     <div className="plan-mgmt-page">
       {toast && (
-        <div className={plan-toast }>
+        <div className={`plan-toast ${toast.type}`}>
           {toast.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />}
           {toast.message}
         </div>
@@ -173,7 +173,7 @@ export default function PlanManagementPage() {
           const isEditing = editingPlan?.id === plan.id
 
           return (
-            <div key={plan.id} className={plan-card } style={{ borderColor: colors.border }}>
+            <div key={plan.id} className={`plan-card${isExpanded ? ' expanded' : ''}`} style={{ borderColor: colors.border }}>
               <div className="plan-card-header" style={{ background: colors.bg }}>
                 <div className="plan-card-title-row">
                   <div className="plan-card-dot" style={{ background: colors.color }} />
@@ -343,14 +343,14 @@ export default function PlanManagementPage() {
                             {modFeatures.map((feat) => {
                               const isEnabled = (planFeatures[plan.key] || []).includes(feat.feature_key)
                               return (
-                                <label key={feat.feature_key} className={plan-feature-item }>
+                                <label key={feat.feature_key} className={`plan-feature-item${isEnabled ? ' enabled' : ''}`}>
                                   <input
                                     type="checkbox"
                                     checked={isEnabled}
                                     onChange={() => toggleFeature(plan.key, feat.feature_key)}
                                   />
                                   <span className="plan-feature-label">{feat.label}</span>
-                                  <span className={plan-feature-status }>
+                                  <span className={`plan-feature-status${feat.status === 'beta' ? ' beta' : ''}`}>
                                     {feat.status === 'beta' ? 'Beta' : feat.status === 'unavailable' ? 'N/A' : ''}
                                   </span>
                                 </label>
