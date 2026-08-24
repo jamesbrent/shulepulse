@@ -218,7 +218,10 @@ export default function AccountsPayablePage({ initialTab }) {
       const payload = { status: to, updated_at: new Date().toISOString() }
       const who = { submitted: 'submitted_by', reviewed: 'reviewed_by', approved: 'approved_by', posted: 'posted_by' }[to]
       if (who) { payload[who] = userId; payload[`${who.replace('_by', '')}_at`] = new Date().toISOString() }
-      if (to === 'approved' && !isAdmin) return showToast('Only the admin / principal can approve invoices', false)
+      if (to === 'approved') {
+        if (!isAdmin) return showToast('Only the admin / principal can approve invoices', false)
+        if (inv.created_by === userId) return showToast('You cannot approve your own invoice', false)
+      }
       if (to === 'posted') {
         const je = await postInvoiceJournal(supabase, { schoolId, userId, invoice: inv, lines: invoiceLinesOf(d, inv.id), supplierName: supplierOf(d, inv.supplier_id)?.name, entryDate: inv.invoice_date })
         payload.journal_entry_id = je.id
@@ -345,7 +348,7 @@ export default function AccountsPayablePage({ initialTab }) {
     try {
       if (to === 'approved') {
         if (!isAdmin) return showToast('Only the admin / principal can approve payments', false)
-        if (pay.created_by === userId && !isAdminRole(role)) return showToast('You cannot approve your own payment request', false)
+        if (pay.created_by === userId) return showToast('You cannot approve your own payment request', false)
       }
       const payload = { status: to, updated_at: new Date().toISOString() }
       const who = { submitted: 'submitted_by', reviewed: 'reviewed_by', approved: 'approved_by', processed: 'processed_by', paid: 'paid_by', posted: 'posted_by' }[to]

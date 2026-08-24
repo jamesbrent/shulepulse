@@ -129,22 +129,28 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
     setSaving(true)
     const amount = parseFloat(payForm.amount)
 
-    const prefix = 'RCP'
-    const yearStr = String(new Date().getFullYear()).slice(-2)
-    const { data: existing } = await supabase
+    // Duplicate payment detection: check for same student, amount, date, term
+    const { data: duplicateCheck } = await supabase
       .from('fee_payments')
-      .select('receipt_number')
+      .select('id, receipt_number')
       .eq('school_id', profile.school_id)
-      .order('created_at', { ascending: false })
+      .eq('student_id', payForm.student.id)
+      .eq('amount', amount)
+      .eq('term', payForm.term)
+      .eq('year', parseInt(payForm.year))
+      .eq('transaction_date', payForm.transaction_date || TODAY)
       .limit(1)
-    let seq = 1
-    if (existing?.length) {
-      const last = existing[0].receipt_number
-      if (last && last.startsWith(`${prefix}-${yearStr}-`)) {
-        seq = parseInt(last.split('-')[2]) + 1
-      }
+    if (duplicateCheck?.length) {
+      setPayError(`Possible duplicate: a payment of KES ${amount.toFixed(2)} for this student/term already exists (Receipt: ${duplicateCheck[0].receipt_number}). Proceed only if intentional.`)
     }
-    const receiptNumber = `${prefix}-${yearStr}-${String(seq).padStart(5, '0')}`
+
+    // Use atomic server-side receipt number generation (migration 074)
+    const { data: receiptNumber, error: receiptErr } = await supabase.rpc('next_receipt_number', { p_school_id: profile.school_id })
+    if (receiptErr) {
+      setPayError(`Failed to generate receipt number: ${receiptErr.message}`)
+      setSaving(false)
+      return
+    }
 
     const paymentRecord = {
       school_id: profile.school_id,

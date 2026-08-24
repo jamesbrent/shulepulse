@@ -238,7 +238,7 @@ export default function ExpensesPage({ initialTab, openExpenseId, onOpenExpenseD
     try {
       if (to === 'approved') {
         if (!isAdmin) return showToast('Only the admin / principal can approve expenses', false)
-        if (exp.created_by === userId && !isAdminRole(role)) return showToast('You cannot approve your own expense', false)
+        if (exp.created_by === userId) return showToast('You cannot approve your own expense', false)
       }
       if (to === 'posted' && !isAdmin) return showToast('Only the admin / principal can post to the General Ledger', false)
 

@@ -38,7 +38,7 @@ export default function SchoolCategoriesPage() {
       const created = await addSchoolType(trimmed)
       setCategories(prev => [...prev, created])
       setNewName('')
-      logAction('school_category', 'add', { name: trimmed })
+      logAction({ action: 'school_category.add', details: { name: trimmed } })
     } catch (e) {
       setError(e.message)
     }
@@ -57,7 +57,7 @@ export default function SchoolCategoriesPage() {
       await updateSchoolType(id, trimmed)
       setCategories(prev => prev.map(c => c.id === id ? { ...c, name: trimmed } : c))
       setEditId(null)
-      logAction('school_category', 'update', { id, name: trimmed })
+      logAction({ action: 'school_category.update', details: { id, name: trimmed } })
     } catch (e) {
       setError(e.message)
     }
@@ -70,7 +70,7 @@ export default function SchoolCategoriesPage() {
     try {
       await deleteSchoolType(id)
       setCategories(prev => prev.filter(c => c.id !== id))
-      logAction('school_category', 'delete', { id, name })
+      logAction({ action: 'school_category.delete', details: { id, name } })
     } catch (e) {
       setError(e.message)
     }

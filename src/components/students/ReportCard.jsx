@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { Printer, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { getGrade as engineGetGrade, resolveSystem, gradeDisplay as engineGradeDisplay, sortExamTypes, compareExamTypes, overallScore } from '../../services/grading'
+import { esc } from '../../utils/escapeHtml'
 
 // ── Fetch student comments from database ──────────────────────
 export async function fetchStudentComments(schoolId, studentId, term, year) {
@@ -323,11 +324,11 @@ function buildSubjectTableHtml(subjects, examTypes, className, overallScore) {
     }).join('')
     return `<tr>
       <td class="left" style="font-weight:600">${i + 1}</td>
-      <td class="left">${sub.name}</td>
+      <td class="left">${esc(sub.name)}</td>
       ${assessCells}
       <td style="font-weight:700">${Math.round(sub.average)}/100</td>
       <td><span ${chipCls}>${bandDisplay}</span>${pts ? `<span class="rc-pts">${pts}</span>` : ''}</td>
-      <td class="left" style="font-size:8px">${sub.teacher || '—'}</td>
+      <td class="left" style="font-size:8px">${esc(sub.teacher || '—')}</td>
       <td class="left" style="font-size:8px"></td>
     </tr>`
   }).join('')
@@ -354,7 +355,7 @@ function buildSubjectTableHtml(subjects, examTypes, className, overallScore) {
   const assessHeaders = examTypes.map(et => {
     const found = subjects.map(s => s.assessments.find(x => x.name === et)).find(Boolean)
     const max = found ? found.maxMarksRaw : 100
-    return `<th>${et}<br/><span style="font-weight:400">/${max}</span></th>`
+    return `<th>${esc(et)}<br/><span style="font-weight:400">/${max}</span></th>`
   }).join('')
   return `
     <div class="rc-section-title">Subject Performance</div>
@@ -409,7 +410,7 @@ function buildTrendChartSvg(subjects, examTypes) {
 
   const xLabels = examTypes.map((et, xi) => {
     const x = P.left + xi * xStep
-    return `<text x="${x}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#475569">${et}</text>`
+    return `<text x="${x}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#475569">${esc(et)}</text>`
   }).join('')
 
   return `
@@ -432,7 +433,7 @@ function buildTrendLegendHtml(subjects) {
     const cells = chunk.map((sub, ci) => {
       const gi = chunks.indexOf(chunk) * 6 + ci
       const color = CHART_COLORS[gi % CHART_COLORS.length]
-      return `<td style="padding:4px 8px;border:1px solid #e2e8f0;white-space:nowrap"><span style="display:inline-block;width:10px;height:10px;background:${color};border-radius:2px;vertical-align:middle;margin-right:4px"></span><span style="font-weight:500;font-size:9px">${sub.name}</span></td>`
+      return `<td style="padding:4px 8px;border:1px solid #e2e8f0;white-space:nowrap"><span style="display:inline-block;width:10px;height:10px;background:${color};border-radius:2px;vertical-align:middle;margin-right:4px"></span><span style="font-weight:500;font-size:9px">${esc(sub.name)}</span></td>`
     }).join('')
     const pad = Array(6 - chunk.length).fill('<td style="border:1px solid #e2e8f0"></td>').join('')
     return `<tr>${cells}${pad}</tr>`
@@ -473,7 +474,7 @@ function buildComparisonChartHtml(studentSubjects, classAverages) {
       <rect x="${cx + gap / 2}" y="${P.top + cH - classH}" width="${barW}" height="${classH}" fill="#94a3b8" rx="2"/>
       <text x="${cx - barW / 2 - gap / 2}" y="${P.top + cH - studentH - 4}" text-anchor="middle" font-size="8" fill="#2563eb" font-weight="600">${Math.round(s.student)}%</text>
       <text x="${cx + barW / 2 + gap / 2}" y="${P.top + cH - classH - 4}" text-anchor="middle" font-size="8" fill="#94a3b8" font-weight="600">${Math.round(s.classAvg)}%</text>
-      <text x="${cx}" y="${H - 8}" text-anchor="middle" font-size="8" fill="#475569" transform="rotate(-20, ${cx}, ${H - 8})">${s.name.length > 12 ? s.name.slice(0, 12) + '…' : s.name}</text>
+      <text x="${cx}" y="${H - 8}" text-anchor="middle" font-size="8" fill="#475569" transform="rotate(-20, ${cx}, ${H - 8})">${esc(s.name.length > 12 ? s.name.slice(0, 12) + '…' : s.name)}</text>
     `
   }).join('')
 
@@ -505,7 +506,7 @@ function buildAcademicHistoryHtml(historicalData) {
       const val = h.terms[t]
       return `<td>${val != null ? `${val}%` : '—'}</td>`
     }).join('')
-    return `<tr><td class="row-label">${h.grade}</td>${cells}</td></tr>`
+    return `<tr><td class="row-label">${esc(h.grade)}</td>${cells}</tr>`
   }).join('')
   const headers = terms.map(t => `<th>${t}</th>`).join('')
   return `
@@ -788,21 +789,21 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
       <div class="rc-top">
         <div class="rc-logo-box">
           ${school?.logo_url
-            ? `<img src="${school.logo_url}" alt="logo" />`
-            : `<span class="rc-logo-placeholder">${(school?.name || 'SCH').slice(0,4).toUpperCase()}</span>`
+            ? `<img src="${esc(school.logo_url)}" alt="logo" />`
+            : `<span class="rc-logo-placeholder">${esc((school?.name || 'SCH').slice(0,4).toUpperCase())}</span>`
           }
         </div>
         <div class="rc-school-block">
           <div class="rc-transcript-label">Student Report Card</div>
-          <div class="rc-school-name">${school?.name || 'School Name'}</div>
-          ${school?.phone ? `<div class="rc-school-contact">Tel: ${school.phone}${school.email ? `  •  ${school.email}` : ''}</div>` : ''}
+          <div class="rc-school-name">${esc(school?.name || 'School Name')}</div>
+          ${school?.phone ? `<div class="rc-school-contact">Tel: ${esc(school.phone)}${school.email ? `  •  ${esc(school.email)}` : ''}</div>` : ''}
           <hr class="rc-hr" />
-          <div class="rc-student-name-big">${student.admission_number ? `${student.admission_number} ` : ''}${student.full_name}</div>
-          <div class="rc-student-meta">${className} &nbsp;·&nbsp; ${term} ${year}</div>
+          <div class="rc-student-name-big">${student.admission_number ? `${esc(student.admission_number)} ` : ''}${esc(student.full_name)}</div>
+          <div class="rc-student-meta">${esc(className)} &nbsp;·&nbsp; ${esc(term)} ${esc(year)}</div>
         </div>
         <div class="rc-photo-box">
           ${student.photo_url
-            ? `<img src="${student.photo_url}" alt="photo" />`
+            ? `<img src="${esc(student.photo_url)}" alt="photo" />`
             : '<span>Photo</span>'
           }
         </div>
@@ -822,13 +823,13 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
       <div class="rc-comments">
         <div class="rc-comment-cell">
           <div class="rc-comment-label">Class Teacher's Comment</div>
-          <div class="rc-comment-text">${extraData.teacherComment || '—'}</div>
+          <div class="rc-comment-text">${esc(extraData.teacherComment || '—')}</div>
           <div class="rc-sig-line" style="margin-top:8px"></div>
           <div style="font-size:9px;color:#64748b;margin-top:2px">Teacher's Signature</div>
         </div>
         <div class="rc-comment-cell">
           <div class="rc-comment-label">Headteacher's Comment</div>
-          <div class="rc-comment-text">${extraData.headteacherComment || '—'}</div>
+          <div class="rc-comment-text">${esc(extraData.headteacherComment || '—')}</div>
           <div class="rc-sig-line" style="margin-top:8px"></div>
           <div style="font-size:9px;color:#64748b;margin-top:2px">Headteacher's Signature</div>
         </div>
@@ -839,6 +840,6 @@ export function buildReportCardHtml(student, grades, school, term, year, extraDa
 
       ${legendHtml}
 
-      ${school?.motto ? `<div class="rc-foot-quote">"${school.motto}"</div>` : ''}
+      ${school?.motto ? `<div class="rc-foot-quote">"${esc(school.motto)}"</div>` : ''}
     </div>`
 }

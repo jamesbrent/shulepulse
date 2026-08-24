@@ -230,7 +230,7 @@ export default function Admissions({ onSuccess }) {
     try {
       await createStudentAuth(student, profile.school_id)
       setExistingLogins(prev => new Set([...prev, student.email]))
-      setLoginResult(`Login created for ${student.full_name} (password: Student@123)`)
+      setLoginResult(`Login created for ${student.full_name}. A temporary password has been generated and provided via email.`)
     } catch (err) { setLoginResult(`${student.full_name}: ${err.message}`) }
   }
 

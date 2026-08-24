@@ -13,7 +13,7 @@ import * as XLSX from 'xlsx'
 import { ImportExcelModal } from '../../components/students/ImportExcelModal'
 import { exportToPDF } from '../../services/students/exportService'
 import { promoteStudentsAtomic, getGradeLevels } from '../../services/students/bulkPromotionService'
-import { createStudentAuth, bulkCreateStudentAuth, resetAllStudentPasswords, bulkCreateParentAccounts } from '../../services/students/studentService'
+import { createStudentAuth, bulkCreateStudentAuth, bulkCreateParentAccounts } from '../../services/students/studentService'
 import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { ReportCard, fetchStudentComments, groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
 import { rankStudentsByGrades, findRank } from '../../services/grading'
@@ -128,7 +128,6 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
   const [creatingLogins, setCreatingLogins] = useState(false)
   const [loginResult, setLoginResult] = useState('')
   const [existingLogins, setExistingLogins] = useState(new Set())
-  const [resettingPasswords, setResettingPasswords] = useState(false)
 
   // Parent login creation
   const [creatingParentLogins, setCreatingParentLogins] = useState(false)
@@ -277,18 +276,8 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
     try {
       await createStudentAuth(student, profile.school_id)
       setExistingLogins(prev => new Set([...prev, student.email]))
-      setLoginResult(`Login created for ${student.full_name} (password: Student@123)`)
+      setLoginResult(`Login created for ${student.full_name}. A temporary password has been generated and provided via email.`)
     } catch (err) { setLoginResult(`${student.full_name}: ${err.message}`) }
-  }
-
-  const handleResetAllPasswords = async () => {
-    if (!confirm('Reset ALL student passwords to Student@123?')) return
-    setResettingPasswords(true); setLoginResult('')
-    try {
-      const result = await resetAllStudentPasswords()
-      setLoginResult(`Reset ${result.reset} passwords. ${result.failed} failed. All student passwords are now: Student@123`)
-    } catch (err) { setLoginResult(`Error: ${err.message}`) }
-    setResettingPasswords(false)
   }
 
   const handleBulkCreateParentLogins = async () => {
@@ -1018,9 +1007,6 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
         <div className="sp-toolbar-right">
           <button className="sp-btn-tool" onClick={handleBulkCreateLogins} disabled={creatingLogins} title="Create login accounts for all students">
             <Key size={14} /> <span className="sp-tool-label">{creatingLogins ? 'Creating...' : 'Create Logins'}</span>
-          </button>
-          <button className="sp-btn-tool" onClick={handleResetAllPasswords} disabled={resettingPasswords} title="Reset all student passwords to Student@123">
-            <Key size={14} /> <span className="sp-tool-label">{resettingPasswords ? 'Resetting...' : 'Reset Passwords'}</span>
           </button>
           <button className="sp-btn-tool" onClick={handleBulkCreateParentLogins} disabled={creatingParentLogins} title="Create parent portal accounts from parent emails">
             <Key size={14} /> <span className="sp-tool-label">{creatingParentLogins ? 'Creating...' : 'Create Parent Logins'}</span>

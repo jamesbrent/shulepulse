@@ -1,5 +1,18 @@
 import { supabase } from '../../lib/supabase'
 
+function generateSecurePassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*'
+  let pw = ''
+  const arr = new Uint8Array(16)
+  if (typeof globalThis.crypto !== 'undefined' && globalThis.crypto.getRandomValues) {
+    globalThis.crypto.getRandomValues(arr)
+  } else {
+    for (let i = 0; i < 16; i++) arr[i] = Math.floor(Math.random() * 256)
+  }
+  for (let i = 0; i < 16; i++) pw += chars[arr[i] % chars.length]
+  return pw
+}
+
 const STUDENT_FIELDS = `
   id, school_id, admission_number, full_name, photo_url,
   date_of_birth, gender, class, stream,
@@ -150,58 +163,43 @@ export async function generateAdmissionNumber(schoolId) {
   return `ADM/${year}/${seq}`
 }
 
-export async function createStudentAuth(student, schoolId, defaultPassword = 'Student@123') {
+export async function createStudentAuth(student, schoolId) {
   const email = student.email
   if (!email) throw new Error('Student has no email address')
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) throw new Error('Not authenticated')
 
+  const password = generateSecurePassword()
+
   const { data, error } = await supabase.functions.invoke('create-student-auth', {
     body: {
       email,
       full_name: student.full_name,
       school_id: schoolId,
-      password: defaultPassword,
+      password,
     },
   })
 
   if (error) throw error
   if (data?.error) throw new Error(data.error)
-  return { userId: data?.user_id, email }
+  return { userId: data?.user_id, email, password }
 }
 
-export async function resetAllStudentPasswords(defaultPassword = 'Student@123') {
+export async function resetStudentPassword(userId) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) throw new Error('Not authenticated')
 
-  const { data: profiles, error: fetchErr } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('role', 'student')
-
-  if (fetchErr) throw fetchErr
-  if (!profiles?.length) throw new Error('No student profiles found')
-
-  let reset = 0
-  let failed = 0
-  for (const p of profiles) {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-student-auth', {
-        body: { user_id: p.id, password: defaultPassword },
-      })
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
-      reset++
-    } catch (err) {
-      console.warn('Reset failed for', p.id, err.message)
-      failed++
-    }
-  }
-  return { reset, failed }
+  const password = generateSecurePassword()
+  const { data, error } = await supabase.functions.invoke('create-student-auth', {
+    body: { user_id: userId, password },
+  })
+  if (error) throw error
+  if (data?.error) throw new Error(data.error)
+  return { password }
 }
 
-export async function bulkCreateStudentAuth(schoolId, defaultPassword = 'Student@123') {
+export async function bulkCreateStudentAuth(schoolId) {
   const { data: students, error: fetchErr } = await supabase
     .from('students')
     .select('id, full_name, email')
@@ -221,7 +219,6 @@ export async function bulkCreateStudentAuth(schoolId, defaultPassword = 'Student
   }
 
   let created = 0
-  let reset = 0
   let skipped = 0
   const errors = []
 
@@ -229,16 +226,11 @@ export async function bulkCreateStudentAuth(schoolId, defaultPassword = 'Student
     if (!student.email) { skipped++; continue }
     try {
       const existingUserId = profileByEmail[student.email]
-      if (existingUserId) {
-        const { data, error } = await supabase.functions.invoke('create-student-auth', {
-          body: { user_id: existingUserId, password: defaultPassword },
-        })
-        if (error) throw error
-        if (data?.error) throw new Error(data.error)
-        reset++
-      } else {
-        await createStudentAuth(student, schoolId, defaultPassword)
+      if (!existingUserId) {
+        await createStudentAuth(student, schoolId)
         created++
+      } else {
+        skipped++
       }
     } catch (err) {
       errors.push({ student: student.full_name, error: err.message })
@@ -246,13 +238,15 @@ export async function bulkCreateStudentAuth(schoolId, defaultPassword = 'Student
     }
   }
 
-  return { created, reset, skipped, errors }
+  return { created, skipped, errors }
 }
 
-export async function createParentAuth(parentEmail, parentName, schoolId, defaultPassword = 'Parent@123') {
+export async function createParentAuth(parentEmail, parentName, schoolId) {
+  const password = generateSecurePassword()
+
   const { data, error: signUpError } = await supabase.auth.signUp({
     email: parentEmail,
-    password: defaultPassword,
+    password,
     options: {
       data: { full_name: parentName, role: 'parent' },
       emailRedirectTo: window.location.origin,
@@ -272,13 +266,13 @@ export async function createParentAuth(parentEmail, parentName, schoolId, defaul
     }).eq('id', userId)
   } else {
     const { data: existing } = await supabase.from('profiles').select('id').eq('email', parentEmail).single()
-    if (existing) return { userId: existing.id, email: parentEmail, password: defaultPassword }
+    if (existing) return { userId: existing.id, email: parentEmail, password }
   }
 
-  return { userId, email: parentEmail, password: defaultPassword }
+  return { userId, email: parentEmail, password }
 }
 
-export async function bulkCreateParentAccounts(schoolId, defaultPassword = 'Parent@123') {
+export async function bulkCreateParentAccounts(schoolId) {
   const { data: students, error: fetchErr } = await supabase
     .from('students')
     .select('id, full_name, parent_name, parent_email, parent_id')
@@ -321,7 +315,7 @@ export async function bulkCreateParentAccounts(schoolId, defaultPassword = 'Pare
       let userId = profileByEmail[email]
 
       if (!userId) {
-        const result = await createParentAuth(email, info.name, schoolId, defaultPassword)
+        const result = await createParentAuth(email, info.name, schoolId)
         userId = result.userId
         created++
         credentials.push({ email, name: info.name, password: result.password })

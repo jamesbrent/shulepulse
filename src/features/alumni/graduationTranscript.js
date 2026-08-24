@@ -1,6 +1,7 @@
 import { supabase } from '../../lib/supabase'
 import { getCBEGrade } from '../../components/students/ReportCard'
 import { weightedScoreMean } from '../../services/grading'
+import { esc } from '../../utils/escapeHtml'
 
 const TERM_ORDER = { 'Term 1': 1, 'Term 2': 2, 'Term 3': 3 }
 
@@ -64,16 +65,16 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&bgcolor=ffffff&data=https://shulepulse.com/verify/${docId}`
 
   const logoHtml = logoUrl
-    ? `<img src="${logoUrl}" style="height:60px;width:auto;margin-bottom:6px" />`
-    : `<div style="width:60px;height:60px;background:#1e3a5f;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;color:#fff;font-size:24px;font-weight:700">${schName[0]}</div>`
+    ? `<img src="${esc(logoUrl)}" style="height:60px;width:auto;margin-bottom:6px" />`
+    : `<div style="width:60px;height:60px;background:#1e3a5f;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;color:#fff;font-size:24px;font-weight:700">${esc(schName[0])}</div>`
 
   const headerBlock = `
     <div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #1e3a5f;padding-bottom:12px">
       ${logoHtml}
-      <div style="font-size:16pt;font-weight:700;color:#1e3a5f;letter-spacing:0.5pt">${schName}</div>
-      <div style="font-size:9pt;color:#666;font-style:italic">"${schMotto}"</div>
-      <div style="font-size:8pt;color:#888;margin-top:3px">${schAddress} | Tel: ${schPhone} | ${schEmail}</div>
-      <div style="font-size:7pt;color:#999;margin-top:2px">Ministry Reg: ${schRegId}</div>
+      <div style="font-size:16pt;font-weight:700;color:#1e3a5f;letter-spacing:0.5pt">${esc(schName)}</div>
+      <div style="font-size:9pt;color:#666;font-style:italic">"${esc(schMotto)}"</div>
+      <div style="font-size:8pt;color:#888;margin-top:3px">${esc(schAddress)} | Tel: ${esc(schPhone)} | ${esc(schEmail)}</div>
+      <div style="font-size:7pt;color:#999;margin-top:2px">Ministry Reg: ${esc(schRegId)}</div>
     </div>
   `
 
@@ -81,7 +82,7 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
   const entryYear = student.entry_year || (student.created_at ? new Date(student.created_at).getFullYear() : '—')
 
   const timelineRows = promotions.length
-    ? promotions.map(p => `<tr><td style="padding:4px 8px;border:1px solid #ccc;font-size:9pt;text-align:center">${new Date(p.promoted_at).toLocaleDateString('en-KE', { year: 'numeric' })}</td><td style="padding:4px 8px;border:1px solid #ccc;font-size:9pt;text-align:center">${p.from_class}</td><td style="padding:4px 8px;border:1px solid #ccc;font-size:9pt;text-align:center">${p.to_class}</td></tr>`).join('')
+    ? promotions.map(p => `<tr><td style="padding:4px 8px;border:1px solid #ccc;font-size:9pt;text-align:center">${new Date(p.promoted_at).toLocaleDateString('en-KE', { year: 'numeric' })}</td><td style="padding:4px 8px;border:1px solid #ccc;font-size:9pt;text-align:center">${esc(p.from_class)}</td><td style="padding:4px 8px;border:1px solid #ccc;font-size:9pt;text-align:center">${esc(p.to_class)}</td></tr>`).join('')
     : `<tr><td colspan="3" style="padding:4px 8px;border:1px solid #ccc;font-size:9pt;text-align:center;color:#999">No promotion history recorded</td></tr>`
 
   const subjectPerformanceHtml = subjectRows.length
@@ -101,7 +102,7 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
           ${subjectRows.map(row => {
             const bg = row.overallAvg >= 75 ? '#f0fdf4' : row.overallAvg >= 50 ? '#fefce8' : row.overallAvg >= 25 ? '#fff7ed' : '#fef2f2'
             return `<tr style="background:${bg}">
-              <td style="padding:4px 6px;border:1px solid #ccc;font-weight:600">${row.subject}</td>
+              <td style="padding:4px 6px;border:1px solid #ccc;font-weight:600">${esc(row.subject)}</td>
               ${row.yearData.map(yd => {
                 let totalForYear = 0; let countForYear = 0
                 const cells = terms.map(t => {
@@ -141,24 +142,24 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
 
         <div style="font-size:11pt;font-weight:700;color:#1e3a5f;margin:12px 0 6px;border-bottom:1px solid #1e3a5f;padding-bottom:4px">1. STUDENT IDENTITY</div>
         <table style="width:100%;border-collapse:collapse;font-size:9pt">
-          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Full Name</td><td style="padding:3px 8px">${student.full_name}</td></tr>
-          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Admission Number</td><td style="padding:3px 8px">${student.admission_number}</td></tr>
-          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Gender</td><td style="padding:3px 8px">${student.gender || '—'}</td></tr>
-          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Date of Birth</td><td style="padding:3px 8px">${student.date_of_birth || '—'} ${age ? `(${age} years)` : ''}</td></tr>
-          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Entry Year</td><td style="padding:3px 8px">${entryYear}</td></tr>
-          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Graduation Year</td><td style="padding:3px 8px">${graduationYear}</td></tr>
-          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Final Class</td><td style="padding:3px 8px">${student.class || '—'}</td></tr>
+          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Full Name</td><td style="padding:3px 8px">${esc(student.full_name)}</td></tr>
+          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Admission Number</td><td style="padding:3px 8px">${esc(student.admission_number)}</td></tr>
+          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Gender</td><td style="padding:3px 8px">${esc(student.gender) || '—'}</td></tr>
+          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Date of Birth</td><td style="padding:3px 8px">${esc(student.date_of_birth) || '—'} ${age ? `(${age} years)` : ''}</td></tr>
+          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Entry Year</td><td style="padding:3px 8px">${esc(String(entryYear))}</td></tr>
+          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Graduation Year</td><td style="padding:3px 8px">${esc(String(graduationYear))}</td></tr>
+          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Final Class</td><td style="padding:3px 8px">${esc(student.class) || '—'}</td></tr>
           <tr><td style="padding:3px 8px;width:30%;font-weight:600">Student Status</td><td style="padding:3px 8px;font-weight:700;color:#16a34a">Graduated</td></tr>
-          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Exit Reason</td><td style="padding:3px 8px">${student.exit_reason || 'Completed'}</td></tr>
+          <tr><td style="padding:3px 8px;width:30%;font-weight:600">Exit Reason</td><td style="padding:3px 8px">${esc(student.exit_reason) || 'Completed'}</td></tr>
         </table>
 
         <div style="font-size:11pt;font-weight:700;color:#1e3a5f;margin:16px 0 6px;border-bottom:1px solid #1e3a5f;padding-bottom:4px">2. ACADEMIC TIMELINE</div>
         <table style="width:100%;border-collapse:collapse;font-size:9pt">
           <thead><tr style="background:#1e3a5f;color:#fff"><th style="padding:5px 8px;border:1px solid #1e3a5f">Year</th><th style="padding:5px 8px;border:1px solid #1e3a5f">From Class</th><th style="padding:5px 8px;border:1px solid #1e3a5f">To Class</th></tr></thead>
           <tbody>
-            <tr><td style="padding:4px 8px;border:1px solid #ccc;text-align:center">${entryYear}</td><td style="padding:4px 8px;border:1px solid #ccc;text-align:center">—</td><td style="padding:4px 8px;border:1px solid #ccc;text-align:center;font-weight:600">Admitted (${student.class || '—'})</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ccc;text-align:center">${esc(String(entryYear))}</td><td style="padding:4px 8px;border:1px solid #ccc;text-align:center">—</td><td style="padding:4px 8px;border:1px solid #ccc;text-align:center;font-weight:600">Admitted (${esc(student.class) || '—'})</td></tr>
             ${timelineRows}
-            <tr style="background:#f0fdf4"><td style="padding:4px 8px;border:1px solid #ccc;text-align:center;font-weight:600">${graduationYear}</td><td style="padding:4px 8px;border:1px solid #ccc;text-align:center">${student.class}</td><td style="padding:4px 8px;border:1px solid #ccc;text-align:center;font-weight:700;color:#16a34a">Graduated</td></tr>
+            <tr style="background:#f0fdf4"><td style="padding:4px 8px;border:1px solid #ccc;text-align:center;font-weight:600">${esc(String(graduationYear))}</td><td style="padding:4px 8px;border:1px solid #ccc;text-align:center">${esc(student.class)}</td><td style="padding:4px 8px;border:1px solid #ccc;text-align:center;font-weight:700;color:#16a34a">Graduated</td></tr>
           </tbody>
         </table>
 
@@ -170,8 +171,8 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
         <div style="font-size:11pt;font-weight:700;color:#1e3a5f;margin:16px 0 6px;border-bottom:1px solid #1e3a5f;padding-bottom:4px">4. PERFORMANCE SUMMARY</div>
         <table style="width:100%;border-collapse:collapse;font-size:9pt">
           <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600;width:40%">Overall Average</td><td style="padding:4px 8px;border:1px solid #ccc">${subjectRows.length ? Math.round(subjectRows.reduce((a, r) => a + (r.overallAvg || 0), 0) / subjectRows.length) : '—'}%</td></tr>
-          <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Best Subject</td><td style="padding:4px 8px;border:1px solid #ccc">${bestSubject?.subject || '—'} (${bestSubject?.overallAvg || '—'}%)</td></tr>
-          <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Weakest Subject</td><td style="padding:4px 8px;border:1px solid #ccc">${worstSubject?.subject || '—'} (${worstSubject?.overallAvg || '—'}%)</td></tr>
+          <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Best Subject</td><td style="padding:4px 8px;border:1px solid #ccc">${esc(bestSubject?.subject) || '—'} (${bestSubject?.overallAvg || '—'}%)</td></tr>
+          <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Weakest Subject</td><td style="padding:4px 8px;border:1px solid #ccc">${esc(worstSubject?.subject) || '—'} (${worstSubject?.overallAvg || '—'}%)</td></tr>
           <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Total Subjects Taken</td><td style="padding:4px 8px;border:1px solid #ccc">${subjects.length}</td></tr>
           <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Total Academic Years</td><td style="padding:4px 8px;border:1px solid #ccc">${years.length}</td></tr>
         </table>
@@ -180,9 +181,9 @@ export async function buildGraduationTranscript(student, school, logoUrl, profil
 
         <div style="font-size:11pt;font-weight:700;color:#1e3a5f;margin:16px 0 6px;border-bottom:1px solid #1e3a5f;padding-bottom:4px">5. CONDUCT & DISCIPLINE SUMMARY</div>
         <table style="width:100%;border-collapse:collapse;font-size:9pt">
-          <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600;width:40%">Conduct Rating</td><td style="padding:4px 8px;border:1px solid #ccc">${student.conduct || 'Satisfactory'}</td></tr>
+          <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600;width:40%">Conduct Rating</td><td style="padding:4px 8px;border:1px solid #ccc">${esc(student.conduct) || 'Satisfactory'}</td></tr>
           <tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Discipline Records</td><td style="padding:4px 8px;border:1px solid #ccc">${discipline.length} record${discipline.length === 1 ? '' : 's'}${discipline.length ? ` (${discipline.filter(d => d.status === 'resolved').length} resolved, ${discipline.filter(d => d.status === 'pending').length} pending)` : ''}</td></tr>
-          ${discipline.length ? `<tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Last Offense</td><td style="padding:4px 8px;border:1px solid #ccc">${discipline[0].offense} (${discipline[0].date})</td></tr>` : ''}
+          ${discipline.length ? `<tr><td style="padding:4px 8px;border:1px solid #ccc;font-weight:600">Last Offense</td><td style="padding:4px 8px;border:1px solid #ccc">${esc(discipline[0].offense)} (${esc(discipline[0].date)})</td></tr>` : ''}
         </table>
 
         <div style="font-size:11pt;font-weight:700;color:#1e3a5f;margin:16px 0 6px;border-bottom:1px solid #1e3a5f;padding-bottom:4px">6. VERIFICATION</div>

@@ -479,8 +479,12 @@ export default function PayrollPage({ initialTab }) {
   }
 
   const advanceRequest = async (req, nextStatus, extra = {}) => {
-    if (nextStatus === 'approved' && !req.payroll_runs?.journal_entry_id) {
-      return showToast('Post the payroll run to the General Ledger before approving its payment', false)
+    if (nextStatus === 'approved') {
+      if (!isAdmin) return showToast('Only the admin / principal can approve payment requests', false)
+      if (req.requested_by === userId) return showToast('You cannot approve your own payment request', false)
+      if (!req.payroll_runs?.journal_entry_id) {
+        return showToast('Post the payroll run to the General Ledger before approving its payment', false)
+      }
     }
     const { error } = await supabase.from('payroll_payment_requests').update({
       status: nextStatus, ...extra, updated_at: new Date().toISOString(),

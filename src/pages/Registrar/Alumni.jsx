@@ -13,6 +13,7 @@ import { useSchool } from '../admin/useSchool'
 import { fmtDate } from '../admin/fees/utils/feesHelpers'
 import { buildGraduationTranscript } from '../../features/alumni/graduationTranscript'
 import { useBrandingStore } from '../../features/branding/brandingStore'
+import { esc } from '../../utils/escapeHtml'
 import './Alumni.css'
 
 const CERT_PREFIXES = {
@@ -230,39 +231,39 @@ export default function Alumni() {
     const schAddress = school?.address || 'P.O. Box 123, Nairobi'
     const schPhone = school?.phone || '+254 700 000 000'
     const logoHtml = logoUrl
-      ? `<img src="${logoUrl}" style="height:60px;width:auto;margin-bottom:6px" />`
-      : `<div style="width:60px;height:60px;background:#1e3a5f;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;color:#fff;font-size:24px;font-weight:700">${schName[0]}</div>`
+      ? `<img src="${esc(logoUrl)}" style="height:60px;width:auto;margin-bottom:6px" />`
+      : `<div style="width:60px;height:60px;background:#1e3a5f;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;color:#fff;font-size:24px;font-weight:700">${esc(schName[0])}</div>`
 
-    const headerBlock = `<div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #1e3a5f;padding-bottom:12px">${logoHtml}<div style="font-size:16pt;font-weight:700;color:#1e3a5f">${schName}</div><div style="font-size:9pt;color:#666;font-style:italic;">"${schMotto}"</div><div style="font-size:8pt;color:#888">${schAddress} | Tel: ${schPhone}</div></div>`
+    const headerBlock = `<div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #1e3a5f;padding-bottom:12px">${logoHtml}<div style="font-size:16pt;font-weight:700;color:#1e3a5f">${esc(schName)}</div><div style="font-size:9pt;color:#666;font-style:italic;">"${esc(schMotto)}"</div><div style="font-size:8pt;color:#888">${esc(schAddress)} | Tel: ${esc(schPhone)}</div></div>`
     const qrBlock = `<div style="display:flex;justify-content:space-between;align-items:start;margin:16px 0"><div><div style="font-size:8pt;color:#888"><strong>Doc ID:</strong> ${docId}</div><div style="font-size:8pt;color:#888"><strong>Date:</strong> ${date}</div></div><div style="text-align:center"><img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https://shulepulse.com/verify/${docId}" style="width:60px;height:60px"/><div style="font-size:6pt;color:#999">Scan to verify</div></div></div>`
     const signatureBlock = `<div style="display:flex;justify-content:space-between;margin-top:28px"><div style="text-align:center;width:45%"><div style="width:120px;border-top:1px solid #333;margin:0 auto 4px"></div><div style="font-size:8pt;font-weight:600;color:#1e3a5f">Registrar</div></div><div style="text-align:center;width:45%"><div style="width:120px;border-top:1px solid #333;margin:0 auto 4px"></div><div style="font-size:8pt;font-weight:600;color:#1e3a5f">Principal</div></div></div>`
     const watermark = `<div style="position:absolute;top:45%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:48pt;font-weight:700;color:rgba(30,58,95,0.04);pointer-events:none;white-space:nowrap">OFFICIAL DOCUMENT</div>`
-    const tr = (l, v) => `<tr><td style="padding:4px 8px;border:1px solid #ccc;background:#f9f9f9;font-size:9pt;font-weight:600;width:35%">${l}</td><td style="padding:4px 8px;border:1px solid #ccc;font-size:9pt">${v || '—'}</td></tr>`
+    const tr = (l, v) => `<tr><td style="padding:4px 8px;border:1px solid #ccc;background:#f9f9f9;font-size:9pt;font-weight:600;width:35%">${esc(l)}</td><td style="padding:4px 8px;border:1px solid #ccc;font-size:9pt">${esc(v) || '—'}</td></tr>`
     const entryYear = s.created_at ? new Date(s.created_at).getFullYear() : '—'
 
     const body = {
       leaving: `<div style="font-size:13pt;font-weight:700;text-align:center;color:#1e3a5f;margin:16px 0 8px">SCHOOL LEAVING CERTIFICATE</div>
         <div style="font-size:9pt;text-align:right">Date: ${date}</div><div style="font-size:9pt;color:#888;margin-bottom:12px">Ref: ${docId}</div>
-        <div style="font-size:9pt;margin-bottom:8px">This is to certify that <strong>${s.full_name}</strong> (Adm No: ${s.admission_number}) was a bonafide student of ${schName}.</div>
+        <div style="font-size:9pt;margin-bottom:8px">This is to certify that <strong>${esc(s.full_name)}</strong> (Adm No: ${esc(s.admission_number)}) was a bonafide student of ${esc(schName)}.</div>
         <table style="width:100%;border-collapse:collapse;margin:12px 0">${tr('Full Name', s.full_name)}${tr('Admission Number', s.admission_number)}${tr('Date of Birth', s.date_of_birth || '—')}${tr('Gender', s.gender || '—')}${tr('Last Class', s.class + (s.stream ? ' ' + s.stream : ''))}${tr('Exit Date', s.exit_date ? new Date(s.exit_date).toLocaleDateString('en-KE', {day:'numeric', month:'long', year:'numeric'}) : date)}${tr('Exit Reason', s.exit_reason || 'Completed')}${tr('Conduct', s.conduct || 'Satisfactory')}</table>
-        <div style="font-size:9pt;margin-top:6px;text-align:justify">Throughout their enrollment at ${schName}, ${s.full_name} conducted well and fulfilled all academic requirements.</div>`,
+        <div style="font-size:9pt;margin-top:6px;text-align:justify">Throughout their enrollment at ${esc(schName)}, ${esc(s.full_name)} conducted well and fulfilled all academic requirements.</div>`,
 
       completion: `<div style="font-size:13pt;font-weight:700;text-align:center;color:#1e3a5f;margin:16px 0 8px">COMPLETION CERTIFICATE</div>
         <div style="font-size:9pt;text-align:right">Date: ${date}</div><div style="font-size:9pt;color:#888;margin-bottom:12px">Ref: ${docId}</div>
         <table style="width:100%;border-collapse:collapse;margin:12px 0">${tr('Full Name', s.full_name)}${tr('Admission Number', s.admission_number)}${tr('Date of Birth', s.date_of_birth || '—')}${tr('Gender', s.gender || '—')}${tr('Class', s.class + (s.stream ? ' ' + s.stream : ''))}${tr('Graduation Year', String(currentYear))}${tr('Status', 'Completed')}</table>
-        <div style="font-size:9pt;margin-top:6px;text-align:justify">This certifies that ${s.full_name} has successfully completed the academic program at ${schName}.</div>`,
+        <div style="font-size:9pt;margin-top:6px;text-align:justify">This certifies that ${esc(s.full_name)} has successfully completed the academic program at ${esc(schName)}.</div>`,
 
       transcript: `<div style="font-size:13pt;font-weight:700;text-align:center;color:#1e3a5f;margin:16px 0 8px">ACADEMIC TRANSCRIPT</div>
         <div style="font-size:9pt;text-align:right">Date: ${date}</div><div style="font-size:9pt;color:#888;margin-bottom:12px">Ref: ${docId}</div>
         <table style="width:100%;border-collapse:collapse;margin:12px 0">${tr('Full Name', s.full_name)}${tr('Admission Number', s.admission_number)}${tr('Date of Birth', s.date_of_birth || '—')}${tr('Gender', s.gender || '—')}${tr('Entry Year', entryYear)}${tr('Exit Year', s.updated_at ? new Date(s.updated_at).getFullYear() : currentYear)}${tr('Final Class', s.class + (s.stream ? ' ' + s.stream : ''))}${tr('Conduct', s.conduct || 'Satisfactory')}</table>
-        <div style="font-size:9pt;margin-top:6px;text-align:justify">This academic transcript is issued by ${schName} as a record of student's academic history.</div>`,
+        <div style="font-size:9pt;margin-top:6px;text-align:justify">This academic transcript is issued by ${esc(schName)} as a record of student's academic history.</div>`,
 
       bonafide: `<div style="font-size:13pt;font-weight:700;text-align:center;color:#1e3a5f;margin:16px 0 8px">BONAFIDE STUDENT LETTER</div>
         <div style="font-size:9pt;text-align:right">Date: ${date}</div><div style="font-size:9pt;color:#888;margin-bottom:12px">Ref: ${docId}</div>
         <div style="font-size:9pt;margin-bottom:8px">To Whom It May Concern,</div>
-        <div style="font-size:10pt;font-weight:600;margin-bottom:8px">RE: BONAFIDE STUDENT LETTER — ${s.full_name.toUpperCase()}</div>
+        <div style="font-size:10pt;font-weight:600;margin-bottom:8px">RE: BONAFIDE STUDENT LETTER — ${esc(s.full_name).toUpperCase()}</div>
         <table style="width:100%;border-collapse:collapse;margin:12px 0">${tr('Full Name', s.full_name)}${tr('Admission Number', s.admission_number)}${tr('Date of Birth', s.date_of_birth || '—')}${tr('Gender', s.gender || '—')}${tr('Final Class', s.class + (s.stream ? ' ' + s.stream : ''))}${tr('Year', currentYear)}${tr('Date Issued', date)}</table>
-        <div style="font-size:9pt;margin-top:6px;text-align:justify">This certifies that ${s.full_name} was a bonafide student of ${schName}. This letter is issued for official purposes.</div>`,
+        <div style="font-size:9pt;margin-top:6px;text-align:justify">This certifies that ${esc(s.full_name)} was a bonafide student of ${esc(schName)}. This letter is issued for official purposes.</div>`,
     }[type]
 
     const html = `<div style="position:relative;background:#fff;width:210mm;padding:20mm 22mm;font-family:'Times New Roman',Times,serif;color:#111;line-height:1.5;margin:0 auto">${watermark}${headerBlock}${qrBlock}${body}${signatureBlock}</div>`
