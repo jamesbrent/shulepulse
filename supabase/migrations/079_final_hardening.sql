@@ -237,11 +237,11 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies WHERE policyname = 'documents_update_school'
   ) THEN
-    CREATE POLICY "documents_update_school"
+    EXECUTE 'CREATE POLICY "documents_update_school"
       ON storage.objects FOR UPDATE
       USING (
-        bucket_id = 'documents'
-        AND (string_to_array(name, '/'))[1] = (SELECT school_id FROM profiles WHERE id = auth.uid())
-      );
+        bucket_id = ''documents''
+        AND (string_to_array(name, ''/''))[1] = (SELECT school_id::text FROM profiles WHERE id = auth.uid())
+      )';
   END IF;
 END $$;
