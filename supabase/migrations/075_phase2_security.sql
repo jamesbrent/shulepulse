@@ -21,36 +21,19 @@ CREATE POLICY "profiles_select_restricted"
   );
 
 -- Create a public-safe view for teacher name lookups (non-sensitive)
-DROP VIEW IF EXISTS teacher_names;
+-- RLS is inherited from the underlying profiles table automatically
+DROP VIEW IF EXISTS teacher_names CASCADE;
 CREATE VIEW teacher_names AS
 SELECT id, school_id, full_name, role
 FROM profiles
 WHERE role IN ('teacher', 'hod', 'class_teacher', 'deputy_administrator', 'admin');
 
-ALTER VIEW teacher_names ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "teacher_names_school_select"
-  ON teacher_names FOR SELECT
-  USING (
-    school_id = get_my_school_id()
-    OR get_my_role() = 'superadmin'
-  );
-
 -- Create a view for parent name lookups
-DROP VIEW IF EXISTS parent_names;
+DROP VIEW IF EXISTS parent_names CASCADE;
 CREATE VIEW parent_names AS
 SELECT id, school_id, full_name, email, role
 FROM profiles
 WHERE role = 'parent';
-
-ALTER VIEW parent_names ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "parent_names_select_own_school"
-  ON parent_names FOR SELECT
-  USING (
-    school_id = get_my_school_id()
-    OR get_my_role() = 'superadmin'
-  );
 
 
 -- ──────────────────────────────────────────────────────────
