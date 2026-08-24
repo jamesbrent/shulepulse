@@ -11,9 +11,9 @@ export default function LogoUploader({ schoolId, currentUrl, onUploaded }) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowed = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp']
+    const allowed = ['image/png', 'image/jpeg', 'image/webp']
     if (!allowed.includes(file.type)) {
-      setError('Only PNG, JPG, SVG or WEBP allowed.')
+      setError('Only PNG, JPG or WEBP allowed. SVG is disabled for security.')
       return
     }
     if (file.size > 2 * 1024 * 1024) {
@@ -68,14 +68,14 @@ export default function LogoUploader({ schoolId, currentUrl, onUploaded }) {
           <p className="logo-drop-text">
             {uploading ? 'Uploading...' : 'Click to upload logo'}
           </p>
-          <span className="logo-drop-hint">PNG, JPG, SVG or WEBP · max 2MB</span>
+          <span className="logo-drop-hint">PNG, JPG or WEBP · max 2MB</span>
         </div>
       )}
       {error && <p className="logo-error">{error}</p>}
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+        accept="image/png,image/jpeg,image/webp"
         style={{ display: 'none' }}
         onChange={handleFile}
       />

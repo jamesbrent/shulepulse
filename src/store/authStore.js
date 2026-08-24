@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { loadGradingConfig } from '../services/grading/config'
+import { logAction } from '../features/audit/auditService'
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -11,8 +12,16 @@ export const useAuthStore = create((set, get) => ({
   selectSchool: async (school) => {
     const { profile } = get()
     if (school && profile) {
-      await supabase.from('profiles').update({ school_id: school.id }).eq('id', profile.id)
+      const { error } = await supabase.rpc('switch_school', {
+        p_user_id: profile.id,
+        p_school_id: school.id,
+      })
+      if (error) {
+        console.error('[AuthStore] switch_school failed:', error)
+        return
+      }
       set({ selectedSchool: school, profile: { ...profile, school_id: school.id, schools: school } })
+      logAction({ schoolId: school.id, action: 'school_switch', details: { user_id: profile.id, to_school: school.id } })
     } else {
       set({ selectedSchool: null })
     }
@@ -28,6 +37,12 @@ export const useAuthStore = create((set, get) => ({
         .eq('id', session.user.id)
         .single()
 
+      if (profile?.disabled) {
+        await supabase.auth.signOut()
+        set({ user: null, profile: null, loading: false })
+        return
+      }
+
       set({ user: session.user, profile: { ...profile, roles: profile?.roles || (profile?.role ? [profile.role] : []) }, loading: false })
       loadGradingConfig()
     } else {
@@ -42,6 +57,12 @@ export const useAuthStore = create((set, get) => ({
           .eq('id', session.user.id)
           .single()
 
+        if (profile?.disabled) {
+          await supabase.auth.signOut()
+          set({ user: null, profile: null, loading: false })
+          return
+        }
+
         set({ user: session.user, profile: { ...profile, roles: profile?.roles || (profile?.role ? [profile.role] : []) }, loading: false })
         loadGradingConfig()
       } else {
@@ -51,7 +72,11 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: async () => {
-    await supabase.auth.signOut()
-    set({ user: null, profile: null })
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.error('[AuthStore] signOut error:', err)
+    }
+    set({ user: null, profile: null, selectedSchool: null })
   },
 }))

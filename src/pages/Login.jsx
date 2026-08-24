@@ -26,13 +26,27 @@ export default function Login() {
       return
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, disabled')
       .eq('id', data.user.id)
       .single()
 
-    const role = profile?.role || data.user?.user_metadata?.role
+    if (profileErr || !profile) {
+      setError('Profile not found. Contact your administrator.')
+      await supabase.auth.signOut()
+      setLoading(false)
+      return
+    }
+
+    if (profile.disabled) {
+      setError('This account has been disabled. Contact your administrator.')
+      await supabase.auth.signOut()
+      setLoading(false)
+      return
+    }
+
+    const role = profile.role
 
     if (role === 'superadmin') window.location.href = basePath('/superadmin')
     else if (role === 'admin') window.location.href = basePath('/admin')

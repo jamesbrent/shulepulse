@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 let _featureCache = null
 let _cacheSchoolId = null
 let _cacheTimestamp = 0
-const CACHE_TTL = 60000
+const CACHE_TTL = 30000
 
 export async function fetchSchoolFeatures(schoolId) {
   if (!schoolId) return []

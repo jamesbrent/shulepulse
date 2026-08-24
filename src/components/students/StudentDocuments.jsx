@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Upload, FileText, X, Download, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useAuthStore } from '../../store/authStore'
 
 export function StudentDocuments({ studentId }) {
   const [docs, setDocs] = useState([])
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { profile } = useAuthStore()
+  const schoolId = profile?.school_id
 
   useEffect(() => {
     if (studentId) fetchDocuments()
@@ -44,7 +47,7 @@ export function StudentDocuments({ studentId }) {
       return
     }
     setUploading(true)
-    const path = `students/${studentId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const path = `${schoolId || 'default'}/students/${studentId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const { error: uploadErr } = await supabase.storage.from('documents').upload(path, file)
     if (uploadErr) { setUploading(false); return }
     const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
