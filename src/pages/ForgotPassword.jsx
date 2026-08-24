@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
+import logoImg from '../assets/logo.png'
 import './Login.css'
 
 export default function ForgotPassword() {
@@ -32,7 +33,7 @@ export default function ForgotPassword() {
     <div className="login-root">
       <div className="login-left">
         <div className="login-brand">
-          <div className="login-logo">SP</div>
+          <div className="login-logo"><img src={logoImg} alt="ShulePulse" /></div>
           <span className="login-brand-name">ShulePulse</span>
         </div>
         <h1 className="login-headline">Reset your password</h1>
