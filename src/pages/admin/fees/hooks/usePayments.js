@@ -221,28 +221,11 @@ export function usePayments(schoolId, term, year) {
 
   // ── Generate a receipt number ─────────────────────────────────────────────
   const generateReceiptNumber = async () => {
+    const { data: receiptNumber, error: receiptErr } = await supabase.rpc('next_receipt_number', { p_school_id: schoolId })
+    if (!receiptErr && receiptNumber) return receiptNumber
+    // Fallback for backward compatibility
     const yearStr = String(year)
-    const { data: seq } = await supabase
-      .from('receipt_sequences')
-      .select('*')
-      .eq('school_id', schoolId)
-      .eq('year', parseInt(year))
-      .maybeSingle()
-
-    if (seq) {
-      const nextNum = seq.counter + 1
-      await supabase
-        .from('receipt_sequences')
-        .update({ counter: nextNum })
-        .eq('id', seq.id)
-      return `${seq.prefix}-${yearStr}-${String(seq.counter).padStart(5, '0')}`
-    } else {
-      const prefix = 'RCT'
-      await supabase
-        .from('receipt_sequences')
-        .insert({ school_id: schoolId, prefix, counter: 2, year: parseInt(year) })
-      return `${prefix}-${yearStr}-00001`
-    }
+    return `RCT-${yearStr}-${String(Math.floor(Math.random() * 99999)).padStart(5, '0')}`
   }
 
   // ── Record Payment (flexible) ─────────────────────────────────────────────
@@ -295,26 +278,30 @@ export function usePayments(schoolId, term, year) {
       year: parseInt(year),
     }
 
-    const { data: payData, error: payErr } = await supabase
-      .from('fee_payments')
-      .insert(paymentRecord)
-      .select()
-      .single()
-
-    if (payErr) { setError(payErr.message); setSaving(false); return null }
-
-    // ── Ledger entry ──
-    const ledgerDesc = buildLedgerDescription(form)
-    await supabase.from('student_ledger').insert({
-      school_id:    schoolId,
-      student_id:   studentId,
-      entry_type:   'payment',
-      amount,
-      term,
-      year:         parseInt(year),
-      description:  ledgerDesc,
-      reference_id: payData.id,
+    // Atomic payment + ledger recording via RPC
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc('record_fee_payment', {
+      p_school_id: schoolId,
+      p_student_id: studentId,
+      p_amount: amount,
+      p_payment_type: resolvedType,
+      p_payment_method: isLegacy ? form.payment_method : resolvedType,
+      p_provider: resolvedProvider,
+      p_reference: resolvedRef,
+      p_receipt_number: receiptNumber,
+      p_received_by: profileId,
+      p_transaction_date: form.transaction_date || new Date().toISOString().split('T')[0],
+      p_term: term,
+      p_year: parseInt(year),
+      p_description: buildLedgerDescription(form),
     })
+
+    if (rpcErr || !rpcResult?.success) {
+      setError(rpcErr?.message || rpcResult?.error || 'Payment recording failed')
+      setSaving(false)
+      return null
+    }
+
+    const payData = { id: rpcResult.payment_id, receipt_number: receiptNumber, student_id: studentId, amount, payment_type: resolvedType }
 
     // ── Cheque tracking ──
     if (form.payment_type === 'cheque') {

@@ -4,6 +4,7 @@ import {
   TrendingUp, FileText, BookOpen, ChevronDown, ChevronRight,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
 import { getGrade } from '../../services/grading'
 
@@ -66,22 +67,22 @@ const CBC_REPORT_STYLES = `
 
 function buildCBCReportHtml(bodyContent, title, school, term, year) {
   return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${title} – ${term} ${year}</title>
+<html><head><meta charset="utf-8"><title>${esc(title)} – ${esc(term)} ${esc(year)}</title>
 <style>${CBC_REPORT_STYLES}</style></head><body>
 <div class="rc-wrap">
   <div class="rc-top">
     <div class="rc-logo-box">
-      ${school?.logo_url ? `<img src="${school.logo_url}" alt="Logo" />` : `<div class="rc-logo-placeholder">${(school?.name || 'S')[0]}</div>`}
+      ${school?.logo_url ? `<img src="${esc(school.logo_url)}" alt="Logo" />` : `<div class="rc-logo-placeholder">${esc((school?.name || 'S')[0])}</div>`}
     </div>
     <div class="rc-school-block">
-      <div class="rc-school-name">${school?.name || 'School'}</div>
-      ${school?.address ? `<div class="rc-school-contact">${school.address}${school.phone ? ' · ' + school.phone : ''}${school.email ? ' · ' + school.email : ''}</div>` : ''}
-      ${school?.motto ? `<div class="rc-school-contact" style="font-style:italic">"${school.motto}"</div>` : ''}
+      <div class="rc-school-name">${esc(school?.name || 'School')}</div>
+      ${school?.address ? `<div class="rc-school-contact">${esc(school.address)}${school.phone ? ' · ' + esc(school.phone) : ''}${school.email ? ' · ' + esc(school.email) : ''}</div>` : ''}
+      ${school?.motto ? `<div class="rc-school-contact" style="font-style:italic">"${esc(school.motto)}"</div>` : ''}
     </div>
   </div>
   <hr class="rc-hr" />
   ${bodyContent}
-  <div class="rc-center-footer">Generated on ${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })} · ${term} ${year}</div>
+  <div class="rc-center-footer">Generated on ${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })} · ${esc(term)} ${esc(year)}</div>
 </div></body></html>`
 }
 
@@ -485,7 +486,7 @@ export default function CBCCompetency({ profile, mode }) {
       Object.keys(d.bands).forEach(b => { dist[b] = d.count > 0 ? Math.round((d.bands[b] / d.count) * 100) : 0 })
       const sBand = CBC_BAND_COLORS[cbcBand(Math.round(meanPts))]
       return `<tr>
-        <td style="font-weight:500">${name}</td>
+        <td style="font-weight:500">${esc(name)}</td>
         <td style="text-align:center;font-weight:700;color:${sBand?.color || '#64748b'}">${meanPts}/8</td>
         <td style="text-align:center"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:${sBand?.bg || '#f1f5f9'};color:${sBand?.color || '#64748b'}">${cbcBandLabel(Math.round(meanPts))}</span></td>
         <td style="text-align:center">${dist.EE}%</td><td style="text-align:center">${dist.ME}%</td><td style="text-align:center">${dist.AE}%</td><td style="text-align:center">${dist.BE}%</td>
@@ -501,8 +502,8 @@ export default function CBCCompetency({ profile, mode }) {
     ).join('')
 
     const body = `
-      <div class="rc-center-title">${cls.name} - CBC Proficiency Report</div>
-      <div class="rc-center-subtitle">${term} ${year} · ${cls.students} students</div>
+      <div class="rc-center-title">${esc(cls.name)} - CBC Proficiency Report</div>
+      <div class="rc-center-subtitle">${esc(term)} ${esc(year)} · ${cls.students} students</div>
       <div class="rc-center-metric-grid">
         <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:${bandColor?.color || '#64748b'}">${cls.meanPoints}/8</div><div class="rc-center-metric-label">Mean Points</div></div>
         <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:${bandColor?.color || '#64748b'}">${cls.meanGrade}</div><div class="rc-center-metric-label">Grade</div></div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FileText, Printer, Users, CalendarDays, ClipboardList, UserPlus, TrendingUp } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 
@@ -96,8 +97,8 @@ export default function Reports() {
     const w = window.open('', '_blank')
     if (!w) return
     const rows = (rowsData) => rowsData.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')
-    const reqRows = (data.topCategories || []).map(([k, v]) => `<tr><td>${CATEGORY_LABELS[k] || k}</td><td style="text-align:center">${v}</td></tr>`).join('')
-    const purposeRows = (data.topPurposes || []).map(([k, v]) => `<tr><td>${k}</td><td style="text-align:center">${v}</td></tr>`).join('')
+    const reqRows = (data.topCategories || []).map(([k, v]) => `<tr><td>${esc(CATEGORY_LABELS[k] || k)}</td><td style="text-align:center">${v}</td></tr>`).join('')
+    const purposeRows = (data.topPurposes || []).map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:center">${v}</td></tr>`).join('')
 
     w.document.write(`
       <html><head><title>Front Office Report</title>
@@ -112,7 +113,7 @@ export default function Reports() {
         th,td{border:1px solid #bbb;padding:6px 8px;font-size:11px;text-align:left}
         th{background:#f1f5f9}
       </style></head><body>
-      <h1>Front Office Report — ${school?.name || ''}</h1>
+      <h1>Front Office Report — ${esc(school?.name || '')}</h1>
       <div class="school">Generated ${new Date().toLocaleString('en-KE')} • ${data.kpis.studentsActive} active students</div>
       <div class="kpis">
         <div class="kpi"><b>${data.kpis.visitorsToday}</b><span>Visitors today</span></div>

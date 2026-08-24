@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { BarChart2, Search, TrendingUp, TrendingDown, Download, FileText, FileSpreadsheet } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
 import { bandColor, sortBands, weightedScoreMean } from '../../services/grading'
@@ -120,17 +121,17 @@ export default function SubjectPerformance() {
 
     const studentRows = d.entries.map((g, i) => `<tr>
       <td style="text-align:center;color:#94a3b8">${i + 1}</td>
-      <td style="font-weight:500">${g.students?.full_name || '—'}</td>
-      <td style="font-family:monospace;color:#64748b">${g.students?.admission_number || '—'}</td>
-      <td>${g.students?.class || '—'}</td>
-      <td>${g.students?.stream || '—'}</td>
+      <td style="font-weight:500">${esc(g.students?.full_name || '—')}</td>
+      <td style="font-family:monospace;color:#64748b">${esc(g.students?.admission_number || '—')}</td>
+      <td>${esc(g.students?.class || '—')}</td>
+      <td>${esc(g.students?.stream || '—')}</td>
       <td style="font-weight:600;color:${Number(g.total_score || 0) >= 50 ? '#16a34a' : '#dc2626'};text-align:center">${g.total_score ?? '—'}%</td>
       <td style="text-align:center"><span class="band-chip ${Number(g.total_score || 0) >= 80 ? 'chip-ee' : Number(g.total_score || 0) >= 60 ? 'chip-me' : Number(g.total_score || 0) >= 40 ? 'chip-ae' : 'chip-be'}">${g.grade || '—'}</span></td>
     </tr>`).join('')
 
     const bodyHtml = `
       <div class="rc-center-title">Subject Performance Report</div>
-      <div class="rc-center-subtitle">${selectedSubject || 'All Subjects'} · ${selectedGrade || 'All Classes'} · ${currentTerm} ${currentYear}</div>
+      <div class="rc-center-subtitle">${esc(selectedSubject || 'All Subjects')} · ${esc(selectedGrade || 'All Classes')} · ${esc(currentTerm)} ${esc(currentYear)}</div>
       <div class="rc-center-metric-grid">
         <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#2563eb">${d.total}</div><div class="rc-center-metric-label">Total Students</div></div>
         <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#16a34a">${d.avgScore}%</div><div class="rc-center-metric-label">Average Score</div></div>
@@ -153,7 +154,7 @@ export default function SubjectPerformance() {
       </table>
     `
     const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Subject Performance – ${currentTerm} ${currentYear}</title>
+<html><head><meta charset="utf-8"><title>Subject Performance – ${esc(currentTerm)} ${esc(currentYear)}</title>
 <style>
   ${REPORT_CARD_STYLES}
   .rc-wrap { max-width: 900px; }
@@ -172,15 +173,15 @@ export default function SubjectPerformance() {
 </style></head><body>
 <div class="rc-wrap">
   <div class="rc-top">
-    <div class="rc-logo-box">${school?.logo_url ? `<img src="${school.logo_url}" alt="Logo" />` : `<div class="rc-logo-placeholder">${(school?.name || 'S')[0]}</div>`}</div>
+    <div class="rc-logo-box">${school?.logo_url ? `<img src="${esc(school.logo_url)}" alt="Logo" />` : `<div class="rc-logo-placeholder">${esc((school?.name || 'S')[0])}</div>`}</div>
     <div class="rc-school-block">
-      <div class="rc-school-name">${school?.name || 'School'}</div>
-      ${school?.address ? `<div class="rc-school-contact">${school.address}${school.phone ? ' · ' + school.phone : ''}${school.email ? ' · ' + school.email : ''}</div>` : ''}
+      <div class="rc-school-name">${esc(school?.name || 'School')}</div>
+      ${school?.address ? `<div class="rc-school-contact">${esc(school.address)}${school.phone ? ' · ' + esc(school.phone) : ''}${school.email ? ' · ' + esc(school.email) : ''}</div>` : ''}
     </div>
   </div>
   <hr class="rc-hr" />
   ${bodyHtml}
-  <div class="rc-center-footer">Generated on ${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })} · ${currentTerm} ${currentYear}</div>
+  <div class="rc-center-footer">Generated on ${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })} · ${esc(currentTerm)} ${esc(currentYear)}</div>
 </div>
 </body></html>`
     const win = window.open('', '_blank')

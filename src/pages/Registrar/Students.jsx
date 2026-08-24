@@ -5,6 +5,7 @@ import {
   Archive, AlertTriangle, Heart, Shield, Clock, CheckCircle
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { fmtDate } from '../admin/fees/utils/feesHelpers'
@@ -146,7 +147,7 @@ export default function Students() {
     const printWindow = window.open('', '_blank')
     if (!printWindow) return
     const rows = filtered.map((s, i) =>
-      `<tr><td style="text-align:center">${i + 1}</td><td>${s.admission_number || ''}</td><td>${s.full_name}</td><td>${s.class || ''}</td><td>${s.stream || ''}</td><td>${s.parent_name || ''}</td><td>${s.parent_phone || ''}</td><td>${s.status || ''}</td></tr>`
+      `<tr><td style="text-align:center">${i + 1}</td><td>${esc(s.admission_number || '')}</td><td>${esc(s.full_name)}</td><td>${esc(s.class || '')}</td><td>${esc(s.stream || '')}</td><td>${esc(s.parent_name || '')}</td><td>${esc(s.parent_phone || '')}</td><td>${esc(s.status || '')}</td></tr>`
     ).join('')
     printWindow.document.write(`
       <html><head><title>Student Records</title>
@@ -160,7 +161,7 @@ export default function Students() {
         .pf{text-align:center;font-size:10px;color:#999;margin-top:12px}
       </style>
       </head><body>
-      <div class="ph"><h2>${school?.name || ''} - Student Records</h2></div>
+      <div class="ph"><h2>${esc(school?.name || '')} - Student Records</h2></div>
       <table><thead><tr><th>No.</th><th>Adm No</th><th>Full Name</th><th>Class</th><th>Stream</th><th>Parent</th><th>Phone</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
       <div class="pf">Generated on ${new Date().toLocaleDateString()} | ${filtered.length} student${filtered.length === 1 ? '' : 's'}</div>
       </body></html>

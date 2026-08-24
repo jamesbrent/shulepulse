@@ -5,6 +5,7 @@ import {
   BookOpen, Receipt, AlertTriangle, Trash2, Columns3
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { fmt, fmtDate, fmtDateTime, downloadFile } from '../admin/fees/utils/feesHelpers'
@@ -456,11 +457,11 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
     const sectionRows = trialSections.map((s) =>
       `<tr class="sec"><td colspan="4">${s.title}</td></tr>`
       + s.rows.map((r) => `<tr>
-        <td>${r.code}</td><td>${r.name}</td>
+        <td>${esc(r.code)}</td><td>${esc(r.name)}</td>
         <td class="num">${r.debit ? r.debit.toLocaleString() : ''}</td>
         <td class="num">${r.credit ? r.credit.toLocaleString() : ''}</td></tr>`).join('')
     ).join('')
-    win.document.write(`<html><head><title>Trial Balance — ${school?.name || 'School'}</title>
+    win.document.write(`<html><head><title>Trial Balance — ${esc(school?.name || 'School')}</title>
       <style>
         * { box-sizing: border-box; }
         body { font-family: Arial, sans-serif; color: #0f172a; margin: 32px; }
@@ -474,8 +475,8 @@ export default function AccountingPage({ initialTab, onOpenSource }) {
         tfoot td { font-weight: 700; background: #f8fafc; }
         @media print { body { margin: 0; } }
       </style></head><body>
-      <h1>${school?.name || 'School'} — TRIAL BALANCE</h1>
-      <div class="sub">${school?.name || 'School'} · ${trialPeriodLabel} · ${school?.plan || ''}</div>
+      <h1>${esc(school?.name || 'School')} — TRIAL BALANCE</h1>
+      <div class="sub">${esc(school?.name || 'School')} · ${trialPeriodLabel} · ${esc(school?.plan || '')}</div>
       <table>
         <thead><tr><th>Code</th><th>Account</th><th class="num">Debit (KES)</th><th class="num">Credit (KES)</th></tr></thead>
         <tbody>${sectionRows}</tbody>

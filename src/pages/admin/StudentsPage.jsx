@@ -7,6 +7,7 @@ import {
   MoreHorizontal, ChevronDown, ChevronUp, ArrowUpDown, Key,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
 import * as XLSX from 'xlsx'
@@ -602,7 +603,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank')
     if (!printWindow) return
-    const rows = filtered.map((s, i) => `<tr><td style="text-align:center">${i + 1}</td><td>${s.admission_number}</td><td>${s.full_name}</td><td>${s.class}</td><td>${s.gender || '—'}</td><td>${s.status}</td></tr>`).join('')
+    const rows = filtered.map((s, i) => `<tr><td style="text-align:center">${i + 1}</td><td>${esc(s.admission_number)}</td><td>${esc(s.full_name)}</td><td>${esc(s.class)}</td><td>${esc(s.gender || '—')}</td><td>${esc(s.status)}</td></tr>`).join('')
     const schoolName = school?.name || ''
     printWindow.document.write(`
       <html><head><title>Student List</title>
@@ -617,7 +618,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
         th{background:#f1f1f1}
       </style>
       </head><body>
-      <div class="ph"><h2>${schoolName}</h2></div>
+      <div class="ph"><h2>${esc(schoolName)}</h2></div>
       <div class="ps">Student List</div>
       <table><thead><tr>
       <th>No.</th><th>Adm No</th><th>Full Name</th><th>Class</th><th>Gender</th><th>Status</th>

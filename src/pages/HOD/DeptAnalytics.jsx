@@ -2,6 +2,7 @@ import { useState, useEffect, Fragment } from 'react'
 import { BarChart2, TrendingUp, TrendingDown, FileText, FileSpreadsheet, AlertTriangle, Users, Award, Search, Filter } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
 import { getGrade, gradeShort, bandColor, sortBands, weightedScoreMean, rankEntries } from '../../services/grading'
@@ -300,7 +301,7 @@ export default function DeptAnalytics() {
   }
 
   const buildPageHtml = (bodyContent, title, school) => `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${title} – ${currentTerm} ${currentYear}</title>
+<html><head><meta charset="utf-8"><title>${esc(title)} – ${esc(currentTerm)} ${esc(currentYear)}</title>
 <style>
   ${REPORT_CARD_STYLES}
   .rc-wrap { max-width: 960px; }
@@ -319,15 +320,15 @@ export default function DeptAnalytics() {
 </style></head><body>
 <div class="rc-wrap">
   <div class="rc-top">
-    <div class="rc-logo-box">${school?.logo_url ? `<img src="${school.logo_url}" alt="Logo" />` : `<div class="rc-logo-placeholder">${(school?.name || 'S')[0]}</div>`}</div>
+    <div class="rc-logo-box">${school?.logo_url ? `<img src="${esc(school.logo_url)}" alt="Logo" />` : `<div class="rc-logo-placeholder">${esc((school?.name || 'S')[0])}</div>`}</div>
     <div class="rc-school-block">
-      <div class="rc-school-name">${school?.name || 'School'}</div>
-      ${school?.address ? `<div class="rc-school-contact">${school.address}${school.phone ? ' · ' + school.phone : ''}${school.email ? ' · ' + school.email : ''}</div>` : ''}
+      <div class="rc-school-name">${esc(school?.name || 'School')}</div>
+      ${school?.address ? `<div class="rc-school-contact">${esc(school.address)}${school.phone ? ' · ' + esc(school.phone) : ''}${school.email ? ' · ' + esc(school.email) : ''}</div>` : ''}
     </div>
   </div>
   <hr class="rc-hr" />
   ${bodyContent}
-  <div class="rc-center-footer">Generated on ${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })} · ${currentTerm} ${currentYear}</div>
+  <div class="rc-center-footer">Generated on ${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })} · ${esc(currentTerm)} ${esc(currentYear)}</div>
 </div>
 </body></html>`
 
@@ -343,7 +344,7 @@ export default function DeptAnalytics() {
   const exportSubjectAnalysisPDF = async () => {
     const school = await getSchool()
     const subjectRows = subjectAverages.map(s => `<tr>
-      <td style="font-weight:500">${s.name}</td>
+      <td style="font-weight:500">${esc(s.name)}</td>
       <td style="text-align:center;font-weight:600;color:${s.avg >= 50 ? '#16a34a' : '#dc2626'}">${s.avg}%</td>
       <td style="text-align:center">${s.count}</td>
       <td style="text-align:center">${s.passRate}%</td>
@@ -352,16 +353,16 @@ export default function DeptAnalytics() {
 
     const studentRows = filteredGrades.map((g, i) => `<tr>
       <td style="text-align:center;color:#94a3b8">${i + 1}</td>
-      <td style="font-weight:500">${g.students?.full_name || '—'}</td>
-      <td style="font-family:monospace;color:#64748b">${g.students?.admission_number || '—'}</td>
-      <td>${g.students?.class || '—'}</td>
+      <td style="font-weight:500">${esc(g.students?.full_name || '—')}</td>
+      <td style="font-family:monospace;color:#64748b">${esc(g.students?.admission_number || '—')}</td>
+      <td>${esc(g.students?.class || '—')}</td>
       <td style="text-align:center;font-weight:600;color:${Number(g.total_score || 0) >= 50 ? '#16a34a' : '#dc2626'}">${g.total_score ?? '—'}%</td>
       <td style="text-align:center"><span class="band-chip ${Number(g.total_score || 0) >= 80 ? 'chip-ee' : Number(g.total_score || 0) >= 60 ? 'chip-me' : Number(g.total_score || 0) >= 40 ? 'chip-ae' : 'chip-be'}">${g.grade || '—'}</span></td>
     </tr>`).join('')
 
     const bodyHtml = `
       <div class="rc-center-title">Subject Analysis</div>
-      <div class="rc-center-subtitle">${selectedSubject || 'All Subjects'} · ${selectedClass || 'All Classes'} · ${currentTerm} ${currentYear}</div>
+      <div class="rc-center-subtitle">${esc(selectedSubject || 'All Subjects')} · ${esc(selectedClass || 'All Classes')} · ${esc(currentTerm)} ${esc(currentYear)}</div>
       <div class="rc-center-metric-grid">
         <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#2563eb">${totalStudents}</div><div class="rc-center-metric-label">Total Students</div></div>
         <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#7c3aed">${avgScore}%</div><div class="rc-center-metric-label">Average Score</div></div>
@@ -401,7 +402,7 @@ export default function DeptAnalytics() {
 
   const exportBroadsheetPDF = async () => {
     const school = await getSchool()
-    const subHeaders = uniqueSubjects.map(s => `<th style="text-align:center;min-width:60px;font-size:9px">${s}</th>`).join('')
+    const subHeaders = uniqueSubjects.map(s => `<th style="text-align:center;min-width:60px;font-size:9px">${esc(s)}</th>`).join('')
     const broadsheetRows = filteredBroadsheet.map((s, idx) => {
       const cells = uniqueSubjects.map(sub => {
         const score = s.subjects[sub]
@@ -409,9 +410,9 @@ export default function DeptAnalytics() {
       }).join('')
       return `<tr>
         <td style="text-align:center;color:#94a3b8">${s.rank}</td>
-        <td style="font-weight:500">${s.full_name}</td>
-        <td style="font-family:monospace;color:#64748b">${s.admission_number}</td>
-        <td>${s.class}</td>
+        <td style="font-weight:500">${esc(s.full_name)}</td>
+        <td style="font-family:monospace;color:#64748b">${esc(s.admission_number)}</td>
+        <td>${esc(s.class)}</td>
         ${cells}
         <td style="text-align:center;font-weight:700">${s.total}</td>
         <td style="text-align:center;font-weight:700;color:${s.average >= 50 ? '#16a34a' : '#dc2626'}">${s.average}%</td>
@@ -422,7 +423,7 @@ export default function DeptAnalytics() {
 
     const bodyHtml = `
       <div class="rc-center-title">Departmental Broadsheet</div>
-      <div class="rc-center-subtitle">${selectedClass || 'All Classes'} · ${currentTerm} ${currentYear} · ${filteredBroadsheet.length} students</div>
+      <div class="rc-center-subtitle">${esc(selectedClass || 'All Classes')} · ${esc(currentTerm)} ${esc(currentYear)} · ${filteredBroadsheet.length} students</div>
       <table class="rc-center-table">
         <thead><tr>
           <th style="text-align:center">#</th><th>Student</th><th>Adm No.</th><th>Class</th>
@@ -454,21 +455,21 @@ export default function DeptAnalytics() {
     const school = await getSchool()
     const defaulterRows = defaulters.map((d, i) => `<tr>
       <td style="text-align:center;color:#94a3b8">${i + 1}</td>
-      <td style="font-weight:500">${d.full_name}</td>
-      <td style="font-family:monospace;color:#64748b">${d.admission_number}</td>
-      <td>${d.class}</td>
-      <td>${d.subject}</td>
+      <td style="font-weight:500">${esc(d.full_name)}</td>
+      <td style="font-family:monospace;color:#64748b">${esc(d.admission_number)}</td>
+      <td>${esc(d.class)}</td>
+      <td>${esc(d.subject)}</td>
       <td style="text-align:center;font-weight:600;color:#dc2626">${d.score}%</td>
       <td style="text-align:center"><span class="band-chip chip-be">${d.grade}</span></td>
     </tr>`).join('')
 
     const bodyHtml = `
       <div class="rc-center-title">Defaulter Tracking</div>
-      <div class="rc-center-subtitle">Below ${threshold}% threshold · ${selectedSubject || 'All Subjects'} · ${selectedClass || 'All Classes'} · ${currentTerm} ${currentYear}</div>
+      <div class="rc-center-subtitle">Below ${threshold}% threshold · ${esc(selectedSubject || 'All Subjects')} · ${esc(selectedClass || 'All Classes')} · ${esc(currentTerm)} ${esc(currentYear)}</div>
       <div class="rc-center-metric-grid">
         <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#dc2626">${defaulterSummary.total}</div><div class="rc-center-metric-label">Total Defaulters</div></div>
-        <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#ca8a04">${defaulterSummary.worstSubject}</div><div class="rc-center-metric-label">Worst Subject (${defaulterSummary.worstSubjectCount})</div></div>
-        <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#7c3aed">${defaulterSummary.mostAffectedClass}</div><div class="rc-center-metric-label">Most Affected (${defaulterSummary.mostAffectedClassCount})</div></div>
+        <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#ca8a04">${esc(defaulterSummary.worstSubject)}</div><div class="rc-center-metric-label">Worst Subject (${defaulterSummary.worstSubjectCount})</div></div>
+        <div class="rc-center-metric"><div class="rc-center-metric-value" style="color:#7c3aed">${esc(defaulterSummary.mostAffectedClass)}</div><div class="rc-center-metric-label">Most Affected (${defaulterSummary.mostAffectedClassCount})</div></div>
       </div>
       <table class="rc-center-table">
         <thead><tr><th style="text-align:center">#</th><th>Student</th><th>Adm No.</th><th>Class</th><th>Subject</th><th style="text-align:center">Score</th><th style="text-align:center">Grade</th></tr></thead>
@@ -499,7 +500,7 @@ export default function DeptAnalytics() {
   const exportTrendsPDF = async () => {
     const school = await getSchool()
     const trendRows = sortedSubjectAverages.map(s => `<tr>
-      <td style="font-weight:500">${s.name}</td>
+      <td style="font-weight:500">${esc(s.name)}</td>
       <td style="text-align:center;font-weight:600;color:${s.avg >= 50 ? '#16a34a' : '#dc2626'}">${s.avg}%</td>
       <td style="text-align:center">${s.passRate}%</td>
       <td style="text-align:center">${s.count}</td>
@@ -508,7 +509,7 @@ export default function DeptAnalytics() {
 
     const topRows = topSubjects.map((s, i) => `<tr>
       <td style="text-align:center;font-weight:700;color:${i === 0 ? '#ca8a04' : i === 1 ? '#64748b' : '#b45309'}">${i < 3 ? '&#9733; ' : ''}${i + 1}</td>
-      <td style="font-weight:600">${s.name}</td>
+      <td style="font-weight:600">${esc(s.name)}</td>
       <td style="text-align:center;color:#16a34a;font-weight:600">${s.avg}%</td>
       <td style="text-align:center">${s.passRate}%</td>
       <td style="text-align:center;color:#64748b">${s.count}</td>
@@ -516,7 +517,7 @@ export default function DeptAnalytics() {
 
     const bottomRows = bottomSubjects.map((s, i) => `<tr>
       <td style="text-align:center;color:#94a3b8">${i + 1}</td>
-      <td style="font-weight:600">${s.name}</td>
+      <td style="font-weight:600">${esc(s.name)}</td>
       <td style="text-align:center;font-weight:600;color:${s.avg >= 50 ? '#16a34a' : '#dc2626'}">${s.avg}%</td>
       <td style="text-align:center">${s.passRate}%</td>
       <td style="text-align:center;color:#64748b">${s.count}</td>
@@ -1503,7 +1504,7 @@ function ClassAverages({ classAverages, grades, selectedSubject, setSelectedSubj
       .map(s => {
         const sBand = cbcBandColors[s.band]
         return `<tr>
-          <td style="font-weight:500">${s.name}</td>
+          <td style="font-weight:500">${esc(s.name)}</td>
           <td style="text-align:center;font-weight:700;color:${sBand?.color || '#64748b'}">${s.meanPoints}/8</td>
           <td style="text-align:center"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:${sBand?.bg || '#f1f5f9'};color:${sBand?.color || '#64748b'}">${s.grade}</span></td>
           <td style="text-align:center">${s.dist.EE}%</td>
@@ -1547,7 +1548,7 @@ function ClassAverages({ classAverages, grades, selectedSubject, setSelectedSubj
     const subjectTableRows = allSubjectHtml.map(s => {
       const sBand = cbcBandColors[s.band]
       return `<tr>
-        <td style="font-weight:500">${s.name}</td>
+        <td style="font-weight:500">${esc(s.name)}</td>
         <td style="text-align:center;font-weight:700;color:${sBand?.color || '#64748b'}">${s.meanPoints}/8</td>
         <td style="text-align:center"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:${sBand?.bg || '#f1f5f9'};color:${sBand?.color || '#64748b'}">${s.grade}</span></td>
         <td style="text-align:center">${s.count}</td>
@@ -1559,7 +1560,7 @@ function ClassAverages({ classAverages, grades, selectedSubject, setSelectedSubj
     }).join('')
 
     const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${cls.name} CBC Proficiency — ${currentTerm} ${currentYear}</title>
+<html><head><meta charset="utf-8"><title>${esc(cls.name)} CBC Proficiency — ${esc(currentTerm)} ${esc(currentYear)}</title>
 <style>
   ${REPORT_CARD_STYLES}
   .rc-center-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
@@ -1577,16 +1578,16 @@ function ClassAverages({ classAverages, grades, selectedSubject, setSelectedSubj
 </style></head><body>
 <div class="rc-wrap">
   <div class="rc-top">
-    <div class="rc-logo-box">${schoolData?.logo_url ? `<img src="${schoolData.logo_url}" alt="Logo" />` : `<div class="rc-logo-placeholder">${(schoolData?.name || 'S')[0]}</div>`}</div>
+    <div class="rc-logo-box">${schoolData?.logo_url ? `<img src="${esc(schoolData.logo_url)}" alt="Logo" />` : `<div class="rc-logo-placeholder">${esc((schoolData?.name || 'S')[0])}</div>`}</div>
     <div class="rc-school-block">
-      <div class="rc-school-name">${schoolData?.name || 'School'}</div>
-      ${schoolData?.address ? `<div class="rc-school-contact">${schoolData.address}${schoolData.phone ? ' · ' + schoolData.phone : ''}${schoolData.email ? ' · ' + schoolData.email : ''}</div>` : ''}
+      <div class="rc-school-name">${esc(schoolData?.name || 'School')}</div>
+      ${schoolData?.address ? `<div class="rc-school-contact">${esc(schoolData.address)}${schoolData.phone ? ' · ' + esc(schoolData.phone) : ''}${schoolData.email ? ' · ' + esc(schoolData.email) : ''}</div>` : ''}
     </div>
   </div>
   <hr class="rc-hr" />
 
-  <div class="rc-center-title">${cls.name} — CBC Proficiency Report</div>
-  <div class="rc-center-subtitle">${currentTerm} ${currentYear} · ${cls.students} students</div>
+  <div class="rc-center-title">${esc(cls.name)} — CBC Proficiency Report</div>
+  <div class="rc-center-subtitle">${esc(currentTerm)} ${esc(currentYear)} · ${cls.students} students</div>
 
   <div class="rc-center-metric-grid">
     <div class="rc-center-metric">

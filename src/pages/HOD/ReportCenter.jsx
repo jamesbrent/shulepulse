@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
+import { esc } from '../../utils/escapeHtml'
 import { useSchool } from '../admin/useSchool'
 import { REPORT_CARD_STYLES } from '../../components/students/ReportCard'
 import { getGrade, gradeShort, weightedScoreMean, rankEntries } from '../../services/grading'
@@ -58,23 +59,23 @@ const REPORT_CENTER_STYLES = `
 
 function buildReportHtml(bodyContent, title, school, term, year) {
   return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${title} – ${term} ${year}</title>
+<html><head><meta charset="utf-8"><title>${esc(title)} – ${esc(term)} ${esc(year)}</title>
 <style>${REPORT_CENTER_STYLES}</style></head>
 <body>
 <div class="rc-wrap">
   <div class="rc-top">
     <div class="rc-logo-box">
-      ${school?.logo_url ? `<img src="${school.logo_url}" alt="Logo" />` : `<div class="rc-logo-placeholder">${(school?.name || 'S')[0]}</div>`}
+      ${school?.logo_url ? `<img src="${esc(school.logo_url)}" alt="Logo" />` : `<div class="rc-logo-placeholder">${esc((school?.name || 'S')[0])}</div>`}
     </div>
     <div class="rc-school-block">
-      <div class="rc-school-name">${school?.name || 'School'}</div>
-      ${school?.address ? `<div class="rc-school-contact">${school.address}${school.phone ? ' · ' + school.phone : ''}${school.email ? ' · ' + school.email : ''}</div>` : ''}
-      ${school?.motto ? `<div class="rc-school-contact" style="font-style:italic">"${school.motto}"</div>` : ''}
+      <div class="rc-school-name">${esc(school?.name || 'School')}</div>
+      ${school?.address ? `<div class="rc-school-contact">${esc(school.address)}${school.phone ? ' · ' + esc(school.phone) : ''}${school.email ? ' · ' + esc(school.email) : ''}</div>` : ''}
+      ${school?.motto ? `<div class="rc-school-contact" style="font-style:italic">"${esc(school.motto)}"</div>` : ''}
     </div>
   </div>
   <hr class="rc-hr" />
   ${bodyContent}
-  <div class="rc-center-footer">Generated on ${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })} · ${term} ${year}</div>
+  <div class="rc-center-footer">Generated on ${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })} · ${esc(term)} ${esc(year)}</div>
 </div>
 </body></html>`
 }
@@ -256,9 +257,9 @@ export default function ReportCenter() {
       const rankColor = r === 1 ? '#ca8a04' : r === 2 ? '#64748b' : r === 3 ? '#b45309' : '#475569'
       return `<tr>
         <td class="rank-cell" style="color:${rankColor}">${r <= 3 ? '&#9733; ' : ''}${r}</td>
-        <td style="font-weight:500">${s.name}</td>
-        <td style="font-family:monospace;color:#64748b">${s.admNo}</td>
-        <td>${s.class}</td>
+        <td style="font-weight:500">${esc(s.name)}</td>
+        <td style="font-family:monospace;color:#64748b">${esc(s.admNo)}</td>
+        <td>${esc(s.class)}</td>
         <td class="avg-cell" style="color:${s.average >= 50 ? '#16a34a' : '#dc2626'}">${s.average}%</td>
         <td class="grade-cell"><span class="band-chip ${s.average >= 80 ? 'chip-ee' : s.average >= 60 ? 'chip-me' : s.average >= 40 ? 'chip-ae' : 'chip-be'}">${s.grade}</span></td>
       </tr>`
@@ -347,7 +348,7 @@ export default function ReportCenter() {
       .sort((a, b) => b.avg - a.avg)
 
     const tableRowsHtml = subjectRows.map((s, i) => `<tr>
-      <td style="font-weight:500">${s.name}</td>
+      <td style="font-weight:500">${esc(s.name)}</td>
       <td style="text-align:center">${s.count}</td>
       <td class="avg-cell" style="color:${s.avg >= 50 ? '#16a34a' : '#dc2626'}">${s.avg}%</td>
       <td style="text-align:center">${s.passRate}%</td>
@@ -392,7 +393,7 @@ export default function ReportCenter() {
     const lowest = totalStudents > 0 ? Math.min(...studentAverages.map(s => s.average)) : 0
 
     const classRowsHtml = classSummaries.map(c => `<tr>
-      <td style="font-weight:600">${c.className}</td>
+      <td style="font-weight:600">${esc(c.className)}</td>
       <td style="text-align:center">${c.students}</td>
       <td style="text-align:center">${c.subjects}</td>
       <td class="avg-cell" style="color:${c.avgScore >= 50 ? '#16a34a' : '#dc2626'}">${c.avgScore}%</td>
@@ -417,7 +418,7 @@ export default function ReportCenter() {
       })
       .sort((a, b) => b.avg - a.avg)
       .map(s => `<tr>
-        <td style="font-weight:500">${s.name}</td>
+        <td style="font-weight:500">${esc(s.name)}</td>
         <td style="text-align:center">${s.count}</td>
         <td class="avg-cell" style="color:${s.avg >= 50 ? '#16a34a' : '#dc2626'}">${s.avg}%</td>
         <td style="text-align:center">${s.passRate}%</td>
