@@ -4,18 +4,24 @@
 
 .pp-page {
   --pp-primary: var(--color-primary, #2563eb);
-  --pp-primary-light: color-mix(in srgb, var(--pp-primary) 8%, transparent);
-  --pp-primary-border: color-mix(in srgb, var(--pp-primary) 20%, transparent);
-  --pp-text: #1e293b;
-  --pp-text-secondary: #475569;
-  --pp-text-muted: #94a3b8;
-  --pp-bg: #ffffff;
-  --pp-bg-alt: #f8fafc;
-  --pp-border: #e2e8f0;
-  --pp-border-light: #f1f5f9;
+  --pp-secondary: var(--color-secondary, #16a34a);
+  --pp-primary-light: color-mix(in srgb, var(--pp-primary) 12%, transparent);
+  --pp-primary-border: color-mix(in srgb, var(--pp-primary) 30%, transparent);
+  --pp-text: #f1f5f9;
+  --pp-text-secondary: #cbd5e1;
+  --pp-text-muted: #64748b;
+  --pp-bg: rgba(15, 23, 42, 0.85);
+  --pp-bg-alt: rgba(30, 41, 59, 0.6);
+  --pp-border: rgba(148, 163, 184, 0.12);
+  --pp-border-light: rgba(148, 163, 184, 0.06);
 
   min-height: 100vh;
-  background: var(--pp-bg);
+  background:
+    radial-gradient(640px 480px at 12% 18%, color-mix(in srgb, var(--pp-primary) 12%, transparent), transparent 70%),
+    radial-gradient(720px 560px at 88% 82%, color-mix(in srgb, var(--pp-secondary) 10%, transparent), transparent 70%),
+    repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.03) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.03) 0 1px, transparent 1px 48px),
+    #0a0f1e;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: var(--pp-text);
   line-height: 1.7;
@@ -183,7 +189,7 @@
 }
 
 .pp-table-head {
-  background: var(--pp-text);
+  background: var(--pp-primary);
   color: #ffffff;
 }
 
@@ -234,5 +240,22 @@
 }
 
 .pp-contact-card strong {
+  color: var(--pp-text);
+}
+
+/* ── Back button ── */
+.pp-back-btn {
+  background: none;
+  border: 1px solid var(--pp-border);
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: var(--pp-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pp-back-btn:hover {
+  background: var(--pp-primary-light);
+  border-color: var(--pp-primary-border);
   color: var(--pp-text);
 }
