@@ -13,13 +13,13 @@ SECURITY DEFINER
 STABLE
 AS $$
   SELECT
-    to_char(transaction_date, 'Mon') || ' ' || to_char(transaction_date, 'YY') AS month,
+    to_char(transaction_date, 'Mon YY') AS month,
     COALESCE(SUM(amount), 0)::numeric AS amount
   FROM fee_payments
   WHERE transaction_date IS NOT NULL
     AND school_id = get_my_school_id()
-  GROUP BY to_char(transaction_date, 'Mon YY'), date_trunc('month', transaction_date)
-  ORDER BY date_trunc('month', transaction_date) ASC;
+  GROUP BY to_char(transaction_date, 'Mon YY')
+  ORDER BY MIN(transaction_date) ASC;
 $$;
 
 -- Grant to authenticated users only (not anon)
