@@ -160,7 +160,7 @@ export default function Login() {
       <div className="login-footer">
         <a href={basePath('/privacy-policy')} className="login-footer-link">Privacy Policy</a>
         <span className="login-footer-sep">&middot;</span>
-        <span>&copy; {new Date().getFullYear()} ShulePulse &middot; BIMA Graphics</span>
+        <span>&copy; {new Date().getFullYear()} ShulePulse</span>
       </div>
     </div>
   )
