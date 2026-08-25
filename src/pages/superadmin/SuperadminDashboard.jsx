@@ -444,6 +444,7 @@ export default function SuperadminDashboard() {
         </div>
         <div className="sidebar-footer">
           <a href={basePath('/privacy-policy')} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#64748b', textDecoration: 'none', display: 'block', textAlign: 'center', marginBottom: 8 }}>Privacy Policy</a>
+          <a href={basePath('/terms-of-service')} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#64748b', textDecoration: 'none', display: 'block', textAlign: 'center', marginBottom: 8 }}>Terms of Service</a>
           <button className="logout-btn" onClick={() => { setMobileOpen(false); handleLogout() }}>
             <LogOut size={16} />
             <span>Logout</span>

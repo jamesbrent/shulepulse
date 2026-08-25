@@ -11,6 +11,7 @@ import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import DeputyAdminDashboard from './pages/DeputyAdministrator/DeputyAdminDashboard'
 import FinanceDashboard from './pages/Finance/FinanceDashboard'
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
 
         {/* Protected routes — each locked to specific role(s) */}
         <Route path="/superadmin" element={

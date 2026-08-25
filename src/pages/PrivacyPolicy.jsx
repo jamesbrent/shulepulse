@@ -5,10 +5,8 @@ import "./PrivacyPolicy.css";
 
 const CONFIG = {
   lastUpdated: "August 25, 2026",
-  contactName: "[Name / role]",
-  contactEmail: "[contact email]",
+  contactEmail: "bima.ic.graphics@gmail.com",
   address: "BIMA Graphics, Thika, Kenya",
-  odpcNumber: "[to be added once registered]",
 };
 
 const SECTIONS = [
@@ -269,10 +267,8 @@ export default function PrivacyPolicy() {
             <SectionHeading id="contact">11. Contact</SectionHeading>
             <p>For questions about this policy or to exercise a data protection right, contact:</p>
             <div className="pp-contact-card">
-              <p><strong>Data Protection Contact:</strong> {CONFIG.contactName}</p>
               <p><strong>Email:</strong> {CONFIG.contactEmail}</p>
               <p><strong>Address:</strong> {CONFIG.address}</p>
-              <p><strong>ODPC Registration Number:</strong> {CONFIG.odpcNumber}</p>
             </div>
 
             <SectionHeading id="changes">12. Changes to This Policy</SectionHeading>
