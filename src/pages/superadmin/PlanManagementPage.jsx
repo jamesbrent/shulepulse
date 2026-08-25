@@ -149,7 +149,6 @@ export default function PlanManagementPage() {
 
       <div className="plan-mgmt-header">
         <div>
-          <h2>Plan Management</h2>
           <p className="plan-mgmt-subtitle">Manage subscription plans and feature assignments</p>
         </div>
         <button className="plan-btn plan-btn-primary" onClick={() => setShowCreatePlan(true)}>
