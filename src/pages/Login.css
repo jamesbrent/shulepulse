@@ -7,6 +7,7 @@
   --login-primary: var(--color-primary, #2563eb);
   --login-secondary: var(--color-secondary, #16a34a);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
