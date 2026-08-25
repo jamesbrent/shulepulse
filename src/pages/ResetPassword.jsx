@@ -23,6 +23,19 @@ export default function ResetPassword() {
       }
     })
 
+    const params = new URLSearchParams(window.location.search)
+    const schoolId = params.get('school')
+    if (schoolId) {
+      supabase.rpc('get_school_branding', { p_school_id: schoolId })
+        .then(({ data }) => {
+          if (!data || typeof data !== 'object') return
+          const root = document.documentElement
+          if (data.primary_color) root.style.setProperty('--color-primary', data.primary_color)
+          if (data.secondary_color) root.style.setProperty('--color-secondary', data.secondary_color)
+        })
+        .catch(() => {})
+    }
+
     return () => subscription.unsubscribe()
   }, [])
 

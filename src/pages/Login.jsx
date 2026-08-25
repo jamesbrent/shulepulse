@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
 import logoImg from '../assets/logo.png'
@@ -11,6 +11,21 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const schoolId = params.get('school')
+    if (!schoolId) return
+
+    supabase.rpc('get_school_branding', { p_school_id: schoolId })
+      .then(({ data }) => {
+        if (!data || typeof data !== 'object') return
+        const root = document.documentElement
+        if (data.primary_color) root.style.setProperty('--color-primary', data.primary_color)
+        if (data.secondary_color) root.style.setProperty('--color-secondary', data.secondary_color)
+      })
+      .catch(() => {})
+  }, [])
 
   const handleLogin = async (e) => {
     e.preventDefault()
