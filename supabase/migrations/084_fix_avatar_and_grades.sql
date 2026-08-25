@@ -8,7 +8,7 @@
 UPDATE storage.buckets SET public = true WHERE id = 'school-assets';
 
 -- Ensure public read policy exists for avatars and logos
-DROP POLICY IF EXISTS "school_assets_logos_read" ON storage.objects;
+DROP POLICY IF EXISTS "school_assets_public_read" ON storage.objects;
 CREATE POLICY "school_assets_public_read"
   ON storage.objects FOR SELECT
   USING (
