@@ -243,6 +243,14 @@
   color: var(--pp-text);
 }
 
+.pp-contact-link {
+  color: var(--pp-primary);
+  text-decoration: none;
+}
+.pp-contact-link:hover {
+  text-decoration: underline;
+}
+
 /* ── Back button ── */
 .pp-back-btn {
   background: none;

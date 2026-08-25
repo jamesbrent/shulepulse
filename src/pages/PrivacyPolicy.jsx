@@ -267,8 +267,9 @@ export default function PrivacyPolicy() {
             <SectionHeading id="contact">11. Contact</SectionHeading>
             <p>For questions about this policy or to exercise a data protection right, contact:</p>
             <div className="pp-contact-card">
-              <p><strong>Email:</strong> {CONFIG.contactEmail}</p>
-              <p><strong>Address:</strong> {CONFIG.address}</p>
+              <p><strong>Email:</strong> <a href="mailto:bima.ic.graphics@gmail.com" className="pp-contact-link">bima.ic.graphics@gmail.com</a></p>
+              <p><strong>Phone / WhatsApp:</strong> <a href="https://wa.me/254715909038" className="pp-contact-link" target="_blank" rel="noopener noreferrer">0715 909 038</a></p>
+              <p><strong>Address:</strong> BIMA Graphics, Thika, Kenya</p>
             </div>
 
             <SectionHeading id="changes">12. Changes to This Policy</SectionHeading>
