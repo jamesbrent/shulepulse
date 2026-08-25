@@ -5,14 +5,6 @@ import logoImg from '../assets/logo.png'
 import AnimatedDottedMap from '../components/AnimatedDottedMap'
 import './Login.css'
 
-const FEATURES = [
-  { icon: '📊', label: 'Student Management', desc: 'Track every learner' },
-  { icon: '💰', label: 'Finance & Fees', desc: 'Smart billing engine' },
-  { icon: '✅', label: 'Attendance', desc: 'Real-time tracking' },
-  { icon: '📚', label: 'Academics', desc: 'Grades & reports' },
-  { icon: '📈', label: 'Reports', desc: 'Analytics & insights' },
-]
-
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -72,58 +64,16 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
-        {/* ── Left Panel: Branded Visual ── */}
+        {/* ── Left Panel: Login Form (dark) ── */}
         <div className="login-left">
-          <AnimatedDottedMap />
-
           <div className="login-left-content">
-            <div className="login-left-brand">
-              <div className="login-left-logo"><img src={logoImg} alt="ShulePulse" /></div>
-              <span className="login-left-name">ShulePulse</span>
+            <div className="login-brand-row">
+              <div className="login-logo-badge"><img src={logoImg} alt="ShulePulse" /></div>
+              <span className="login-brand-name">ShulePulse</span>
             </div>
 
-            <h1 className="login-headline">Run Your School Smarter</h1>
-            <p className="login-sub">One intelligent platform connecting every part of your school.</p>
-
-            <div className="login-features">
-              {FEATURES.map((f) => (
-                <div key={f.label} className="login-feature-card">
-                  <span className="login-feature-icon">{f.icon}</span>
-                  <div>
-                    <div className="login-feature-label">{f.label}</div>
-                    <div className="login-feature-desc">{f.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="login-left-footer">
-              <div className="login-stats">
-                <div className="login-stat">
-                  <span className="stat-num">500+</span>
-                  <span className="stat-label">Schools</span>
-                </div>
-                <div className="login-stat">
-                  <span className="stat-num">120K+</span>
-                  <span className="stat-label">Students</span>
-                </div>
-                <div className="login-stat">
-                  <span className="stat-num">47</span>
-                  <span className="stat-label">Counties</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Right Panel: Login Form ── */}
-        <div className="login-right">
-          <div className="login-right-inner">
-            <div className="login-form-header">
-              <div className="login-form-logo"><img src={logoImg} alt="ShulePulse" /></div>
-              <h2 className="login-title">Welcome back</h2>
-              <p className="login-hint">Sign in to access your school management system.</p>
-            </div>
+            <h1 className="login-title">Welcome back</h1>
+            <p className="login-hint">Sign in to continue to your school management system</p>
 
             {error && <div className="login-error">{error}</div>}
 
@@ -185,6 +135,11 @@ export default function Login() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* ── Right Panel: Ecosystem Visualization (dark, animated) ── */}
+        <div className="login-right">
+          <AnimatedDottedMap />
         </div>
       </div>
     </div>

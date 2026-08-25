@@ -34,6 +34,16 @@ M705,185 L718,180 732,182 742,190 748,202 745,215 735,222 722,220 712,212 708,20
 M475,240 L488,235 502,238 512,248 515,262 510,275 498,280 485,278 475,268 470,255Z
 `
 
+/* Subtle decorative module labels placed in open "ocean" areas */
+const MODULE_LABELS = [
+  { x: 92,  y: 55,  text: 'STUDENTS' },
+  { x: 350, y: 30,  text: 'FINANCE' },
+  { x: 885, y: 152, text: 'ATTENDANCE' },
+  { x: 58,  y: 300, text: 'ACADEMICS' },
+  { x: 262, y: 212, text: 'HR & PAYROLL' },
+  { x: 505, y: 468, text: 'REPORTS' },
+]
+
 export default function AnimatedDottedMap() {
   const dots = useMemo(() => {
     const pts = []
@@ -45,17 +55,24 @@ export default function AnimatedDottedMap() {
     return pts
   }, [])
 
+  const gridPath = useMemo(() => {
+    let d = ''
+    for (let x = 0; x <= VIEWBOX_W; x += GRID * 5) d += `M${x},0 L${x},${VIEWBOX_H} `
+    for (let y = 0; y <= VIEWBOX_H; y += GRID * 5) d += `M0,${y} L${VIEWBOX_W},${y} `
+    return d
+  }, [])
+
   const connections = useMemo(() => [
-    { d: 'M200,145 C280,120 380,100 460,110', dur: '9s',  delay: '0s',   opacity: 0.18 },
-    { d: 'M460,110 C520,95 600,85 680,80',      dur: '10s', delay: '1.5s', opacity: 0.15 },
-    { d: 'M680,80 C740,75 790,80 830,90',       dur: '8s',  delay: '3s',   opacity: 0.12 },
-    { d: 'M200,145 C210,180 215,220 210,260',   dur: '7s',  delay: '0.5s', opacity: 0.14 },
-    { d: 'M210,260 C220,290 215,310 200,325',   dur: '6s',  delay: '2s',   opacity: 0.10 },
-    { d: 'M460,110 C455,160 450,200 455,235',   dur: '8s',  delay: '1s',   opacity: 0.12 },
-    { d: 'M455,235 C460,270 455,300 445,340',   dur: '7s',  delay: '2.5s', opacity: 0.10 },
-    { d: 'M680,80 C720,120 760,160 780,180',    dur: '9s',  delay: '4s',   opacity: 0.11 },
-    { d: 'M780,180 C770,200 730,210 715,205',   dur: '6s',  delay: '5s',   opacity: 0.08 },
-    { d: 'M830,90 C840,100 840,115 835,125',    dur: '5s',  delay: '3.5s', opacity: 0.09 },
+    { d: 'M200,145 C280,120 380,100 460,110', dur: '9s',  delay: '0s',   opacity: 0.10 },
+    { d: 'M460,110 C520,95 600,85 680,80',      dur: '10s', delay: '1.5s', opacity: 0.09 },
+    { d: 'M680,80 C740,75 790,80 830,90',       dur: '8s',  delay: '3s',   opacity: 0.07 },
+    { d: 'M200,145 C210,180 215,220 210,260',   dur: '7s',  delay: '0.5s', opacity: 0.08 },
+    { d: 'M210,260 C220,290 215,310 200,325',   dur: '6s',  delay: '2s',   opacity: 0.06 },
+    { d: 'M460,110 C455,160 450,200 455,235',   dur: '8s',  delay: '1s',   opacity: 0.07 },
+    { d: 'M455,235 C460,270 455,300 445,340',   dur: '7s',  delay: '2.5s', opacity: 0.06 },
+    { d: 'M680,80 C720,120 760,160 780,180',    dur: '9s',  delay: '4s',   opacity: 0.06 },
+    { d: 'M780,180 C770,200 730,210 715,205',   dur: '6s',  delay: '5s',   opacity: 0.05 },
+    { d: 'M830,90 C840,100 840,115 835,125',    dur: '5s',  delay: '3.5s', opacity: 0.05 },
   ], [])
 
   return (
@@ -75,6 +92,15 @@ export default function AnimatedDottedMap() {
         </filter>
       </defs>
 
+      {/* ── Faint background grid lines ── */}
+      <path
+        d={gridPath}
+        fill="none"
+        stroke="white"
+        strokeWidth="0.5"
+        strokeOpacity="0.04"
+      />
+
       {/* ── Dotted world map — grid masked by continent shapes ── */}
       <g clipPath="url(#adm-world-clip)">
         {dots.map((d, i) => (
@@ -84,10 +110,26 @@ export default function AnimatedDottedMap() {
             cy={d.y}
             r={DOT_R}
             fill="white"
-            opacity={0.08 + (((d.x * 7 + d.y * 13) % 100) / 100) * 0.14}
+            opacity={0.10 + (((d.x * 7 + d.y * 13) % 100) / 100) * 0.16}
           />
         ))}
       </g>
+
+      {/* ── Floating module labels (decorative) ── */}
+      {MODULE_LABELS.map((m, i) => (
+        <g key={`label-${i}`} fill="white" opacity="0.05">
+          <circle cx={m.x - 8} cy={m.y - 3} r="1.5" />
+          <text
+            x={m.x}
+            y={m.y}
+            fontSize="9"
+            fontFamily="Inter, sans-serif"
+            letterSpacing="2.5"
+          >
+            {m.text}
+          </text>
+        </g>
+      ))}
 
       {/* ── Pulsing overlay dots ── */}
       {[
@@ -101,8 +143,15 @@ export default function AnimatedDottedMap() {
         { cx: 200, cy: 325, r: 3, dur: '7s', d: '4s' },
       ].map((p, i) => (
         <g key={`pulse-${i}`}>
-          <circle cx={p.cx} cy={p.cy} r={p.r} fill="white" opacity="0" filter="url(#adm-dot-glow)">
-            <animate attributeName="opacity" values="0;0.12;0" dur={p.dur} begin={p.d} repeatCount="indefinite" />
+          <circle
+            cx={p.cx}
+            cy={p.cy}
+            r={p.r}
+            fill={i % 2 === 0 ? '#4ade80' : '#60a5fa'}
+            opacity="0"
+            filter="url(#adm-dot-glow)"
+          >
+            <animate attributeName="opacity" values="0;0.09;0" dur={p.dur} begin={p.d} repeatCount="indefinite" />
             <animate attributeName="r" values={`${p.r};${p.r + 2};${p.r}`} dur={p.dur} begin={p.d} repeatCount="indefinite" />
           </circle>
         </g>
@@ -121,11 +170,16 @@ export default function AnimatedDottedMap() {
             strokeDasharray="3 6"
           />
           {/* Primary particle */}
-          <circle r="2" fill="white" opacity="0" filter="url(#adm-dot-glow)">
+          <circle
+            r="2"
+            fill={i % 2 === 0 ? '#4ade80' : '#60a5fa'}
+            opacity="0"
+            filter="url(#adm-dot-glow)"
+          >
             <animateMotion dur={c.dur} repeatCount="indefinite" begin={c.delay}>
               <mpath href={`#adm-cp-${i}`} />
             </animateMotion>
-            <animate attributeName="opacity" values="0;0.2;0.2;0" dur={c.dur} repeatCount="indefinite" begin={c.delay} />
+            <animate attributeName="opacity" values="0;0.14;0.14;0" dur={c.dur} repeatCount="indefinite" begin={c.delay} />
           </circle>
           {/* Secondary particle (smaller, slower, fainter) */}
           <circle r="1.2" fill="white" opacity="0">
