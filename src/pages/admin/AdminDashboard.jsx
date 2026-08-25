@@ -272,7 +272,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [pendingAp, setPendingAp] = useState(0)
+  const [logoError, setLogoError] = useState(false)
   const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
+
+  useEffect(() => { setLogoError(false) }, [logoUrl])
 
   const filteredNavGroups = useMemo(() => {
     if (isSuperadmin) return NAV_GROUPS
@@ -759,8 +762,8 @@ export default function AdminDashboard() {
   const sidebarContent = (
     <>
       <div className="adm-sidebar-brand">
-        {logoUrl ? (
-          <img src={logoUrl} alt={schoolName || 'Logo'} className="adm-brand-logo" />
+        {logoUrl && !logoError ? (
+          <img src={logoUrl} alt={schoolName || 'Logo'} className="adm-brand-logo" onError={() => setLogoError(true)} />
         ) : (
           <div className="adm-brand-icon">{schoolName?.[0] || 'S'}</div>
         )}

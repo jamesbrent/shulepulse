@@ -9,6 +9,7 @@ export default function AvatarUpload({ className, size = 36, fallbackChar = 'U' 
   const inputRef = useRef()
   const photoUrl = profile?.photo_url
   const initial = profile?.full_name?.[0]?.toUpperCase() || fallbackChar
+  const [imgError, setImgError] = useState(false)
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0]
@@ -61,8 +62,8 @@ export default function AvatarUpload({ className, size = 36, fallbackChar = 'U' 
 
   return (
     <div className={className} style={style} onClick={() => inputRef.current?.click()} title="Click to change photo">
-      {photoUrl ? (
-        <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+      {photoUrl && !imgError ? (
+        <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={() => setImgError(true)} />
       ) : (
         initial
       )}
