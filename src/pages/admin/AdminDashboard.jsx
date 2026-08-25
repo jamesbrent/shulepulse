@@ -836,6 +836,7 @@ export default function AdminDashboard() {
       <div className="adm-sidebar-bottom">
         <div className="adm-divider" />
         <RoleSwitcher />
+        <a href={basePath('/privacy-policy')} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#64748b', textDecoration: 'none', display: 'block', textAlign: 'center', marginBottom: 6 }}>Privacy Policy</a>
         <button className="adm-logout" onClick={handleLogout}>
           <LogOut size={16} />
           <span>Logout</span>

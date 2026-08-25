@@ -482,4 +482,27 @@
     max-width: 100%;
     padding: 16px 20px;
   }
+
+  .login-footer {
+    padding: 12px 20px;
+  }
+}
+
+.login-footer {
+  text-align: center;
+  padding: 16px 24px;
+  font-size: 12px;
+  color: #64748b;
+}
+.login-footer-link {
+  color: #94a3b8;
+  text-decoration: none;
+}
+.login-footer-link:hover {
+  color: #e2e8f0;
+  text-decoration: underline;
+}
+.login-footer-sep {
+  margin: 0 8px;
+  color: #475569;
 }

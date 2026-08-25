@@ -10,6 +10,7 @@ import { basePath } from './lib/paths'
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import DeputyAdminDashboard from './pages/DeputyAdministrator/DeputyAdminDashboard'
 import FinanceDashboard from './pages/Finance/FinanceDashboard'
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
         {/* Protected routes — each locked to specific role(s) */}
         <Route path="/superadmin" element={
