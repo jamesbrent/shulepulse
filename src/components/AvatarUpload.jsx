@@ -30,11 +30,11 @@ export default function AvatarUpload({ className, size = 36, fallbackChar = 'U' 
 
     const { data: urlData, error: urlErr } = await supabase.storage
       .from('school-assets')
-      .createSignedUrl(path, 3600)
+      .getPublicUrl(path)
 
-    if (urlErr || !urlData?.signedUrl) { setUploading(false); return }
+    if (urlErr || !urlData?.publicUrl) { setUploading(false); return }
 
-    const photoUrlWithCache = `${urlData.signedUrl}?t=${Date.now()}`
+    const photoUrlWithCache = `${urlData.publicUrl}?t=${Date.now()}`
 
     await supabase.from('profiles').update({ photo_url: photoUrlWithCache }).eq('id', user.id)
 

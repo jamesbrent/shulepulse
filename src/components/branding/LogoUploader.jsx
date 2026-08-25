@@ -39,15 +39,15 @@ export default function LogoUploader({ schoolId, currentUrl, onUploaded }) {
 
     const { data: urlData, error: urlErr } = await supabase.storage
       .from('school-assets')
-      .createSignedUrl(path, 3600)
+      .getPublicUrl(path)
 
-    if (urlErr || !urlData?.signedUrl) {
+    if (urlErr || !urlData?.publicUrl) {
       setError('Upload succeeded but the logo link could not be generated. Please retry.')
       setUploading(false)
       return
     }
 
-    onUploaded(urlData.signedUrl)
+    onUploaded(urlData.publicUrl)
     setUploading(false)
   }
 
