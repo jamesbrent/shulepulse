@@ -63,7 +63,7 @@ export default function BrandingProvider({ children }) {
     }, POLL_INTERVAL)
 
     return () => clearInterval(poll)
-  }, [profile?.school_id])
+  }, [profile, profile?.school_id])
 
   return children
 }

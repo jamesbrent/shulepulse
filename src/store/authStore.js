@@ -8,6 +8,7 @@ export const useAuthStore = create((set, get) => ({
   profile: null,
   loading: true,
   selectedSchool: null,
+  _disabledChannel: null,
 
   selectSchool: async (school) => {
     const { profile } = get()
@@ -71,6 +72,11 @@ export const useAuthStore = create((set, get) => ({
     })
 
     // Real-time: kick disabled users immediately (VULN-55)
+    const prevChannel = get()._disabledChannel
+    if (prevChannel) {
+      supabase.removeChannel(prevChannel)
+    }
+
     const currentUser = get().user
     if (currentUser) {
       const channel = supabase
@@ -88,6 +94,7 @@ export const useAuthStore = create((set, get) => ({
           }
         })
         .subscribe()
+      set({ _disabledChannel: channel })
     }
   },
 
