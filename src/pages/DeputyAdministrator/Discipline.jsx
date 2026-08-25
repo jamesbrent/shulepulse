@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
+import { esc } from '../../utils/escapeHtml'
 
 export default function Discipline() {
   const { profile } = useAuthStore()
@@ -136,7 +137,7 @@ export default function Discipline() {
     win.document.write(`
       <html>
         <head>
-          <title>Discipline Record — ${selectedRecord.students?.full_name || 'Student'}</title>
+          <title>Discipline Record — ${esc(selectedRecord.students?.full_name || 'Student')}</title>
           <style>
             @page { size: A4; margin: 3mm; }
             * { box-sizing: border-box; font-family: Arial, sans-serif; }

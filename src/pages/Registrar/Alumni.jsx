@@ -14,6 +14,7 @@ import { fmtDate } from '../admin/fees/utils/feesHelpers'
 import { buildGraduationTranscript } from '../../features/alumni/graduationTranscript'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { esc } from '../../utils/escapeHtml'
+import { sanitizeHtml } from '../../utils/sanitizeHtml'
 import './Alumni.css'
 
 const CERT_PREFIXES = {
@@ -275,7 +276,7 @@ export default function Alumni() {
       const doc = await buildGraduationTranscript(s, school, logoUrl, profile?.id)
       const w = window.open('', '_blank')
       if (!w) return
-      w.document.write(`<html><head><title>Transcript — ${s.full_name}</title><style>@page{size:A4;margin:18mm 20mm}*{margin:0;padding:0;box-sizing:border-box}body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>${doc.html}</body></html>`)
+      w.document.write(`<html><head><title>Transcript — ${esc(s.full_name)}</title><style>@page{size:A4;margin:18mm 20mm}*{margin:0;padding:0;box-sizing:border-box}body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>${doc.html}</body></html>`)
       w.document.close()
       w.onload = () => { w.focus(); w.print() }
     } catch (e) { alert('Failed to generate transcript: ' + e.message) }
@@ -874,7 +875,7 @@ export default function Alumni() {
             'body { background: #fff; font-family: \'Times New Roman\', Times, serif; color: #111; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
             'img { max-width: 100%; }',
           ].join(' ')
-          w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + previewDoc.doc.title + ' - ' + previewDoc.student.full_name + '</title><style>' + styles + '</style></head><body>' + printContent + '</body></html>')
+          w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(previewDoc.doc.title) + ' - ' + esc(previewDoc.student.full_name) + '</title><style>' + styles + '</style></head><body>' + printContent + '</body></html>')
           w.document.close()
           w.onload = () => { w.focus(); w.print() }
         }
@@ -889,7 +890,7 @@ export default function Alumni() {
                 <button className="al-modal-close" onClick={() => setPreviewDoc(null)}><X size={18} /></button>
               </div>
               <div className="al-doc-preview-body" ref={printRef}>
-                <div dangerouslySetInnerHTML={{ __html: previewDoc.doc.html }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewDoc.doc.html) }} />
               </div>
               <div className="al-doc-preview-footer">
                 <button className="al-btn al-btn--outline" onClick={() => setPreviewDoc(null)}><X size={15} /> Close</button>

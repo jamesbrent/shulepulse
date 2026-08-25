@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Printer, X, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { groupGradesBySubject, getCBEGrade, gradeDisplay } from '../../components/students/ReportCard'
+import { esc } from '../../utils/escapeHtml'
 
 const SHULEPULSE_LOGO = import.meta.env.BASE_URL + 'favicon.svg'
 const TERM_NUM = { 'Term 1': '1', 'Term 2': '2', 'Term 3': '3' }
@@ -105,7 +106,7 @@ export default function TranscriptDocument({ student, school, term, year, classN
     if (!sheetRef.current) return
     const content = sheetRef.current.outerHTML
     const win = window.open('', '_blank')
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Academic Transcript — ${student?.full_name}</title><style>${TR_CSS}</style></head><body>${content}</body></html>`)
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Academic Transcript — ${esc(student?.full_name || '')}</title><style>${TR_CSS}</style></head><body>${content}</body></html>`)
     win.document.close()
     win.focus()
     setTimeout(() => win.print(), 300)

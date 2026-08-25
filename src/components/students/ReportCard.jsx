@@ -3,6 +3,7 @@ import { Printer, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { getGrade as engineGetGrade, resolveSystem, gradeDisplay as engineGradeDisplay, sortExamTypes, compareExamTypes, overallScore } from '../../services/grading'
 import { esc } from '../../utils/escapeHtml'
+import { sanitizeHtml } from '../../utils/sanitizeHtml'
 
 // ── Fetch student comments from database ──────────────────────
 export async function fetchStudentComments(schoolId, studentId, term, year) {
@@ -539,7 +540,7 @@ export function ReportCard({
     const content = printRef.current.innerHTML
     const win = window.open('', '_blank')
     const printCSS = REPORT_CARD_STYLES + 'body { margin: 0; padding: 0; } @page { size: A4 portrait; margin: 10mm; } @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; } body { margin: 0; padding: 0; } .rc-wrap { width: 100%; padding: 8px 12px; } }'
-    win.document.write(`<html><head><title>Student Transcript – ${student.full_name}</title>
+    win.document.write(`<html><head><title>Student Transcript – ${esc(student.full_name)}</title>
       <style>${printCSS}</style></head><body>${content}</body></html>`)
     win.document.close()
     win.print()
@@ -591,21 +592,21 @@ export function ReportCard({
             </div>
             <hr className="rc-hr" />
 
-            <div dangerouslySetInnerHTML={{ __html: buildSummaryCardsHtml(grouped.totalMarks, grouped.totalMax, grouped.overallAverage, grouped.totalSubjects, className, classRank) }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(buildSummaryCardsHtml(grouped.totalMarks, grouped.totalMax, grouped.overallAverage, grouped.totalSubjects, className, classRank)) }} />
             <hr className="rc-hr-light" />
 
-            <div dangerouslySetInnerHTML={{ __html: buildSubjectTableHtml(grouped.subjects, grouped.examTypes, className, grouped.overallAverage) }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(buildSubjectTableHtml(grouped.subjects, grouped.examTypes, className, grouped.overallAverage)) }} />
             <hr className="rc-hr-light" />
 
             {trendSection && <>
               <div className="rc-section-title">Performance Trend</div>
-              <div dangerouslySetInnerHTML={{ __html: trendSection }} />
-              <div dangerouslySetInnerHTML={{ __html: buildTrendLegendHtml(grouped.subjects) }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(trendSection) }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(buildTrendLegendHtml(grouped.subjects)) }} />
               <hr className="rc-hr-light" />
             </>}
 
             {comparisonSection && <>
-              <div dangerouslySetInnerHTML={{ __html: comparisonSection }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(comparisonSection) }} />
               <hr className="rc-hr-light" />
             </>}
 
@@ -626,11 +627,11 @@ export function ReportCard({
             <hr className="rc-hr-light" />
 
             {historySection && <>
-              <div dangerouslySetInnerHTML={{ __html: historySection }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(historySection) }} />
               <hr className="rc-hr-light" />
             </>}
 
-            <div dangerouslySetInnerHTML={{ __html: buildGradingLegendHtml(className) }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(buildGradingLegendHtml(className)) }} />
 
             {school?.motto && <div className="rc-foot-quote">"{school.motto}"</div>}
           </div>

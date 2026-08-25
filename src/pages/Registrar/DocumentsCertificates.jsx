@@ -9,6 +9,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { esc } from '../../utils/escapeHtml'
+import { sanitizeHtml } from '../../utils/sanitizeHtml'
 import './DocumentsCertificates.css'
 
 const DOCUMENT_TYPES = [
@@ -377,7 +378,7 @@ export default function DocumentsCertificates() {
     if (!doc) return
     const w = window.open('', '_blank')
     if (!w) return
-    w.document.write(`<html><head><title>${doc.title}</title><style>@page{size:A4;margin:0}*{margin:0;padding:0;box-sizing:border-box}body{background:#fff}</style></head><body>${doc.html}</body></html>`)
+    w.document.write(`<html><head><title>${esc(doc.title)}</title><style>@page{size:A4;margin:0}*{margin:0;padding:0;box-sizing:border-box}body{background:#fff}</style></head><body>${doc.html}</body></html>`)
     w.document.close()
     w.onload = () => { w.focus(); w.print() }
   }
@@ -551,7 +552,7 @@ export default function DocumentsCertificates() {
                 <button className="dc-modal-close" onClick={() => setSelectedStudent(null)}><X size={16} /></button>
               </div>
               <div className="dc-doc-preview">
-                <div className="dc-doc-viewer" dangerouslySetInnerHTML={{ __html: doc.html }} />
+                <div className="dc-doc-viewer" dangerouslySetInnerHTML={{ __html: sanitizeHtml(doc.html) }} />
               </div>
               <div className="dc-modal-foot">
                 <button className="dc-btn dc-btn--outline" onClick={() => setSelectedStudent(null)}>Close</button>
