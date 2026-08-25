@@ -40,8 +40,10 @@ function fmtDate(d) {
 }
 
 function generatePassword() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*'
+  const arr = new Uint8Array(16)
+  crypto.getRandomValues(arr)
+  return Array.from(arr, b => chars[b % chars.length]).join('')
 }
 
 export default function StaffDirectory() {

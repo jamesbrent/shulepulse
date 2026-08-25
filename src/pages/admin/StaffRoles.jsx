@@ -21,10 +21,10 @@ const ROLE_OPTIONS = [
 ]
 
 function generatePassword() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  let pw = ''
-  for (let i = 0; i < 8; i++) pw += chars.charAt(Math.floor(Math.random() * chars.length))
-  return pw + '!A1'
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*'
+  const arr = new Uint8Array(16)
+  crypto.getRandomValues(arr)
+  return Array.from(arr, b => chars[b % chars.length]).join('')
 }
 
 function generateTeacherCode() {

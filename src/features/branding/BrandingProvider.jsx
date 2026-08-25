@@ -19,8 +19,6 @@ export default function BrandingProvider({ children }) {
         .select('name, primary_color, secondary_color, logo_url')
         .eq('id', profile.school_id)
         .single()
-      console.log('[BrandingProvider] load:', data, error)
-
       if (data) {
         sigRef.current = `${data.primary_color}|${data.secondary_color}|${data.logo_url || ''}`
         applyBranding({
@@ -51,7 +49,6 @@ export default function BrandingProvider({ children }) {
 
       const sig = `${data.primary_color}|${data.secondary_color}|${data.logo_url || ''}`
       if (sig !== sigRef.current) {
-        console.log('[BrandingProvider] detected branding change:', data)
         sigRef.current = sig
         applyBranding({
           primaryColor: data.primary_color || '#2563eb',

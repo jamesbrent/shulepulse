@@ -1,7 +1,8 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const ALLOWED_ORIGIN = Deno.env.get('APP_ORIGIN') || 'https://oywptkvlztswblfchvyo.supabase.co'
+const ALLOWED_ORIGIN = Deno.env.get('APP_ORIGIN')
+if (!ALLOWED_ORIGIN) throw new Error('APP_ORIGIN env var is required')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
@@ -19,6 +20,11 @@ function json(data: unknown, status = 200) {
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders })
+  }
+
+  const origin = req.headers.get('Origin')
+  if (origin !== ALLOWED_ORIGIN) {
+    return json({ error: 'Origin not allowed' }, 403)
   }
 
   if (req.method !== 'POST') {
