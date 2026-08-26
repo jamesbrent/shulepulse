@@ -4,7 +4,7 @@ import { basePath } from '../lib/paths'
 import { fetchPlatformSettings } from '../features/superadmin/platformSettingsService'
 import { checkLoginSecurity, recordLoginAttempt, recordLoginSession } from '../features/auth/loginSecurity'
 import logoImg from '../assets/logo.png'
-import KenyaChoropleth from '../components/KenyaChoropleth'
+import AnimatedDottedMap from '../components/AnimatedDottedMap'
 import MaintenancePage from './MaintenancePage'
 import './MaintenancePage.css'
 import './Login.css'
@@ -213,7 +213,7 @@ export default function Login() {
 
         {/* ── Right Panel: Ecosystem Visualization (dark, animated) ── */}
         <div className="login-right">
-          <KenyaChoropleth />
+          <AnimatedDottedMap />
         </div>
       </div>
       <div className="login-footer">
