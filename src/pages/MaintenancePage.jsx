@@ -13,9 +13,6 @@ export default function MaintenancePage({ message }) {
         <p className="maintenance-message">
           {message || 'ShulePulse is currently undergoing scheduled maintenance. Please check back shortly.'}
         </p>
-        <p className="maintenance-sub">
-          If you are a superadmin, you can still log in to disable maintenance mode.
-        </p>
       </div>
     </div>
   )
