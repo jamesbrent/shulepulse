@@ -47,6 +47,7 @@ export default function OnboardSchoolModal({ onClose }) {
     password: '',
     confirmPassword: '',
   })
+  const [acceptedLegal, setAcceptedLegal] = useState(false)
 
   useEffect(() => {
     if (schoolTypes.length > 0 && !school.type) {
@@ -80,6 +81,7 @@ export default function OnboardSchoolModal({ onClose }) {
         admin.password === admin.confirmPassword
       )
     }
+    if (step === 3) return acceptedLegal
     return true
   }
 
@@ -97,7 +99,7 @@ export default function OnboardSchoolModal({ onClose }) {
     setError('')
 
     try {
-      await onboardSchool({ school, admin })
+      await onboardSchool({ school, admin, acceptedLegal })
       setDone(true)
       setTimeout(() => {
         window.location.href = basePath('/')
@@ -379,6 +381,17 @@ export default function OnboardSchoolModal({ onClose }) {
                   <div className="review-row"><span>Email</span><span>{admin.email}</span></div>
                 </div>
               </div>
+
+              <label className="legal-accept-check">
+                <input
+                  type="checkbox"
+                  checked={acceptedLegal}
+                  onChange={(e) => setAcceptedLegal(e.target.checked)}
+                />
+                <span>
+                  I have read and accept the <a href="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> on behalf of this school.
+                </span>
+              </label>
             </div>
           )}
         </div>

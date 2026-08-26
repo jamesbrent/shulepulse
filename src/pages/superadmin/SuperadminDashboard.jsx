@@ -5,7 +5,7 @@ import {
   Eye, Edit, Ban, Trash2, Building2, Download, CheckCircle,
   GraduationCap, UserCheck, DollarSign, Calendar,
   Activity, ArrowUp, ArrowDown, History, MessageSquare, Menu, X, ListTree,
-  ChevronDown, ArrowRight
+  ChevronDown, ArrowRight, Scale
 } from 'lucide-react'
 import logoImg from '../../assets/logo.png'
 import {
@@ -35,6 +35,8 @@ import SchoolCategoriesPage from './SchoolCategoriesPage'
 import './SchoolCategoriesPage.css'
 import PlanManagementPage from './PlanManagementPage'
 import './PlanManagementPage.css'
+import LegalDocumentsPage from './LegalDocumentsPage'
+import './LegalDocumentsPage.css'
 import OnboardSchoolModal from '../../features/onboarding/OnboardSchoolModal'
 import '../../features/onboarding/OnboardSchoolModal.css'
 import SchoolDetailModal from '../../features/onboarding/SchoolDetailModal'
@@ -159,6 +161,7 @@ export default function SuperadminDashboard() {
     { key: 'analytics', label: 'Payments', icon: <TrendingUp size={16} /> },
     { key: 'categories', label: 'Categories', icon: <ListTree size={16} /> },
     { key: 'settings', label: 'Platform Settings', icon: <Settings size={16} /> },
+    { key: 'legal', label: 'Legal Documents', icon: <Scale size={16} /> },
   ]
 
   const pageTitles = {
@@ -172,6 +175,7 @@ export default function SuperadminDashboard() {
     analytics: 'Payments',
     categories: 'School Categories',
     settings: 'Platform Settings',
+    legal: 'Legal Documents',
   }
 
   const renderContent = () => {
@@ -185,6 +189,7 @@ export default function SuperadminDashboard() {
       case 'analytics': return <AnalyticsPage />
       case 'categories': return <SchoolCategoriesPage />
       case 'settings': return <PlatformSettingsPage />
+      case 'legal': return <LegalDocumentsPage />
       default: return renderDashboard()
     }
   }

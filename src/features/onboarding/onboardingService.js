@@ -3,7 +3,7 @@ import { logAction } from '../audit/auditService'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export async function onboardSchool({ school, admin }) {
+export async function onboardSchool({ school, admin, acceptedLegal }) {
   if (!EMAIL_RE.test(admin.email)) {
     throw new Error('Please enter a valid email address for the admin.')
   }
@@ -28,6 +28,7 @@ export async function onboardSchool({ school, admin }) {
       subscription_start: now.toISOString(),
       subscription_end: trialEnd.toISOString(),
       subscription_status: 'trial',
+      accepted_terms_at: acceptedLegal ? now.toISOString() : null,
     })
     .select()
     .single()
