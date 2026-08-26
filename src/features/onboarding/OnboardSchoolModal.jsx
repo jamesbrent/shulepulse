@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, School, CreditCard, UserCheck, Check, ChevronLeft, ChevronRight, Building2, MapPin, Globe, Phone, Mail, Palette, ShieldCheck, LogOut, Loader } from 'lucide-react'
+import { X, School, CreditCard, UserCheck, Check, ChevronLeft, ChevronRight, Building2, MapPin, Globe, Phone, Mail, Palette, ShieldCheck, LogOut, Loader, Eye, EyeOff } from 'lucide-react'
 import { onboardSchool } from './onboardingService'
 import { fetchCounties, fetchSchoolTypes, fetchPlans } from './onboardingData'
 import { basePath } from '../../lib/paths'
@@ -47,6 +47,8 @@ export default function OnboardSchoolModal({ onClose }) {
     password: '',
     confirmPassword: '',
   })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [acceptedLegal, setAcceptedLegal] = useState(false)
 
   useEffect(() => {
@@ -327,21 +329,31 @@ export default function OnboardSchoolModal({ onClose }) {
                 </div>
                 <div className="form-field">
                   <label><ShieldCheck size={14} /> Temporary Password</label>
-                  <input
-                    type="password"
-                    placeholder="Min. 6 characters"
-                    value={admin.password}
-                    onChange={(e) => updateAdmin('password', e.target.value)}
-                  />
+                  <div className="password-field">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Min. 6 characters"
+                      value={admin.password}
+                      onChange={(e) => updateAdmin('password', e.target.value)}
+                    />
+                    <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="form-field">
                   <label><ShieldCheck size={14} /> Confirm Password</label>
-                  <input
-                    type="password"
-                    placeholder="Repeat password"
-                    value={admin.confirmPassword}
-                    onChange={(e) => updateAdmin('confirmPassword', e.target.value)}
-                  />
+                  <div className="password-field">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Repeat password"
+                      value={admin.confirmPassword}
+                      onChange={(e) => updateAdmin('confirmPassword', e.target.value)}
+                    />
+                    <button type="button" className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)} tabIndex={-1}>
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
