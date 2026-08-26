@@ -32,7 +32,11 @@ CREATE TABLE IF NOT EXISTS school_types (
 );
 
 INSERT INTO school_types (name) VALUES
-  ('primary'), ('secondary'), ('college'), ('university')
+  ('Pre-Primary Education (PP1–PP2)'),
+  ('Primary Education (Grades 1–6)'),
+  ('Junior Secondary School / JSS (Grades 7–9)'),
+  ('Senior Secondary School / SSS (Grades 10–12)'),
+  ('Mixed (Primary + Secondary)')
 ON CONFLICT (name) DO NOTHING;
 
 ALTER TABLE school_types ENABLE ROW LEVEL SECURITY;
