@@ -56,6 +56,7 @@ const DEFAULT_SETTINGS = {
     max_login_attempts: 5,
     account_lock_duration_minutes: 30,
     ip_restrictions_enabled: false,
+    ip_restrictions: [],
     device_tracking: false,
   },
   sms: {

@@ -2,6 +2,7 @@
 import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
 import { fetchPlatformSettings } from '../features/superadmin/platformSettingsService'
+import { checkLoginSecurity, recordLoginAttempt, recordLoginSession } from '../features/auth/loginSecurity'
 import logoImg from '../assets/logo.png'
 import AnimatedDottedMap from '../components/AnimatedDottedMap'
 import MaintenancePage from './MaintenancePage'
@@ -55,12 +56,24 @@ export default function Login() {
       return
     }
 
+    try {
+      const security = await checkLoginSecurity(email)
+      if (!security.allowed) {
+        setError(security.reason)
+        setLoading(false)
+        return
+      }
+    } catch {
+      // proceed if check fails
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
     if (error) {
+      recordLoginAttempt({ email, success: false }).catch(() => {})
       setError('Invalid email or password. Please try again.')
       setLoading(false)
       return
@@ -87,6 +100,9 @@ export default function Login() {
     }
 
     const role = profile.role
+
+    recordLoginAttempt({ email, success: true }).catch(() => {})
+    recordLoginSession(data.user.id).catch(() => {})
 
     if (role === 'superadmin') window.location.href = basePath('/superadmin')
     else if (role === 'admin') window.location.href = basePath('/admin')

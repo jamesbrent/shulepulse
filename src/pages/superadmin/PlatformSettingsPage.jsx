@@ -311,6 +311,11 @@ export default function PlatformSettingsPage() {
       <Field label="IP Restrictions">
         <Toggle value={s.auth_security.ip_restrictions_enabled} onChange={(v) => updateField('auth_security', 'ip_restrictions_enabled', v)} />
       </Field>
+      {s.auth_security.ip_restrictions_enabled && (
+        <Field label="Allowed IP Addresses">
+          <TagInput values={s.auth_security.ip_restrictions || []} onChange={(v) => updateField('auth_security', 'ip_restrictions', v)} placeholder="Enter IP address and press Enter" />
+        </Field>
+      )}
       <Field label="Device Tracking">
         <Toggle value={s.auth_security.device_tracking} onChange={(v) => updateField('auth_security', 'device_tracking', v)} />
       </Field>
