@@ -8,6 +8,10 @@ export async function onboardSchool({ school, admin }) {
     throw new Error('Please enter a valid email address for the admin.')
   }
 
+  const now = new Date()
+  const trialEnd = new Date(now)
+  trialEnd.setDate(trialEnd.getDate() + 14)
+
   const { data: newSchool, error: schoolError } = await supabase
     .from('schools')
     .insert({
@@ -21,6 +25,9 @@ export async function onboardSchool({ school, admin }) {
       primary_color: school.primaryColor,
       secondary_color: school.secondaryColor,
       status: 'active',
+      subscription_start: now.toISOString(),
+      subscription_end: trialEnd.toISOString(),
+      subscription_status: 'trial',
     })
     .select()
     .single()
@@ -29,6 +36,9 @@ export async function onboardSchool({ school, admin }) {
     console.error('[onboardSchool] insert error:', schoolError)
     throw new Error(schoolError.message)
   }
+
+  // Seed CBC subjects (safety net — trigger trg_seed_cbc_subjects also handles this)
+  await supabase.rpc('seed_cbc_subjects', { p_school_id: newSchool.id })
 
   const { data: existingProfile, error: profileQueryError } = await supabase
     .from('profiles')
