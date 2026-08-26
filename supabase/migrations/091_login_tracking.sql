@@ -31,25 +31,40 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFA
 -- RLS: users can only see their own login sessions
 ALTER TABLE login_sessions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users see own sessions"
-  ON login_sessions FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users see own sessions"
+    ON login_sessions FOR SELECT
+    USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "System inserts login sessions"
-  ON login_sessions FOR INSERT
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "System inserts login sessions"
+    ON login_sessions FOR INSERT
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "System updates login sessions"
-  ON login_sessions FOR UPDATE
-  USING (true);
+DO $$ BEGIN
+  CREATE POLICY "System updates login sessions"
+    ON login_sessions FOR UPDATE
+    USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- RLS for login_attempts (superadmin can read for audit)
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Superadmins can read login attempts"
-  ON login_attempts FOR SELECT
-  USING (get_my_role() = 'superadmin');
+DO $$ BEGIN
+  CREATE POLICY "Superadmins can read login attempts"
+    ON login_attempts FOR SELECT
+    USING (get_my_role() = 'superadmin');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "System inserts login attempts"
-  ON login_attempts FOR INSERT
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "System inserts login attempts"
+    ON login_attempts FOR INSERT
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
