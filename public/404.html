@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ShulePulse</title>
+    <script>
+      ;(function () {
+        var path = window.location.pathname.replace(/\/+$/, '') || '/'
+        window.history.replaceState(null, '', path)
+        fetch('/index.html').then(function (r) { return r.text() }).then(function (html) {
+          document.open()
+          document.write(html)
+          document.close()
+        })
+      })()
+    </script>
   </head>
   <body></body>
 </html>
