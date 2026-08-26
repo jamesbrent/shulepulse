@@ -332,6 +332,37 @@
   z-index: 1;
 }
 
+.kenya-map-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kenya-map-wrap > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.kenya-map-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.kenya-map-label {
+  position: absolute;
+  font-size: 9px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.12);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .adm-map-svg * {
     animation: none !important;
