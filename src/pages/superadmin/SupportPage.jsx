@@ -215,7 +215,6 @@ export default function SupportPage() {
           <StatCard label="Resolved Today" value={stats?.resolved_today ?? 0} sub="Closed today" color="#16a34a" icon={<CheckCircle size={20} />} />
           <StatCard label="Escalated" value={stats?.escalated ?? 0} sub="Needs attention" color="#dc2626" icon={<AlertCircle size={20} />} />
           <StatCard label="Total Tickets" value={stats?.total ?? 0} sub="All time" color="#7c3aed" icon={<MessageSquare size={20} />} />
-          <StatCard label="Avg Response" value="1h 24m" sub="Last 7 days" color="#0891b2" icon={<Clock size={20} />} />
         </div>
 
         <div className="charts-grid">

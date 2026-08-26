@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../audit/auditService'
+import { fetchPlatformSettings } from '../superadmin/platformSettingsService'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -9,8 +10,15 @@ export async function onboardSchool({ school, admin, acceptedLegal }) {
   }
 
   const now = new Date()
+  let trialDays = 14
+  try {
+    const settings = await fetchPlatformSettings()
+    trialDays = settings.subscription?.trial_duration_days || 14
+  } catch {
+    // use default
+  }
   const trialEnd = new Date(now)
-  trialEnd.setDate(trialEnd.getDate() + 14)
+  trialEnd.setDate(trialEnd.getDate() + trialDays)
 
   const { data: newSchool, error: schoolError } = await supabase
     .from('schools')

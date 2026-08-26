@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -6,6 +6,10 @@ import BrandingProvider from './features/branding/BrandingProvider'
 import { FeatureAccessProvider } from './features/access/FeatureAccessContext'
 import './features/access/FeatureLocked.css'
 import { basePath } from './lib/paths'
+import { fetchPlatformSettings } from './features/superadmin/platformSettingsService'
+import useSessionTimeout from './hooks/useSessionTimeout'
+import MaintenancePage from './pages/MaintenancePage'
+import './pages/MaintenancePage.css'
 
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
@@ -27,10 +31,30 @@ import LibrarianDashboard from './pages/library/LibrarianDashboard'
 
 export default function App() {
   const init = useAuthStore((s) => s.init)
+  const profile = useAuthStore((s) => s.profile)
+  const [maintenance, setMaintenance] = useState(null)
 
   useEffect(() => {
     init()
   }, [])
+
+  useEffect(() => {
+    fetchPlatformSettings()
+      .then((s) => setMaintenance(s.maintenance))
+      .catch(() => setMaintenance({ enabled: false }))
+  }, [])
+
+  const isSuperadmin = profile?.role === 'superadmin'
+  const isMaintenance = maintenance?.enabled && !isSuperadmin
+  const sessionTimeout = maintenance?.session_timeout_minutes || 60
+
+  useSessionTimeout(isSuperadmin ? 0 : sessionTimeout)
+
+  if (maintenance === null) return null
+
+  if (isMaintenance) {
+    return <MaintenancePage message={maintenance.message} />
+  }
 
   return (
     <BrowserRouter basename={basePath()}>

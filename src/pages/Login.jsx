@@ -1,8 +1,11 @@
 ﻿import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
+import { fetchPlatformSettings } from '../features/superadmin/platformSettingsService'
 import logoImg from '../assets/logo.png'
 import AnimatedDottedMap from '../components/AnimatedDottedMap'
+import MaintenancePage from './MaintenancePage'
+import './MaintenancePage.css'
 import './Login.css'
 
 export default function Login() {
@@ -11,18 +14,32 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [maintenance, setMaintenance] = useState(null)
+  const [minPasswordLength, setMinPasswordLength] = useState(8)
+  const [showMaintenanceLogin, setShowMaintenanceLogin] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const schoolId = params.get('school')
-    if (!schoolId) return
+    if (params.get('session_expired') === '1') {
+      setError('Your session has expired due to inactivity. Please sign in again.')
+    }
 
-    supabase.rpc('get_school_branding', { p_school_id: schoolId })
-      .then(({ data }) => {
-        if (!data || typeof data !== 'object') return
-        const root = document.documentElement
-        if (data.primary_color) root.style.setProperty('--color-primary', data.primary_color)
-        if (data.secondary_color) root.style.setProperty('--color-secondary', data.secondary_color)
+    const schoolId = params.get('school')
+    if (schoolId) {
+      supabase.rpc('get_school_branding', { p_school_id: schoolId })
+        .then(({ data }) => {
+          if (!data || typeof data !== 'object') return
+          const root = document.documentElement
+          if (data.primary_color) root.style.setProperty('--color-primary', data.primary_color)
+          if (data.secondary_color) root.style.setProperty('--color-secondary', data.secondary_color)
+        })
+        .catch(() => {})
+    }
+
+    fetchPlatformSettings()
+      .then((s) => {
+        setMaintenance(s.maintenance)
+        setMinPasswordLength(s.auth_security?.min_password_length || 8)
       })
       .catch(() => {})
   }, [])
@@ -31,6 +48,12 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     setError('')
+
+    if (password.length < minPasswordLength) {
+      setError(`Password must be at least ${minPasswordLength} characters.`)
+      setLoading(false)
+      return
+    }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -74,6 +97,26 @@ export default function Login() {
     else if (role === 'librarian') window.location.href = basePath('/library')
     else if (role === 'reception') window.location.href = basePath('/reception')
     else window.location.href = basePath('/admin')
+  }
+
+  if (maintenance === null) return null
+
+  if (maintenance?.enabled && !showMaintenanceLogin) {
+    return (
+      <>
+        <MaintenancePage message={maintenance.message} />
+        <button
+          onClick={() => setShowMaintenanceLogin(true)}
+          style={{
+            position: 'fixed', bottom: 24, right: 24, background: '#1e293b',
+            color: '#94a3b8', border: '1px solid #334155', borderRadius: 8,
+            padding: '8px 16px', fontSize: 12, cursor: 'pointer', zIndex: 1001,
+          }}
+        >
+          Admin Login
+        </button>
+      </>
+    )
   }
 
   return (

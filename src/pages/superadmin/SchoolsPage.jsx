@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
-  School, Plus, Download, Upload, Filter, Search, Eye,
+  School, Plus, Download, Filter, Search, Eye,
   Edit, Key, MoreVertical, ChevronDown, Ban, CheckCircle,
   Calendar, Clock, Globe, Mail, Phone, MapPin, Building2,
   CreditCard, Users, GraduationCap, UserCheck, BookOpen,
-  RefreshCw, Trash2, Lock, Unlock, Speaker, ToggleLeft,
+  Trash2, Lock, Unlock, Speaker, ToggleLeft,
   ToggleRight, Loader, AlertTriangle, X, Copy, Check
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -160,17 +160,8 @@ export default function SchoolsPage({ onOnboard }) {
           <button className="btn-primary" onClick={onOnboard}>
             <Plus size={15} /> Add School
           </button>
-          <button className="btn-secondary">
-            <Upload size={14} /> Import
-          </button>
           <button className="btn-secondary" onClick={handleExport}>
             <Download size={14} /> Export
-          </button>
-          <button className="btn-secondary">
-            <RefreshCw size={14} /> Bulk Actions
-          </button>
-          <button className="btn-secondary">
-            <Speaker size={14} /> Announce
           </button>
         </div>
       </div>
