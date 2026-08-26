@@ -5,11 +5,10 @@ import App from './App.jsx'
 
 const params = new URLSearchParams(window.location.search)
 const pendingPath = params.get('p')
-if (pendingPath) {
+if (pendingPath && !params.has('q')) {
   const base = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '')
-  const q = params.get('q')
   const target =
-    window.location.origin + base + pendingPath + (q ? `?${decodeURIComponent(q)}` : '') + window.location.hash
+    window.location.origin + base + pendingPath + window.location.hash
   window.history.replaceState(null, '', target)
 }
 
