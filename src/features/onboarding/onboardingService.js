@@ -86,40 +86,89 @@ export async function onboardSchool({ school, admin, acceptedLegal }) {
 
   await supabase.rpc('seed_cbc_subjects', { p_school_id: newSchool.id })
 
-  const { error: signUpError } = await supabase.auth.signUp({
-    email: admin.email,
-    password: admin.password,
-    options: {
-      data: {
-        role: 'admin',
-        school_id: newSchool.id,
-        full_name: admin.fullName,
+  let adminCreated = false
+  let lastErrorMsg = null
+
+  // 1. Primary: Direct PostgreSQL RPC (Instant, pre-confirmed, zero rate limits)
+  try {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('create_school_admin_user', {
+      p_email: admin.email,
+      p_password: admin.password,
+      p_full_name: admin.fullName,
+      p_school_id: newSchool.id,
+    })
+
+    if (!rpcError && rpcData?.success) {
+      adminCreated = true
+    } else if (rpcError) {
+      lastErrorMsg = rpcError.message
+    }
+  } catch (err) {
+    lastErrorMsg = err.message
+  }
+
+  // 2. Secondary: Edge Function (create-admin-auth)
+  if (!adminCreated) {
+    try {
+      const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-admin-auth', {
+        body: {
+          email: admin.email,
+          password: admin.password,
+          full_name: admin.fullName,
+          school_id: newSchool.id,
+          role: 'admin',
+        },
+      })
+
+      if (!edgeError && edgeData?.success) {
+        adminCreated = true
+      } else {
+        lastErrorMsg = edgeError?.message || edgeData?.error || lastErrorMsg
+      }
+    } catch (err) {
+      lastErrorMsg = err.message
+    }
+  }
+
+  // 3. Tertiary Fallback: Client-side signUp
+  if (!adminCreated) {
+    console.warn('[onboardSchool] Falling back to client signUp:', lastErrorMsg)
+
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: admin.email,
+      password: admin.password,
+      options: {
+        data: {
+          role: 'admin',
+          school_id: newSchool.id,
+          full_name: admin.fullName,
+        },
       },
-    },
-  })
+    })
 
-  if (signUpError && !signUpError.message?.includes('already')) {
-    await cleanup()
-    throw new Error(`Admin signup failed: ${signUpError.message}`)
-  }
+    if (signUpError && !signUpError.message?.includes('already')) {
+      await cleanup()
+      throw new Error(`Admin signup failed: ${signUpError.message}`)
+    }
 
-  const profile = await waitForProfile(admin.email)
+    const profile = await waitForProfile(admin.email)
 
-  if (!profile) {
-    await cleanup()
-    throw new Error(
-      'Could not create admin profile. The admin email may already exist in auth without a profile. Please check the Supabase dashboard or contact support.'
-    )
-  }
+    if (!profile) {
+      await cleanup()
+      throw new Error(
+        'Could not create admin profile. Please run migration 094 in the Supabase SQL Editor.'
+      )
+    }
 
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ school_id: newSchool.id, role: 'admin', full_name: admin.fullName })
-    .eq('id', profile.id)
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ school_id: newSchool.id, role: 'admin', full_name: admin.fullName })
+      .eq('id', profile.id)
 
-  if (updateError) {
-    await cleanup()
-    throw new Error(`Failed to link admin to school: ${updateError.message}`)
+    if (updateError) {
+      await cleanup()
+      throw new Error(`Failed to link admin to school: ${updateError.message}`)
+    }
   }
 
   await logAction({
