@@ -4,16 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ShulePulse</title>
-    <script>
-      ;(function () {
-        var segs = window.location.pathname.split('/').filter(Boolean)
-        var base = segs.length ? segs[0] : ''
-        var rest = segs.slice(1).join('/')
-        var target = window.location.origin + '/' + base + '/?p=/' + rest
-        if (window.location.hash) target += window.location.hash
-        window.location.replace(target)
-      })()
-    </script>
   </head>
   <body></body>
 </html>
