@@ -18,6 +18,7 @@ import {
 import './GradesPage.css'
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
+const FORM_EXAMS = ['Opener', 'Midterm', 'End Term']
 const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1]
 
@@ -158,7 +159,7 @@ export default function GradesPage({ profile }) {
         const examStatuses = {}
         let allRows = []
         let latestUpdate = null
-        const examTypeNames = examTypeConfig.map(e => e.name)
+        const examTypeNames = FORM_EXAMS
         examTypeNames.forEach(et => {
           const etGrades = existingGrades.filter(g => g.exam_type === et)
           const statuses = etGrades.map(g => g.status)
@@ -253,7 +254,7 @@ export default function GradesPage({ profile }) {
   const handleViewAnalytics = (className, subjectName) => {
     setSelectedClass(className)
     setSelectedSubject(subjectName)
-    setSelectedExamType(examTypeConfig[0]?.name || '')
+    setSelectedExamType(FORM_EXAMS[0])
     setView('analytics')
   }
 
@@ -344,7 +345,7 @@ export default function GradesPage({ profile }) {
   const { completedCards, progressCards, pendingCards } = useMemo(() => {
     const c = [], p = [], n = []
     classCards.forEach(card => {
-      const statuses = examTypeConfig.map(et => card.examStatuses[et.name])
+      const statuses = FORM_EXAMS.map(et => card.examStatuses[et])
       const anyPending = statuses.some(s => s === 'pending')
       if (anyPending) n.push(card)
       else if (statuses.every(s => s === 'locked' || s === 'approved')) c.push(card)
@@ -371,24 +372,24 @@ export default function GradesPage({ profile }) {
   const activityFeed = useMemo(() => {
     const items = []
     classCards.forEach(card => {
-      examTypeConfig.forEach(et => {
-        const st = card.examStatuses[et.name]
+      FORM_EXAMS.forEach(examName => {
+        const st = card.examStatuses[examName]
         if (st === 'locked' || st === 'approved') {
           items.push({
             type: 'approved',
-            message: `${card.subjectName} — ${et} approved`,
+            message: `${card.subjectName} — ${examName} approved`,
             className: card.className,
           })
         } else if (st === 'submitted') {
           items.push({
             type: 'submitted',
-            message: `${card.subjectName} — ${et} submitted`,
+            message: `${card.subjectName} — ${examName} submitted`,
             className: card.className,
           })
         } else if (st === 'draft') {
           items.push({
             type: 'draft',
-            message: `${card.subjectName} — ${et} in progress`,
+            message: `${card.subjectName} — ${examName} in progress`,
             className: card.className,
           })
         }
@@ -398,7 +399,7 @@ export default function GradesPage({ profile }) {
   }, [classCards])
 
   const progressForCard = (card) => {
-    const examTypeNames = examTypeConfig.map(e => e.name)
+    const examTypeNames = FORM_EXAMS
     const done = examTypeNames.filter(et =>
       card.examStatuses[et] === 'locked' || card.examStatuses[et] === 'approved'
     ).length
@@ -455,7 +456,7 @@ export default function GradesPage({ profile }) {
                     <span className={`gd-progress-label ${progressLabelClass(prog.pct)}`}>{prog.done}/{prog.total}</span>
                   </div>
                   <div>
-                    {sortExamTypes(examTypeConfig).map(et => {
+                    {(examTypeConfig.length ? sortExamTypes(examTypeConfig) : FORM_EXAMS.map(n => ({ name: n }))).map(et => {
                       const st = card.examStatuses[et.name]
                       return (
                         <span key={et.name} className="gd-pill" style={{ marginRight: 4, marginBottom: 2 }}>
