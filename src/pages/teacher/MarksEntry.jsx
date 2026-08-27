@@ -34,6 +34,7 @@ export default function MarksEntry({ profile }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [errors, setErrors] = useState({})
   const [lastSaved, setLastSaved] = useState(null)
   const [activeTab, setActiveTab] = useState('entry')
@@ -493,6 +494,7 @@ export default function MarksEntry({ profile }) {
 
     setSaving(false)
     if (!error) {
+      setSubmitError('')
       setLastSaved(new Date())
       hasChanges.current = false
       setDirty(false)
@@ -505,6 +507,8 @@ export default function MarksEntry({ profile }) {
       if (shouldUploadFile && examFile) {
         uploadExamFileAfterSubmit()
       }
+    } else {
+      setSubmitError(error.message || 'Failed to save marks. Please try again.')
     }
   }
 
@@ -850,6 +854,14 @@ export default function MarksEntry({ profile }) {
             </div>
             {lastSaved && <div className="me-summary-item" style={{ color: '#64748b', fontSize: 12 }}>Saved: {lastSaved.toLocaleTimeString()}</div>}
           </div>
+
+          {submitError && (
+            <div className="me-error-banner" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '10px 0', padding: '10px 14px', borderRadius: 10, background: '#FEF2F2', border: '1px solid #FECACA', color: '#B91C1C', fontSize: 13 }}>
+              <AlertCircle size={16} />
+              <span><strong>Save failed:</strong> {submitError}</span>
+              <button type="button" onClick={() => setSubmitError('')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#B91C1C', cursor: 'pointer', fontWeight: 700 }}>×</button>
+            </div>
+          )}
 
           <div className="me-tabs">
             <button className={`me-tab ${activeTab === 'entry' ? 'active' : ''}`} onClick={() => setActiveTab('entry')}>
