@@ -1782,6 +1782,8 @@
   }
 
   .sp-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .sp-stat-card { padding: 14px; gap: 10px; }
+  .sp-stat-value { font-size: 20px; }
   .sp-dashboard-grid { grid-template-columns: 1fr; }
   .sp-self-service-grid { grid-template-columns: repeat(2, 1fr); }
   .sp-search-box { width: 160px; }
@@ -1789,15 +1791,23 @@
   .sp-downloads-grid { grid-template-columns: 1fr; }
   .sp-library-mini-grid { grid-template-columns: repeat(2, 1fr); }
   .sp-performance-stats { grid-template-columns: repeat(2, 1fr); }
+  .sp-section-card { padding: 16px; }
+  .sp-section-header h3 { font-size: 14px; }
+  .sp-table th, .sp-table td { padding: 10px 8px; font-size: 13px; }
+  .sp-page { gap: 14px; }
 }
 
 @media (max-width: 480px) {
   .sp-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .sp-stat-card { padding: 14px; }
-  .sp-stat-icon-wrap { width: 38px; height: 38px; }
+  .sp-stat-card { padding: 12px; }
+  .sp-stat-value { font-size: 18px; }
+  .sp-stat-icon-wrap { width: 36px; height: 36px; }
   .sp-quick-actions { grid-template-columns: repeat(2, 1fr); }
   .sp-self-service-grid { grid-template-columns: repeat(2, 1fr); }
   .sp-quick-links { flex-direction: column; }
+  .sp-section-card { padding: 14px; border-radius: 10px; }
+  .sp-table { font-size: 12px; }
+  .sp-table th, .sp-table td { padding: 8px 6px; }
 }
 
 /* ─────────────────────────────────────────────

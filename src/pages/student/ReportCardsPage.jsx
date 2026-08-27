@@ -77,7 +77,7 @@ export default function ReportCardsPage({ student, school }) {
         setSelectedClass={setSelectedClass}
       />
 
-      <div className="sp-stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div className="sp-stats-grid">
         <div className="sp-stat-card">
           <div className="sp-stat-icon-wrap" style={{ background: '#eff6ff', color: '#2563eb' }}><BarChart2 size={20} /></div>
           <div className="sp-stat-content">

@@ -131,3 +131,27 @@
   font-size: 11px;
   color: #475569;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Student Timetable
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .st-grid-wrapper { border-radius: 10px; }
+  .st-print-area { padding: 12px; }
+  .st-print-school-name { font-size: 12px; }
+  .st-print-heading { font-size: 13px; margin-bottom: 12px; }
+  .st-th { font-size: 8px; padding: 3px 2px; }
+  .st-td { padding: 3px 2px; }
+  .st-cell-subj { font-size: 10px; }
+  .st-cell-class { font-size: 7px; }
+  .st-cell-teacher { font-size: 8px; }
+  .st-td-lesson { height: 50px; }
+}
+@media (max-width: 480px) {
+  .st-print-area { padding: 8px; }
+  .st-th { font-size: 7px; }
+  .st-cell-subj { font-size: 9px; }
+  .st-cell-class { display: none; }
+  .st-td-lesson { height: 44px; }
+}

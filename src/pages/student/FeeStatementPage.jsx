@@ -63,7 +63,7 @@ export default function FeeStatementPage({ student, school }) {
 
   return (
     <div className="sp-page">
-      <div className="sp-stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div className="sp-stats-grid">
         <div className="sp-stat-card">
           <div className="sp-stat-icon-wrap" style={{ background: '#eff6ff', color: '#2563eb' }}><DollarSign size={20} /></div>
           <div className="sp-stat-content">
