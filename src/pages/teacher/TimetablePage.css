@@ -259,6 +259,22 @@
   .tt-summary { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
-  .tt-summary { grid-template-columns: repeat(2, 1fr); }
+  .tt-summary { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .tt-stat { padding: 12px !important; }
+  .tt-stat-value { font-size: 20px !important; }
   .tt-today-list { flex-direction: column; }
+  .tt-toolbar { padding: 10px 14px; flex-wrap: wrap; }
+  .tt-day-nav { width: 100%; justify-content: center; }
+  .tt-today { padding: 14px; }
+  .tt-today-item { padding: 10px 12px; min-height: 44px; }
+  .tt-cell { height: 48px; padding: 2px; }
+  .tt-cell-subj { font-size: 11px; }
+  .tt-cell-class { font-size: 8px; }
+  .tt-th { font-size: 9px; padding: 6px 2px; }
+  .tt-grid-wrap { border-radius: 10px; }
+}
+@media (max-width: 480px) {
+  .tt-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tt-stat-value { font-size: 18px; }
+  .tt-dash { gap: 14px; }
 }

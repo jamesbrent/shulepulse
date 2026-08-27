@@ -47,3 +47,19 @@
   border-color: #94a3b8;
   background: #f8fafc;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — CBC Competency
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .cbc-level-legend { padding: 10px 12px; gap: 10px; }
+  .cbc-legend-item { font-size: 11px; }
+  .cbc-rating-btn { min-width: 36px; min-height: 36px; padding: 6px 12px; font-size: 12px; }
+  .cbc-page { gap: 14px; }
+}
+
+@media (max-width: 480px) {
+  .cbc-level-legend { gap: 8px; }
+  .cbc-legend-dot { width: 8px; height: 8px; }
+}

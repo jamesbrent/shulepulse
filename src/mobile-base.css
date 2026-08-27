@@ -1,0 +1,254 @@
+/* ═══════════════════════════════════════════════════
+   ShulePulse — Shared Responsive Foundation
+   Loaded globally via main.jsx / App.jsx
+   ═══════════════════════════════════════════════════ */
+
+/* ── Responsive breakpoints (consistent across app)
+   1200px  – large tablet / small desktop
+   900px   – tablet
+   768px   – mobile (sidebar collapses)
+   480px   – small mobile
+   ─────────────────────────────────────────────────── */
+
+/* ── Tables: horizontal scroll wrapper ────────────── */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+}
+
+/* ── Tables: compact mobile rendering ─────────────── */
+@media (max-width: 768px) {
+  .table-scroll {
+    border-radius: 8px;
+    margin: 0 -4px;
+  }
+  .table-scroll table {
+    font-size: 12px;
+  }
+  .table-scroll th {
+    font-size: 10px;
+    padding: 8px 8px;
+    white-space: nowrap;
+  }
+  .table-scroll td {
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+}
+
+/* ── Tables: card view on very small screens ──────── */
+/* Apply .table-card-view to tables that should become cards on mobile */
+@media (max-width: 600px) {
+  .table-card-view {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: none;
+    background: none;
+  }
+  .table-card-view table {
+    min-width: unset;
+    display: contents;
+  }
+  .table-card-view thead {
+    display: none;
+  }
+  .table-card-view tbody {
+    display: contents;
+  }
+  .table-card-view tr {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+  }
+  .table-card-view td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid #f1f5f9;
+    white-space: normal;
+  }
+  .table-card-view td:last-child {
+    border-bottom: none;
+  }
+  .table-card-view td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+}
+
+/* ── Form grids: stack on mobile ──────────────────── */
+@media (max-width: 768px) {
+  .form-grid,
+  .form-grid.two-col,
+  .form-grid.three-col {
+    grid-template-columns: 1fr !important;
+  }
+  .form-field.full-width {
+    grid-column: 1 !important;
+  }
+}
+
+/* ── Two-column layouts: stack on mobile ──────────── */
+@media (max-width: 768px) {
+  .two-col-layout,
+  .teacher-grid,
+  .gd-layout,
+  .ad-layout,
+  .mk-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── KPI / stat grids: responsive collapse ────────── */
+@media (max-width: 768px) {
+  .teacher-stats,
+  .ad-kpi-grid,
+  .mk-kpi-grid,
+  .gd-kpi-grid,
+  .tt-summary {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+@media (max-width: 480px) {
+  .teacher-stats,
+  .ad-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .mk-kpi-grid,
+  .gd-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .tt-summary {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Cards: mobile padding reduction ──────────────── */
+@media (max-width: 768px) {
+  .teacher-card,
+  .ad-card,
+  .mk-class,
+  .gd-panel,
+  .gd-card,
+  .mc-card,
+  .cmt-toolbar,
+  .notice-card-full {
+    padding: 14px 12px !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* ── Headers: stack on mobile ─────────────────────── */
+@media (max-width: 768px) {
+  .teacher-header,
+  .ad-header-top,
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .header-actions {
+    width: 100%;
+  }
+  .header-actions .btn-primary,
+  .ad-btn--primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Modals: mobile full-screen ───────────────────── */
+@media (max-width: 768px) {
+  .me-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .me-modal {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* ── Touch-friendly targets ───────────────────────── */
+@media (max-width: 768px) {
+  .nav-item,
+  .attend-toggle,
+  .class-tab,
+  .ad-qa-btn,
+  .ad-btn,
+  .mk-btn,
+  .gd-btn {
+    min-height: 44px;
+  }
+}
+
+/* ── Page content: reduce padding ─────────────────── */
+@media (max-width: 768px) {
+  .ad-dash,
+  .mk-page,
+  .gd-dash,
+  .tt-dash,
+  .cmt-page,
+  .cbc-page,
+  .notices-page,
+  .mc-page {
+    gap: 14px !important;
+  }
+}
+
+/* ── Filter toolbars: stack on mobile ─────────────── */
+@media (max-width: 768px) {
+  .cmt-toolbar,
+  .mk-info,
+  .ad-status,
+  .gd-status,
+  .me-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cmt-filters {
+    flex-direction: column;
+  }
+  .cmt-select,
+  .me-filter-select {
+    width: 100%;
+  }
+}
+
+/* ── Utility: hide secondary actions on mobile ────── */
+@media (max-width: 480px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* ── Utility: full-width buttons on mobile ────────── */
+@media (max-width: 480px) {
+  .btn-full-mobile {
+    width: 100%;
+    justify-content: center;
+  }
+}

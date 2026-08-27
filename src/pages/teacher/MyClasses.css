@@ -143,3 +143,29 @@
   border-radius: 50%; animation: mc-spin 0.6s linear infinite;
 }
 @keyframes mc-spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — My Classes
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .mc-hdr { padding: 14px; gap: 10px; }
+  .mc-hdr-icon { width: 36px; height: 36px; }
+  .mc-hdr-name { font-size: 14px; }
+  .mc-hdr-meta { font-size: 11px; }
+  .mc-body { padding: 0 14px 14px; padding-top: 12px; }
+  .mc-slot {
+    grid-template-columns: 48px 1fr;
+    gap: 8px;
+  }
+  .mc-slot-subj { text-align: left; grid-column: 1 / -1; font-size: 12px; }
+  .mc-pills { gap: 4px; }
+  .mc-pill { font-size: 11px; padding: 4px 10px; }
+  .mc-section-label { font-size: 10px; }
+}
+
+@media (max-width: 480px) {
+  .mc-hdr { padding: 12px 10px; }
+  .mc-card { border-radius: 10px !important; }
+  .mc-page { gap: 10px; }
+}

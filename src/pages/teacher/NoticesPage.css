@@ -84,3 +84,21 @@
   color: #94a3b8;
   font-size: 14px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Notices
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .notice-card-full { padding: 14px 16px !important; border-radius: 10px !important; }
+  .notice-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .notice-title-row h3 { font-size: 14px; }
+  .notice-content { font-size: 13px; }
+  .notice-meta { flex-wrap: wrap; gap: 10px; }
+  .notices-page { gap: 14px; }
+}
+
+@media (max-width: 480px) {
+  .notice-card-full { padding: 12px 12px !important; }
+  .notices-list-full { gap: 10px; }
+}

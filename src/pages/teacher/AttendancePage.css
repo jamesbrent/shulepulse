@@ -204,7 +204,19 @@
 @media (max-width: 768px) {
   .ad-header-top { flex-direction: column; align-items: stretch; }
   .ad-header-actions { justify-content: flex-end; }
-  .ad-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .ad-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .ad-quick-actions { flex-direction: column; }
-  .ad-status { flex-wrap: wrap; }
+  .ad-qa-btn { min-height: 44px; justify-content: center; }
+  .ad-status { flex-wrap: wrap; gap: 6px; }
+  .ad-card { padding: 14px 12px !important; }
+  .ad-kpi { padding: 12px !important; }
+  .ad-kpi-val { font-size: 22px !important; }
+  .ad-feed-msg { white-space: normal; }
+  .ad-header-actions { width: 100%; }
+  .ad-header-actions .ad-btn { flex: 1; justify-content: center; min-height: 44px; }
+}
+@media (max-width: 480px) {
+  .ad-kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ad-kpi-val { font-size: 20px; }
+  .ad-dash { gap: 14px; }
 }
