@@ -1,0 +1,21 @@
+-- ============================================================
+-- Migration 097: Restore auth.users read for `authenticated`
+-- ------------------------------------------------------------
+-- Symptom: grade save (Submit for Approval / Save Draft) fails with
+-- "permission denied for table users" -> PostgREST 403 for the
+-- POST /rest/v1/grades upsert.
+--
+-- Cause: migration 077 (VULN-04) REVOKEd SELECT ON auth.users FROM
+-- authenticated, but the app still relies on auth.users — both its
+-- RLS policies (grades_parent_read, cbc assessments) and live
+-- dashboard-created triggers reference `auth.users`. Once 096 granted
+-- table privileges on grades, the write proceeds far enough to hit
+-- the revoked auth.users access.
+--
+-- Fix: restore the auth.users SELECT grant for authenticated users.
+-- This matches the existing helper script FIX_RLS.sql at the repo root.
+-- (Hardening follow-up: rewrite parent policies to use profiles.email
+--  so auth.users access can be revoked again later.)
+-- ============================================================
+
+GRANT SELECT ON auth.users TO authenticated;
