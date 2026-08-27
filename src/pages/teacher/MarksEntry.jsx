@@ -96,7 +96,7 @@ export default function MarksEntry({ profile }) {
     if (!dirty) return
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => {
-      persistGrades('draft', false)
+      persistGrades('draft', false, false)
     }, AUTO_SAVE_DELAY)
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current) }
   }, [gradeForm, dirty])
@@ -432,7 +432,7 @@ export default function MarksEntry({ profile }) {
     return Object.keys(newErrors).length === 0
   }
 
-  const persistGrades = async (status, shouldUploadFile = false) => {
+  const persistGrades = async (status, shouldUploadFile = false, audit = true) => {
     if (!hasChanges.current) return
 
     const profileCheck = getCBEGrade(100, selectedClass)
@@ -487,8 +487,23 @@ export default function MarksEntry({ profile }) {
 
     if (inserts.length === 0) return
 
+    let existingAuditKeys = null
+    if (audit) {
+      try {
+        const { data: existing } = await supabase
+          .from('grades')
+          .select('id, student_id, exam_type')
+          .eq('school_id', profile.school_id)
+          .eq('class_name', selectedClass)
+          .eq('subject', selectedSubject)
+          .eq('term', term)
+          .eq('year', Number(year))
+        existingAuditKeys = new Set((existing || []).map(g => `${g.student_id}::${g.exam_type}`))
+      } catch { }
+    }
+
     setSaving(true)
-    const { error } = await supabase
+    const { data: savedRows, error } = await supabase
       .from('grades')
       .upsert(inserts, { onConflict: 'student_id,subject,exam_type,term,year', ignoreDuplicates: false })
 
@@ -501,6 +516,20 @@ export default function MarksEntry({ profile }) {
       if (!shouldUploadFile) {
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
+      }
+      if (audit) {
+        try {
+          const auditInserts = (savedRows || []).map(r => ({
+            school_id: profile.school_id,
+            grade_id: r.id,
+            action: existingAuditKeys?.has(`${r.student_id}::${r.exam_type}`) ? 'updated' : 'created',
+            performed_by: profile.id,
+            details: `${selectedSubject} · ${r.exam_type}${status === 'submitted' ? ' · Submitted for approval' : ' · Saved'}`,
+          }))
+          if (auditInserts.length) {
+            await supabase.from('grade_audit_logs').insert(auditInserts)
+          }
+        } catch (e) { console.error('Audit log insert failed:', e) }
       }
       fetchGrades()
       refreshClassCards()

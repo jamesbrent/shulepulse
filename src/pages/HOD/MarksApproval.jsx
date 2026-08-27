@@ -258,7 +258,7 @@ export default function MarksApproval() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, full_name')
       .eq('id', (await supabase.auth.getUser()).data.user.id)
       .single()
 
@@ -272,6 +272,17 @@ export default function MarksApproval() {
       setPendingExams(prev => prev.filter(e => e.id !== examId))
       setSelectedExam(null)
       fetchTeacherEntries(schoolId)
+      try {
+        await supabase.from('grade_audit_logs').insert(
+          ids.map(id => ({
+            school_id: schoolId,
+            grade_id: id,
+            action: 'approved',
+            performed_by: profile?.id,
+            details: `${exam.subject} · ${exam.examType} · Approved by ${profile?.full_name || 'Admin'}`,
+          }))
+        )
+      } catch (e) { console.error('Audit log insert failed:', e) }
     }
     setApproving(null)
   }
@@ -285,7 +296,7 @@ export default function MarksApproval() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, full_name')
       .eq('id', (await supabase.auth.getUser()).data.user.id)
       .single()
 
@@ -299,6 +310,17 @@ export default function MarksApproval() {
       setPendingExams(prev => prev.filter(e => e.id !== examId))
       setSelectedExam(null)
       fetchTeacherEntries(schoolId)
+      try {
+        await supabase.from('grade_audit_logs').insert(
+          ids.map(id => ({
+            school_id: schoolId,
+            grade_id: id,
+            action: 'rejected',
+            performed_by: profile?.id,
+            details: `${exam.subject} · ${exam.examType} · Rejected by ${profile?.full_name || 'Admin'}${reason ? ` — ${reason}` : ''}`,
+          }))
+        )
+      } catch (e) { console.error('Audit log insert failed:', e) }
     }
     setApproving(null)
   }
@@ -355,6 +377,19 @@ export default function MarksApproval() {
         .update({ total_score: p.adjusted })
         .eq('id', p.id)
     }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('grade_audit_logs').insert(
+        updates.map(p => ({
+          school_id: schoolId,
+          grade_id: p.id,
+          action: 'moderated',
+          performed_by: user?.id,
+          details: `${p.name} — score adjusted ${p.original}% → ${p.adjusted}%`,
+        }))
+      )
+    } catch (e) { console.error('Audit log insert failed:', e) }
 
     setModPreview([])
     setModGraceMarks(0)
