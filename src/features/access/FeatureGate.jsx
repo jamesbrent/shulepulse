@@ -3,12 +3,13 @@ import FeatureLocked from './FeatureLocked'
 
 export default function FeatureGate({ feature, features, requireAll = false, children, fallback }) {
   const { has, hasAny, hasAll, loading } = useFeatureAccess()
+  const featureKey = Array.isArray(feature) ? feature[0] : feature
 
   if (loading) return null
 
   let allowed = false
-  if (feature) {
-    allowed = has(feature)
+  if (featureKey) {
+    allowed = has(featureKey)
   } else if (features) {
     allowed = requireAll ? hasAll(features) : hasAny(features)
   } else {
@@ -17,7 +18,7 @@ export default function FeatureGate({ feature, features, requireAll = false, chi
 
   if (!allowed) {
     if (fallback) return fallback
-    return <FeatureLocked featureKey={feature || features?.[0]} />
+    return <FeatureLocked featureKey={featureKey || features?.[0]} />
   }
 
   return children
