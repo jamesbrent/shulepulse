@@ -328,11 +328,6 @@ export default function HODDashboard() {
             <h1>{pageTitles[activeNav]}</h1>
             <p>{currentTerm ? `${currentTerm}, ${currentYear}` : `${currentYear}`} · {school?.name || ''}</p>
           </div>
-          <div className="hod-header-actions">
-            <div className="hod-avatar">
-              {authProfile?.full_name?.[0]?.toUpperCase() || 'H'}
-            </div>
-          </div>
         </header>
 
         <FeatureGate feature={HOD_NAV_FEATURES[activeNav]?.[0]}>
