@@ -20,6 +20,11 @@ const BLANK_CAT = {
 const BLANK_STR = { category_id: '', class: '', amount: '', mandatory: true }
 
 export function FeeStructureTab({ profile, term, year }) {
+  const schoolId = profile?.school_id
+  if (!schoolId) {
+    return <div className="tab-content"><p className="loading-state">Loading school context…</p></div>
+  }
+
   const {
     categories, structures, students, classes,
     loading, saving, error,
@@ -28,7 +33,7 @@ export function FeeStructureTab({ profile, term, year }) {
     addStructure, deleteStructure,
     generateAssessments,
     downloadTemplate, importExcel,
-  } = useFeeStructure(profile.school_id, term, year)
+  } = useFeeStructure(schoolId, term, year)
 
   const [showCatModal, setShowCatModal] = useState(false)
   const [showStrModal, setShowStrModal] = useState(false)

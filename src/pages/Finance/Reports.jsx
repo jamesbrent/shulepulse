@@ -110,7 +110,7 @@ export default function ReportsPage({ initialTab }) {
   // ── Aggregation: By Method ──
   const byMethod = {}
   filteredPayments.forEach((p) => {
-    const method = (p.payment_type || p.payment_method || 'other').replace(/_/g, ' ')
+    const method = String(p.payment_type || p.payment_method || 'other').replace(/_/g, ' ')
     if (!byMethod[method]) byMethod[method] = { count: 0, total: 0 }
     byMethod[method].count++
     byMethod[method].total += Number(p.amount)

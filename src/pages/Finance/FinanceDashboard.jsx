@@ -465,7 +465,7 @@ export default function FinanceDashboard() {
           <AvatarUpload className="b-school-avatar" size={36} />
           <div>
             <p className="b-school-name">{authProfile?.full_name || 'User'}</p>
-            <p className="b-school-plan">{authProfile?.role ? authProfile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Bursar'}</p>
+            <p className="b-school-plan">{authProfile?.role ? String(authProfile.role).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Bursar'}</p>
           </div>
         </div>
 

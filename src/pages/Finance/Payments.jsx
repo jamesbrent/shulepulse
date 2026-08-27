@@ -580,7 +580,7 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
                       <td className="pay-amount">{fmt(p.amount)}</td>
                       <td>
                         <span className={`pay-method-chip ${methodClass(p.payment_type || p.payment_method)}`}>
-                          {(p.payment_type || p.payment_method || '—').replace(/_/g, ' ')}
+                          {String(p.payment_type || p.payment_method || '—').replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td className="pay-muted">{fmtDate(p.transaction_date)}</td>
@@ -673,9 +673,9 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
               <div className="pay-detail-row">
                 <span className="pay-detail-label">Method</span>
                 <span className="pay-detail-value">
-                  <span className={`pay-method-chip ${methodClass(viewModal.payment_type || viewModal.payment_method)}`}>
-                    {(viewModal.payment_type || viewModal.payment_method || '—').replace(/_/g, ' ')}
-                  </span>
+<span className={`pay-method-chip ${methodClass(viewModal.payment_type || viewModal.payment_method)}`}>
+                      {String(viewModal.payment_type || viewModal.payment_method || '—').replace(/_/g, ' ')}
+                    </span>
                 </span>
               </div>
               <div className="pay-detail-row">
