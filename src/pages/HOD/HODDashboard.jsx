@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, BarChart2, GraduationCap, ClipboardList,
   LogOut, Upload, ChevronRight, BookOpen, Settings, ShieldCheck,
-  FileBarChart, FileText, Bell, MessageSquare, Menu, X
+  Bell, MessageSquare, Menu, X
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -19,7 +19,6 @@ import DeptExams from './DeptExams'
 import ExamSetup from './ExamSetup'
 import MarksApproval from './MarksApproval'
 import DeptAnalytics from './DeptAnalytics'
-import ReportCenter from './ReportCenter'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
@@ -56,7 +55,6 @@ export default function HODDashboard() {
     { key: 'exam_setup', label: 'Exam Setup', icon: <Settings size={16} /> },
     { key: 'marks_approval', label: 'Marks Approval', icon: <ShieldCheck size={16} /> },
     { key: 'analytics', label: 'Performance Analytics', icon: <BarChart2 size={16} /> },
-    { key: 'reports', label: 'Reports & Results', icon: <FileBarChart size={16} /> },
     { key: 'teacher_review', label: 'Teacher Review', icon: <GraduationCap size={16} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
     { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
@@ -150,7 +148,6 @@ export default function HODDashboard() {
     exam_setup: 'Pre-Exam Setup & Configuration',
     marks_approval: 'Marks Verification & Approval',
     analytics: 'Departmental Performance Analytics',
-    reports: 'Report & Result Generation',
     subject_performance: 'Subject Performance Analysis',
     teacher_review: 'Teacher Performance Review',
     dept_exams: 'Departmental Examinations',
@@ -167,8 +164,6 @@ export default function HODDashboard() {
         return <MarksApproval />
       case 'analytics':
         return <DeptAnalytics />
-      case 'reports':
-        return <ReportCenter />
       case 'subject_performance':
         return <SubjectPerformance />
       case 'teacher_review':
@@ -255,7 +250,6 @@ export default function HODDashboard() {
                 { key: 'exam_setup', label: 'Exam Setup', desc: 'Configure grading & exam types', icon: <Settings size={18} />, color: '#2563eb' },
                 { key: 'marks_approval', label: 'Marks Approval', desc: 'Review & approve submitted marks', icon: <ShieldCheck size={18} />, color: '#16a34a' },
                 { key: 'analytics', label: 'Analytics', desc: 'Department performance insights', icon: <BarChart2 size={18} />, color: '#7c3aed' },
-                { key: 'reports', label: 'Reports', desc: 'Generate report cards & exports', icon: <FileBarChart size={18} />, color: '#ca8a04' },
               ].map((a) => (
                 <button
                   key={a.key}
@@ -335,12 +329,6 @@ export default function HODDashboard() {
             <p>{currentTerm ? `${currentTerm}, ${currentYear}` : `${currentYear}`} · {school?.name || ''}</p>
           </div>
           <div className="hod-header-actions">
-            <button className="hod-btn-secondary" onClick={() => { setActiveNav('reports'); setMobileOpen(false) }}>
-              <FileText size={15} /> Reports
-            </button>
-            <button className="hod-btn-primary" onClick={() => { setActiveNav('analytics'); setMobileOpen(false) }}>
-              <BarChart2 size={15} /> View Analytics
-            </button>
             <div className="hod-avatar">
               {authProfile?.full_name?.[0]?.toUpperCase() || 'H'}
             </div>
