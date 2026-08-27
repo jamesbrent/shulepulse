@@ -1,5 +1,6 @@
 ﻿import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '../../store/authStore'
+import { supabase } from '../../lib/supabase'
 import {
   fetchSchoolFeatures,
   fetchFeatureCatalog,
@@ -55,6 +56,27 @@ export function FeatureAccessProvider({ children }) {
   useEffect(() => {
     loadFeatures()
   }, [loadFeatures])
+
+  useEffect(() => {
+    if (!schoolId || isSuperadmin) return undefined
+
+    const channel = supabase
+      .channel(`feature-access-school-${schoolId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'schools',
+        filter: `id=eq.${schoolId}`,
+      }, () => {
+        invalidateCache()
+        loadFeatures()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [schoolId, isSuperadmin, loadFeatures])
 
   const has = useCallback((featureKey) => {
     if (isSuperadmin) return true
