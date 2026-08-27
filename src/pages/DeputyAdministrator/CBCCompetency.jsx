@@ -341,7 +341,7 @@ export default function CBCCompetency() {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
         <div className="da-card">
           <div className="da-card-header">
             <h3>Competency Overview</h3>

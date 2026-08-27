@@ -67,3 +67,13 @@
   background: #fef2f2;
   color: #dc2626;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Admin Comments
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .admin-comments-page .att-toolbar { padding: 10px 12px; }
+  .admin-table th, .admin-table td { padding: 10px 10px; font-size: 12px; }
+  .admin-comments-page { gap: 12px; }
+}

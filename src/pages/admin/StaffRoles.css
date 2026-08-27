@@ -358,3 +358,15 @@
 .sr-input:focus { border-color: var(--color-primary); }
 
 .text-muted { color: #94a3b8; font-size: 12px; }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Staff Roles
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .sr-modal { border-radius: 12px; max-width: 100%; }
+  .sr-modal-body { padding: 16px; }
+  .sr-form-grid { grid-template-columns: 1fr; }
+  .sr-role-option { min-height: 44px; }
+  .sr-dept-option { min-height: 36px; }
+}

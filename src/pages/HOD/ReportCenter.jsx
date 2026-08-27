@@ -619,7 +619,7 @@ export default function ReportCenter() {
             </button>
           </div>
 
-          <div className="hod-sp-metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="hod-sp-metrics">
             <div className="hod-sp-metric-card">
               <p className="hod-sp-metric-value" style={{ color: '#2563eb' }}>{filteredMerit.length}</p>
               <p className="hod-sp-metric-label">Total Students</p>
@@ -744,7 +744,7 @@ function DraftPreview({ className, onBack, getStudentReport }) {
 
         {current ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               <div style={{ padding: 14, background: '#f8fafc', borderRadius: 8 }}>
                 <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, textTransform: 'uppercase', letterSpacing: 0.04, fontWeight: 600 }}>Student Name</p>
                 <p style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', margin: '4px 0 0' }}>{current.name}</p>

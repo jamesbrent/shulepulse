@@ -23,3 +23,12 @@
 .reg-bulk-import .reg-card h3 { font-size: 16px; font-weight: 600; color: #0f172a; margin: 0; }
 .reg-btn-primary.small { padding: 6px 14px; font-size: 13px; }
 .reg-btn-secondary.small { padding: 6px 14px; font-size: 13px; }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Bulk Import
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .reg-import-dropzone { padding: 32px 16px; }
+  .reg-bulk-import .reg-card { padding: 16px; }
+}

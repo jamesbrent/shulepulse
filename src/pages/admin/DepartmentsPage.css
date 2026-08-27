@@ -39,3 +39,18 @@
 .dept-btn-cancel { padding: 8px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; cursor: pointer; color: #374151; }
 .dept-btn-save { padding: 8px 16px; background: var(--color-primary, #2563eb); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .dept-btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Departments
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .dept-grid { grid-template-columns: 1fr; }
+  .dept-card { padding: 12px; }
+  .dept-modal { max-width: 100%; border-radius: 12px; }
+  .dept-modal-body { padding: 16px; }
+  .dept-header h2 { font-size: 18px; }
+}
+@media (max-width: 480px) {
+  .dept-btn-add { min-height: 44px; flex: 1; justify-content: center; }
+}

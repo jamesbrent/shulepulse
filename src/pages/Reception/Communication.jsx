@@ -102,7 +102,7 @@ export default function Communication({ profile }) {
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                   placeholder="Notice title..." />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
                 <div className="rcp-form-field">
                   <label><Tag size={11} /> Category</label>
                   <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>

@@ -1655,7 +1655,7 @@ function ClassAverages({ classAverages, grades, selectedSubject, setSelectedSubj
         <div className="hod-card-header">
           <h3>Proficiency Distribution (All Classes)</h3>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, padding: '0 16px 16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10, padding: '0 16px 16px' }}>
           {['EE', 'ME', 'AE', 'BE'].map(band => (
             <div key={band} style={{ textAlign: 'center', padding: '10px 8px', background: cbcBandColors[band].bg, borderRadius: 8, border: `1px solid ${cbcBandColors[band].color}22` }}>
               <div style={{ fontSize: 20, fontWeight: 700, color: cbcBandColors[band].color }}>{overallDistPct[band]}%</div>

@@ -219,7 +219,7 @@ export default function Reports() {
       <div className="rcp-two-col">
         <div className="rcp-card">
           <div className="rcp-card-hdr"><h3><Users size={16} /> Visitor Status</h3></div>
-          <div className="rcp-stat-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <div className="rcp-stat-grid">
             <div className="rcp-stat"><span className="rcp-stat-val">{data.kpis.visitorsTotal}</span><span className="rcp-stat-lbl">All-time records</span></div>
             <div className="rcp-stat"><span className="rcp-stat-val" style={{ color: '#0F766E' }}>{data.kpis.onSite}</span><span className="rcp-stat-lbl">On campus</span></div>
           </div>

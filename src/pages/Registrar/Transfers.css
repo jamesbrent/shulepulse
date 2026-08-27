@@ -24,3 +24,14 @@
   padding-top: 16px;
   border-top: 1px solid #f1f5f9;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Transfers
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .reg-transfers .reg-form-grid { grid-template-columns: 1fr; }
+  .reg-transfers .reg-card { padding: 16px; }
+  .reg-transfers .reg-form-actions { flex-direction: column; }
+  .reg-transfers .reg-form-actions button { min-height: 44px; justify-content: center; }
+}
