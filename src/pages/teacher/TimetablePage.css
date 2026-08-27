@@ -237,6 +237,114 @@
 .tt-today-subj { font-weight: 700; color: var(--tt-text); }
 .tt-today-cls { font-size: 11px; color: var(--tt-text-sec); }
 
+/* ── MOBILE vertical day list (same timetable data) ── */
+.tt-mobile-list { display: none; }
+
+@media (max-width: 768px) {
+  .tt-scroll, .tt-today { display: none; }
+
+  .tt-toolbar { padding: 10px 14px; }
+  .tt-btn { min-height: 40px; }
+
+  .tt-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .tt-mobile-day {
+    background: #FAFBFC;
+    border: 1px solid var(--tt-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .tt-mobile-day--today {
+    border-color: color-mix(in srgb, var(--tt-blue) 40%, white);
+    background: color-mix(in srgb, var(--tt-blue) 4%, white);
+  }
+
+  .tt-mobile-day-hdr {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--tt-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+  .tt-mobile-day--today .tt-mobile-day-hdr { color: var(--tt-blue); }
+
+  .tt-mobile-today-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--tt-blue);
+    color: #fff;
+  }
+
+  .tt-mobile-day-empty {
+    margin: 0;
+    font-size: 12px;
+    color: var(--tt-text-muted);
+  }
+
+  .tt-mobile-lessons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tt-mobile-lesson {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid var(--tt-border);
+    border-left: 3px solid var(--tt-blue);
+    border-radius: 10px;
+    padding: 10px 12px;
+    min-height: 52px;
+  }
+
+  .tt-mobile-time {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--tt-blue);
+    font-family: monospace;
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+  .tt-mobile-dash { color: #CBD5E1; }
+
+  .tt-mobile-info { flex: 1; min-width: 0; }
+  .tt-mobile-subj {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--tt-text);
+  }
+  .tt-mobile-cls {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--tt-text-sec);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .tt-summary { grid-template-columns: repeat(2, 1fr); }

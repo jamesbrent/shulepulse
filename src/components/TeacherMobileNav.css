@@ -1,0 +1,257 @@
+/* ═══════════════════════════════════════════════════
+   Teacher Mobile Bottom Navigation + More Sheet
+   ═══════════════════════════════════════════════════ */
+
+.tmn-nav {
+  display: none;
+}
+
+/* ── Bottom bar ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .tmn-nav {
+    display: flex;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 900;
+    background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .tmn-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 5px 2px 4px;
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tmn-item-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 28px;
+    border-radius: 16px;
+    transition: background 0.15s;
+  }
+
+  .tmn-item-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .tmn-item-label {
+    font-size: 10px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    padding: 0 2px;
+  }
+
+  .tmn-item--active { color: var(--color-primary); }
+  .tmn-item--active .tmn-item-icon {
+    background: color-mix(in srgb, var(--color-primary) 12%, white);
+  }
+
+  .tmn-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: 8px;
+    border: 1.5px solid #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── More sheet overlay ── */
+  .tmn-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 940;
+    animation: tmn-fade 0.2s ease;
+  }
+
+  /* ── More sheet ── */
+  .tmn-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 950;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    animation: tmn-sheet-up 0.25s ease;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.18);
+  }
+
+  .tmn-sheet-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    margin: 10px auto 4px;
+    flex-shrink: 0;
+  }
+
+  .tmn-sheet-hdr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px 14px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .tmn-sheet-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-primary) 12%, white);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .tmn-sheet-id { flex: 1; min-width: 0; }
+  .tmn-sheet-name { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; }
+  .tmn-sheet-school { margin: 2px 0 0; font-size: 12px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .tmn-sheet-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .tmn-more-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 16px 18px;
+    overflow-y: auto;
+  }
+
+  .tmn-more-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 12px;
+    min-height: 52px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .tmn-more-item:active { background: #f8fafc; }
+  .tmn-more-item--active {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 6%, white);
+  }
+
+  .tmn-more-icon {
+    display: flex;
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+  .tmn-more-icon svg { width: 21px; height: 21px; }
+
+  .tmn-more-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tmn-badge--sm {
+    position: static;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .tmn-more-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    padding: 20px 0;
+  }
+
+  .tmn-sheet-footer {
+    border-top: 1px solid #f1f5f9;
+    padding: 12px 18px;
+    flex-shrink: 0;
+  }
+
+  .tmn-logout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px;
+    border: 1px solid #fee2e2;
+    border-radius: 10px;
+    background: #fff;
+    color: #dc2626;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .tmn-logout:active { background: #fef2f2; }
+
+  @keyframes tmn-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes tmn-sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+}

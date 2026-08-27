@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, ClipboardList, BarChart2, Calendar,
   Bell, LogOut, Save, CheckCircle, XCircle, MessageSquare,
-  BookOpen, Award, Menu, X, Library
+  BookOpen, Award, Menu, X, Library, Clock, Users, ChevronRight
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { basePath } from '../../lib/paths'
@@ -33,6 +33,7 @@ import '../../features/support/SchoolSupportPage.css'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
 import { TEACHER_NAV_FEATURES } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
+import TeacherMobileNav from '../../components/TeacherMobileNav'
 
 export default function TeacherDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard')
@@ -210,6 +211,33 @@ export default function TeacherDashboard() {
     window.location.href = basePath('/')
   }
 
+  const handleNav = (key) => {
+    setActiveNav(key)
+    if (key === 'notices') markNoticesSeen(profile?.id)
+    window.scrollTo({ top: 0 })
+  }
+
+  // ── Mobile dashboard helpers ──
+  const nowDate = new Date()
+  const greeting = nowDate.getHours() < 12 ? 'Good morning'
+    : nowDate.getHours() < 17 ? 'Good afternoon' : 'Good evening'
+  const firstName = (profile?.full_name || 'Teacher').split(' ')[0]
+  const todayLabel = nowDate.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' })
+  const nowMins = nowDate.getHours() * 60 + nowDate.getMinutes()
+  const upNext = timetable.find((t) => {
+    const [h, m] = (t.start_time || '00:00').split(':').map(Number)
+    return h * 60 + m > nowMins
+  }) || null
+
+  const quickActions = [
+    { key: 'attendance', label: 'Mark Attendance', icon: <ClipboardList size={18} />, color: '#16a34a' },
+    { key: 'marks', label: 'Enter Marks', icon: <BarChart2 size={18} />, color: '#2563eb' },
+    { key: 'myclasses', label: 'My Classes', icon: <BookOpen size={18} />, color: '#7c3aed' },
+    { key: 'grades', label: 'Submit Grades', icon: <BarChart2 size={18} />, color: '#ca8a04' },
+    { key: 'timetable', label: 'Timetable', icon: <Calendar size={18} />, color: '#0891b2' },
+    { key: 'notices', label: 'Notices', icon: <Bell size={18} />, color: '#dc2626' },
+  ]
+
   const pageTitles = {
     dashboard: 'Teacher Dashboard',
     attendance: 'Attendance',
@@ -255,6 +283,48 @@ export default function TeacherDashboard() {
     if (loading) return <div className="loading-state">Loading dashboard...</div>
     return (
       <>
+        {/* ── Mobile: day snapshot ── */}
+        <div className="tp-mobile">
+          <div className="tp-hello">
+            <p className="tp-hello-line">{greeting}, {firstName}</p>
+            <p className="tp-hello-sub">{todayLabel}</p>
+          </div>
+
+          <div className="tp-upnext">
+            <span className="tp-upnext-label">Up next</span>
+            {upNext ? (
+              <button className="tp-upnext-card" onClick={() => handleNav('timetable')}>
+                <div className="tp-upnext-time">
+                  <Clock size={14} /> {upNext.start_time?.slice(0, 5)} – {upNext.end_time?.slice(0, 5)}
+                </div>
+                <p className="tp-upnext-subj">{upNext.subjects?.name || upNext.subject}</p>
+                <p className="tp-upnext-cls">
+                  <Users size={12} /> {upNext.classes?.class_name?.trim() || upNext.class}{upNext.room ? ` · Room ${upNext.room}` : ''}
+                </p>
+                <ChevronRight size={18} className="tp-upnext-chev" />
+              </button>
+            ) : (
+              <div className="tp-upnext-card tp-upnext-card--done">
+                <CheckCircle size={20} /> No more lessons today
+              </div>
+            )}
+          </div>
+
+          <div className="tp-actions">
+            {quickActions.map((a) => (
+              <button
+                key={a.key}
+                className="tp-action"
+                style={{ ['--accent']: a.color }}
+                onClick={() => handleNav(a.key)}
+              >
+                <span className="tp-action-icon">{a.icon}</span>
+                <span className="tp-action-label">{a.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="teacher-stats">
           {[
             { label: 'My Classes', value: stats.classes, color: '#2563eb', icon: <Calendar size={20} /> },
@@ -460,6 +530,17 @@ export default function TeacherDashboard() {
           {renderContent()}
         </FeatureGate>
       </main>
+
+      <TeacherMobileNav
+        items={filteredNavItems}
+        activeNav={activeNav}
+        onNavigate={handleNav}
+        onNoticesSeen={() => markNoticesSeen(profile?.id)}
+        notifCount={notifCount}
+        profile={profile}
+        schoolName={schoolName}
+        onLogout={handleLogout}
+      />
     </div>
   )
 }

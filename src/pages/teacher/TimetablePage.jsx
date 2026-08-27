@@ -406,6 +406,48 @@ export default function TimetablePage({ profile }) {
             </div>
           </div>
 
+          {/* ── MOBILE: vertical day-by-day list (same timetable data) ── */}
+          <div className="tt-mobile-list">
+            {DAYS.map((day) => {
+              const dayLessons = timetable
+                .filter((t) => t.day === day)
+                .slice()
+                .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
+              return (
+                <div key={day} className={`tt-mobile-day ${day === todayName ? 'tt-mobile-day--today' : ''}`}>
+                  <div className="tt-mobile-day-hdr">
+                    <span>{DAY_SHORT[day]}</span>
+                    {day === todayName && <span className="tt-mobile-today-lbl">Today</span>}
+                  </div>
+                  {dayLessons.length === 0 ? (
+                    <p className="tt-mobile-day-empty">No lessons</p>
+                  ) : (
+                    <div className="tt-mobile-lessons">
+                      {dayLessons.map((l, i) => (
+                        <div key={`${day}-${i}`} className="tt-mobile-lesson">
+                          <div className="tt-mobile-time">
+                            <span>{l.start_time?.slice(0, 5)}</span>
+                            <span className="tt-mobile-dash">–</span>
+                            <span>{l.end_time?.slice(0, 5)}</span>
+                          </div>
+                          <div className="tt-mobile-info">
+                            <p className="tt-mobile-subj">{l.subject_name}</p>
+                            <p className="tt-mobile-cls">
+                              <Users size={11} />
+                              {l.class_name?.trim()}
+                              {l.class_stream ? ` ${l.class_stream}` : ''}
+                              {l.room ? ` · Room ${l.room}` : ''}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
           {/* Today's detail list — only shown when there are lessons today */}
           {todayLessons.length > 0 && (
             <div className="tt-today">

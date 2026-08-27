@@ -7,6 +7,7 @@ export default function MyClasses({ profile }) {
   const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
+  const [counts, setCounts] = useState({})
 
   useEffect(() => {
     if (!profile?.school_id) return
@@ -70,6 +71,26 @@ export default function MyClasses({ profile }) {
 
     setClasses(result)
     if (result.length > 0) setExpanded(result[0].className)
+
+    const { data: students } = await supabase
+      .from('students')
+      .select('class, stream, status')
+      .eq('school_id', profile.school_id)
+
+    const byClass = {}
+    for (const st of students || []) {
+      const key = `${(st.class || '').trim()}${st.stream ? ` ${st.stream}` : ''}`
+      if (!byClass[key]) byClass[key] = { total: 0, active: 0 }
+      byClass[key].total += 1
+      if (String(st.status || '').toLowerCase() === 'active') byClass[key].active += 1
+    }
+    const countMap = {}
+    for (const c of result) {
+      const key = `${c.className}${c.stream ? ` ${c.stream}` : ''}`
+      countMap[c.className] = byClass[key]?.active ?? byClass[key]?.total ?? 0
+    }
+    setCounts(countMap)
+
     setLoading(false)
   }
 
@@ -106,6 +127,9 @@ export default function MyClasses({ profile }) {
                       {cls.level && <span className="mc-hdr-level">{cls.level}</span>}
                     </div>
                     <p className="mc-hdr-meta">
+                      <Users size={11} className="mc-meta-icon" />
+                      {counts[cls.className] ?? 0} student{counts[cls.className] === 1 ? '' : 's'}
+                      {' · '}
                       {cls.subjects.length} subject{cls.subjects.length > 1 ? 's' : ''}
                       {' · '}
                       {cls.schedule.length} slot{cls.schedule.length > 1 ? 's' : ''}

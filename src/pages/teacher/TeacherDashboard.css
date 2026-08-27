@@ -484,28 +484,151 @@
 .teacher-mobile-close:hover { color: #fff; background: rgba(255,255,255,0.2); }
 @keyframes teacherFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+/* ── Mobile: day snapshot (Up Next + Quick Actions) ── */
+.tp-mobile { display: none; }
+
+@media (max-width: 768px) {
+  .tp-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .tp-hello-line {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .tp-hello-sub {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .tp-upnext {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .tp-upnext-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+  }
+  .tp-upnext-card {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--color-primary);
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+    color: #0f172a;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .tp-upnext-time {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  .tp-upnext-subj {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .tp-upnext-cls {
+    margin: 0;
+    font-size: 12px;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .tp-upnext-chev {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #cbd5e1;
+  }
+  .tp-upnext-card--done {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    border-left-color: #16a34a;
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: default;
+  }
+
+  .tp-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .tp-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 12px 6px;
+    min-height: 68px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.05);
+    color: #0f172a;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .tp-action:active { transform: scale(0.97); }
+  .tp-action-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--accent) 10%, white);
+    color: var(--accent);
+  }
+  .tp-action-label {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
    MOBILE RESPONSIVE — Teacher Dashboard
    ═══════════════════════════════════════════════════════════ */
 
 @media (max-width: 768px) {
-  .teacher-mobile-toggle { display: flex; }
-  .teacher-mobile-overlay { display: block; }
+  .teacher-mobile-toggle,
+  .teacher-mobile-overlay { display: none; }
 
-  .teacher-sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    width: 280px;
-    left: 0;
-    top: 0;
-    z-index: 200;
-    padding: 16px 12px;
-  }
-  .teacher-sidebar.open { transform: translateX(0); }
+  .teacher-sidebar { display: none; }
 
   .teacher-main {
     margin-left: 0;
-    padding: 64px 14px 14px;
+    padding: 16px 14px calc(86px + env(safe-area-inset-bottom, 0px));
   }
 
   .teacher-header h1 { font-size: 20px; }
@@ -545,6 +668,6 @@
   .t-stat-card { padding: 12px; }
   .t-stat-value { font-size: 20px; }
   .t-stat-label { font-size: 11px; }
-  .teacher-main { padding: 60px 10px 10px; }
+  .teacher-main { padding: 12px 10px calc(86px + env(safe-area-inset-bottom, 0px)); }
   .teacher-card { padding: 12px 10px !important; }
 }

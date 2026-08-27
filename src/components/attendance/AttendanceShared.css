@@ -637,3 +637,109 @@
   .att-bulk-actions { flex-wrap: wrap; }
   .att-tabs { overflow-x: auto; }
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE — attendance as stacked cards + touch targets
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .att-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .att-toolbar-left,
+  .att-toolbar-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .date-nav { width: 100%; justify-content: space-between; }
+  .date-nav-btn { min-width: 44px; height: 44px; }
+  .date-nav .date-input { flex: 1; min-height: 44px; }
+  .search-wrap { width: 100%; }
+  .search-input { width: 100%; min-height: 44px; font-size: 14px; }
+  .filter-select { width: 100%; min-height: 44px; font-size: 14px; }
+
+  .att-bulk-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .att-bulk-btn { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; }
+
+  .att-save-wrap { width: 100%; }
+  .att-save-btn { flex: 1; justify-content: center; min-height: 46px; }
+
+  /* Card view: only for AttendanceTable (att-card-table) */
+  .att-table-wrap.att-card-table {
+    overflow: visible;
+    border: none;
+    background: none;
+  }
+  .att-card-table thead { display: none; }
+  .att-card-table,
+  .att-card-table tbody,
+  .att-card-table tr,
+  .att-card-table td {
+    display: block;
+  }
+  .att-card-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .att-card-table tr {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+  .att-card-table tbody tr:hover { background: #fff; }
+  .att-card-table td {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    min-height: 30px;
+  }
+  .att-card-table td:last-child { border-bottom: none; }
+  .att-card-table td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .att-card-table .student-name-cell {
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* Status: full-width 4-up buttons */
+  .att-card-table .att-status-buttons {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .att-status-btn {
+    justify-content: center;
+    min-height: 40px;
+    font-size: 12px;
+    padding: 4px 2px;
+  }
+
+  /* Notes: full width input */
+  .att-card-table .att-notes-input { width: 100%; min-height: 42px; font-size: 14px; padding: 8px 10px; }
+
+  .att-card-table .att-badge { justify-content: center; min-height: 36px; font-size: 13px; }
+
+  .att-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .att-tab { white-space: nowrap; padding: 11px 14px; min-height: 44px; }
+}

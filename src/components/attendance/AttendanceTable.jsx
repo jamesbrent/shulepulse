@@ -81,7 +81,7 @@ export default function AttendanceTable({
 
   return (
     <div className="att-table-wrap">
-      <table className="att-table">
+      <table className="att-table att-card-table">
         <thead>
           <tr>
             <th>Student</th>
@@ -100,7 +100,7 @@ export default function AttendanceTable({
               const status = attendance[s.id] || 'present'
               return (
                 <tr key={s.id}>
-                  <td>
+                  <td data-label="Student">
                     <div className="student-name-cell">
                       <div className="student-avatar-sm">
                         {s.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2)}
@@ -108,11 +108,11 @@ export default function AttendanceTable({
                       {s.full_name}
                     </div>
                   </td>
-                  {showAdm && <td className="adm-no">{s.admission_number || '—'}</td>}
-                  {showClass && <td>{s.class || '—'}</td>}
-                  <td>{renderStatusCell(s.id, status)}</td>
+                  {showAdm && <td className="adm-no" data-label="Adm No.">{s.admission_number || '—'}</td>}
+                  {showClass && <td data-label="Class">{s.class || '—'}</td>}
+                  <td data-label="Status">{renderStatusCell(s.id, status)}</td>
                   {showNotes && (
-                    <td>
+                    <td data-label="Notes">
                       <input
                         className="att-notes-input"
                         placeholder="Optional note..."
@@ -121,16 +121,16 @@ export default function AttendanceTable({
                       />
                     </td>
                   )}
-                  {showMarkedBy && <td className="text-muted">—</td>}
-                  {showTime && <td className="text-muted">—</td>}
-                  {showRemarks && <td className="text-muted">—</td>}
+                  {showMarkedBy && <td className="text-muted" data-label="Marked By">—</td>}
+                  {showTime && <td className="text-muted" data-label="Time">—</td>}
+                  {showRemarks && <td className="text-muted" data-label="Remarks">—</td>}
                 </tr>
               )
             })
           ) : (
             rows.map((r) => (
               <tr key={r.id}>
-                <td>
+                <td data-label="Student">
                   <div className="student-name-cell">
                     <div className="student-avatar-sm">
                       {r.students?.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2)}
@@ -138,19 +138,19 @@ export default function AttendanceTable({
                     {r.students?.full_name}
                   </div>
                 </td>
-                {showAdm && <td className="adm-no">{r.students?.admission_number || '—'}</td>}
-                {showClass && <td>{r.students?.class || '—'}</td>}
-                <td>{renderStatusCell(r.student_id, r.status)}</td>
-                {showNotes && <td className="text-muted">{r.notes || '—'}</td>}
-                {showMarkedBy && <td className="text-muted">{r.teacher_name || '—'}</td>}
+                {showAdm && <td className="adm-no" data-label="Adm No.">{r.students?.admission_number || '—'}</td>}
+                {showClass && <td data-label="Class">{r.students?.class || '—'}</td>}
+                <td data-label="Status">{renderStatusCell(r.student_id, r.status)}</td>
+                {showNotes && <td className="text-muted" data-label="Notes">{r.notes || '—'}</td>}
+                {showMarkedBy && <td className="text-muted" data-label="Marked By">{r.teacher_name || '—'}</td>}
                 {showTime && (
-                  <td className="text-muted">
+                  <td className="text-muted" data-label="Time">
                     {r.created_at
                       ? new Date(r.created_at).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })
                       : '—'}
                   </td>
                 )}
-                {showRemarks && <td className="text-muted">{r.remarks || '—'}</td>}
+                {showRemarks && <td className="text-muted" data-label="Remarks">{r.remarks || '—'}</td>}
               </tr>
             ))
           )}

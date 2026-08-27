@@ -871,53 +871,53 @@ export default function MarksEntry({ profile }) {
                           const st = g?.status || (isMissing ? 'missing' : 'draft')
                           return (
                             <tr key={s.id} className={hasError ? 'me-row-error' : ''}>
-                              <td className="me-muted">{i + 1}</td>
-                              <td>
+                              <td className="me-muted" data-label="No.">{i + 1}</td>
+                              <td data-label="Student">
                                 <div className="me-student-cell">
                                   <div className="me-avatar">{s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>
                                   {s.full_name}
                                 </div>
                               </td>
-                              <td className="me-adm">{s.admission_number || '—'}</td>
-                              <td>
+                              <td className="me-adm" data-label="Adm No.">{s.admission_number || '—'}</td>
+                              <td data-label={`Opener (${getMax('Opener')})`}>
                                 <div className="me-input-wrap">
-                                  <input type="number" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.cat1 !== '' && g?.cat1 !== undefined ? 'me-input-filled' : ''}`}
+                                  <input type="number" inputMode="numeric" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.cat1 !== '' && g?.cat1 !== undefined ? 'me-input-filled' : ''}`}
                                     min="0" max={getMax('Opener')} value={g?.cat1 ?? ''}
                                     onChange={e => updateGrade(s.id, 'cat1', e.target.value)}
                                     onKeyDown={e => handleKeyDown(e, s.id, 'cat1', i)}
                                     data-student={s.id} data-field="cat1" placeholder="—" disabled={isLocked} />
                                 </div>
                               </td>
-                              <td>
+                              <td data-label={`Midterm (${getMax('Midterm')})`}>
                                 <div className="me-input-wrap">
-                                  <input type="number" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.cat2 !== '' && g?.cat2 !== undefined ? 'me-input-filled' : ''}`}
+                                  <input type="number" inputMode="numeric" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.cat2 !== '' && g?.cat2 !== undefined ? 'me-input-filled' : ''}`}
                                     min="0" max={getMax('Midterm')} value={g?.cat2 ?? ''}
                                     onChange={e => updateGrade(s.id, 'cat2', e.target.value)}
                                     onKeyDown={e => handleKeyDown(e, s.id, 'cat2', i)}
                                     data-student={s.id} data-field="cat2" placeholder="—" disabled={isLocked} />
                                 </div>
                               </td>
-                              <td>
+                              <td data-label={`End Term (${getMax('End Term')})`}>
                                 <div className="me-input-wrap">
-                                  <input type="number" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.et !== '' && g?.et !== undefined ? 'me-input-filled' : ''}`}
+                                  <input type="number" inputMode="numeric" className={`me-input ${hasError ? 'me-input-error' : ''} ${g?.et !== '' && g?.et !== undefined ? 'me-input-filled' : ''}`}
                                     min="0" max={getMax('End Term')} value={g?.et ?? ''}
                                     onChange={e => updateGrade(s.id, 'et', e.target.value)}
                                     onKeyDown={e => handleKeyDown(e, s.id, 'et', i)}
                                     data-student={s.id} data-field="et" placeholder="—" disabled={isLocked} />
                                 </div>
                               </td>
-                              <td style={{ fontWeight: 700, fontSize: 14 }}>{total !== null ? total : '—'}</td>
-                              <td>
+                              <td data-label="Total (&/100)" style={{ fontWeight: 700, fontSize: 14 }}>{total !== null ? total : '—'}</td>
+                              <td data-label="Grade">
                                 {preview ? <span className={`cbe-badge ${preview.color}`}>{gradeDisplay(preview)}</span> : <span className="me-muted">—</span>}
                               </td>
-                              <td>
+                              <td data-label="Remarks">
                                 <input type="text" className="me-input me-remarks-input"
                                   value={g?.remarks ?? ''}
                                   onChange={e => updateGrade(s.id, 'remarks', e.target.value)}
                                   onKeyDown={e => handleKeyDown(e, s.id, 'remarks', i)}
                                   data-student={s.id} data-field="remarks" placeholder="Auto" disabled={isLocked} />
                               </td>
-                              <td>
+                              <td data-label="Status">
                                 {st === 'missing' ? <span className="me-status-dot" style={{ background: '#f59e0b', color: '#fff' }}>Missing</span>
                                   : st === 'submitted' ? <span className="me-status-dot" style={{ background: '#2563eb', color: '#fff' }}>Saved</span>
                                   : st === 'approved' ? <span className="me-status-dot" style={{ background: '#16a34a', color: '#fff' }}>Approved</span>
@@ -1036,11 +1036,11 @@ export default function MarksEntry({ profile }) {
                       <tbody>
                         {grades.slice(0, 50).map(g => (
                           <tr key={g.id}>
-                            <td style={{ fontWeight: 500 }}>{g.students?.full_name || '—'}</td>
-                            <td>{g.exam_type || '—'}</td>
-                            <td>{g.total_score ?? '—'}%</td>
-                            <td><span className={`cbe-badge ${g.cbe_band || ''}`}>{g.grade || '—'}</span></td>
-                            <td><span className="me-status-dot" style={{ background: g.status === 'approved' ? '#16a34a' : g.status === 'submitted' ? '#2563eb' : '#d97706', color: '#fff' }}>{g.status || '—'}</span></td>
+                            <td data-label="Student" style={{ fontWeight: 500 }}>{g.students?.full_name || '—'}</td>
+                            <td data-label="Exam">{g.exam_type || '—'}</td>
+                            <td data-label="Marks">{g.total_score ?? '—'}%</td>
+                            <td data-label="Grade"><span className={`cbe-badge ${g.cbe_band || ''}`}>{g.grade || '—'}</span></td>
+                            <td data-label="Status"><span className="me-status-dot" style={{ background: g.status === 'approved' ? '#16a34a' : g.status === 'submitted' ? '#2563eb' : '#d97706', color: '#fff' }}>{g.status || '—'}</span></td>
                           </tr>
                         ))}
                       </tbody>
@@ -1064,10 +1064,10 @@ export default function MarksEntry({ profile }) {
                       <tbody>
                         {auditLogs.map(log => (
                           <tr key={log.id}>
-                            <td><span className="me-status-dot" style={{ background: '#6366f1', color: '#fff' }}>{log.action}</span></td>
-                            <td>{log.performed_by || '—'}</td>
-                            <td>{log.performed_at ? new Date(log.performed_at).toLocaleString() : '—'}</td>
-                            <td style={{ fontSize: 12, color: '#64748b', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.details || '—'}</td>
+                            <td data-label="Action"><span className="me-status-dot" style={{ background: '#6366f1', color: '#fff' }}>{log.action}</span></td>
+                            <td data-label="Performed By">{log.performed_by || '—'}</td>
+                            <td data-label="Date">{log.performed_at ? new Date(log.performed_at).toLocaleString() : '—'}</td>
+                            <td data-label="Details" style={{ fontSize: 12, color: '#64748b', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.details || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
