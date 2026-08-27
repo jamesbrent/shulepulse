@@ -19,12 +19,13 @@ import {
 import { getGrade as getCBEGrade, gradeDisplay, sortBands, sortExamTypes } from '../../services/grading'
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
+const FORM_EXAMS = ['Opener', 'Midterm', 'End Term']
 const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1]
 const AUTO_SAVE_DELAY = 15000
 
 export default function MarksEntry({ profile }) {
-  const { examTypes: examTypeConfig, examMap, getMax } = useExamTypeConfig()
+  const { getMax } = useExamTypeConfig()
   const isAdmin = profile?.roles?.includes('admin') || profile?.roles?.includes('superadmin')
   const [students, setStudents] = useState([])
   const [classes, setClasses] = useState([])
@@ -42,6 +43,7 @@ export default function MarksEntry({ profile }) {
   const fileInputRef = useRef(null)
   const autoSaveTimer = useRef(null)
   const classSubjectRef = useRef({})
+  const termInited = useRef(false)
 
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('')
@@ -122,6 +124,29 @@ export default function MarksEntry({ profile }) {
         .single()
       setSchool(schoolData)
 
+      let defaultTerm = schoolData?.current_term
+      let defaultYear = schoolData?.current_year
+      if (!termInited.current) {
+        if (!defaultTerm || !defaultYear) {
+          const { data: gradeRows } = await supabase
+            .from('grades')
+            .select('term, year')
+            .eq('school_id', schoolId)
+          const rows = gradeRows || []
+          if (!defaultTerm) {
+            const terms = [...new Set(rows.map(r => r.term).filter(Boolean))].sort()
+            defaultTerm = terms[terms.length - 1] || 'Term 1'
+          }
+          if (!defaultYear) {
+            const years = [...new Set(rows.map(r => r.year).filter(Boolean))].sort((a, b) => Number(a) - Number(b))
+            defaultYear = years[years.length - 1] || CURRENT_YEAR
+          }
+        }
+        termInited.current = true
+        setTerm(defaultTerm)
+        setYear(String(defaultYear))
+      }
+
       let teacherRecData = null
       if (!isAdmin) {
         const { data } = await supabase
@@ -183,14 +208,14 @@ export default function MarksEntry({ profile }) {
         if (firstSubjects.length > 0) setSelectedSubject(firstSubjects[0])
       }
 
-      await buildClassCards(schoolId, classSubjects)
+      await buildClassCards(schoolId, classSubjects, defaultTerm, defaultYear)
     } catch (err) {
       console.error('fetchData error:', err)
     }
     setLoading(false)
   }
 
-  const buildClassCards = async (schoolId, classSubjects) => {
+  const buildClassCards = async (schoolId, classSubjects, termFilter = term, yearFilter = year) => {
     if (!profile?.id) return
     const { data: allSchoolStudents } = await supabase
       .from('students')
@@ -206,8 +231,8 @@ export default function MarksEntry({ profile }) {
       .from('grades')
       .select('class_name, subject, exam_type, status, total_score')
       .eq('school_id', schoolId)
-      .eq('term', term)
-      .eq('year', Number(year))
+      .eq('term', termFilter)
+      .eq('year', Number(yearFilter))
     if (!isAdmin) gradesQ.eq('teacher_id', profile.id)
     const { data: allGrades } = await gradesQ
 
@@ -217,7 +242,7 @@ export default function MarksEntry({ profile }) {
           g => g.class_name === className && g.subject === subjectName
         )
         const examStatuses = {}
-        const examTypeNames = sortExamTypes(examTypeConfig.map(e => e.name))
+        const examTypeNames = sortExamTypes(FORM_EXAMS)
         examTypeNames.forEach(et => {
           const etGrades = existingGrades.filter(g => g.exam_type === et)
           const statuses = etGrades.map(g => g.status)
@@ -244,7 +269,7 @@ export default function MarksEntry({ profile }) {
 
   const refreshClassCards = async () => {
     if (!teacherRec || !profile?.school_id) return
-    await buildClassCards(profile.school_id, classSubjectRef.current)
+    await buildClassCards(profile.school_id, classSubjectRef.current, term, year)
   }
 
   const fetchGrades = async () => {
@@ -254,7 +279,7 @@ export default function MarksEntry({ profile }) {
       .eq('school_id', profile.school_id)
       .eq('class_name', selectedClass)
       .eq('subject', selectedSubject)
-      .in('exam_type', examTypeConfig.map(e => e.name))
+      .in('exam_type', FORM_EXAMS)
       .eq('term', term)
       .eq('year', Number(year))
 
@@ -722,7 +747,7 @@ export default function MarksEntry({ profile }) {
                   <div className="mk-body">
                     <div className="mk-subj-grid">
                       {clsCards.map(card => {
-                        const allApproved = examTypeConfig.every(et => card.examStatuses[et.name] === 'approved')
+                        const allApproved = FORM_EXAMS.every(et => card.examStatuses[et] === 'approved')
                         return (
                           <div key={`${card.className}-${card.subjectName}`} className="mk-subj">
                             <div className="mk-subj-top">
@@ -734,17 +759,17 @@ export default function MarksEntry({ profile }) {
                             <div className="mk-subj-body">
                               <div className="mk-subj-stat"><Users size={12} /> {card.studentCount} Students</div>
                               <div className="mk-subj-comps">
-                                {examTypeConfig.map(et => {
-                                  const st = card.examStatuses[et.name]
-                                  const mean = card.examStatuses[`${et.name}_mean`]
+                                {FORM_EXAMS.map(et => {
+                                  const st = card.examStatuses[et]
+                                  const mean = card.examStatuses[`${et}_mean`]
                                   const clsName = st === 'approved' ? 'mk-subj-comp--approved'
                                     : st === 'submitted' ? 'mk-subj-comp--submitted'
                                     : st === 'draft' ? 'mk-subj-comp--draft'
                                     : st === 'completed' ? 'mk-subj-comp--completed'
                                     : 'mk-subj-comp--pending'
                                   return (
-                                    <span key={et.name} className={`mk-subj-comp ${clsName}`} title={`${et.name}: ${st}${mean ? ` (${mean}%)` : ''}`}>
-                                      {et.name === 'End Term' ? 'ET' : et.name.replace('CAT ', 'C')}
+                                    <span key={et} className={`mk-subj-comp ${clsName}`} title={`${et}: ${st}${mean ? ` (${mean}%)` : ''}`}>
+                                      {et === 'End Term' ? 'ET' : et === 'Midterm' ? 'Mid' : 'Open'}
                                     </span>
                                   )
                                 })}
@@ -1089,7 +1114,7 @@ export default function MarksEntry({ profile }) {
               <button className="me-modal-close" onClick={() => setShowExportModal(false)}>×</button>
             </div>
             <div className="me-modal-body">
-              <div className="me-modal-info">{selectedClass} · {selectedSubject} · {examTypeConfig.map(e => e.name).join('+')} · {term} {year}</div>
+              <div className="me-modal-info">{selectedClass} · {selectedSubject} · {FORM_EXAMS.join('+')} · {term} {year}</div>
               <div className="me-export-options">
                 <label className={`me-export-option ${exportFormat === 'class-sheet' ? 'active' : ''}`}>
                   <input type="radio" name="export-format" value="class-sheet" checked={exportFormat === 'class-sheet'} onChange={e => setExportFormat(e.target.value)} />

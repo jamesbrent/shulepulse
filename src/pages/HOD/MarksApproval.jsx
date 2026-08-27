@@ -149,12 +149,13 @@ export default function MarksApproval() {
   }
 
   const fetchTeacherEntries = async (sid) => {
-    const { data } = await supabase
+    let q = supabase
       .from('grades')
       .select('teacher_id, subject, status, id')
       .eq('school_id', sid)
-      .eq('term', currentTerm)
-      .eq('year', currentYear)
+    if (currentTerm) q = q.eq('term', currentTerm)
+    q = q.eq('year', currentYear)
+    const { data } = await q
 
     const teacherIds = [...new Set((data || []).map(g => g.teacher_id).filter(Boolean))]
     let teacherMap = {}
@@ -188,7 +189,8 @@ export default function MarksApproval() {
       .from('grades')
       .select('*, students(full_name, class, stream, admission_number)')
       .eq('school_id', sid)
-      .eq('term', currentTerm)
+    if (currentTerm) query = query.eq('term', currentTerm)
+    query = query
       .eq('year', currentYear)
       .eq('status', 'submitted')
 
@@ -306,15 +308,18 @@ export default function MarksApproval() {
     const [subject, ...rest] = modExamGroup.split('::')
     const examType = rest.join('::')
 
-    const { data } = await supabase
+    let query = supabase
       .from('grades')
       .select('id, total_score, students(full_name), cat_score, exam_score')
       .eq('school_id', schoolId)
-      .eq('term', currentTerm)
+    if (currentTerm) query = query.eq('term', currentTerm)
+    query = query
       .eq('year', currentYear)
       .eq('subject', subject)
       .eq('exam_type', examType)
       .order('students(full_name)')
+
+    const { data } = await query
 
     const preview = (data || []).map(g => {
       const original = Number(g.total_score || 0)
