@@ -245,7 +245,7 @@ export default function LibraryFines({ schoolId, term, year, onOpenMember }) {
 
   return (
     <div>
-      <div className="lib-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+      <div className="lib-grid">
         <div className="lib-stat-card">
           <div className="lib-stat-icon">
             <span style={{ width: 38, height: 38, borderRadius: 10, background: '#fef3c7', color: '#ca8a04', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -400,7 +400,7 @@ export default function LibraryFines({ schoolId, term, year, onOpenMember }) {
                   <option key={b.id} value={b.id}>{b.title}</option>
                 ))}
               </select>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
                 <div>
                   <label className="lib-label">Amount (KES)</label>
                   <input type="number" min="1" className="lib-input" style={{ width: '100%' }} value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />

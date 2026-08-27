@@ -1187,7 +1187,7 @@ function ClassAveragesTab({ classCBCAverages, grades, assignedClasses, filterSub
 
   return (
     <div className="ct-perf-grid-full">
-      <div className="ct-perf-summary" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div className="ct-perf-summary">
         <div className="ct-perf-sum-card blue">
           <Users size={20} />
           <div><p className="ct-psc-label">Classes</p><p className="ct-psc-value">{displayedClasses.length}</p></div>

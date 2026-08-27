@@ -93,7 +93,7 @@ export default function LibraryOverview({ schoolId, onNavigate }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, alignItems: 'start' }}>
         <div className="lib-card">
           <div className="lib-card-header">
             <div>

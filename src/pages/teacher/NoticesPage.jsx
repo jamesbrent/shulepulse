@@ -124,7 +124,7 @@ export default function NoticesPage({ profile }) {
             <Send size={16} color="#2563eb" /> Create New Notice
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4, display: 'block' }}>Title *</label>
               <input

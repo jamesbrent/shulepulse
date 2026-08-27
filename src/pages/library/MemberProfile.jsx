@@ -304,7 +304,7 @@ export default function MemberProfile({ schoolId, memberId, onNavigate, onBack, 
             ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start', marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16, alignItems: 'start', marginBottom: 16 }}>
             <div className="lib-card">
               <div className="lib-card-header">
                 <div>

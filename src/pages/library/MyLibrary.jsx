@@ -125,7 +125,7 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
         <div className="lib-stat-card">
           <div className="lib-stat-icon">
             <span style={{ width: 38, height: 38, borderRadius: 10, background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
