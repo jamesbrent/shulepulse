@@ -45,9 +45,10 @@ const PLAN_SUGGESTIONS = {
 export default function FeatureLocked({ featureKey }) {
   const { catalog } = useFeatureAccess()
 
-  const feature = catalog.find((f) => f.feature_key === featureKey)
-  const featureLabel = feature?.label || featureKey?.replace(/[.]/g, ' ') || 'This feature'
-  const requiredPlan = PLAN_SUGGESTIONS[featureKey] || 'Pro'
+  const key = Array.isArray(featureKey) ? featureKey[0] : featureKey
+  const feature = catalog.find((f) => f.feature_key === key)
+  const featureLabel = feature?.label || String(key || '').replace(/[.]/g, ' ') || 'This feature'
+  const requiredPlan = PLAN_SUGGESTIONS[key] || 'Pro'
 
   return (
     <div className="feature-locked-container">

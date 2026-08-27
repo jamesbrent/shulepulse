@@ -306,7 +306,7 @@ export default function AssetProfile({
                 <span className="as-timeline-dot" />
                 <div className="as-timeline-body">
                   <div className="as-timeline-head">
-                    <strong style={{ textTransform: 'capitalize' }}>{e.event_type.replace(/_/g, ' ')}</strong>
+                    <strong style={{ textTransform: 'capitalize' }}>{String(e.event_type || '').replace(/_/g, ' ')}</strong>
                     <span className="as-timeline-date">{fmtDateTime(e.occurred_at)}</span>
                   </div>
                   {e.description && <p>{e.description}</p>}

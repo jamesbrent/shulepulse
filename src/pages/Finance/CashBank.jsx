@@ -176,7 +176,7 @@ export default function CashBankPage({ initialTab }) {
     try {
       const payload = { status: to, updated_at: new Date().toISOString() }
       const who = { submitted: 'submitted_by', approved: 'approved_by', posted: 'posted_by' }[to]
-      if (who) { payload[who] = userId; payload[`${who.replace('_by', '')}_at`] = new Date().toISOString() }
+      if (who) { payload[who] = userId; payload[`${String(who).replace('_by', '')}_at`] = new Date().toISOString() }
       if (to === 'posted') {
         const je = await postTransferJournal(supabase, {
           schoolId, userId, transfer: tr,

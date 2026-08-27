@@ -237,7 +237,7 @@ export default function AccountsPayablePage({ initialTab }) {
     try {
       const payload = { status: to, updated_at: new Date().toISOString() }
       const who = { submitted: 'submitted_by', reviewed: 'reviewed_by', approved: 'approved_by', posted: 'posted_by' }[to]
-      if (who) { payload[who] = userId; payload[`${who.replace('_by', '')}_at`] = new Date().toISOString() }
+      if (who) { payload[who] = userId; payload[`${String(who).replace('_by', '')}_at`] = new Date().toISOString() }
       if (to === 'approved') {
         if (!isAdmin) return showToast('Only the admin / principal can approve invoices', false)
         if (inv.created_by === userId) return showToast('You cannot approve your own invoice', false)
@@ -250,7 +250,7 @@ export default function AccountsPayablePage({ initialTab }) {
       }
       const { error } = await supabase.from('ap_invoices').update(payload).eq('id', inv.id)
       if (error) throw error
-      showToast(`Invoice ${inv.invoice_no} → ${to.replace(/_/g, ' ')}`)
+      showToast(`Invoice ${inv.invoice_no} → ${String(to).replace(/_/g, ' ')}`)
       await writeAudit(supabase, { schoolId, action: `ap_invoice_${to}`, details: { invoice_id: inv.id, invoice_no: inv.invoice_no } })
       if (to === 'approved') {
         await logInvoiceToAssets(supabase, { schoolId, invoiceId: inv.id, eventType: 'invoice_approved', description: `AP invoice ${inv.invoice_no} approved` })
@@ -372,7 +372,7 @@ export default function AccountsPayablePage({ initialTab }) {
       }
       const payload = { status: to, updated_at: new Date().toISOString() }
       const who = { submitted: 'submitted_by', reviewed: 'reviewed_by', approved: 'approved_by', processed: 'processed_by', paid: 'paid_by', posted: 'posted_by' }[to]
-      if (who) { payload[who] = userId; payload[`${who.replace('_by', '')}_at`] = new Date().toISOString() }
+      if (who) { payload[who] = userId; payload[`${String(who).replace('_by', '')}_at`] = new Date().toISOString() }
       if (to === 'posted') {
         const je = await postPaymentJournal(supabase, { schoolId, userId, payment: pay, payeeName: supplierOf(d, pay.supplier_id)?.name || pay.payee_name, entryDate: pay.payment_date })
         payload.journal_entry_id = je.id
@@ -383,7 +383,7 @@ export default function AccountsPayablePage({ initialTab }) {
         const { data: allocs } = await supabase.from('ap_payment_allocations').select('invoice_id').eq('payment_id', pay.id)
         for (const a of allocs || []) await recomputeInvoicePaid(supabase, { schoolId, invoiceId: a.invoice_id })
       }
-      showToast(`Payment ${pay.payment_no} → ${to.replace(/_/g, ' ')}`)
+      showToast(`Payment ${pay.payment_no} → ${String(to).replace(/_/g, ' ')}`)
       await writeAudit(supabase, { schoolId, action: `ap_payment_${to}`, details: { payment_id: pay.id, payment_no: pay.payment_no } })
       if (to === 'posted') {
         await logPaymentToAssets(supabase, { schoolId, paymentId: pay.id, eventType: 'payment_made', description: `Payment ${pay.payment_no} made — payable settled` })

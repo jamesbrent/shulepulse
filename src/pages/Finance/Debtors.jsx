@@ -74,7 +74,7 @@ export default function DebtorsPage() {
 
   const sendWhatsApp = (d) => {
     const msg = `Dear ${d.parent_name || 'Parent'}, fees balance for ${d.full_name} (${d.class} ${d.stream || ''}) is ${fmt(d.balance)}. Please pay at the school finance office. Thank you.`
-    window.open(`https://wa.me/${d.parent_phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/${String(d.parent_phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const sendAllReminders = async () => {
