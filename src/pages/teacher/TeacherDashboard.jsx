@@ -527,15 +527,10 @@ export default function TeacherDashboard() {
       <main className="teacher-main">
         <header className="teacher-header">
           {activeNav === 'attendance' ? (
-            <>
-              <div />
-              <div className="header-actions">
-                <button className="btn-primary" onClick={() => { setActiveNav('grades'); setMobileOpen(false) }}>
-                  <BarChart2 size={15} />
-                  Submit Grades
-                </button>
-              </div>
-            </>
+            <div>
+              <h1>{pageTitles[activeNav]}</h1>
+              <p>{new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
           ) : (
             <>
               <div>
