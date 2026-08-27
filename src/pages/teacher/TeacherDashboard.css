@@ -628,7 +628,7 @@
 
   .teacher-main {
     margin-left: 0;
-    padding: 16px 14px calc(86px + env(safe-area-inset-bottom, 0px));
+    padding: calc(70px + env(safe-area-inset-top, 0px)) 14px calc(86px + env(safe-area-inset-bottom, 0px));
   }
 
   .teacher-header h1 { font-size: 20px; }
@@ -668,6 +668,6 @@
   .t-stat-card { padding: 12px; }
   .t-stat-value { font-size: 20px; }
   .t-stat-label { font-size: 11px; }
-  .teacher-main { padding: 12px 10px calc(86px + env(safe-area-inset-bottom, 0px)); }
+  .teacher-main { padding: calc(64px + env(safe-area-inset-top, 0px)) 10px calc(86px + env(safe-area-inset-bottom, 0px)); }
   .teacher-card { padding: 12px 10px !important; }
 }

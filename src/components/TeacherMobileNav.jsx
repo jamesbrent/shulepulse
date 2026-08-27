@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import {
   LayoutDashboard, Calendar, BookOpen, ClipboardList,
   MoreHorizontal, X, LogOut,
@@ -21,9 +21,9 @@ export default function TeacherMobileNav({
   profile,
   schoolName,
   onLogout,
+  moreOpen,
+  setMoreOpen,
 }) {
-  const [moreOpen, setMoreOpen] = useState(false)
-
   useEffect(() => {
     document.body.style.overflow = moreOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -35,7 +35,6 @@ export default function TeacherMobileNav({
 
   const go = (key, markSeen) => {
     setMoreOpen(false)
-    document.body.style.overflow = ''
     if (markSeen) onNoticesSeen?.()
     onNavigate?.(key)
   }
@@ -120,7 +119,7 @@ export default function TeacherMobileNav({
             </div>
 
             <div className="tmn-sheet-footer">
-              <button className="tmn-logout" onClick={() => { setMoreOpen(false); document.body.style.overflow = ''; onLogout?.() }}>
+              <button className="tmn-logout" onClick={() => { setMoreOpen(false); onLogout?.() }}>
                 <LogOut size={16} /> Logout
               </button>
             </div>

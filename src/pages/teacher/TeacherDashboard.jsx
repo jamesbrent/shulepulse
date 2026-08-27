@@ -34,6 +34,7 @@ import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
 import { TEACHER_NAV_FEATURES } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
 import TeacherMobileNav from '../../components/TeacherMobileNav'
+import TeacherMobileHeader from '../../components/TeacherMobileHeader'
 
 export default function TeacherDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard')
@@ -49,6 +50,7 @@ export default function TeacherDashboard() {
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const { logoUrl, schoolName } = useBrandingStore()
   const { features, isSuperadmin } = useFeatureAccess()
   const notifCount = useNoticeCount(profile?.school_id, profile?.id)
@@ -213,6 +215,7 @@ export default function TeacherDashboard() {
 
   const handleNav = (key) => {
     setActiveNav(key)
+    setMoreOpen(false)
     if (key === 'notices') markNoticesSeen(profile?.id)
     window.scrollTo({ top: 0 })
   }
@@ -463,6 +466,15 @@ export default function TeacherDashboard() {
 
   return (
     <div className="teacher-root">
+      <TeacherMobileHeader
+        schoolName={schoolName}
+        logoUrl={logoUrl}
+        profile={profile}
+        notifCount={notifCount}
+        onOpenMore={() => setMoreOpen(true)}
+        onOpenNotices={() => handleNav('notices')}
+      />
+
       <button className="teacher-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu size={20} />
       </button>
@@ -554,6 +566,8 @@ export default function TeacherDashboard() {
         profile={profile}
         schoolName={schoolName}
         onLogout={handleLogout}
+        moreOpen={moreOpen}
+        setMoreOpen={setMoreOpen}
       />
     </div>
   )
