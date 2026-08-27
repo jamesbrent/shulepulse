@@ -1,5 +1,4 @@
 import { supabase } from '../../lib/supabase'
-import { logAction } from '../audit/auditService'
 
 let _planPrices = null
 
@@ -21,32 +20,17 @@ export async function getPriceDiff(currentPlan, newPlan) {
 }
 
 export async function changeSchoolPlan(schoolId, schoolName, currentPlan, newPlan) {
-  const now = new Date().toISOString()
   const diff = await getPriceDiff(currentPlan, newPlan)
 
-  const { error } = await supabase
-    .from('schools')
-    .update({
-      plan: newPlan,
-      subscription_start: now,
-      subscription_end: null,
-    })
-    .eq('id', schoolId)
+  const { data, error } = await supabase.rpc('set_school_plan', {
+    p_school_id: schoolId,
+    p_plan_key: newPlan,
+    p_options: {},
+  })
 
   if (error) throw new Error(error.message)
 
-  await logAction({
-    schoolId,
-    action: 'school.plan_changed',
-    details: {
-      schoolName,
-      fromPlan: currentPlan,
-      toPlan: newPlan,
-      priceDiff: diff,
-    },
-  })
-
-  return { success: true, priceDiff: diff }
+  return { success: true, priceDiff: diff, result: data }
 }
 
 export async function fetchSubscriptionStats() {

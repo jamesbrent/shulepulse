@@ -174,17 +174,11 @@ export async function updatePlan(planId, updates) {
 }
 
 export async function updateSchoolPlan(schoolId, planKey, options = {}) {
-  const now = new Date().toISOString()
-  const update = { plan: planKey, subscription_start: now }
-
-  if (options.subscription_end) update.subscription_end = options.subscription_end
-  if (options.subscription_status) update.subscription_status = options.subscription_status
-  if (options.billing_cycle) update.billing_cycle = options.billing_cycle
-
-  const { error } = await supabase
-    .from('schools')
-    .update(update)
-    .eq('id', schoolId)
+  const { error } = await supabase.rpc('set_school_plan', {
+    p_school_id: schoolId,
+    p_plan_key: planKey,
+    p_options: options,
+  })
 
   if (error) throw new Error(error.message)
   invalidateCache()
@@ -192,20 +186,15 @@ export async function updateSchoolPlan(schoolId, planKey, options = {}) {
 }
 
 export async function suspendSchool(schoolId) {
-  return updateSchoolPlan(schoolId, null, { subscription_status: 'suspended' })
+  return updateSchoolPlan(schoolId, null, { suspend: true })
 }
 
 export async function reactivateSchool(schoolId, planKey) {
-  return updateSchoolPlan(schoolId, planKey, { subscription_status: 'active' })
+  return updateSchoolPlan(schoolId, planKey, { reactivate: true })
 }
 
 export async function setTrialSchool(schoolId, planKey, days = 14) {
-  const end = new Date()
-  end.setDate(end.getDate() + days)
-  return updateSchoolPlan(schoolId, planKey, {
-    subscription_status: 'trial',
-    subscription_end: end.toISOString(),
-  })
+  return updateSchoolPlan(schoolId, planKey, { trial_days: days })
 }
 
 export function invalidateCache() {

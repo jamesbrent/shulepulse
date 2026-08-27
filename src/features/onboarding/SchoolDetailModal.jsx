@@ -8,7 +8,6 @@ import {
   ToggleLeft, ToggleRight, DollarSign, Building2, Loader, Save, Pause, Play
 } from 'lucide-react'
 import { fetchSchoolStats, fetchSchoolRecentActivity, getModulesConfig } from '../superadmin/schoolService'
-import { supabase } from '../../lib/supabase'
 import {
   fetchAllPlans, fetchSchoolFeatures, fetchFeatureCatalog,
   fetchSchoolOverrides, setSchoolOverride, removeSchoolOverride,
@@ -126,8 +125,7 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
       const currentEnd = school.subscription_end ? new Date(school.subscription_end) : new Date()
       if (currentEnd < new Date()) currentEnd.setTime(Date.now())
       currentEnd.setDate(currentEnd.getDate() + days)
-      const { error } = await supabase.from('schools').update({ subscription_end: currentEnd.toISOString() }).eq('id', school.id)
-      if (error) throw new Error(error.message)
+      await updateSchoolPlan(school.id, school.plan || 'basic', { subscription_end: currentEnd.toISOString() })
       setSchool((prev) => ({ ...prev, subscription_end: currentEnd.toISOString() }))
       showToast('success', `Extended by ${days} days`)
     } catch (err) {
