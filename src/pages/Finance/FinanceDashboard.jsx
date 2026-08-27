@@ -544,17 +544,6 @@ export default function FinanceDashboard() {
             <h1>{activeItem.key === 'dashboard' ? 'Finance Dashboard' : activeItem.label}</h1>
             <p>{currentTerm ? `${currentTerm}, ${currentYear}` : `${currentYear}`} · {school?.name || ''}</p>
           </div>
-          <div className="b-header-actions">
-            <button className="b-btn-secondary" onClick={() => go(findItem('reports:fee') || { key: 'reports:fee', label: 'Fee Collection', page: 'reports', tab: 'overview' })}>
-              <Upload size={15} /> Export Report
-            </button>
-            <button className="b-btn-primary" onClick={() => { go(findItem('payments') || { key: 'payments', label: 'Payments', page: 'payments' }); setOpenRecordPayment(true) }}>
-              <UserPlus size={15} /> Record Payment
-            </button>
-            <div className="b-admin-avatar">
-              {authProfile?.full_name?.[0]?.toUpperCase() || 'BU'}
-            </div>
-          </div>
         </header>
 
         <FeatureGate feature={FINANCE_NAV_FEATURES[activeItem.page] || FINANCE_NAV_FEATURES[activeItem.key]?.[0]}>
