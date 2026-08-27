@@ -64,7 +64,7 @@ export default function FeePaymentsPage({ activeChild }) {
 
   return (
     <div className="fees-page-view">
-      <div className="att-summary" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div className="att-summary">
         <div className="att-sum-card blue">
           <DollarSign size={20} />
           <div>

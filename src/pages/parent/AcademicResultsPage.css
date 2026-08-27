@@ -2,6 +2,7 @@
 
 .att-summary {
   display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 .att-sum-card {
@@ -85,4 +86,29 @@
   padding: 60px;
   color: #94a3b8;
   font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Parent Academic Results
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .att-summary { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .att-summary { gap: 10px; }
+  .att-sum-card { padding: 14px; gap: 10px; }
+  .asc-value { font-size: 20px; }
+  .section-card { padding: 16px; }
+  .card-header { margin-bottom: 14px; }
+  .card-header h3 { font-size: 14px; }
+  .att-table th, .att-table td { padding: 10px 12px; font-size: 13px; }
+  .att-table { font-size: 13px; }
+}
+@media (max-width: 480px) {
+  .att-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .att-sum-card { padding: 12px; gap: 8px; }
+  .asc-value { font-size: 18px; }
+  .section-card { padding: 12px; }
+  .grades-page-view { gap: 14px; }
 }

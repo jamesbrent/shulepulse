@@ -110,7 +110,7 @@ export default function AcademicResultsPage({ activeChild }) {
 
       {activeTab === 'results' && (
         <>
-          <div className="att-summary" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="att-summary">
             <div className="att-sum-card blue">
               <BarChart2 size={20} />
               <div>
