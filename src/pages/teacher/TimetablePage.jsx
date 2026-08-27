@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Calendar, Clock, BookOpen, Users, GraduationCap, ChevronLeft, ChevronRight, Download } from 'lucide-react'
+import { Calendar, Clock, BookOpen, Users, GraduationCap, Download } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import './TimetablePage.css'
 
@@ -122,14 +122,6 @@ export default function TimetablePage({ profile }) {
   const [classMap, setClassMap]       = useState({})   // classId → class object
   const [teacherCode, setTeacherCode] = useState('')
   const [loading, setLoading]         = useState(true)
-  const [selectedDay, setSelectedDay] = useState(todayName)  // mobile day filter
-  const [isMobile, setIsMobile]       = useState(window.innerWidth < 768)
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
 
   const printRef = useRef(null)
 
@@ -249,11 +241,6 @@ export default function TimetablePage({ profile }) {
   const activeTimeSlots  = getWidestSlotsForClasses(allTaughtClasses)
   const lessonSlots      = activeTimeSlots.filter(s => s.type === 'lesson')
 
-  // ── Mobile day navigation ──────────────────────────────────
-  const dayIdx        = DAYS.indexOf(selectedDay)
-  const prevDay       = () => setSelectedDay(DAYS[Math.max(0, dayIdx - 1)])
-  const nextDay       = () => setSelectedDay(DAYS[Math.min(DAYS.length - 1, dayIdx + 1)])
-
   const todayStr = new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
   if (loading) return (
@@ -324,13 +311,6 @@ export default function TimetablePage({ profile }) {
       ) : (
         <div className="tt-grid-wrap">
           <div className="tt-toolbar">
-            {isMobile && (
-              <div className="tt-day-nav">
-                <button onClick={prevDay} disabled={dayIdx === 0}><ChevronLeft size={16} /></button>
-                <span className="tt-day-nav-label">{selectedDay}</span>
-                <button onClick={nextDay} disabled={dayIdx === DAYS.length - 1}><ChevronRight size={16} /></button>
-              </div>
-            )}
             <div className="tt-toolbar-spacer" />
             {timetable.length > 0 && (
               <button className="tt-btn tt-btn--dark" onClick={handlePrint}>
@@ -361,7 +341,7 @@ export default function TimetablePage({ profile }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {(isMobile ? [selectedDay] : DAYS).map((day, di) => (
+                  {DAYS.map((day, di) => (
                     <tr
                       key={day}
                       className={`tt-row ${day === todayName ? 'tt-row--today' : ''}`}
@@ -375,13 +355,6 @@ export default function TimetablePage({ profile }) {
                       {activeTimeSlots.map((slot, si) => {
                         // Break columns — span all rows, only render on first day
                         if (slot.type === 'break') {
-                          if (isMobile) {
-                            return (
-                              <td key={slot.key} className="tt-td tt-td-break">
-                                <span className="tt-break-lbl">{slot.breakLabel}</span>
-                              </td>
-                            )
-                          }
                           if (di === 0) return (
                             <td
                               key={slot.key}

@@ -102,27 +102,10 @@
 .tt-btn--dark { background: #0F172A; color: #fff; }
 .tt-btn--dark:hover { background: #1E293B; }
 
-/* Mobile day nav */
-.tt-day-nav {
-  display: flex; align-items: center; gap: 6px;
-}
-.tt-day-nav button {
-  width: 28px; height: 28px;
-  border: 1px solid var(--tt-border); border-radius: 6px;
-  background: var(--tt-surf); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--tt-text-sec); transition: all 0.12s;
-}
-.tt-day-nav button:hover:not(:disabled) { background: #F1F5F9; }
-.tt-day-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
-.tt-day-nav-label {
-  font-size: 13px; font-weight: 700; color: var(--tt-text);
-  min-width: 80px; text-align: center;
-}
-
 /* ── Scroll ── */
 .tt-scroll {
   overflow-x: auto; padding: 0 4px 4px;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Grid Table ── */
@@ -264,7 +247,6 @@
   .tt-stat-value { font-size: 20px !important; }
   .tt-today-list { flex-direction: column; }
   .tt-toolbar { padding: 10px 14px; flex-wrap: wrap; }
-  .tt-day-nav { width: 100%; justify-content: center; }
   .tt-today { padding: 14px; }
   .tt-today-item { padding: 10px 12px; min-height: 44px; }
   .tt-cell { height: 48px; padding: 2px; }

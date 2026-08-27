@@ -25,6 +25,8 @@ import '../teacher/NoticesPage.css'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import ClassTeacherLibrary from '../library/ClassTeacherLibrary'
+import TimetablePage from '../teacher/TimetablePage'
+import '../teacher/TimetablePage.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
 import './ParentCommunication.css'
 import './ClassTeacherDashboard.css'
@@ -64,6 +66,7 @@ export default function ClassTeacherDashboard() {
     { key: 'performance', label: 'Performance Tracker', icon: <BarChart3 size={16} /> },
     { key: 'comments', label: 'Class Comments', icon: <MessageSquare size={16} /> },
     { key: 'communication', label: 'Parent Communication', icon: <Phone size={16} /> },
+    { key: 'timetable', label: 'Timetable', icon: <Calendar size={16} /> },
     { key: 'notices', label: 'Notices', icon: <Bell size={16} /> },
     { key: 'library', label: 'Library', icon: <BookOpen size={16} /> },
     { key: 'support', label: 'Support', icon: <MessageSquare size={16} /> },
@@ -167,6 +170,7 @@ export default function ClassTeacherDashboard() {
     performance: 'Performance Tracker',
     comments: 'Class Comments',
     communication: 'Parent Communication',
+    timetable: 'Timetable',
     notices: 'Notices & Announcements',
     library: 'Library',
     support: 'Support Tickets',
@@ -186,6 +190,8 @@ export default function ClassTeacherDashboard() {
         return <ClassComments {...sharedProps} />
       case 'communication':
         return <ParentCommunication {...sharedProps} />
+      case 'timetable':
+        return <TimetablePage profile={authProfile} />
       case 'notices':
         return <NoticesPage profile={authProfile} />
       case 'library':
