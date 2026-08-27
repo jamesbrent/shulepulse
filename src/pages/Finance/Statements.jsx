@@ -238,7 +238,7 @@ export default function StatementsPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 20, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20, alignItems: 'start' }}>
         <div className="b-section-card" style={{ padding: 12 }}>
           <h4 style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', color: '#64748b' }}>Students</h4>
           <div style={{ maxHeight: 500, overflowY: 'auto' }}>
