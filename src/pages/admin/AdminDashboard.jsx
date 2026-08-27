@@ -58,7 +58,7 @@ import MarksApproval from '../HOD/MarksApproval'
 import DeptAnalytics from '../HOD/DeptAnalytics'
 import ReportCenter from '../HOD/ReportCenter'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
-import { ADMIN_NAV_FEATURES } from '../../features/access/featureMap'
+import { ADMIN_NAV_FEATURES, navItemAllowed } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
 import SubjectPerformance from '../HOD/SubjectPerformance'
 import TeacherReview from '../HOD/TeacherReview'
@@ -281,18 +281,14 @@ export default function AdminDashboard() {
     if (isSuperadmin) return NAV_GROUPS
     return NAV_GROUPS.map((group) => ({
       ...group,
-      items: group.items.filter((item) => {
-        const required = ADMIN_NAV_FEATURES[item.key]
-        if (!required) return true
-        return required.some((f) => features.includes(f))
-      }),
+      items: group.items.filter((item) => navItemAllowed(item, ADMIN_NAV_FEATURES, features)),
     })).filter((group) => group.items.length > 0)
   }, [features, isSuperadmin])
 
   useEffect(() => {
-    if (isSuperadmin || activeNav === 'dashboard') return
-    const required = ADMIN_NAV_FEATURES[activeNav]
-    if (required && !required.some((f) => features.includes(f))) {
+    if (isSuperadmin) return
+    const item = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.key === activeNav)
+    if (item && !navItemAllowed(item, ADMIN_NAV_FEATURES, features)) {
       setActiveNav('dashboard')
     }
   }, [features, activeNav, isSuperadmin])

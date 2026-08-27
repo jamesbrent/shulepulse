@@ -51,6 +51,10 @@ export const FINANCE_NAV_FEATURES = {
   ap: ['finance.ap'],
   finance_reports: ['finance.reports'],
   financial_statements: ['finance.financial_statements'],
+  accounts_payable: ['finance.ap'],
+  payroll_reports: ['payroll.employees'],
+  comments: ['hr.comments'],
+  reports: ['finance.reports'],
 }
 
 export const HOD_NAV_FEATURES = {
@@ -58,9 +62,12 @@ export const HOD_NAV_FEATURES = {
   marks_approval: ['academics.marks_approval'],
   dept_exams: ['academics.exams'],
   subject_perf: ['academics.performance'],
+  subject_performance: ['academics.performance'],
   dept_analytics: ['academics.performance'],
+  analytics: ['academics.performance'],
   teacher_review: ['academics.teacher_review'],
   report_center: ['platform.reports'],
+  library: ['library.catalogue'],
 }
 
 export const REGISTRAR_NAV_FEATURES = {
@@ -69,18 +76,24 @@ export const REGISTRAR_NAV_FEATURES = {
   promotions: ['students.promotion'],
   transfers: ['students.transfers'],
   alumni: ['students.alumni'],
+  archives: ['students.alumni'],
   bulk_import: ['students.import'],
+  'bulk-import': ['students.import'],
   documents: ['students.documents'],
   parents: ['students.records'],
+  guardians: ['students.records'],
+  library: ['library.catalogue'],
 }
 
 export const RECEPTION_NAV_FEATURES = {
   admissions: ['students.admission'],
+  'new-admission': ['students.admission'],
   visitors: ['reception.front_office'],
   appointments: ['reception.front_office'],
   calendar: ['reception.calendar'],
   communication: ['communication.messages'],
   requests: ['reception.front_office'],
+  reports: ['reception.front_office'],
   students: ['students.records'],
   parents: ['students.records'],
 }
@@ -88,11 +101,15 @@ export const RECEPTION_NAV_FEATURES = {
 export const TEACHER_NAV_FEATURES = {
   timetable: ['academics.timetable'],
   marks_entry: ['academics.marks_entry'],
-  attendance: ['students.attendance'],
+  marks: ['academics.marks_entry'],
   my_classes: ['academics.marks_entry'],
+  myclasses: ['academics.marks_entry'],
+  attendance: ['students.attendance'],
   grades: ['academics.grades'],
   cbc_competency: ['academics.cbc_analysis'],
+  cbc: ['academics.cbc_analysis'],
   comments: ['hr.comments'],
+  library: ['library.catalogue'],
   notices: ['communication.notices'],
 }
 
@@ -101,11 +118,16 @@ export const CLASS_TEACHER_NAV_FEATURES = {
   performance: ['academics.performance'],
   comments: ['hr.comments'],
   parent_comm: ['communication.messages'],
+  communication: ['communication.messages'],
+  library: ['library.catalogue'],
+  marks: ['academics.marks_entry'],
+  timetable: ['academics.timetable'],
 }
 
 export const LIBRARY_NAV_FEATURES = {
   catalogue: ['library.catalogue'],
   borrow_return: ['library.circulation'],
+  borrow: ['library.circulation'],
   members: ['library.catalogue'],
   reservations: ['library.circulation'],
   overdue: ['library.circulation'],
@@ -114,21 +136,29 @@ export const LIBRARY_NAV_FEATURES = {
   management: ['library.catalogue'],
 }
 
+export const FREE_NAV_KEYS = ['dashboard', 'notices', 'support']
+
+export function navItemAllowed(item, navFeatures, features) {
+  const key = item?.key
+  if (!key) return false
+  if (FREE_NAV_KEYS.includes(key)) return true
+  const required = navFeatures?.[key] || navFeatures?.[item?.page]
+  if (!required) return false
+  return required.some((f) => features.includes(f))
+}
+
 export function getNavItemsWithFeatureCheck(navItems, navFeatures, features) {
   return navItems
     .map((item) => {
       if (item.children) {
         const filteredChildren = item.children.filter((child) => {
-          const requiredFeatures = navFeatures[child.key]
-          if (!requiredFeatures) return true
-          return requiredFeatures.some((f) => features.includes(f))
+          return navItemAllowed(child, navFeatures, features)
         })
         if (filteredChildren.length === 0) return null
         return { ...item, children: filteredChildren }
       }
-      const requiredFeatures = navFeatures[item.key]
-      if (!requiredFeatures) return true
-      return requiredFeatures.some((f) => features.includes(f))
+      if (!navItemAllowed(item, navFeatures, features)) return null
+      return item
     })
     .filter(Boolean)
 }

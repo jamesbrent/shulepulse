@@ -42,7 +42,7 @@ import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import LibraryContent from '../library/LibraryContent'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
-import { REGISTRAR_NAV_FEATURES } from '../../features/access/featureMap'
+import { REGISTRAR_NAV_FEATURES, navItemAllowed } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
 
 export default function RegistrarDashboard() {
@@ -89,17 +89,13 @@ export default function RegistrarDashboard() {
 
   const filteredNavItems = useMemo(() => {
     if (isSuperadmin) return navItems
-    return navItems.filter((item) => {
-      const required = REGISTRAR_NAV_FEATURES[item.key]
-      if (!required) return true
-      return required.some((f) => features.includes(f))
-    })
+    return navItems.filter((item) => navItemAllowed(item, REGISTRAR_NAV_FEATURES, features))
   }, [features, isSuperadmin])
 
   useEffect(() => {
-    if (isSuperadmin || activeNav === 'dashboard') return
-    const required = REGISTRAR_NAV_FEATURES[activeNav]
-    if (required && !required.some((f) => features.includes(f))) {
+    if (isSuperadmin) return
+    const item = navItems.find((i) => i.key === activeNav)
+    if (item && !navItemAllowed(item, REGISTRAR_NAV_FEATURES, features)) {
       setActiveNav('dashboard')
     }
   }, [features, activeNav, isSuperadmin])

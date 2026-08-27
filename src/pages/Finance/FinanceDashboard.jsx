@@ -51,7 +51,7 @@ import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import './FinanceDashboard.css'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
-import { FINANCE_NAV_FEATURES } from '../../features/access/featureMap'
+import { FINANCE_NAV_FEATURES, navItemAllowed } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
 
 const DASHBOARD_ITEM = { key: 'dashboard', label: 'Dashboard', page: 'dashboard' }
@@ -184,11 +184,7 @@ export default function FinanceDashboard() {
       groups: section.groups
         .map((group) => ({
           ...group,
-          items: group.items.filter((item) => {
-            const required = FINANCE_NAV_FEATURES[item.key] || FINANCE_NAV_FEATURES[item.page]
-            if (!required) return true
-            return required.some((f) => features.includes(f))
-          }),
+          items: group.items.filter((item) => navItemAllowed(item, FINANCE_NAV_FEATURES, features)),
         }))
         .filter((group) => group.items.length > 0),
     })).filter((section) => section.groups.length > 0)
@@ -196,9 +192,7 @@ export default function FinanceDashboard() {
 
   useEffect(() => {
     if (isSuperadmin || activeItem.key === 'dashboard') return
-    const page = activeItem.page || activeItem.key
-    const required = FINANCE_NAV_FEATURES[page] || FINANCE_NAV_FEATURES[activeItem.key]
-    if (required && !required.some((f) => features.includes(f))) {
+    if (!navItemAllowed(activeItem, FINANCE_NAV_FEATURES, features)) {
       setActiveItem(DASHBOARD_ITEM)
     }
   }, [features, activeItem, isSuperadmin])

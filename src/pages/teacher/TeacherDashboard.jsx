@@ -31,7 +31,7 @@ import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import SchoolSupportPage from '../../features/support/SchoolSupportPage'
 import '../../features/support/SchoolSupportPage.css'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
-import { TEACHER_NAV_FEATURES } from '../../features/access/featureMap'
+import { TEACHER_NAV_FEATURES, navItemAllowed } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
 import TeacherMobileNav from '../../components/TeacherMobileNav'
 import TeacherMobileHeader from '../../components/TeacherMobileHeader'
@@ -75,17 +75,13 @@ export default function TeacherDashboard() {
 
   const filteredNavItems = useMemo(() => {
     if (isSuperadmin) return navItems
-    return navItems.filter((item) => {
-      const required = TEACHER_NAV_FEATURES[item.key]
-      if (!required) return true
-      return required.some((f) => features.includes(f))
-    })
+    return navItems.filter((item) => navItemAllowed(item, TEACHER_NAV_FEATURES, features))
   }, [features, isSuperadmin])
 
   useEffect(() => {
-    if (isSuperadmin || activeNav === 'dashboard') return
-    const required = TEACHER_NAV_FEATURES[activeNav]
-    if (required && !required.some((f) => features.includes(f))) {
+    if (isSuperadmin) return
+    const item = navItems.find((i) => i.key === activeNav)
+    if (item && !navItemAllowed(item, TEACHER_NAV_FEATURES, features)) {
       setActiveNav('dashboard')
     }
   }, [features, activeNav, isSuperadmin])

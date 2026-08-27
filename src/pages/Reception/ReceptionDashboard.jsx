@@ -26,7 +26,7 @@ import Requests from './Requests'
 import Reports from './Reports'
 import NewAdmission from './NewAdmission'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
-import { RECEPTION_NAV_FEATURES } from '../../features/access/featureMap'
+import { RECEPTION_NAV_FEATURES, navItemAllowed } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
 
 const NAV_GROUPS = [
@@ -92,18 +92,14 @@ export default function ReceptionDashboard() {
     if (isSuperadmin) return NAV_GROUPS
     return NAV_GROUPS.map((group) => ({
       ...group,
-      items: group.items.filter((item) => {
-        const required = RECEPTION_NAV_FEATURES[item.key]
-        if (!required) return true
-        return required.some((f) => features.includes(f))
-      }),
+      items: group.items.filter((item) => navItemAllowed(item, RECEPTION_NAV_FEATURES, features)),
     })).filter((group) => group.items.length > 0)
   }, [features, isSuperadmin])
 
   useEffect(() => {
-    if (isSuperadmin || activeNav === 'dashboard') return
-    const required = RECEPTION_NAV_FEATURES[activeNav]
-    if (required && !required.some((f) => features.includes(f))) {
+    if (isSuperadmin) return
+    const item = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.key === activeNav)
+    if (item && !navItemAllowed(item, RECEPTION_NAV_FEATURES, features)) {
       setActiveNav('dashboard')
     }
   }, [features, activeNav, isSuperadmin])
@@ -388,7 +384,8 @@ export default function ReceptionDashboard() {
   }
 
   return (
-    <div className="rcp-root">
+    <FeatureGate feature="reception.front_office">
+      <div className="rcp-root">
       <button className="rcp-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu size={20} />
       </button>
@@ -465,6 +462,7 @@ export default function ReceptionDashboard() {
           {renderContent()}
         </FeatureGate>
       </main>
-    </div>
+      </div>
+    </FeatureGate>
   )
 }

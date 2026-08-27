@@ -23,6 +23,7 @@ import CBCCompetency from './CBCCompetency'
 import NoticesPage from '../teacher/NoticesPage'
 import '../teacher/NoticesPage.css'
 import LibraryContent from '../library/LibraryContent'
+import FeatureGate from '../../features/access/FeatureGate'
 
 export default function DeputyAdminDashboard() {
   const { profile: authProfile } = useAuthStore()
@@ -130,7 +131,7 @@ export default function DeputyAdminDashboard() {
       case 'students':
         return <Students />
       case 'teachers':
-        return <Teachers />
+        return <FeatureGate feature="hr.staff_management"><Teachers /></FeatureGate>
       case 'timetable':
         return <Timetable />
       case 'attendance':
@@ -138,15 +139,15 @@ export default function DeputyAdminDashboard() {
       case 'exams':
         return <Exams />
       case 'discipline':
-        return <Discipline />
+        return <FeatureGate feature="students.discipline"><Discipline /></FeatureGate>
       case 'support':
         return <SupportTicket />
       case 'cbc':
-        return <CBCCompetency />
+        return <FeatureGate feature="academics.cbc_analysis"><CBCCompetency /></FeatureGate>
       case 'notices':
         return <NoticesPage profile={authProfile} />
       case 'library':
-        return <LibraryContent schoolId={authProfile?.school_id} school={school} profile={authProfile} />
+        return <FeatureGate feature="library.catalogue"><LibraryContent schoolId={authProfile?.school_id} school={school} profile={authProfile} /></FeatureGate>
       default:
         return renderDashboard()
     }

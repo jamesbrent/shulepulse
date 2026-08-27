@@ -26,7 +26,7 @@ import LibraryFines from './LibraryFines'
 import MemberProfile from './MemberProfile'
 import NoticesPage from '../teacher/NoticesPage'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
-import { LIBRARY_NAV_FEATURES } from '../../features/access/featureMap'
+import { LIBRARY_NAV_FEATURES, navItemAllowed } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
 
 export default function LibrarianDashboard() {
@@ -59,17 +59,13 @@ export default function LibrarianDashboard() {
 
   const filteredNavItems = useMemo(() => {
     if (isSuperadmin) return navItems
-    return navItems.filter((item) => {
-      const required = LIBRARY_NAV_FEATURES[item.key]
-      if (!required) return true
-      return required.some((f) => features.includes(f))
-    })
+    return navItems.filter((item) => navItemAllowed(item, LIBRARY_NAV_FEATURES, features))
   }, [features, isSuperadmin])
 
   useEffect(() => {
-    if (isSuperadmin || activeNav === 'dashboard') return
-    const required = LIBRARY_NAV_FEATURES[activeNav]
-    if (required && !required.some((f) => features.includes(f))) {
+    if (isSuperadmin) return
+    const item = navItems.find((i) => i.key === activeNav)
+    if (item && !navItemAllowed(item, LIBRARY_NAV_FEATURES, features)) {
       setActiveNav('dashboard')
     }
   }, [features, activeNav, isSuperadmin])
@@ -121,7 +117,8 @@ export default function LibrarianDashboard() {
   }
 
   return (
-    <div className="lib-root">
+    <FeatureGate feature="library.catalogue">
+      <div className="lib-root">
       <button className="lib-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu size={20} />
       </button>
@@ -191,6 +188,7 @@ export default function LibrarianDashboard() {
           {renderContent()}
         </FeatureGate>
       </main>
-    </div>
+      </div>
+    </FeatureGate>
   )
 }
