@@ -44,6 +44,7 @@ export default function GradesPage({ profile }) {
   const [exporting, setExporting] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState('summary')
+  const termInited = useRef(false)
 
   useEffect(() => {
     if (!profile?.school_id) return
@@ -66,6 +67,29 @@ export default function GradesPage({ profile }) {
       .eq('id', schoolId)
       .single()
     setSchool(schoolData)
+
+    let defaultTerm = schoolData?.current_term
+    let defaultYear = schoolData?.current_year
+    if (!termInited.current) {
+      if (!defaultTerm || !defaultYear) {
+        const { data: gradeRows } = await supabase
+          .from('grades')
+          .select('term, year')
+          .eq('school_id', schoolId)
+        const rows = gradeRows || []
+        if (!defaultTerm) {
+          const terms = [...new Set(rows.map(r => r.term).filter(Boolean))].sort()
+          defaultTerm = terms[terms.length - 1] || TERMS[1]
+        }
+        if (!defaultYear) {
+          const years = [...new Set(rows.map(r => r.year).filter(Boolean))].sort((a, b) => Number(a) - Number(b))
+          defaultYear = years[years.length - 1] || CURRENT_YEAR
+        }
+      }
+      termInited.current = true
+      setTerm(defaultTerm)
+      setYear(String(defaultYear))
+    }
 
     const { data: teacherRecData } = await supabase
       .from('teachers')
@@ -102,11 +126,11 @@ export default function GradesPage({ profile }) {
       if (firstSubjects.length > 0) setSelectedSubject(firstSubjects[0])
     }
 
-    await buildClassCards(schoolId, classSubjects)
+    await buildClassCards(schoolId, classSubjects, defaultTerm, defaultYear)
     setLoading(false)
   }
 
-  const buildClassCards = async (schoolId, classSubjects) => {
+  const buildClassCards = async (schoolId, classSubjects, termFilter = term, yearFilter = year) => {
     if (!profile?.id) return
     const { data: allSchoolStudents } = await supabase
       .from('students')
@@ -123,8 +147,8 @@ export default function GradesPage({ profile }) {
       .select('class_name, subject, exam_type, status, total_score, max_marks, updated_at')
       .eq('school_id', schoolId)
       .eq('teacher_id', profile.id)
-      .eq('term', term)
-      .eq('year', Number(year))
+      .eq('term', termFilter)
+      .eq('year', Number(yearFilter))
 
     const cards = Object.entries(classSubjects).flatMap(([className, subjects]) =>
       [...subjects].map(subjectName => {
