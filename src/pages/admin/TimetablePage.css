@@ -1294,7 +1294,205 @@
   color: color-mix(in srgb, var(--color-primary) 80%, black);
   border-radius: 6px;
   padding: 5px 12px;
-  font-size: 12px;
+font-size: 12px;
   font-weight: 600;
   margin-bottom: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MASTER TIMETABLE (Global tab) — on-screen view
+   Mirrors the printed weekly-timetable document so the screen
+   grid is fully arranged (bordered table, centred heading,
+   vertical break labels, signed footer).
+   ═══════════════════════════════════════════════════════════ */
+
+.tt-grid-wrapper {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.tt-grid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 15px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.tt-grid-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tt-grid-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tt-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tt-print-btn:hover { background: color-mix(in srgb, var(--color-primary) 80%, black); }
+
+.tt-day-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.tt-day-nav button {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tt-day-nav button:hover { background: #e2e8f0; color: #0f172a; }
+.tt-day-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tt-day-nav-label {
+  min-width: 66px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.tt-grid-scroll { overflow-x: auto; }
+
+.tt-print-area {
+  background: #fff;
+  padding: 18px 20px 14px;
+  min-width: 900px;
+}
+
+.tt-print-school-name {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.tt-print-heading {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.tt-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #64748b;
+}
+
+.tt-grid-table th,
+.tt-grid-table td {
+  border: 1px solid #cbd5e1;
+  padding: 6px 5px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.tt-grid-th {
+  background: #f1f5f9;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #334155;
+}
+
+.tt-grid-th-break { background: #f8fafc; width: 24px; }
+.tt-grid-th-day { width: 46px; }
+
+.tt-grid-time-label { display: block; font-weight: 800; color: #334155; }
+
+.tt-grid-break-time {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.tt-grid-td-day {
+  width: 46px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  background: #f1f5f9;
+  color: #0f172a;
+  text-transform: uppercase;
+}
+
+.tt-grid-td-break { background: #f8fafc; width: 24px; }
+
+.tt-grid-td-cell { height: auto; }
+
+.tt-break-label {
+  display: block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.tt-grid-dash {
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tt-print-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #334155;
 }
