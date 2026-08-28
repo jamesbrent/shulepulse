@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import {
-  Users, Search, Filter, School, Shield, UserCog,
-  Lock, Unlock, Trash2, Mail, Clock, Loader,
+  Users, Search, Filter, School, UserCog,
+  Lock, Unlock, Trash2, Mail, Clock,
   ShieldCheck, UserCheck, User as UserIcon, Key
 } from 'lucide-react'
 import { fetchUsers, toggleUserDisabled, sendPasswordReset, deleteProfile, setUserPassword } from '../../features/superadmin/userService'
+import { useAuthStore } from '../../store/authStore'
 import './UsersPage.css'
 
 const ROLE_META = {
@@ -15,6 +16,7 @@ const ROLE_META = {
 }
 
 export default function UsersPage() {
+  const { profile } = useAuthStore()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [roleFilter, setRoleFilter] = useState('')
@@ -24,16 +26,16 @@ export default function UsersPage() {
   const [newPwd, setNewPwd] = useState('')
   const [settingPwd, setSettingPwd] = useState(false)
 
-  useEffect(() => {
-    loadUsers()
-  }, [roleFilter])
-
   const loadUsers = async () => {
     setLoading(true)
     const data = await fetchUsers({ role: roleFilter || undefined, search: search || undefined })
     setUsers(data)
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadUsers()
+  }, [roleFilter])
 
   const showToast = (msg) => {
     setToast(msg)
@@ -68,7 +70,7 @@ export default function UsersPage() {
   const handleDelete = async (user) => {
     if (!window.confirm(`Delete user "${user.full_name || user.email}"? This cannot be undone.`)) return
     try {
-      await deleteProfile(user.id, user.full_name)
+      await deleteProfile(user.id, user.full_name, { callerId: profile?.id })
       showToast(`User "${user.full_name || user.email}" deleted`)
       loadUsers()
     } catch (err) {

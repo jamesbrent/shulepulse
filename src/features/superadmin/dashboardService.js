@@ -52,6 +52,39 @@ export async function fetchDashboardStats() {
     amount: r.amount || 0,
   }))
 
+  const now = new Date()
+  const sameMonth = (iso, offset) => {
+    if (!iso) return false
+    const d = new Date(iso)
+    const base = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+    return d.getFullYear() === base.getFullYear() && d.getMonth() === base.getMonth()
+  }
+
+  let newSchoolsThisMonth = 0
+  let newSchoolsLastMonth = 0
+  ;(signups || []).forEach((s) => {
+    if (sameMonth(s.created_at, 0)) newSchoolsThisMonth += 1
+    else if (sameMonth(s.created_at, -1)) newSchoolsLastMonth += 1
+  })
+
+  const schoolGrowthPct = newSchoolsLastMonth > 0
+    ? Math.round(((newSchoolsThisMonth - newSchoolsLastMonth) / newSchoolsLastMonth) * 100)
+    : null
+
+  const currentMonthKey = now.toLocaleDateString('en-KE', { month: 'short', year: '2-digit' })
+  const revenueTrend = (() => {
+    if (monthlyRevenue.length < 2) return null
+    const last = monthlyRevenue[monthlyRevenue.length - 1]
+    if (last.month !== currentMonthKey) return null
+    const previous = monthlyRevenue[monthlyRevenue.length - 2].amount || 0
+    const current = last.amount || 0
+    return {
+      current,
+      previous,
+      pct: previous > 0 ? Math.round(((current - previous) / previous) * 100) : null,
+    }
+  })()
+
   return {
     totalSchools: totalSchools || 0,
     activeSchools: activeSchools || 0,
@@ -63,9 +96,14 @@ export async function fetchDashboardStats() {
     totalProfiles: totalProfiles || 0,
     totalRevenue,
     mrr,
+    arpu: totalSchools > 0 ? Math.round(mrr / totalSchools) : 0,
     planCounts,
     schoolGrowth,
     monthlyRevenue,
+    newSchoolsThisMonth,
+    newSchoolsLastMonth,
+    schoolGrowthPct,
+    revenueTrend,
   }
 }
 

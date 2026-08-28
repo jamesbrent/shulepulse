@@ -14,7 +14,7 @@ import * as XLSX from 'xlsx'
 import { ImportExcelModal } from '../../components/students/ImportExcelModal'
 import { exportToPDF } from '../../services/students/exportService'
 import { promoteStudentsAtomic, getGradeLevels } from '../../services/students/bulkPromotionService'
-import { createStudentAuth, bulkCreateStudentAuth, bulkCreateParentAccounts } from '../../services/students/studentService'
+import { createStudentAuth, bulkCreateStudentAuth, bulkCreateParentAccounts, generateAdmissionNumber } from '../../services/students/studentService'
 import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { ReportCard, fetchStudentComments, groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
 import { rankStudentsByGrades, findRank } from '../../services/grading'
@@ -256,10 +256,13 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
     setLoading(false)
   }
 
-  const generateAdmNumber = () => {
-    const year = new Date().getFullYear()
-    const seq = String(students.length + 1).padStart(4, '0')
-    return `ADM/${year}/${seq}`
+  const generateAdmNumber = async () => {
+    // Read-only next-number preview (server-side, correct per school+year).
+    try {
+      return await generateAdmissionNumber(profile.school_id)
+    } catch {
+      return ''
+    }
   }
 
   const handleBulkCreateLogins = async () => {
@@ -295,9 +298,10 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
     setCreatingParentLogins(false)
   }
 
-  const openAddModal = () => {
+  const openAddModal = async () => {
     setEditingStudent(null)
-    setForm({ ...EMPTY_FORM, admission_number: generateAdmNumber() })
+    const adm = await generateAdmNumber()
+    setForm({ ...EMPTY_FORM, admission_number: adm })
     setGuardians([
       { ...EMPTY_GUARDIAN, relationship: 'father', portal_access: true },
       { ...EMPTY_GUARDIAN, relationship: 'mother', portal_access: true },
@@ -366,7 +370,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
     const now = new Date().toISOString()
     const payload = {
       school_id: profile.school_id,
-      admission_number: form.admission_number || generateAdmNumber(),
+      admission_number: form.admission_number || null,
       full_name: form.full_name.trim(),
       class: form.class,
       stream: form.stream || null,

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Save, ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
-import { createStudent, generateAdmissionNumber } from '../../services/students/studentService'
+import { createStudent } from '../../services/students/studentService'
 import { StudentForm } from '../../components/students/StudentForm'
 import { ParentForm } from '../../components/students/ParentForm'
 
@@ -38,7 +38,7 @@ export default function AddStudent() {
     }
 
     try {
-      const admNo = form.admission_number || await generateAdmissionNumber(profile.school_id)
+      const admNo = form.admission_number.trim() || null
 
       const payload = {
         school_id: profile.school_id,

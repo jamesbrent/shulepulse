@@ -1,8 +1,19 @@
 import { useState, useEffect } from 'react'
-import { X, School, MapPin, Building2, Phone, Mail, Globe, CreditCard, Palette, Loader } from 'lucide-react'
+import { X, School, MapPin, Building2, Phone, Mail, Globe, CreditCard, Palette, Layers } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { fetchCounties, fetchSchoolTypes } from './onboardingData'
 import { logAction } from '../audit/auditService'
+
+// Matches the CBC band keys used across the app (TimetablePage.getCBCBand).
+const EDUCATION_LEVEL_OPTIONS = [
+  { value: 'PP',             label: 'Pre-Primary' },
+  { value: 'LOWER_PRIMARY',  label: 'Lower Primary' },
+  { value: 'UPPER_PRIMARY',  label: 'Upper Primary' },
+  { value: 'JUNIOR',         label: 'Junior School' },
+  { value: 'SENIOR',         label: 'Senior School' },
+]
+
+const PLANS = [ 'basic', 'pro', 'enterprise' ]
 
 export default function EditSchoolModal({ school, onClose, onSaved }) {
   const [saving, setSaving] = useState(false)
@@ -18,6 +29,7 @@ export default function EditSchoolModal({ school, onClose, onSaved }) {
     email: school.email || '',
     address: school.address || '',
     plan: school.plan || 'basic',
+    education_levels: Array.isArray(school.education_levels) ? school.education_levels : [],
     primary_color: school.primary_color || '#2563eb',
     secondary_color: school.secondary_color || '#16a34a',
     status: school.status || 'active',
@@ -41,6 +53,11 @@ export default function EditSchoolModal({ school, onClose, onSaved }) {
     setSaving(true)
     setError('')
 
+    const planChanged = form.plan !== (school.plan || 'basic')
+
+    // Direct update CANNOT include plan / subscription_* (blocked by the
+    // guard trigger) — those must go through set_school_plan. Status is a
+    // plain column and is safe to update directly.
     const { error: err } = await supabase
       .from('schools')
       .update({
@@ -50,18 +67,32 @@ export default function EditSchoolModal({ school, onClose, onSaved }) {
         phone: form.phone,
         email: form.email,
         address: form.address,
-        plan: form.plan,
+        education_levels: form.education_levels,
         primary_color: form.primary_color,
         secondary_color: form.secondary_color,
         status: form.status,
       })
       .eq('id', school.id)
 
-    setSaving(false)
     if (err) {
+      setSaving(false)
       setError(err.message)
       return
     }
+
+    if (planChanged) {
+      const { error: planErr } = await supabase.rpc('set_school_plan', {
+        p_school_id: school.id,
+        p_plan_key: form.plan,
+      })
+      if (planErr) {
+        setSaving(false)
+        setError('School details saved, but the plan could not be changed: ' + planErr.message)
+        return
+      }
+    }
+
+    setSaving(false)
     logAction({
       schoolId: school.id,
       action: 'school.edited',
@@ -109,6 +140,29 @@ export default function EditSchoolModal({ school, onClose, onSaved }) {
               </select>
             </div>
             <div className="form-field">
+              <label><Layers size={14} /> Education Levels <span className="field-hint">Select all levels taught</span></label>
+              <div className="level-checkbox-grid">
+                {EDUCATION_LEVEL_OPTIONS.map((opt) => {
+                  const checked = form.education_levels.includes(opt.value)
+                  return (
+                    <label key={opt.value} className={`level-checkbox ${checked ? 'checked' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...form.education_levels, opt.value]
+                            : form.education_levels.filter((v) => v !== opt.value)
+                          update('education_levels', next)
+                        }}
+                      />
+                      {opt.label}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="form-field">
               <label><Phone size={14} /> Phone</label>
               <input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} />
             </div>
@@ -123,9 +177,9 @@ export default function EditSchoolModal({ school, onClose, onSaved }) {
             <div className="form-field">
               <label><CreditCard size={14} /> Plan</label>
               <select value={form.plan} onChange={(e) => update('plan', e.target.value)}>
-                <option value="basic">Basic</option>
-                <option value="pro">Pro</option>
-                <option value="enterprise">Enterprise</option>
+                {PLANS.map((p) => (
+                  <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                ))}
               </select>
             </div>
             <div className="form-field">

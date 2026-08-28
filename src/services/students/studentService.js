@@ -151,16 +151,17 @@ export async function fetchStreams(schoolId) {
   return [...new Set(data.map(r => r.stream).filter(Boolean))].sort()
 }
 
-export async function generateAdmissionNumber(schoolId) {
-  const year = new Date().getFullYear()
-  const { count, error } = await supabase
-    .from('students')
-    .select('id', { count: 'exact', head: true })
-    .eq('school_id', schoolId)
-    .gte('created_at', `${year}-01-01`)
+export async function generateAdmissionNumber(schoolId, year = new Date().getFullYear()) {
+  // Read-only preview of the next admission number (matches what the DB
+  // trigger will assign on insert). The trigger owns the real allocation so
+  // concurrent adds never collide (was: in-memory counts of students created
+  // this year → wrong sequence and global-unique collisions).
+  const { data, error } = await supabase.rpc('preview_student_admission_number', {
+    p_school_id: schoolId,
+    p_year: year,
+  })
   if (error) throw error
-  const seq = String((count || 0) + 1).padStart(4, '0')
-  return `ADM/${year}/${seq}`
+  return data
 }
 
 export async function createStudentAuth(student, schoolId) {

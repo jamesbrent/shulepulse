@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
+import { createTeacher } from '../../services/teachers/teacherService'
 import './TimetablePage.css'
 import '../teacher/TimetablePage.css'
 
@@ -942,12 +943,22 @@ export default function AdminTimetablePage() {
 
   // ── Subject CRUD ───────────────────────────────────────────
   const addSubject = async () => {
-    if (!subjectForm.name.trim()) return
+    const name = subjectForm.name.trim()
+    if (!name) return
+    const level = subjectForm.curriculum_level || 'all'
+    const existing = subjects.find(
+      (s) => s.name.trim().toLowerCase() === name.toLowerCase()
+        && (s.curriculum_level || 'all') === level
+    )
+    if (existing) {
+      setError(`Subject "${name}" already exists${level !== 'all' ? ` for ${level}` : ''}.`)
+      return
+    }
     setSavingSubject(true)
     const { error: err } = await supabase.from('subjects').insert({
       school_id: profile.school_id,
-      name: subjectForm.name.trim(),
-      code: subjectForm.code.toUpperCase() || null,
+      name,
+      code: (subjectForm.code || '').toUpperCase() || null,
       category: subjectForm.category,
       curriculum_level: subjectForm.curriculum_level,
     })
@@ -980,16 +991,30 @@ export default function AdminTimetablePage() {
   const saveTeacher = async () => {
     if (!teacherForm.full_name.trim()) return
     setSavingTeacher(true)
-    const payload = { ...teacherForm, school_id: profile.school_id }
     if (editTeacher) {
-      await supabase.from('teachers').update(payload).eq('id', editTeacher.id)
-    } else {
-      await supabase.from('teachers').insert(payload)
+      const { error: err } = await supabase.from('teachers').update({ ...teacherForm }).eq('id', editTeacher.id)
+      setSavingTeacher(false)
+      if (err) { setError(err.message); return }
+      setShowTeacherModal(false)
+      showSuccess('Teacher updated!')
+      fetchAll()
+      return
     }
-    setSavingTeacher(false)
-    setShowTeacherModal(false)
-    showSuccess(editTeacher ? 'Teacher updated!' : 'Teacher added!')
-    fetchAll()
+    try {
+      const result = await createTeacher({
+        schoolId: profile.school_id,
+        payload: { ...teacherForm },
+      })
+      setSavingTeacher(false)
+      if (!result.password) setShowTeacherModal(false)
+      showSuccess(result.password
+        ? `Teacher added! Sign-in: ${result.email} / ${result.password}`
+        : 'Teacher added!')
+      fetchAll()
+    } catch (e) {
+      setSavingTeacher(false)
+      setError(e.message)
+    }
   }
 
   const deleteTeacher = async (id) => {
@@ -1283,7 +1308,7 @@ export default function AdminTimetablePage() {
     { key: 'teachers',  label: 'Teachers',      icon: <User size={15} /> },
     { key: 'classes',   label: 'Classes',       icon: <GraduationCap size={15} /> },
     { key: 'grid',      label: 'Timetable',     icon: <Grid size={15} /> },
-    { key: 'global',    label: 'Global Timetable', icon: <Eye size={15} /> },
+    { key: 'global',    label: 'Master Timetable', icon: <Eye size={15} /> },
     { key: 'conflicts', label: `Conflicts${conflicts.length ? ` (${conflicts.length})` : ''}`, icon: <AlertTriangle size={15} /> },
   ]
 

@@ -8,11 +8,12 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
+import { createTeacher } from '../../services/teachers/teacherService'
 import { weightedScoreMean } from '../../services/grading'
 
 // SUBJECTS and DEPARTMENTS are now fetched dynamically from Supabase
 const DEPARTMENTS = ['Sciences','Humanities','Languages','Technical','Arts','Physical Education']
-const EMPLOYMENT_TYPES = ['TSC','Board']
+const EMPLOYMENT_TYPES = ['Full-time','Part-time','Contract']
 const TEACHING_LEVELS = [
   'Pre-Primary',
   'Lower Primary',
@@ -39,7 +40,7 @@ const STATUS_META = {
 const EMPTY_FORM = {
   full_name: '', email: '', phone: '', id_number: '',
   employee_number: '', teacher_code: '', subjects: [], departments: [],
-  classes_assigned: [], employment_type: 'TSC',
+  classes_assigned: [], employment_type: 'Full-time',
   salary: '', date_of_hire: '', gender: '',
   date_of_birth: '', qualification: '', status: 'active',
   photo_url: null,
@@ -70,6 +71,7 @@ export default function TeachersPage() {
 
   // ── Modals ────────────────────────────────────────────────
   const [showAddModal, setShowAddModal]         = useState(false)
+  const [notice, setNotice]                     = useState('')
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [selectedTeacher, setSelectedTeacher]   = useState(null)
   const [profileTab, setProfileTab]             = useState('profile')
@@ -214,7 +216,7 @@ export default function TeachersPage() {
   // ── Submit ─────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setSaving(true); setError('')
+    setSaving(true); setError(''); setNotice('')
 
     const teacherCode = form.teacher_code.trim().toUpperCase() || null
     const employeeNo  = form.employee_number || genEmployeeNo()
@@ -246,6 +248,7 @@ export default function TeachersPage() {
     }
 
     let err
+    let createdPassword = null
     if (editTarget) {
       const { error: e } = await supabase
         .from('teachers')
@@ -253,10 +256,10 @@ export default function TeachersPage() {
         .eq('id', editTarget.id)
       err = e
     } else {
-      const { error: e } = await supabase
-        .from('teachers')
-        .insert(payload)
-      err = e
+      try {
+        const result = await createTeacher({ schoolId: profile.school_id, payload })
+        createdPassword = result.password || null
+      } catch (e2) { err = e2 }
     }
 
     if (err) {
@@ -266,8 +269,12 @@ export default function TeachersPage() {
     }
 
     setSaving(false)
-    setShowAddModal(false)
-    setForm(EMPTY_FORM)
+    if (createdPassword) {
+      setNotice(`Teacher added with login — Email: ${payload.email}  |  Password: ${createdPassword}`)
+    } else {
+      setShowAddModal(false)
+      setForm(EMPTY_FORM)
+    }
     fetchTeachers()
   }
 
@@ -297,7 +304,7 @@ export default function TeachersPage() {
   const openAdd = () => {
     setEditTarget(null)
     setForm({ ...EMPTY_FORM, teacher_code: genTeacherCode() })
-    setError(''); setShowAddModal(true)
+    setError(''); setNotice(''); setShowAddModal(true)
   }
 
   const openEdit = (t) => {
@@ -318,7 +325,7 @@ export default function TeachersPage() {
       maximum_lessons_per_week: t.maximum_lessons_per_week ?? 30,
       maximum_lessons_per_day:  t.maximum_lessons_per_day  ?? 6,
     })
-    setError(''); setShowAddModal(true)
+    setError(''); setNotice(''); setShowAddModal(true)
   }
 
   const openProfile = (t) => {
@@ -579,14 +586,15 @@ export default function TeachersPage() {
           ADD / EDIT MODAL
       ══════════════════════════════════════════════ */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowAddModal(false); setNotice('') }}>
           <div className="modal modal-xl" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editTarget ? 'Edit Teacher' : 'Add New Teacher'}</h3>
-              <button className="modal-close" onClick={() => setShowAddModal(false)}><X size={18}/></button>
+              <button className="modal-close" onClick={() => { setShowAddModal(false); setNotice('') }}><X size={18}/></button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
               {error && <div className="form-error">{error}</div>}
+              {notice && <div style={{ background:'#f0fdf4', color:'#16a34a', border:'1px solid #bbf7d0', borderRadius:8, padding:'10px 12px', fontSize:13, marginBottom:12 }}>{notice}</div>}
 
               {/* Photo */}
               <div className="photo-upload-row">

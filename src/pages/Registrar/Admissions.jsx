@@ -7,7 +7,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
-import { createStudentAuth, bulkCreateStudentAuth } from '../../services/students/studentService'
+import { createStudentAuth, bulkCreateStudentAuth, generateAdmissionNumber } from '../../services/students/studentService'
 import './Admissions.css'
 
 const CLASS_GROUPS = [
@@ -126,10 +126,13 @@ export default function Admissions({ onSuccess }) {
 
   useEffect(() => { setPage(1) }, [search, statusFilter])
 
-  const generateAdmNumber = () => {
-    const year = new Date().getFullYear()
-    const seq = String(students.length + 1).padStart(4, '0')
-    return `ADM/${year}/${seq}`
+  const generateAdmNumber = async () => {
+    // Read-only next-number preview (server-side, correct per school+year).
+    try {
+      return await generateAdmissionNumber(profile.school_id)
+    } catch {
+      return ''
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -140,7 +143,7 @@ export default function Admissions({ onSuccess }) {
     if (!form.class) { setError('Class is required'); setSaving(false); return }
 
     const now = new Date().toISOString()
-    const admNumber = form.admission_number || generateAdmNumber()
+    const admNumber = form.admission_number || null
 
     const payload = {
       school_id: profile.school_id,
@@ -176,27 +179,35 @@ export default function Admissions({ onSuccess }) {
     }
 
     try {
-      const { error: insertError } = await supabase.from('students').insert(payload)
+      const { data: inserted, error: insertError } = await supabase
+        .from('students')
+        .insert(payload)
+        .select('admission_number')
+        .single()
       if (insertError) throw insertError
+
+      const assigned = inserted?.admission_number || admNumber || ''
 
       if (form.email) {
         try {
           await createStudentAuth({ full_name: form.full_name.trim(), email: form.email }, profile.school_id)
         } catch (authErr) {
-          setSuccess(`Admitted "${form.full_name}" — ${admNumber} (Login account: ${authErr.message})`)
+          setSuccess(`Admitted "${form.full_name}" — ${assigned} (Login account: ${authErr.message})`)
         }
       }
 
-      setSuccess(`Admitted "${form.full_name}" — ${admNumber}${form.email ? ' (login created)' : ''}`)
-      setForm({ ...EMPTY_FORM, admission_number: generateAdmNumber() })
+      setSuccess(`Admitted "${form.full_name}" — ${assigned}${form.email ? ' (login created)' : ''}`)
+      const adm = await generateAdmNumber()
+      setForm({ ...EMPTY_FORM, admission_number: adm })
       fetchStudents()
       if (onSuccess) onSuccess()
     } catch (err) { setError(err.message) }
     setSaving(false)
   }
 
-  const handleClear = () => {
-    setForm({ ...EMPTY_FORM, admission_number: generateAdmNumber() })
+  const handleClear = async () => {
+    const adm = await generateAdmNumber()
+    setForm({ ...EMPTY_FORM, admission_number: adm })
     setError(''); setSuccess('')
   }
 
@@ -287,7 +298,7 @@ export default function Admissions({ onSuccess }) {
                 <label>Admission No.</label>
                 <div className="adm-input-row">
                   <input placeholder="Auto-generated" value={form.admission_number} onChange={e => setFormField('admission_number', e.target.value)} />
-                  <button type="button" className="adm-btn-auto" onClick={() => setFormField('admission_number', generateAdmNumber())}>Auto</button>
+                  <button type="button" className="adm-btn-auto" onClick={async () => { const adm = await generateAdmNumber(); setFormField('admission_number', adm) }}>Auto</button>
                 </div>
               </div>
               <div className="adm-field">

@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react'
 import {
-  Settings, School, Bell, Lock, Save,
-  CheckCircle, Eye, EyeOff, ChevronRight
+  School, Bell, Lock, Save,
+  CheckCircle, Eye, EyeOff
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
 import { fetchSchoolTypes } from '../../features/onboarding/onboardingData'
+
+const DEFAULT_TERMS = ['Term 1', 'Term 2', 'Term 3']
+
+const EDUCATION_LEVEL_OPTIONS = [
+  { value: 'PP',             label: 'Pre-Primary' },
+  { value: 'LOWER_PRIMARY',  label: 'Lower Primary' },
+  { value: 'UPPER_PRIMARY',  label: 'Upper Primary' },
+  { value: 'JUNIOR',         label: 'Junior School' },
+  { value: 'SENIOR',         label: 'Senior School' },
+]
 
 export default function SettingsPage() {
   const { profile } = useAuthStore()
@@ -25,6 +35,7 @@ export default function SettingsPage() {
     name: '', email: '', phone: '', address: '',
     county: '', type: '', motto: '',
     current_term: '', current_year: new Date().getFullYear(),
+    education_levels: [],
   })
 
   const [notifForm, setNotifForm] = useState({
@@ -38,19 +49,23 @@ export default function SettingsPage() {
     old_password: '', new_password: '', confirm_password: ''
   })
 
-  useEffect(() => { loadSchool(); fetchLookups() }, [])
-
   const fetchLookups = async () => {
     const [{ data: grades }, types] = await Promise.all([
       supabase.from('grades').select('term, year').eq('school_id', profile.school_id),
       fetchSchoolTypes(),
     ])
+    const cy = new Date().getFullYear()
+    const yearList = [cy - 1, cy, cy + 1, cy + 2]
+    const termSet = new Set(DEFAULT_TERMS)
+    const yearSet = new Set(yearList)
     if (grades) {
-      const terms = [...new Set(grades.map(g => g.term).filter(Boolean))].sort()
-      const years = [...new Set(grades.map(g => g.year).filter(Boolean))].sort()
-      if (terms.length) setAvailableTerms(terms)
-      if (years.length) setAvailableYears(years)
+      grades.forEach(g => {
+        if (g.term) termSet.add(g.term)
+        if (g.year) yearSet.add(g.year)
+      })
     }
+    setAvailableTerms([...termSet])
+    setAvailableYears([...yearSet].sort((a, b) => a - b))
     if (types.length) setSchoolTypes(types)
   }
 
@@ -72,10 +87,13 @@ export default function SettingsPage() {
         motto: data.motto || '',
         current_term: data.current_term || '',
         current_year: cy,
+        education_levels: Array.isArray(data.education_levels) ? data.education_levels : [],
       })
       if (data.notifications) setNotifForm(data.notifications)
     }
   }
+
+  useEffect(() => { loadSchool(); fetchLookups() }, [])
 
   const flash = () => {
     setSaved(true)
@@ -97,6 +115,7 @@ export default function SettingsPage() {
         motto: schoolForm.motto,
         current_term: schoolForm.current_term,
         current_year: parseInt(schoolForm.current_year),
+        education_levels: schoolForm.education_levels,
       })
       .eq('id', profile.school_id)
     setSaving(false)
@@ -244,6 +263,29 @@ export default function SettingsPage() {
                 <option value="">Select category</option>
                 {schoolTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
+            </div>
+            <div className="form-field full">
+              <label>Education Levels <span className="field-hint">Select all levels taught</span></label>
+              <div className="level-checkbox-grid">
+                {EDUCATION_LEVEL_OPTIONS.map(opt => {
+                  const checked = schoolForm.education_levels.includes(opt.value)
+                  return (
+                    <label key={opt.value} className={`level-checkbox ${checked ? 'checked' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={e => {
+                          const next = e.target.checked
+                            ? [...schoolForm.education_levels, opt.value]
+                            : schoolForm.education_levels.filter(v => v !== opt.value)
+                          setSchoolForm({ ...schoolForm, education_levels: next })
+                        }}
+                      />
+                      {opt.label}
+                    </label>
+                  )
+                })}
+              </div>
             </div>
             <div className="form-field full">
               <label>School Motto</label>

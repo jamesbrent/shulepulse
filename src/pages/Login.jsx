@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
-import { fetchPlatformSettings } from '../features/superadmin/platformSettingsService'
+import { fetchPlatformSettings, fetchMaintenanceStatus } from '../features/superadmin/platformSettingsService'
 import { checkLoginSecurity, recordLoginAttempt, recordLoginSession } from '../features/auth/loginSecurity'
 import logoImg from '../assets/logo.png'
 import AnimatedDottedMap from '../components/AnimatedDottedMap'
@@ -37,11 +37,12 @@ export default function Login() {
         .catch(() => {})
     }
 
+    fetchMaintenanceStatus()
+      .then((s) => setMaintenance(s))
+      .catch(() => {})
+
     fetchPlatformSettings()
-      .then((s) => {
-        setMaintenance(s.maintenance)
-        setMinPasswordLength(s.auth_security?.min_password_length || 8)
-      })
+      .then((s) => setMinPasswordLength(s.auth_security?.min_password_length || 8))
       .catch(() => {})
   }, [])
 

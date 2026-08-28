@@ -6,7 +6,7 @@ import BrandingProvider from './features/branding/BrandingProvider'
 import { FeatureAccessProvider } from './features/access/FeatureAccessContext'
 import './features/access/FeatureLocked.css'
 import { basePath } from './lib/paths'
-import { fetchPlatformSettings } from './features/superadmin/platformSettingsService'
+import { fetchMaintenanceStatus } from './features/superadmin/platformSettingsService'
 import useSessionTimeout from './hooks/useSessionTimeout'
 import MaintenancePage from './pages/MaintenancePage'
 import './pages/MaintenancePage.css'
@@ -38,10 +38,26 @@ export default function App() {
     init()
   }, [])
 
+  // Maintenance gate: check on mount, re-check periodically and when the tab
+  // regains focus, so enabling maintenance locks out active sessions quickly.
   useEffect(() => {
-    fetchPlatformSettings()
-      .then((s) => setMaintenance(s.maintenance))
-      .catch(() => setMaintenance({ enabled: false }))
+    let cancelled = false
+    const check = () => {
+      fetchMaintenanceStatus()
+        .then((s) => { if (!cancelled) setMaintenance(s) })
+        .catch(() => {})
+    }
+    check()
+    const id = setInterval(check, 30000)
+    const onVisible = () => { if (document.visibilityState === 'visible') check() }
+    window.addEventListener('focus', onVisible)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+      window.removeEventListener('focus', onVisible)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [])
 
   const isSuperadmin = profile?.role === 'superadmin'

@@ -201,6 +201,28 @@ export async function fetchPlatformSettings() {
   return { id: dbSettings.id || 1, ...merged }
 }
 
+export async function fetchMaintenanceStatus() {
+  // Public RPC: returns { enabled, message } for ANY visitor (anon + authed),
+  // so the App/Login gates can actually fire for non-superadmins (BUG FIX:
+  // previously the flag was only readable by superadmins and everyone else
+  // fell back to the defaults => maintenance was never enforced).
+  const { data, error } = await supabase.rpc('get_maintenance_status')
+  if (error || !data || typeof data !== 'object') {
+    return {
+      enabled: false,
+      message: DEFAULT_SETTINGS.maintenance.message,
+      session_timeout_minutes: null,
+    }
+  }
+  return {
+    enabled: !!data.enabled,
+    message: data.message || DEFAULT_SETTINGS.maintenance.message,
+    session_timeout_minutes: Number.isFinite(Number(data.session_timeout_minutes))
+      ? Number(data.session_timeout_minutes)
+      : null,
+  }
+}
+
 export async function updatePlatformSettings(section, values) {
   // Use safe RPC that strips masked values before saving (VULN-49)
   const { data, error } = await supabase.rpc('update_platform_settings_safe', {

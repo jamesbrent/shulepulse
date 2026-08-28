@@ -46,8 +46,16 @@ export async function sendPasswordReset(email) {
   return true
 }
 
-export async function deleteProfile(profileId, fullName) {
-  const { error } = await supabase.from('profiles').delete().eq('id', profileId)
+export async function deleteProfile(profileId, fullName, { callerId } = {}) {
+  // BUG FIX (Part 11): a direct profiles DELETE used to fail at auth.identities
+  // FK constraints or orphan the auth.users row. RPC now runs under SECURITY
+  // DEFINER (as postgres) so it can remove dependent rows + auth tables, and
+  // refuses to delete the currently signed-in account.
+  if (callerId && callerId === profileId) {
+    throw new Error('You cannot delete your own account.')
+  }
+
+  const { error } = await supabase.rpc('delete_user', { p_user_id: profileId })
   if (error) throw new Error(error.message)
 
   await logAction({
