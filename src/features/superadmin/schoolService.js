@@ -62,14 +62,8 @@ export async function fetchCounties() {
 }
 
 export async function deleteSchool(schoolId, schoolName) {
-  const { error } = await supabase.from('schools').delete().eq('id', schoolId)
+  const { error } = await supabase.rpc('delete_school', { p_school_id: schoolId })
   if (error) throw new Error(error.message)
-
-  await logAction({
-    schoolId,
-    action: 'school.deleted',
-    details: { schoolName },
-  })
   return true
 }
 
