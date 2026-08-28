@@ -39,10 +39,12 @@ BEGIN
   END IF;
 
   -- 1) snapshot all public-schema FKs (deferrability preserved)
+  -- WHERE true is required: Supabase's preloaded `safeupdate` library raises
+  -- SQLSTATE 21000 ("DELETE requires a WHERE clause") on any where-less DELETE.
   CREATE TEMP TABLE IF NOT EXISTS _fk_snapshot (
     tbl regclass, conname text, condef text, is_deferrable boolean
   ) ON COMMIT DROP;
-  DELETE FROM _fk_snapshot;
+  DELETE FROM _fk_snapshot WHERE true;
 
   INSERT INTO _fk_snapshot (tbl, conname, condef, is_deferrable)
   SELECT c.conrelid, c.conname, pg_get_constraintdef(c.oid), c.condeferrable
