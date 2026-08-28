@@ -3,10 +3,14 @@ import {
   ClipboardList, Calendar, AlertTriangle, TrendingUp, FileSpreadsheet,
   ChevronLeft, ChevronRight, Search, Save, RotateCcw, FileText,
   CheckCircle, XCircle, Clock, UserMinus, ChevronDown, MessageSquare,
+  BookOpen, AlertOctagon,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
 import { exportAttendanceCSV, exportAttendancePDF } from '../../services/attendance/exportAttendance'
 import ExportPanel from '../../components/attendance/ExportPanel'
+import LessonAttendancePanel from '../../components/attendance/LessonAttendancePanel'
+import AttendanceConflictsPanel from '../../components/attendance/AttendanceConflictsPanel'
 import './ClassAttendance.css'
 
 const STATUS_META = {
@@ -93,6 +97,8 @@ function StudentRowWithNote({ student, status, onStatusChange, note, onNoteChang
 }
 
 export default function ClassAttendance({ teacherData, currentTerm, currentYear, assignedClasses = [] }) {
+  const { has } = useFeatureAccess()
+  const hasLesson = has('students.attendance.lesson')
   const [students, setStudents] = useState([])
   const [records, setRecords] = useState([])
   const [attendance, setAttendance] = useState({})
@@ -309,6 +315,22 @@ export default function ClassAttendance({ teacherData, currentTerm, currentYear,
         >
           <FileSpreadsheet size={14} /> Export & Reports
         </button>
+        {hasLesson && (
+          <>
+            <button
+              className={`ct-att-tab ${activeTab === 'lesson' ? 'active' : ''}`}
+              onClick={() => setActiveTab('lesson')}
+            >
+              <BookOpen size={14} /> Lesson Attendance
+            </button>
+            <button
+              className={`ct-att-tab ${activeTab === 'conflicts' ? 'active' : ''}`}
+              onClick={() => setActiveTab('conflicts')}
+            >
+              <AlertOctagon size={14} /> Conflicts
+            </button>
+          </>
+        )}
       </div>
 
       {activeTab === 'mark' && (
@@ -579,6 +601,14 @@ export default function ClassAttendance({ teacherData, currentTerm, currentYear,
           currentYear={currentYear}
           assignedClasses={assignedClasses}
         />
+      )}
+
+      {activeTab === 'lesson' && hasLesson && (
+        <LessonAttendancePanel profile={teacherData} assignedClasses={assignedClasses} />
+      )}
+
+      {activeTab === 'conflicts' && hasLesson && (
+        <AttendanceConflictsPanel schoolId={teacherData.school_id} assignedClasses={assignedClasses} />
       )}
     </div>
   )

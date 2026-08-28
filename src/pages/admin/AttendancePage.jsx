@@ -3,13 +3,18 @@ import {
   ClipboardList, Calendar, AlertTriangle, TrendingUp, FileSpreadsheet,
   ChevronLeft, ChevronRight, Search, CheckCircle, XCircle, Clock,
   UserMinus, Save, Send, CheckSquare, Square, RotateCcw, Users,
+  BookOpen, AlertOctagon, BarChart3,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from './useSchool'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
 import AttendanceTrends from '../../components/attendance/AttendanceTrends'
 import StudentAnalytics from '../../components/attendance/StudentAnalytics'
 import ExportPanel from '../../components/attendance/ExportPanel'
+import LessonAttendancePanel from '../../components/attendance/LessonAttendancePanel'
+import AttendanceConflictsPanel from '../../components/attendance/AttendanceConflictsPanel'
+import AttendanceAnalyticsPanel from '../../components/attendance/AttendanceAnalyticsPanel'
 import { exportAttendanceCSV, exportAttendancePDF } from '../../services/attendance/exportAttendance'
 
 const STATUSES = [
@@ -22,6 +27,9 @@ const STATUSES = [
 export default function AttendancePage() {
   const { profile } = useAuthStore()
   const { currentTerm, currentYear } = useSchool()
+  const { has } = useFeatureAccess()
+  const hasLesson = has('students.attendance.lesson')
+  const hasAnalytics = has('students.attendance.analytics')
   const [students, setStudents] = useState([])
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
@@ -154,6 +162,21 @@ export default function AttendancePage() {
         <button className={`att-tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
           <TrendingUp size={14} /> History & Reports
         </button>
+        {hasLesson && (
+          <>
+            <button className={`att-tab ${activeTab === 'lesson' ? 'active' : ''}`} onClick={() => setActiveTab('lesson')}>
+              <BookOpen size={14} /> Lesson Attendance
+            </button>
+            <button className={`att-tab ${activeTab === 'conflicts' ? 'active' : ''}`} onClick={() => setActiveTab('conflicts')}>
+              <AlertOctagon size={14} /> Conflicts
+            </button>
+          </>
+        )}
+        {hasAnalytics && (
+          <button className={`att-tab ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+            <BarChart3 size={14} /> Analytics
+          </button>
+        )}
       </div>
 
       {/* ═══════════════════════════════════════════════════════
@@ -357,6 +380,27 @@ export default function AttendancePage() {
             school={profile?.schools} currentTerm={currentTerm} currentYear={currentYear}
           />
         </>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+         LESSON ATTENDANCE TAB (Pro)
+         ═══════════════════════════════════════════════════════ */}
+      {activeTab === 'lesson' && hasLesson && (
+        <LessonAttendancePanel profile={profile} isAdmin />
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+         CONFLICTS TAB (Pro)
+         ═══════════════════════════════════════════════════════ */}
+      {activeTab === 'conflicts' && hasLesson && (
+        <AttendanceConflictsPanel schoolId={profile.school_id} isAdmin />
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+         ANALYTICS TAB (Enterprise)
+         ═══════════════════════════════════════════════════════ */}
+      {activeTab === 'analytics' && hasAnalytics && (
+        <AttendanceAnalyticsPanel schoolId={profile.school_id} isAdmin />
       )}
     </div>
   )

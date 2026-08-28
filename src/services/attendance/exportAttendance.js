@@ -22,6 +22,48 @@ export function exportAttendanceCSV(records, filename = 'attendance_export.csv')
   XLSX.writeFile(wb, filename)
 }
 
+/* ── Conflict records export (CSV) ── */
+export function exportConflictsCSV(conflicts, subjects = {}, teachers = {}, filename = 'attendance_conflicts.csv') {
+  const rows = conflicts.map(c => ({
+    'Student Name': c.student_name || '',
+    'Admission No': c.admission_number || '',
+    'Class': c.class_name || '—',
+    'Date': c.date || '—',
+    'Daily Status': c.daily_status || '—',
+    'Lesson Status': c.lesson_status || '—',
+    'Subject': subjects[c.subject_id] || c.subject_id || '—',
+    'Lesson Time': c.period_start
+      ? new Date(c.period_start).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })
+      : '—',
+    'Teacher': teachers[c.teacher_id] || '—',
+  }))
+  const ws = XLSX.utils.json_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Conflicts')
+  XLSX.writeFile(wb, filename)
+}
+
+/* ── Lesson attendance export (CSV) ── */
+export function exportLessonAttendanceCSV(records, filename = 'lesson_attendance_export.csv') {
+  const rows = records.map(r => ({
+    'Student Name': r.students?.full_name || r.full_name || '',
+    'Admission No': r.students?.admission_number || r.admission_number || '',
+    'Class': r.class_name || r.students?.class || '',
+    'Status': r.status || '—',
+    'Subject': r.subjects?.name || r.subject_name || '—',
+    'Date': r.period_start ? r.period_start.slice(0, 10) : '—',
+    'Lesson Time': r.period_start
+      ? new Date(r.period_start).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })
+      : '—',
+    'Notes': r.notes || '',
+    'Teacher': r.teachers?.full_name || r.teacher_name || '—',
+  }))
+  const ws = XLSX.utils.json_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Lesson Attendance')
+  XLSX.writeFile(wb, filename)
+}
+
 /* ── Default Kenyan term start dates (override via termDates prop) ── */
 export const DEFAULT_TERM_DATES = {
   'Term 1': { month: 0, day: 15 },    // Jan 15

@@ -5,6 +5,7 @@ import {
   UserCheck, UserX, Save, Eye, BookOpen,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
 import '../../components/attendance/AttendanceShared.css'
 import './AttendancePage.css'
 import AttendanceFilters from '../../components/attendance/AttendanceFilters'
@@ -12,9 +13,12 @@ import AttendanceTable from '../../components/attendance/AttendanceTable'
 import AttendanceTrends from '../../components/attendance/AttendanceTrends'
 import StudentAnalytics from '../../components/attendance/StudentAnalytics'
 import ExportPanel from '../../components/attendance/ExportPanel'
+import LessonAttendancePanel from '../../components/attendance/LessonAttendancePanel'
 import { exportAttendanceCSV, exportAttendancePDF } from '../../services/attendance/exportAttendance'
 
 export default function AttendancePage({ profile }) {
+  const { has } = useFeatureAccess()
+  const hasLesson = has('students.attendance.lesson')
   const [records, setRecords] = useState([])
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -320,6 +324,11 @@ export default function AttendancePage({ profile }) {
         <button className={`att-tab ${activeTab === 'export' ? 'active' : ''}`} onClick={() => setActiveTab('export')}>
           <FileSpreadsheet size={14} /> Export & Reports
         </button>
+        {hasLesson && (
+          <button className={`att-tab ${activeTab === 'lesson' ? 'active' : ''}`} onClick={() => setActiveTab('lesson')}>
+            <BookOpen size={14} /> Lesson Attendance
+          </button>
+        )}
       </div>
 
       {activeTab === 'mark' && (
@@ -617,6 +626,10 @@ export default function AttendancePage({ profile }) {
           currentTerm={profile?.schools?.current_term}
           currentYear={new Date().getFullYear()}
         />
+      )}
+
+      {activeTab === 'lesson' && hasLesson && (
+        <LessonAttendancePanel profile={profile} assignedClasses={classes} />
       )}
     </div>
   )

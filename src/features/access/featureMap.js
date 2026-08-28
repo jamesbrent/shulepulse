@@ -1,6 +1,9 @@
 export const ADMIN_NAV_FEATURES = {
   students: ['students.records'],
-  attendance: ['students.attendance'],
+  attendance: ['students.attendance.daily'],
+  lesson_attendance: ['students.attendance.lesson'],
+  attendance_conflicts: ['students.attendance.lesson'],
+  attendance_analytics: ['students.attendance.analytics'],
   alumni: ['students.alumni'],
   grades: ['academics.grades'],
   marks_entry: ['academics.marks_entry'],
@@ -104,7 +107,8 @@ export const TEACHER_NAV_FEATURES = {
   marks: ['academics.marks_entry'],
   my_classes: ['academics.marks_entry'],
   myclasses: ['academics.marks_entry'],
-  attendance: ['students.attendance'],
+  attendance: ['students.attendance.daily'],
+  lesson_attendance: ['students.attendance.lesson'],
   grades: ['academics.grades'],
   cbc_competency: ['academics.cbc_analysis'],
   cbc: ['academics.cbc_analysis'],
@@ -114,7 +118,8 @@ export const TEACHER_NAV_FEATURES = {
 }
 
 export const CLASS_TEACHER_NAV_FEATURES = {
-  attendance: ['students.attendance'],
+  attendance: ['students.attendance.daily'],
+  lesson_attendance: ['students.attendance.lesson'],
   performance: ['academics.performance'],
   comments: ['hr.comments'],
   parent_comm: ['communication.messages'],
