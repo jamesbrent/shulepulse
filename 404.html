@@ -6,13 +6,13 @@
     <title>ShulePulse</title>
     <script>
       ;(function () {
-        var segs = window.location.pathname.split('/').filter(Boolean)
-        var base = segs.length ? segs[0] : ''
-        var rest = segs.slice(1).join('/')
-        var target = window.location.origin + '/' + base + '/?p=/' + rest
-        if (window.location.search) target += '&q=' + encodeURIComponent(window.location.search.slice(1))
-        if (window.location.hash) target += window.location.hash
-        window.location.replace(target)
+        var path = window.location.pathname.replace(/\/+$/, '') || '/'
+        window.history.replaceState(null, '', path)
+        fetch('/index.html').then(function (r) { return r.text() }).then(function (html) {
+          document.open()
+          document.write(html)
+          document.close()
+        })
       })()
     </script>
   </head>
