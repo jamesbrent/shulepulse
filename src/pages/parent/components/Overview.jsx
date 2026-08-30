@@ -7,7 +7,7 @@ import { groupGradesBySubject, getCBEGrade } from '../../../components/students/
 export default function Overview({ activeChild, school }) {
   const [grades, setGrades] = useState([])
   const [attendance, setAttendance] = useState(null)
-  const [feeBalance, setFeeBalance] = useState({ totalCharged: 0, totalPaid: 0, balance: 0, status: 'due' })
+  const [feeBalance, setFeeBalance] = useState({ totalCharged: 0, totalPaid: 0, credit: 0, balance: 0, status: 'due' })
   const [recentNotices, setRecentNotices] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -41,7 +41,7 @@ export default function Overview({ activeChild, school }) {
     setGrades(gradesData || [])
     setRecentNotices(noticesData || [])
 
-    const [assessmentsRes, paymentsRes] = await Promise.all([
+    const [assessmentsRes, ledgerRes, creditRes] = await Promise.all([
       supabase
         .from('fee_assessments')
         .select('amount_due')
@@ -49,17 +49,25 @@ export default function Overview({ activeChild, school }) {
         .eq('term', currentTerm)
         .eq('year', currentYear),
       supabase
-        .from('fee_payments')
-        .select('amount')
+        .from('student_ledger')
+        .select('entry_type, amount')
         .eq('student_id', activeChild.id)
         .eq('term', currentTerm)
         .eq('year', currentYear),
+      schoolId ? supabase
+        .rpc('student_credit_balance', { p_school_id: schoolId, p_student_id: activeChild.id }) : { data: 0 },
     ])
 
     const totalCharged = (assessmentsRes.data || []).reduce((s, a) => s + Number(a.amount_due), 0)
-    const totalPaid = (paymentsRes.data || []).reduce((s, p) => s + Number(p.amount), 0)
-    const balance = totalCharged - totalPaid
-    setFeeBalance({ totalCharged, totalPaid, balance, status: balance <= 0 ? 'cleared' : totalPaid > 0 ? 'partial' : 'due' })
+    // Applied-to-fees figure: charges/penalties increase; every other entry
+    // (payment, waiver, scholarship, discount, credit application) reduces.
+    const totalPaid = (ledgerRes.data || []).reduce((s, l) => {
+      if (l.entry_type === 'charge' || l.entry_type === 'penalty') return s
+      return s + Number(l.amount || 0)
+    }, 0)
+    const credit = Number(creditRes.data || 0)
+    const balance = Math.max(0, totalCharged - totalPaid)
+    setFeeBalance({ totalCharged, totalPaid, credit, balance, status: balance <= 0 ? 'cleared' : totalPaid > 0 ? 'partial' : 'due' })
 
     const { count: presentCount } = await supabase
       .from('attendance')
@@ -168,9 +176,15 @@ export default function Overview({ activeChild, school }) {
                 <span>KES {feeBalance.totalCharged.toLocaleString()}</span>
               </div>
               <div className="fee-item">
-                <span>Total Paid</span>
+                <span>Applied to Fees</span>
                 <span style={{ color: '#16a34a' }}>KES {feeBalance.totalPaid.toLocaleString()}</span>
               </div>
+              {feeBalance.credit > 0 && (
+                <div className="fee-item">
+                  <span>Student Credit (Advance)</span>
+                  <span style={{ color: '#7c3aed' }}>KES {feeBalance.credit.toLocaleString()}</span>
+                </div>
+              )}
               <div className="fee-balance-row">
                 <span>Balance</span>
                 <span style={{ color: feeBalance.balance <= 0 ? '#16a34a' : '#dc2626', fontWeight: 700 }}>

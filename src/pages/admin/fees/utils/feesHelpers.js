@@ -14,6 +14,8 @@ export const initials = (name) =>
   (name || '').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
 // ─── File Download ────────────────────────────────────────────────────────────
+import { Banknote, Smartphone, Landmark, FileText, SlidersHorizontal } from 'lucide-react'
+
 export const downloadFile = (content, filename, type) => {
   const blob = content instanceof Blob ? content : new Blob([content], { type })
   const url  = URL.createObjectURL(blob)
@@ -34,11 +36,11 @@ export const PAYMENT_METHODS = ['mpesa', 'bank', 'cash']
 
 // Flexible payment types (v2)
 export const PAYMENT_TYPES = [
-  { value: 'cash',         label: 'Cash',          icon: '💵' },
-  { value: 'mobile_money', label: 'Mobile Money',  icon: '📱' },
-  { value: 'bank',         label: 'Bank Transfer',  icon: '🏦' },
-  { value: 'cheque',       label: 'Cheque',         icon: '📄' },
-  { value: 'adjustment',   label: 'Adjustment',     icon: '🔧' },
+  { value: 'cash',         label: 'Cash',          icon: Banknote },
+  { value: 'mobile_money', label: 'Mobile Money',  icon: Smartphone },
+  { value: 'bank',         label: 'Bank Transfer',  icon: Landmark },
+  { value: 'cheque',       label: 'Cheque',         icon: FileText },
+  { value: 'adjustment',   label: 'Adjustment',     icon: SlidersHorizontal },
 ]
 
 export const MOBILE_MONEY_PROVIDERS = [

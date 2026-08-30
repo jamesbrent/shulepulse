@@ -110,14 +110,23 @@ export async function generateReceiptPdf({ school, payment, student, term, year 
   const receiptNo   = payment?.receipt_number || 'RCT-' + Date.now().toString(36).toUpperCase()
   const payDate     = payment?.transaction_date || payment?.created_at
   const amount      = Number(payment?.amount) || 0
+  const applied     = payment?.applied_amount != null ? Number(payment.applied_amount) : amount
+  const credit      = Number(payment?.credit_amount) || 0
   const ledgerTotal = Number(payment?.ledger_total) || amount
-  const outstanding = Math.max(0, ledgerTotal - amount)
+  const outstanding = Math.max(0, ledgerTotal - applied)
   const method      = payment?.payment_type || payment?.payment_method || 'Cash'
   const payerName   = payment?.payer_name || payment?.parent_name || payment?.received_by_name || '\u2014'
 
   // Build fee items — only entries with data
   const feeItems = []
-  if (payment?.fee_category || amount > 0) {
+  // Per-term allocation rows when the payment was split across terms / held as credit
+  if (payment?.allocations && Array.isArray(payment.allocations)) {
+    payment.allocations.forEach((a) => {
+      const amt = Number(a.applied) || 0
+      if (amt > 0) feeItems.push({ label: `${a.term} ${a.year || ''} Fees`.trim(), amount: amt })
+    })
+  }
+  if (!feeItems.length && (payment?.fee_category || amount > 0)) {
     feeItems.push({ label: payment?.fee_category || 'School Fees', amount })
   }
   // If ledger has breakdown items, add them instead
@@ -321,8 +330,10 @@ export async function generateReceiptPdf({ school, payment, student, term, year 
 
   const totals = [
     ['Total Fees', fmtKES(ledgerTotal)],
-    ['Amount Paid', fmtKES(amount)],
+    ['Amount Received', fmtKES(amount)],
+    ['Applied to Fees', fmtKES(applied)],
   ]
+  if (credit > 0) totals.push(['Student Credit', fmtKES(credit)])
 
   totals.forEach(([label, val], i) => {
     const isLast = i === totals.length - 1

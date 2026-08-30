@@ -56,6 +56,7 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
   const [searching, setSearching] = useState(false)
   const [saving, setSaving] = useState(false)
   const [payError, setPayError] = useState('')
+  const [payPreview, setPayPreview] = useState(null)
   const tableRef = useRef(null)
 
   const load = useCallback(async () => {
@@ -102,6 +103,24 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
       onRecordPaymentClose?.()
     }
   }, [showRecordPayment])
+
+  // Live overpayment preview — shows term allocation + student credit before recording
+  useEffect(() => {
+    const amt = parseFloat(payForm.amount || '0')
+    if (!payForm.student || amt <= 0 || !payForm.term || !payForm.year) { setPayPreview(null); return }
+    let active = true
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc('preview_fee_allocation', {
+        p_school_id: profile.school_id,
+        p_student_id: payForm.student.id,
+        p_amount: amt,
+        p_term: payForm.term,
+        p_year: parseInt(payForm.year),
+      })
+      if (active && data) setPayPreview(data)
+    }, 250)
+    return () => { active = false; clearTimeout(t) }
+  }, [payForm.amount, payForm.student?.id, payForm.term, payForm.year, profile.school_id])
 
   const searchTimer = useRef(null)
   const searchStudents = useCallback((q) => {
@@ -177,7 +196,17 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
       return
     }
 
-    const payData = { id: rpcResult.payment_id, receipt_number: receiptNumber, student: payForm.student }
+    const payData = {
+      id: rpcResult.payment_id,
+      receipt_number: receiptNumber,
+      student: payForm.student,
+      amount,
+      payment_type: payForm.payment_type,
+      transaction_date: payForm.transaction_date || TODAY,
+      applied_amount: Number(rpcResult.applied_amount ?? amount),
+      credit_amount: Number(rpcResult.credit_amount ?? 0),
+      allocations: rpcResult.allocations || [],
+    }
 
     try {
       await postFeePaymentToGL(supabase, {
@@ -198,7 +227,9 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
     setSaving(false)
     setShowPayModal(false)
     setPayForm(BLANK_PAY(currentTerm, currentYear))
-    setToast({ type: 'success', msg: `Payment of ${fmt(amount)} recorded for ${payForm.student.full_name}. Receipt: ${receiptNumber}` })
+    setPayPreview(null)
+    const creditNote = Number(rpcResult.credit_amount) > 0 ? ` — ${fmt(rpcResult.credit_amount)} held as student credit.` : ''
+    setToast({ type: 'success', msg: `Payment of ${fmt(amount)} recorded for ${payForm.student.full_name}. Receipt: ${receiptNumber}${creditNote}` })
     load()
   }
 
@@ -840,6 +871,29 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
                   onChange={(e) => setPayForm((f) => ({ ...f, amount: e.target.value }))}
                 />
               </div>
+
+              {payPreview && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderLeft: '3px solid #2563eb', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 6px' }}>Payment Allocation</p>
+                  {(payPreview.allocations || []).filter((a) => Number(a.applied) > 0).map((a) => (
+                    <div key={`${a.term}-${a.year}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 13, color: '#1e293b', borderBottom: '1px dashed #e2e8f0' }}>
+                      <span>{a.term} {a.year}{a.is_selected ? '' : ' (other term)'}</span>
+                      <span style={{ fontWeight: 600 }}>{fmt(a.applied)}</span>
+                    </div>
+                  ))}
+                  {Number(payPreview.credit) > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 13, color: '#4c1d95' }}>
+                      <span>Student Credit (advance)</span>
+                      <span style={{ fontWeight: 600 }}>{fmt(payPreview.credit)}</span>
+                    </div>
+                  )}
+                  {Number(payPreview.credit) > 0 && (
+                    <div style={{ marginTop: 8, padding: '8px 10px', background: '#ede9fe', color: '#4c1d95', borderRadius: 8, fontSize: 12, lineHeight: 1.45 }}>
+                      Payment exceeds the {payForm.term} {payForm.year} balance — the excess is held as <strong>Student Credit</strong> and can be applied to future fees.
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 14 }}>
                 <div>

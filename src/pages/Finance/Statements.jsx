@@ -193,6 +193,10 @@ export default function StatementsPage() {
         .select('*')
         .eq('id', profile.school_id)
         .single()
+      const { data: credit } = await supabase.rpc('student_credit_balance', {
+        p_school_id: profile.school_id,
+        p_student_id: selectedStudent.id,
+      })
       const blob = await generateFeeStatementPdf({
         school: schoolData || {},
         student: selectedStudent,
@@ -200,6 +204,7 @@ export default function StatementsPage() {
         assessments: studentAssessments,
         term,
         year,
+        credit: Number(credit) || 0,
       })
       const filename = `fee_statement_${selectedStudent.admission_number || selectedStudent.id}_${term}_${year}.pdf`
       downloadFile(blob, filename, 'application/pdf')

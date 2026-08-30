@@ -9,7 +9,7 @@ export default function FeeStatementPage({ student, school }) {
   const [payments, setPayments] = useState([])
   const [ledger, setLedger] = useState([])
   const [loading, setLoading] = useState(true)
-  const [aggregate, setAggregate] = useState({ totalCharged: 0, totalPaid: 0, balance: 0, status: 'due' })
+  const [aggregate, setAggregate] = useState({ totalCharged: 0, totalPaid: 0, credit: 0, balance: 0, status: 'due' })
 
   useEffect(() => {
     if (!student?.id) { setLoading(false); return }
@@ -37,22 +37,31 @@ export default function FeeStatementPage({ student, school }) {
         .eq('term', term)
         .eq('year', year)
         .order('created_at', { ascending: false }),
-    ]).then(([a, p, l]) => {
+      school?.id ? supabase
+        .rpc('student_credit_balance', { p_school_id: school.id, p_student_id: student.id }) : { data: 0 },
+    ]).then(([a, p, l, c]) => {
       const totalCharged = (a.data || []).reduce((s, x) => s + Number(x.amount_due || 0), 0)
-      const totalPaid = (p.data || []).reduce((s, x) => s + Number(x.amount || 0), 0)
-      const balance = totalCharged - totalPaid
+      // Applied-to-fees figure: charges/penalties increase; every other entry
+      // (payment, waiver, scholarship, discount, credit application) reduces.
+      const totalPaid = (l.data || []).reduce((s, x) => {
+        if (x.entry_type === 'charge' || x.entry_type === 'penalty') return s
+        return s + Number(x.amount || 0)
+      }, 0)
+      const credit = Number(c.data || 0)
+      const balance = Math.max(0, totalCharged - totalPaid)
       setAssessments(a.data || [])
       setPayments(p.data || [])
       setLedger(l.data || [])
       setAggregate({
         totalCharged,
         totalPaid,
+        credit,
         balance,
         status: balance <= 0 ? 'cleared' : totalPaid > 0 ? 'partial' : 'due',
       })
       setLoading(false)
     }).catch(() => setLoading(false))
-  }, [student?.id, school?.current_term, school?.current_year])
+  }, [student?.id, school?.current_term, school?.current_year, school?.id])
 
   if (loading) return (
     <div className="sp-loading-container">
@@ -76,9 +85,18 @@ export default function FeeStatementPage({ student, school }) {
           <div className="sp-stat-icon-wrap" style={{ background: '#f0fdf4', color: '#16a34a' }}><CheckCircle size={20} /></div>
           <div className="sp-stat-content">
             <p className="sp-stat-value" style={{ color: '#16a34a', fontSize: 16 }}>{fmt(aggregate.totalPaid)}</p>
-            <p className="sp-stat-label">Total Paid</p>
+            <p className="sp-stat-label">Applied to Fees</p>
           </div>
         </div>
+        {aggregate.credit > 0 && (
+          <div className="sp-stat-card">
+            <div className="sp-stat-icon-wrap" style={{ background: '#f5f3ff', color: '#7c3aed' }}><DollarSign size={20} /></div>
+            <div className="sp-stat-content">
+              <p className="sp-stat-value" style={{ color: '#7c3aed', fontSize: 16 }}>{fmt(aggregate.credit)}</p>
+              <p className="sp-stat-label">Student Credit (Advance)</p>
+            </div>
+          </div>
+        )}
         <div className="sp-stat-card">
           <div className="sp-stat-icon-wrap" style={{ background: aggregate.balance <= 0 ? '#f0fdf4' : '#fef2f2', color: aggregate.balance <= 0 ? '#16a34a' : '#dc2626' }}>
             {aggregate.balance <= 0 ? <CheckCircle size={20} /> : <XCircle size={20} />}
@@ -176,7 +194,7 @@ export default function FeeStatementPage({ student, school }) {
                   </tr>
                 ))}
                 <tr className="sp-table-total">
-                  <td colSpan={4}>Total Paid</td>
+                  <td colSpan={4}>Applied to Fees</td>
                   <td style={{ textAlign: 'right', color: '#16a34a' }}>{fmt(aggregate.totalPaid)}</td>
                 </tr>
               </tbody>

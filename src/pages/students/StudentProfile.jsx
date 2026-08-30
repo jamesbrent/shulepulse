@@ -30,7 +30,7 @@ export default function StudentProfile() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('personal')
   const [profileTabLoading, setProfileTabLoading] = useState(false)
-  const [profileFee, setProfileFee] = useState({ assessments: [], payments: [], totalCharged: 0, totalPaid: 0, balance: 0 })
+  const [profileFee, setProfileFee] = useState({ assessments: [], payments: [], totalCharged: 0, totalPaid: 0, credit: 0, balance: 0 })
   const [profileAttendance, setProfileAttendance] = useState({ records: [], present: 0, absent: 0, late: 0 })
   const [profileGrades, setProfileGrades] = useState([])
   const [activityLog, setActivityLog] = useState([])
@@ -69,13 +69,27 @@ export default function StudentProfile() {
     const ct = getCurrentTerm()
     const cy = new Date().getFullYear()
     try {
-      const [assessmentsRes, paymentsRes] = await Promise.all([
+      const [assessmentsRes, paymentsRes, ledgerRes, creditRes] = await Promise.all([
         supabase.from('fee_assessments').select('*').eq('student_id', student.id).eq('term', ct).eq('year', cy),
         supabase.from('fee_payments').select('*').eq('student_id', student.id).order('transaction_date', { ascending: false }),
+        supabase.from('student_ledger').select('entry_type, amount').eq('student_id', student.id).eq('term', ct).eq('year', cy),
+        profile?.school_id ? supabase.rpc('student_credit_balance', { p_school_id: profile.school_id, p_student_id: student.id }) : { data: 0 },
       ])
       const totalCharged = (assessmentsRes.data || []).reduce((s, a) => s + Number(a.amount_due), 0)
-      const totalPaid = (paymentsRes.data || []).reduce((s, p) => s + Number(p.amount), 0)
-      setProfileFee({ assessments: assessmentsRes.data || [], payments: paymentsRes.data || [], totalCharged, totalPaid, balance: totalCharged - totalPaid })
+      // Applied-to-fees figure: charges/penalties increase; every other entry
+      // (payment, waiver, scholarship, discount, credit application) reduces.
+      const totalPaid = (ledgerRes.data || []).reduce((s, l) => {
+        if (l.entry_type === 'charge' || l.entry_type === 'penalty') return s
+        return s + Number(l.amount || 0)
+      }, 0)
+      setProfileFee({
+        assessments: assessmentsRes.data || [],
+        payments: paymentsRes.data || [],
+        totalCharged,
+        totalPaid,
+        credit: Number(creditRes.data || 0),
+        balance: Math.max(0, totalCharged - totalPaid),
+      })
     } catch (e) { console.error(e) }
     setProfileTabLoading(false)
   }
@@ -201,9 +215,17 @@ export default function StudentProfile() {
               <div className="summary-card">
                 <div className="summary-card-body">
                   <p className="summary-card-value">{fmt(fc.totalPaid)}</p>
-                  <p className="summary-card-label">Total Paid</p>
+                  <p className="summary-card-label">Applied to Fees</p>
                 </div>
               </div>
+              {fc.credit > 0 && (
+                <div className="summary-card">
+                  <div className="summary-card-body">
+                    <p className="summary-card-value" style={{ color: '#7c3aed' }}>{fmt(fc.credit)}</p>
+                    <p className="summary-card-label">Student Credit</p>
+                  </div>
+                </div>
+              )}
               <div className="summary-card">
                 <div className="summary-card-body">
                   <p className="summary-card-value" style={{ color: feeStatus === 'cleared' ? '#16a34a' : '#dc2626' }}>{fmt(fc.balance)}</p>

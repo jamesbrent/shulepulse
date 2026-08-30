@@ -46,6 +46,7 @@ export const DEFAULT_CHART = [
   { code: '2151', name: 'Other Payroll Deductions Payable', type: 'liability', category: 'Payroll Payables' },
   { code: '2210', name: 'Caution Money Held',        type: 'liability', category: 'Deposits' },
   { code: '2220', name: 'Deferred Fee Income',       type: 'liability', category: 'Deposits' },
+  { code: '2230', name: 'Student Credit / Advance Payments', type: 'liability', category: 'Deposits' },
   // Equity
   { code: '3010', name: 'Accumulated Fund',          type: 'equity',    category: 'Fund Balances' },
   { code: '3020', name: 'Capital Grants',            type: 'equity',    category: 'Fund Balances' },

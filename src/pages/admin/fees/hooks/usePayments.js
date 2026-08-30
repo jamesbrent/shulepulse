@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
 import { useAuthStore } from '../../../../store/authStore'
-import { postFeeAssessmentToGL, postFeePaymentToGL } from '../../../Finance/cashBankUtils'
+import {
+  postFeeAssessmentToGL,
+  postFeePaymentToGL,
+  postCreditApplicationToGL,
+  postRefundToGL,
+} from '../../../Finance/cashBankUtils'
 
 export function usePayments(schoolId, term, year) {
   const { profile } = useAuthStore()
@@ -9,10 +14,17 @@ export function usePayments(schoolId, term, year) {
   const [selected,       setSelected]       = useState(null)
   const [ledger,         setLedger]         = useState([])
   const [assessments,    setAssessments]    = useState([])
+  const [creditHistory,  setCreditHistory]  = useState([])
   const [loading,        setLoading]        = useState(false)
   const [saving,         setSaving]         = useState(false)
   const [error,          setError]          = useState('')
   const [autoAssessed,   setAutoAssessed]   = useState(false)   // ← new: toast trigger
+
+  // Running student-credit balance across ALL terms (credits − debits − refunds)
+  const creditBalance = creditHistory.reduce(
+    (bal, t) => bal + (t.type === 'credit' ? Number(t.amount) : -Number(t.amount)),
+    0
+  )
 
   // Load all active students once
   useEffect(() => {
@@ -41,7 +53,7 @@ export function usePayments(schoolId, term, year) {
     setAutoAssessed(false)   // reset toast on each selection
     setLoading(true)
 
-    const [ledgerRes, assRes] = await Promise.all([
+    const [ledgerRes, assRes, creditRes] = await Promise.all([
       supabase
         .from('student_ledger')
         .select('*')
@@ -57,10 +69,17 @@ export function usePayments(schoolId, term, year) {
         .eq('student_id', student.id)
         .eq('term', term)
         .eq('year', year),
+      supabase
+        .from('student_credit_transactions')
+        .select('*')
+        .eq('school_id', schoolId)
+        .eq('student_id', student.id)
+        .order('created_at'),
     ])
 
     let assessmentData = assRes.data || []
     let ledgerData     = ledgerRes.data || []
+    const creditData   = creditRes.data || []
 
     // ── Enrich ledger entries with actual dates from source tables ──
     const paymentRefIds = ledgerData
@@ -216,6 +235,7 @@ export function usePayments(schoolId, term, year) {
 
     setLedger(ledgerData)
     setAssessments(assessmentData)
+    setCreditHistory(creditData)
     setLoading(false)
   }
 
@@ -253,31 +273,6 @@ export function usePayments(schoolId, term, year) {
       ? (form.mpesa_code || null)
       : form.reference || null
 
-    const paymentRecord = {
-      school_id:      schoolId,
-      student_id:     studentId,
-      amount,
-      payment_type:   resolvedType,
-      payment_method: isLegacy ? form.payment_method : resolvedType,
-      provider:       resolvedProvider,
-      reference:      resolvedRef,
-      metadata:       form.metadata || {},
-      mpesa_code:     isLegacy
-        ? (form.mpesa_code || null)
-        : (form.payment_type === 'mobile_money' && form.provider === 'M-Pesa'
-            ? form.reference || null
-            : null),
-      cheque_status:          form.payment_type === 'cheque' ? (form.cheque_status || 'pending') : null,
-      cheque_clearance_date:  form.payment_type === 'cheque' && form.cheque_clearance_date
-                                ? form.cheque_clearance_date
-                                : null,
-      receipt_number:   receiptNumber,
-      received_by:      profileId,
-      transaction_date: form.transaction_date || new Date().toISOString().split('T')[0],
-      term,
-      year: parseInt(year),
-    }
-
     // Atomic payment + ledger recording via RPC
     const { data: rpcResult, error: rpcErr } = await supabase.rpc('record_fee_payment', {
       p_school_id: schoolId,
@@ -301,7 +296,13 @@ export function usePayments(schoolId, term, year) {
       return null
     }
 
-    const payData = { id: rpcResult.payment_id, receipt_number: receiptNumber, student_id: studentId, amount, payment_type: resolvedType }
+    const payData = {
+      id: rpcResult.payment_id, receipt_number: receiptNumber, student_id: studentId, amount,
+      payment_type: resolvedType,
+      applied_amount: Number(rpcResult.applied_amount ?? amount),
+      credit_amount: Number(rpcResult.credit_amount ?? 0),
+      allocations: rpcResult.allocations || [],
+    }
 
     // ── Cheque tracking ──
     if (form.payment_type === 'cheque') {
@@ -391,14 +392,105 @@ export function usePayments(schoolId, term, year) {
     if (studentObj) await selectStudent(studentObj)
   }
 
+  // ── Student credit ───────────────────────────────────────────────────────
+  // Live preview of where a payment of `amount` would go: the selected term
+  // first, then other current-year terms in order, then student credit.
+  const previewAllocation = async (amount, studentIdOverride) => {
+    const studentId = studentIdOverride || selected?.id
+    if (!studentId || !amount) return null
+    const { data, error } = await supabase.rpc('preview_fee_allocation', {
+      p_school_id: schoolId,
+      p_student_id: studentId,
+      p_amount: parseFloat(amount) || 0,
+      p_term: term,
+      p_year: parseInt(year),
+    })
+    if (error || !data) return null
+    return data
+  }
+
+  // Consume stored student credit against a term's outstanding assessment.
+  const applyCredit = async ({ targetTerm = term, targetYear = year, amount: creditAmount, description = '' }) => {
+    const studentId = selected?.id
+    if (!studentId) return { error: 'No student selected.' }
+    setSaving(true)
+    const { data, error } = await supabase.rpc('apply_student_credit', {
+      p_school_id: schoolId,
+      p_student_id: studentId,
+      p_term: targetTerm,
+      p_year: parseInt(targetYear),
+      p_amount: parseFloat(creditAmount) || 0,
+      p_user_id: profile?.id ?? null,
+      p_description: description,
+    })
+    if (error || !data?.success) {
+      setSaving(false)
+      return { error: error?.message || data?.error || 'Failed to apply credit.' }
+    }
+    if (profile?.id) {
+      try {
+        await postCreditApplicationToGL(supabase, {
+          schoolId,
+          userId: profile.id,
+          entry: { ...data, term: targetTerm, year: targetYear },
+          studentName: selected?.full_name,
+        })
+      } catch { /* GL unavailable for this role — backfill covers later */ }
+    }
+    if (selected) await selectStudent(selected)
+    setSaving(false)
+    return { ...data }
+  }
+
+  // Controlled, auditable refund of stored student credit.
+  const refundCredit = async ({ amount: refundAmount, paymentId = null, method = 'cash', reference = '', entryDate, description = '' }) => {
+    const studentId = selected?.id
+    if (!studentId) return { error: 'No student selected.' }
+    setSaving(true)
+    const desc = [
+      description,
+      method ? `via ${method}` : '',
+      reference ? `Ref: ${reference}` : '',
+    ].filter(Boolean).join(' — ')
+    const { data, error } = await supabase.rpc('refund_student_credit', {
+      p_school_id: schoolId,
+      p_student_id: studentId,
+      p_amount: parseFloat(refundAmount) || 0,
+      p_payment_id: paymentId,
+      p_refund_date: entryDate || new Date().toISOString().split('T')[0],
+      p_description: desc,
+      p_user_id: profile?.id ?? null,
+    })
+    if (error || !data?.success) {
+      setSaving(false)
+      return { error: error?.message || data?.error || 'Refund failed.' }
+    }
+    if (profile?.id) {
+      try {
+        await postRefundToGL(supabase, {
+          schoolId,
+          userId: profile.id,
+          refund: data,
+          method,
+          studentName: selected?.full_name,
+        })
+      } catch { /* GL unavailable for this role — backfill covers later */ }
+    }
+    if (selected) await selectStudent(selected)
+    setSaving(false)
+    return { ...data }
+  }
+
   return {
     students, selected, ledger, assessments,
     loading, saving, error,
     balance,
+    creditHistory, creditBalance,      // ← student credit ledger + running balance
     autoAssessed,         // ← exported so PaymentsTab can read it
     setAutoAssessed,      // ← exported so the tab can dismiss the toast
     setError,
     selectStudent, recordPayment, addAdjustment, generateReceiptNumber,
+    previewAllocation, applyCredit, refundCredit,
   }
 }
 

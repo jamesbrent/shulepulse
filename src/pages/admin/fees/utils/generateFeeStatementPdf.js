@@ -85,7 +85,7 @@ function sectionTitle(doc, text, x, y) {
   return y + 6
 }
 
-export async function generateFeeStatementPdf({ school, student, ledger, assessments, term, year }) {
+export async function generateFeeStatementPdf({ school, student, ledger, assessments, term, year, credit }) {
   const doc = new jsPDF('portrait', 'mm', 'a4')
 
   const schoolName  = school?.name || 'School Name'
@@ -265,7 +265,7 @@ export async function generateFeeStatementPdf({ school, student, ledger, assessm
 
   const summaryItems = [
     ['Total Fees Charged', fmtKES(assessedTotal || grossCharged)],
-    ['Total Paid', fmtKES(totalPaid)],
+    ['Applied to Fees', fmtKES(totalPaid)],
     ['Discounts / Waivers', fmtKES(totalDiscounts)],
     ['Penalties', fmtKES(totalPenalties)],
   ]
@@ -307,6 +307,16 @@ export async function generateFeeStatementPdf({ school, student, ledger, assessm
   doc.text(badgeLabel, MARGIN + 52 + badgeW / 2, tableY + 6, { align: 'center' })
 
   tableY += ROW_H + 6
+
+  // Student credit held on account (excess payments not yet applied)
+  const heldCredit = Number(credit) || 0
+  if (heldCredit > 0) {
+    doc.setFont(FONT, 'bold')
+    doc.setFontSize(8.5)
+    doc.setTextColor(...TEXT_MUTED)
+    doc.text(`STUDENT CREDIT HELD ON ACCOUNT: ${fmtKES(heldCredit)}`, MARGIN, tableY)
+    tableY += 6
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 4. FEE LEDGER TABLE

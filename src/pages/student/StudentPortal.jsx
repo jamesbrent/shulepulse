@@ -86,6 +86,7 @@ export default function StudentPortal() {
   const [student, setStudent] = useState(null)
   const [grades, setGrades] = useState([])
   const [fees, setFees] = useState([])
+  const [credit, setCredit] = useState(0)
   const [attendance, setAttendance] = useState({ present: 0, total: 0, rate: 0 })
   const [notices, setNotices] = useState([])
   const [school, setSchool] = useState(null)
@@ -153,11 +154,11 @@ export default function StudentPortal() {
         const [
           gradesRes, assessmentsRes, paymentsRes, attendancePresent,
           attendanceTotal, noticesRes, timetableRes, assignmentsRes,
-          messagesRes, eventsRes, libraryRes
+          messagesRes, eventsRes, libraryRes, creditRes
         ] = await Promise.all([
           supabase.from('grades').select('*').eq('student_id', studentData.id).eq('term', currentTerm).eq('year', currentYear).in('status', ['approved', 'published']),
           supabase.from('fee_assessments').select('*').eq('student_id', studentData.id).eq('term', currentTerm).eq('year', currentYear),
-          supabase.from('fee_payments').select('amount').eq('student_id', studentData.id),
+          supabase.from('student_ledger').select('entry_type, amount').eq('student_id', studentData.id).eq('term', currentTerm).eq('year', currentYear),
           supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('student_id', studentData.id).eq('status', 'present'),
           supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('student_id', studentData.id),
           supabase.from('notices').select('*').eq('school_id', profileData.school_id).order('created_at', { ascending: false }).limit(10),
@@ -166,6 +167,7 @@ export default function StudentPortal() {
           supabase.from('messages').select('*').eq('recipient_id', user.id).order('created_at', { ascending: false }).limit(5),
           supabase.from('events').select('*').eq('school_id', profileData.school_id).gte('date', new Date().toISOString().split('T')[0]).order('date', { ascending: true }).limit(10),
           supabase.from('library_books').select('*').eq('school_id', profileData.school_id).limit(5),
+          profileData.school_id ? supabase.rpc('student_credit_balance', { p_school_id: profileData.school_id, p_student_id: studentData.id }) : { data: 0 },
         ])
 
         setGrades(gradesRes.data || [])
@@ -175,9 +177,13 @@ export default function StudentPortal() {
           amount_due: a.amount || 0,
           amount_paid: 0,
         }))
-        const paidFromPayments = (paymentsRes.data || []).reduce((s, p) => s + (p.amount || 0), 0)
+        const paidFromPayments = (paymentsRes.data || []).reduce((s, p) => {
+          if (p.entry_type === 'charge' || p.entry_type === 'penalty') return s
+          return s + (p.amount || 0)
+        }, 0)
         if (feesData.length > 0) feesData[0].amount_paid = paidFromPayments
         setFees(feesData)
+        setCredit(Number(creditRes.data || 0))
 
         setAttendance({
           present: attendancePresent.count || 0,
@@ -255,7 +261,7 @@ export default function StudentPortal() {
 
   const totalDue = fees.reduce((s, f) => s + (f.amount_due || 0), 0)
   const totalPaid = fees.reduce((s, f) => s + (f.amount_paid || 0), 0)
-  const balance = totalDue - totalPaid
+  const balance = Math.max(0, totalDue - totalPaid)
   const grouped = groupGradesBySubject(grades)
   const avgGrade = grouped.overallAverage
   const subScores = grouped.subjects.map(s => s.average)
@@ -1084,9 +1090,15 @@ export default function StudentPortal() {
                   <span>KES {totalDue.toLocaleString()}</span>
                 </div>
                 <div className="sp-fee-row">
-                  <span>Total Paid</span>
+                  <span>Applied to Fees</span>
                   <span className="sp-fee-paid">KES {totalPaid.toLocaleString()}</span>
                 </div>
+                {credit > 0 && (
+                  <div className="sp-fee-row">
+                    <span>Student Credit (Advance)</span>
+                    <span style={{ color: '#7c3aed' }}>KES {credit.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="sp-fee-row sp-fee-total">
                   <span>Balance</span>
                   <span style={{ color: balance === 0 ? '#16a34a' : '#dc2626' }}>

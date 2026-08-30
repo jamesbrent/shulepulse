@@ -1262,3 +1262,61 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   OVERPAYMENT / STUDENT CREDIT
+   ═══════════════════════════════════════════════════════════════════ */
+.pay-credit-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding-left: 16px;
+  border-left: 1px solid #e5e7eb;
+  color: #7c3aed;
+}
+.pay-credit-chip .bal-value { color: #7c3aed; }
+
+.credit-balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #f5f3ff;
+  border: 1px solid #ede9fe;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #4c1d95;
+}
+
+.overpay-preview {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid var(--color-primary, #2563eb);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+}
+.alloc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 13.5px;
+  color: #1e293b;
+}
+.alloc-row + .alloc-row { border-top: 1px dashed #e2e8f0; }
+.alloc-row.credit span:last-child { color: #7c3aed; }
+.alloc-notice {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #ede9fe;
+  color: #4c1d95;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.entry-type.credit  { background: #f5f3ff; color: #7c3aed; }
+.entry-type.debit   { background: #eff6ff; color: #2563eb; }
+.entry-type.refund  { background: #fef2f2; color: #b91c1c; }

@@ -410,29 +410,90 @@ export function suggestMatches(imported, glLines) {
 }
 
 // ─── Fee payment → GL (so Treasury reflects student receipts) ─────────────
-// Dr <Bank/M-Pesa/Cash> | Cr <Student Fee Receivables>.
+// Dr <Bank/M-Pesa/Cash> | Cr <Student Fee Receivables> for the applied
+// portion; any excess (overpayment) is credited to the Student Credit
+// liability account (2230) instead of over-clearing receivables.
 export async function postFeePaymentToGL(supabase, { schoolId, userId, payment, method }) {
   if (payment?.journal_entry_id) return null
-  await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030', '1110'])
+  const credit = Math.max(toNum(payment.credit_amount), 0)
+  const applied = Math.max(toNum(payment.applied_amount ?? payment.amount) - credit, 0)
+  await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030', '1110', '2230'])
   const code = METHOD_ACCOUNT_CODE[method] || '1020'
-  const { data: accs } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).in('code', [code, '1110'])
+  const { data: accs } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).in('code', [code, '1110', '2230'])
   const payAcc = (accs || []).find((a) => a.code === code)
   const recv = (accs || []).find((a) => a.code === '1110')
+  const creditLiab = (accs || []).find((a) => a.code === '2230')
   if (!payAcc || !recv) throw new Error('Cash / receivable account missing from the chart')
   const amount = toNum(payment.amount)
   const studentName = payment.student?.full_name || payment.student_name || 'Student'
+  const lines = [
+    { account_id: payAcc.id, debit: amount, credit: 0, notes: `Receipt ${payment.receipt_number || ''} — ${method || 'cash'}` },
+    { account_id: recv.id, debit: 0, credit: applied, notes: `Fee receivable cleared — ${studentName}` },
+  ]
+  if (credit > 0) {
+    if (!creditLiab) throw new Error('Student credit liability account (2230) missing from the chart')
+    lines.push({ account_id: creditLiab.id, debit: 0, credit, notes: `Advance held as student credit — ${studentName}` })
+  }
   const je = await postToJournal(supabase, {
     schoolId, userId,
     entry_date: payment.transaction_date || today(),
     description: `Fee payment ${payment.receipt_number || ''} — ${studentName} (${method || 'cash'})`.trim(),
     source: 'fees', reference_type: 'fee_payment', reference_id: payment.id,
-    lines: [
-      { account_id: payAcc.id, debit: amount, credit: 0, notes: `Receipt ${payment.receipt_number || ''} — ${method || 'cash'}` },
-      { account_id: recv.id, debit: 0, credit: amount, notes: `Fee receivable cleared — ${studentName}` },
-    ],
+    lines,
   })
   await supabase.from('fee_payments').update({ journal_entry_id: je.id }).eq('id', payment.id)
-  await writeAudit(supabase, { schoolId, action: 'fee_payment_posted', details: { payment_id: payment.id, receipt: payment.receipt_number, amount, journal_id: je.id } })
+  await writeAudit(supabase, { schoolId, action: 'fee_payment_posted', details: { payment_id: payment.id, receipt: payment.receipt_number, amount, applied, credit, journal_id: je.id } })
+  return je
+}
+
+// ─── Student credit application → GL ──────────────────────────────────────
+// Consuming stored credit against a term's assessment clears the receivable
+// already accrued by the assessment: Dr <Student Credit (2230) | Cr <Receivables>.
+export async function postCreditApplicationToGL(supabase, { schoolId, userId, entry, studentName }) {
+  await ensureAccounts(supabase, schoolId, ['1110', '2230'])
+  const { data: accs } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).in('code', ['1110', '2230'])
+  const recv = (accs || []).find((a) => a.code === '1110')
+  const creditLiab = (accs || []).find((a) => a.code === '2230')
+  if (!recv || !creditLiab) throw new Error('Receivable / student credit account missing from the chart')
+  const amount = toNum(entry.applied)
+  const name = studentName || 'Student'
+  const je = await postToJournal(supabase, {
+    schoolId, userId,
+    entry_date: today(),
+    description: `Student credit applied — ${entry.term || ''} ${entry.year || ''} — ${name}`.trim(),
+    source: 'fees', reference_type: 'fee_credit', reference_id: entry.ledger_entry_id || null,
+    lines: [
+      { account_id: creditLiab.id, debit: amount, credit: 0, notes: `Credit applied to ${entry.term || ''} — ${name}` },
+      { account_id: recv.id, debit: 0, credit: amount, notes: `Receivable cleared by student credit — ${name}` },
+    ],
+  })
+  await writeAudit(supabase, { schoolId, action: 'student_credit_applied', details: { term: entry.term, year: entry.year, amount, journal_id: je.id } })
+  return je
+}
+
+// ─── Student credit refund → GL ──────────────────────────────────────────
+// Returning stored credit: Dr <Student Credit (2230)> | Cr <Cash/Bank/M-Pesa>
+// (authorizer confirmed the refund is actually disbursed).
+export async function postRefundToGL(supabase, { schoolId, userId, refund, method, studentName }) {
+  await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030', '2230'])
+  const code = METHOD_ACCOUNT_CODE[method] || '1020'
+  const { data: accs } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).in('code', [code, '2230'])
+  const cashAcc = (accs || []).find((a) => a.code === code)
+  const creditLiab = (accs || []).find((a) => a.code === '2230')
+  if (!cashAcc || !creditLiab) throw new Error('Cash / student credit account missing from the chart')
+  const amount = toNum(refund.amount)
+  const name = studentName || 'Student'
+  const je = await postToJournal(supabase, {
+    schoolId, userId,
+    entry_date: today(),
+    description: `Refund of student credit — ${name} (${method || 'cash'})`.trim(),
+    source: 'refund', reference_type: 'fee_refund', reference_id: refund.refund_id || null,
+    lines: [
+      { account_id: creditLiab.id, debit: amount, credit: 0, notes: `Student credit refunded — ${name}` },
+      { account_id: cashAcc.id, debit: 0, credit: amount, notes: `Refund paid out — ${method || 'cash'}` },
+    ],
+  })
+  await writeAudit(supabase, { schoolId, action: 'student_credit_refund', details: { refund_id: refund.refund_id, amount, method, journal_id: je.id } })
   return je
 }
 

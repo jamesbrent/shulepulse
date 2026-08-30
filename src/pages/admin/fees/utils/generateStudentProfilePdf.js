@@ -306,14 +306,15 @@ export async function generateFeeAccountPdf({ school, student, fee, term, year }
 
   const totalCharged = fee?.totalCharged || 0
   const totalPaid = fee?.totalPaid || 0
+  const credit = fee?.credit || 0
   const balance = fee?.balance || 0
   const feeStatus = balance <= 0 ? 'Cleared' : totalPaid > 0 ? 'Partial' : 'Due'
 
   const cardW = (CONTENT_W - 12) / 4
   const cards = [
     { label: 'Total Charged', value: fmt(totalCharged) },
-    { label: 'Total Paid', value: fmt(totalPaid) },
-    { label: 'Discounts', value: fmt(0) },
+    { label: 'Applied to Fees', value: fmt(totalPaid) },
+    { label: 'Student Credit', value: fmt(credit) },
     { label: 'Balance', value: fmt(Math.abs(balance)) },
   ]
 
@@ -358,6 +359,14 @@ export async function generateFeeAccountPdf({ school, student, fee, term, year }
   doc.text(feeStatus.toUpperCase(), PAGE_W - MARGIN - 26, y + 8, { align: 'center' })
 
   y += 18
+
+  if (credit > 0) {
+    doc.setFont(FONT, 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(...MEDIUM)
+    doc.text(`STUDENT CREDIT HELD ON ACCOUNT: ${fmt(credit)}`, MARGIN + 10, y)
+    y += 7
+  }
 
   const assessments = fee?.assessments || []
   const payments = fee?.payments || []

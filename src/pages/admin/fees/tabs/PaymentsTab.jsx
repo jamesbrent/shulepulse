@@ -1,5 +1,5 @@
 import { useState, useEffect }         from 'react'
-import { Search, ChevronRight, Wallet, CheckCircle, Percent, Printer, Plus, CreditCard, Calendar, DollarSign, Clock, TrendingUp, Download, Sparkles } from 'lucide-react'
+import { Search, ChevronRight, Wallet, CheckCircle, Percent, Printer, Plus, CreditCard, Calendar, DollarSign, Clock, TrendingUp, Download, Sparkles, Smartphone, Landmark, Banknote, School, BadgeDollarSign, Undo2 } from 'lucide-react'
 import { supabase }                     from '../../../../lib/supabase'
 import { usePayments }                  from '../hooks/usePayments'
 import { useFeesDashboard }             from '../hooks/useFeesDashboard'
@@ -54,14 +54,45 @@ function AutoAssessedToast({ studentName, onDismiss }) {
   )
 }
 
+// ─── Overpayment allocation preview ─────────────────────────────────────────
+function AllocationPreview({ preview, term, year }) {
+  const rows   = (preview?.allocations || []).filter((a) => Number(a.applied) > 0)
+  const credit = Number(preview?.credit) || 0
+  if (!rows.length && !credit) return null
+  return (
+    <div className="overpay-preview">
+      <p className="ledger-label" style={{ marginBottom: 6 }}>Payment Allocation</p>
+      {rows.map((a) => (
+        <div key={`${a.term}-${a.year}`} className="alloc-row">
+          <span>{a.term} {a.year}{a.is_selected ? '' : ' (other term)'}</span>
+          <span className="fw600">{fmt(a.applied)}</span>
+        </div>
+      ))}
+      {credit > 0 && (
+        <div className="alloc-row credit">
+          <span>Student Credit (advance)</span>
+          <span className="fw600">{fmt(credit)}</span>
+        </div>
+      )}
+      {credit > 0 && (
+        <div className="alloc-notice">
+          Payment exceeds the {term} {year} balance — the excess is held as <strong>Student Credit</strong> and can be applied to future fees.
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function PaymentsTab({ profile, term, year, search, filterClass, filterStream, refreshKey, onRefresh }) {
   const {
     students, selected, ledger, assessments,
     loading, saving, error,
     balance,
+    creditHistory, creditBalance,
     autoAssessed, setAutoAssessed,
     setError,
     selectStudent, recordPayment, addAdjustment,
+    previewAllocation, applyCredit, refundCredit,
   } = usePayments(profile.school_id, term, year)
 
   const { summary, collectionRate } = useFeesDashboard(profile.school_id, term, year)
@@ -76,6 +107,17 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
   const [payStudent,       setPayStudent]       = useState(null)
   const [payStudentSearch, setPayStudentSearch] = useState('')
   const [generatingPdf,    setGeneratingPdf]    = useState(false)
+
+  // Overpayment preview + credit / refund UI
+  const [preview,              setPreview]              = useState(null)
+  const [flexPreview,          setFlexPreview]          = useState(null)
+  const [payStudentOutstanding, setPayStudentOutstanding] = useState(null)
+  const [showCreditModal,      setShowCreditModal]      = useState(false)
+  const [creditForm,           setCreditForm]           = useState({ amount: '', term })
+  const [showRefundModal,      setShowRefundModal]      = useState(false)
+  const [refundForm,           setRefundForm]           = useState({ amount: '', method: 'cash', reference: '', transaction_date: TODAY, description: '' })
+  const [creditMsg,            setCreditMsg]            = useState('')
+  const [creditErr,            setCreditErr]            = useState('')
 
   const filtered = students.filter(
     (s) =>
@@ -139,6 +181,65 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
     }
   }
 
+  const openPayModal = () => {
+    setError('')
+    setPayStudent(null)
+    setPayStudentSearch('')
+    setPayStudentOutstanding(null)
+    setFlexPreview(null)
+    setFlexPay(BLANK_FLEX_PAY)
+    setShowPayModal(true)
+  }
+
+  // Live preview of where a typed amount goes (overpayment → credit notice)
+  const handleQuickAmountChange = (val) => {
+    setPayForm({ ...payForm, amount: val })
+    const num = parseFloat(val)
+    if (num > balance) previewAllocation(val).then(setPreview)
+    else setPreview(null)
+  }
+
+  const handleFlexAmountChange = (val) => {
+    setFlexPay({ ...flexPay, amount: val })
+    const num = parseFloat(val)
+    if (payStudent && num > 0 && payStudentOutstanding != null && num > payStudentOutstanding) {
+      previewAllocation(val, payStudent.id).then(setFlexPreview)
+    } else {
+      setFlexPreview(null)
+    }
+  }
+
+  const handleApplyCreditSubmit = async (e) => {
+    e.preventDefault()
+    setCreditMsg(''); setCreditErr('')
+    const targetTerm = creditForm.term || term
+    const res = await applyCredit({ targetTerm, targetYear: year, amount: creditForm.amount, description: 'Manual credit application' })
+    if (res?.error) setCreditErr(res.error)
+    else {
+      setShowCreditModal(false)
+      setCreditForm({ amount: '', term })
+      setCreditMsg(`${fmt(res.applied)} applied to ${targetTerm} ${year}. Remaining credit: ${fmt(res.new_balance)}.`)
+    }
+  }
+
+  const handleRefundSubmit = async (e) => {
+    e.preventDefault()
+    setCreditMsg(''); setCreditErr('')
+    const res = await refundCredit({
+      amount: refundForm.amount,
+      method: refundForm.method,
+      reference: refundForm.reference,
+      entryDate: refundForm.transaction_date,
+      description: refundForm.description,
+    })
+    if (res?.error) setCreditErr(res.error)
+    else {
+      setShowRefundModal(false)
+      setRefundForm({ amount: '', method: 'cash', reference: '', transaction_date: TODAY, description: '' })
+      setCreditMsg(`Refund of ${fmt(res.amount)} processed (${refundForm.method}). Remaining credit: ${fmt(res.new_balance)}.`)
+    }
+  }
+
   const payFiltered = students.filter(
     (s) =>
       s.full_name?.toLowerCase().includes(payStudentSearch.toLowerCase()) ||
@@ -162,7 +263,7 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
     setGeneratingPdf(true)
     try {
       const school = await fetchSchool()
-      const blob   = await generateFeeStatementPdf({ school, student: selected, ledger, assessments, term, year })
+      const blob   = await generateFeeStatementPdf({ school, student: selected, ledger, assessments, term, year, credit: creditBalance })
       const filename = `fee_statement_${selected.admission_number || selected.id}_${term}_${year}.pdf`
       downloadFile(blob, filename, 'application/pdf')
     } finally {
@@ -242,7 +343,7 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
         <p className="text-muted">Record and manage student fee payments</p>
         <button
           className="btn-primary"
-          onClick={() => { setShowPayModal(true); setError(''); setPayStudent(null); setFlexPay(BLANK_FLEX_PAY) }}
+          onClick={openPayModal}
           disabled={!term || !year || !isAuthorized}
           title={
             !term || !year    ? 'Select term and year first' :
@@ -309,9 +410,15 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
                   className="pay-balance-chip"
                   style={{ color: balance > 0 ? '#dc2626' : '#16a34a' }}
                 >
-                  <span className="bal-label">Balance</span>
-                  <span className="bal-value">{fmt(balance)}</span>
+                  <span className="bal-label">{balance > 0 ? 'Outstanding' : 'Cleared'}</span>
+                  <span className="bal-value">{fmt(Math.max(balance, 0))}</span>
                 </div>
+                {creditBalance > 0 && (
+                  <div className="pay-credit-chip">
+                    <span className="bal-label">Student Credit</span>
+                    <span className="bal-value">{fmt(creditBalance)}</span>
+                  </div>
+                )}
                 <div className="stmt-actions">
                   <button className="btn-ghost sm" onClick={handleDownloadStatement} disabled={generatingPdf} title="Statement PDF">
                     <Download size={13} /> {generatingPdf ? '…' : 'PDF'}
@@ -391,31 +498,39 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
                     <div className="form-grid">
                       <div className="form-field full">
                         <label>
-                          Amount (KES) * <span className="text-muted">Max: {fmt(balance)}</span>
+                          Amount (KES) * <span className="text-muted">Outstanding: {fmt(balance)}</span>
                         </label>
                         <input
                           required
                           type="number"
                           min="1"
-                          max={balance}
-                          placeholder={`Up to KES ${balance.toLocaleString()}`}
+                          placeholder={`KES ${balance.toLocaleString()} outstanding`}
                           value={payForm.amount}
-                          onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })}
+                          onChange={(e) => handleQuickAmountChange(e.target.value)}
                         />
                       </div>
+                      {preview && Number(payForm.amount) > balance && (
+                        <div className="form-field full">
+                          <AllocationPreview preview={preview} term={term} year={year} />
+                        </div>
+                      )}
                       <div className="form-field full">
                         <label>Payment Method *</label>
                         <div className="method-tabs">
-                          {PAYMENT_METHODS.map((m) => (
-                            <button
-                              key={m}
-                              type="button"
-                              className={`method-tab ${payForm.payment_method === m ? 'active' : ''}`}
-                              onClick={() => setPayForm({ ...payForm, payment_method: m })}
-                            >
-                              {m === 'mpesa' ? '📱 M-Pesa' : m === 'bank' ? '🏦 Bank' : '💵 Cash'}
-                            </button>
-                          ))}
+                          {PAYMENT_METHODS.map((m) => {
+                            const Icon = m === 'mpesa' ? Smartphone : m === 'bank' ? Landmark : Banknote
+                            return (
+                              <button
+                                key={m}
+                                type="button"
+                                className={`method-tab ${payForm.payment_method === m ? 'active' : ''}`}
+                                onClick={() => setPayForm({ ...payForm, payment_method: m })}
+                              >
+                                <Icon size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                                {m === 'mpesa' ? 'M-Pesa' : m === 'bank' ? 'Bank' : 'Cash'}
+                              </button>
+                            )
+                          })}
                         </div>
                       </div>
                       {payForm.payment_method === 'mpesa' && (
@@ -449,7 +564,76 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
 
               {balance <= 0 && assessments.length > 0 && (
                 <div className="gen-result success" style={{ marginTop: 16 }}>
-                  <CheckCircle size={16} /> This student's account is fully settled for {term} {year}.
+                  <CheckCircle size={16} />
+                  {creditBalance > 0
+                    ? `No outstanding balance for ${term} ${year} — ${fmt(creditBalance)} is held as student credit.`
+                    : `This student's account is fully settled for ${term} ${year}.`}
+                </div>
+              )}
+
+              {/* ── Student Credit / Advance ── */}
+              {creditBalance > 0 && (
+                <div className="section-card" style={{ marginTop: 16 }}>
+                  <div className="section-card-head">
+                    <h4><Wallet size={14} /> Student Credit / Advance</h4>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        className="btn-ghost sm"
+                        onClick={() => {
+                          setCreditErr(''); setCreditMsg('')
+                          setCreditForm({ amount: creditBalance, term })
+                          setShowCreditModal(true)
+                        }}
+                        title="Apply stored credit to an outstanding term balance"
+                      >
+                        <BadgeDollarSign size={13} /> Apply Credit
+                      </button>
+                      <button
+                        className="btn-ghost sm"
+                        onClick={() => { setCreditErr(''); setCreditMsg(''); setShowRefundModal(true) }}
+                        title="Authorised refund of student credit"
+                      >
+                        <Undo2 size={13} /> Refund
+                      </button>
+                    </div>
+                  </div>
+                  {creditMsg && <div className="gen-result success" style={{ margin: '8px 0' }}>{creditMsg}</div>}
+                  {creditErr && <div className="form-error" style={{ margin: '8px 0' }}>{creditErr}</div>}
+                  <div className="credit-balance-row">
+                    <span className="text-muted">Available credit</span>
+                    <span className="fw600">{fmt(creditBalance)}</span>
+                  </div>
+                  {creditHistory.length > 0 && (
+                    <div className="audit-table-wrap" style={{ marginTop: 8 }}>
+                      <table className="fees-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Running Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {creditHistory.map((t) => (
+                            <tr key={t.id}>
+                              <td className="text-muted">{fmtDate(t.entry_date || t.created_at)}</td>
+                              <td><span className={`entry-type ${t.type}`}>{t.type}</span></td>
+                              <td>{t.description || '—'}</td>
+                              <td className={t.type === 'credit' ? 'text-green fw600' : 'text-red fw600'}>
+                                {t.type === 'credit' ? '+' : '−'}{fmt(t.amount)}
+                              </td>
+                              <td className="fw600">{fmt(t.balance)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <p className="text-muted" style={{ fontSize: 12, marginTop: 8 }}>
+                    Credit is held on account and can be applied to any outstanding term balance, or refunded with authorisation.
+                  </p>
                 </div>
               )}
             </>
@@ -485,6 +669,11 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
                       onClick={() => {
                         setPayStudent(s)
                         setPayStudentSearch(`${s.full_name} (${s.admission_number})`)
+                        setFlexPreview(null)
+                        previewAllocation(0, s.id).then((p) => {
+                          const sel = (p?.allocations || []).find((a) => a.is_selected)
+                          setPayStudentOutstanding(sel?.outstanding ?? 0)
+                        })
                       }}
                     >
                       <div className="student-avatar-sm">{initials(s.full_name)}</div>
@@ -511,10 +700,10 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
               </div>
             </div>
 
-            {payStudent && (
+            {payStudent && payStudentOutstanding != null && flexPay.payment_type !== 'adjustment' && (
               <div className="pay-modal-balance">
                 <span>Current Balance:</span>
-                <span className="fw600" style={{ color: '#dc2626' }}>{fmt(balance)}</span>
+                <span className="fw600" style={{ color: payStudentOutstanding > 0 ? '#dc2626' : '#16a34a' }}>{fmt(payStudentOutstanding)}</span>
               </div>
             )}
 
@@ -528,7 +717,7 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
                     className={`pay-type-btn ${flexPay.payment_type === pt.value ? 'active' : ''}`}
                     onClick={() => setFlexPay({ ...flexPay, payment_type: pt.value, provider: '', reference: '' })}
                   >
-                    <span className="pay-type-icon">{pt.icon}</span>
+                    <span className="pay-type-icon"><pt.icon size={18} /></span>
                     <span className="pay-type-label">{pt.label}</span>
                   </button>
                 ))}
@@ -700,20 +889,23 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
               >
                 <label>
                   Amount (KES) *
-                  {payStudent && balance > 0 && flexPay.payment_type !== 'adjustment' && (
-                    <span className="text-muted"> Max: {fmt(balance)}</span>
+                  {payStudent && payStudentOutstanding != null && payStudentOutstanding > 0 && flexPay.payment_type !== 'adjustment' && (
+                    <span className="text-muted"> Outstanding: {fmt(payStudentOutstanding)}</span>
                   )}
                 </label>
                 <input
                   required
                   type="number"
                   min="1"
-                  max={flexPay.payment_type !== 'adjustment' && payStudent && balance > 0 ? balance : undefined}
                   placeholder="Enter amount"
                   value={flexPay.amount}
-                  onChange={(e) => setFlexPay({ ...flexPay, amount: e.target.value })}
+                  onChange={(e) => handleFlexAmountChange(e.target.value)}
                 />
               </div>
+
+              {flexPay.payment_type !== 'adjustment' && flexPreview && Number(flexPay.amount) > (payStudentOutstanding ?? 0) && (
+                <AllocationPreview preview={flexPreview} term={term} year={year} />
+              )}
 
               {flexPay.payment_type === 'adjustment' && (
                 <div className="form-field">
@@ -741,14 +933,24 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
       {showReceipt && (
         <Modal title="Payment Receipt" onClose={() => setShowReceipt(null)}>
           <div className="receipt-body">
-            <div className="receipt-logo">🏫 ShulePulse</div>
+            <div className="receipt-logo"><School size={19} style={{ verticalAlign: 'middle', marginRight: 6 }} /> ShulePulse</div>
             <p className="receipt-title">Official Payment Receipt</p>
             <div className="receipt-row"><span>Receipt No.</span>  <span className="fw600">{showReceipt.receipt_number || showReceipt.receipt?.id?.slice(0, 8).toUpperCase() || '—'}</span></div>
             <div className="receipt-row"><span>Student</span>      <span>{showReceipt.student?.full_name}</span></div>
             <div className="receipt-row"><span>Admission</span>    <span>{showReceipt.student?.admission_number}</span></div>
             <div className="receipt-row"><span>Class</span>        <span>{showReceipt.student?.class}</span></div>
             <div className="receipt-row"><span>Term / Year</span>  <span>{term} / {year}</span></div>
-            <div className="receipt-row"><span>Amount Paid</span>  <span className="fw600 text-green">{fmt(showReceipt.amount)}</span></div>
+            <div className="receipt-row"><span>Amount Received</span>  <span className="fw600 text-green">{fmt(showReceipt.amount)}</span></div>
+            <div className="receipt-row">
+              <span>Applied to Fees</span>
+              <span className="fw600">{fmt(showReceipt.applied_amount != null ? showReceipt.applied_amount : showReceipt.amount)}</span>
+            </div>
+            {Number(showReceipt.credit_amount) > 0 && (
+              <div className="receipt-row">
+                <span>Student Credit</span>
+                <span className="fw600" style={{ color: '#7c3aed' }}>{fmt(showReceipt.credit_amount)}</span>
+              </div>
+            )}
             <div className="receipt-row">
               <span>Method</span>
               <span><MethodBadge method={showReceipt.payment_type || showReceipt.payment_method} provider={showReceipt.provider} /></span>
@@ -815,6 +1017,100 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
               </div>
             </div>
             <ModalActions onCancel={() => setShowAdjModal(false)} saving={saving} label="Apply Adjustment" />
+          </form>
+        </Modal>
+      )}
+
+      {/* ── Apply Credit Modal ── */}
+      {showCreditModal && (
+        <Modal title="Apply Student Credit" onClose={() => setShowCreditModal(false)}>
+          <form onSubmit={handleApplyCreditSubmit} className="modal-form">
+            {creditErr && <div className="form-error">{creditErr}</div>}
+            <div className="form-grid">
+              <div className="form-field full">
+                <label>Term * <span className="text-muted">({year})</span></label>
+                <select value={creditForm.term} onChange={(e) => setCreditForm({ ...creditForm, term: e.target.value })}>
+                  {['Term 1', 'Term 2', 'Term 3'].map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="form-field full">
+                <label>Amount (KES) *</label>
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max={creditBalance}
+                  value={creditForm.amount}
+                  onChange={(e) => setCreditForm({ ...creditForm, amount: e.target.value })}
+                />
+                <p className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
+                  Available: {fmt(creditBalance)} — credit offsets the selected term's outstanding assessment.
+                </p>
+              </div>
+            </div>
+            <ModalActions onCancel={() => setShowCreditModal(false)} saving={saving} label="Apply Credit" />
+          </form>
+        </Modal>
+      )}
+
+      {/* ── Refund Credit Modal ── */}
+      {showRefundModal && (
+        <Modal title="Refund Student Credit" onClose={() => setShowRefundModal(false)}>
+          <form onSubmit={handleRefundSubmit} className="modal-form">
+            {creditErr && <div className="form-error">{creditErr}</div>}
+            <div className="form-grid">
+              <div className="form-field full">
+                <label>Amount (KES) *</label>
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max={creditBalance}
+                  value={refundForm.amount}
+                  onChange={(e) => setRefundForm({ ...refundForm, amount: e.target.value })}
+                />
+                <p className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
+                  Available: {fmt(creditBalance)}
+                </p>
+              </div>
+              <div className="form-field full">
+                <label>Refund Method *</label>
+                <select value={refundForm.method} onChange={(e) => setRefundForm({ ...refundForm, method: e.target.value })}>
+                  <option value="cash">Cash</option>
+                  <option value="bank">Bank Transfer</option>
+                  <option value="mobile_money">M-Pesa / Mobile Money</option>
+                  <option value="cheque">Cheque</option>
+                </select>
+              </div>
+              <div className="form-field full">
+                <label>Reference (optional)</label>
+                <input
+                  placeholder="e.g. M-Pesa confirmation code"
+                  value={refundForm.reference}
+                  onChange={(e) => setRefundForm({ ...refundForm, reference: e.target.value })}
+                />
+              </div>
+              <div className="form-field full">
+                <label>Refund Date</label>
+                <input
+                  type="date"
+                  value={refundForm.transaction_date}
+                  onChange={(e) => setRefundForm({ ...refundForm, transaction_date: e.target.value })}
+                />
+              </div>
+              <div className="form-field full">
+                <label>Reason / Notes</label>
+                <input
+                  placeholder="e.g. Parent requested refund of excess fees"
+                  value={refundForm.description}
+                  onChange={(e) => setRefundForm({ ...refundForm, description: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="gen-result warn" style={{ marginBottom: 12 }}>
+              Refunds reduce the student's available credit and must be authorised by a finance officer or admin.
+            </div>
+            <ModalActions onCancel={() => setShowRefundModal(false)} saving={saving} label="Process Refund" />
           </form>
         </Modal>
       )}

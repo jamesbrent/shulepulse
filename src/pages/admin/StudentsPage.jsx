@@ -147,7 +147,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
 
   // Profile tab
   const [profileTab, setProfileTab] = useState('personal')
-  const [profileFee, setProfileFee] = useState({ assessments: [], payments: [], totalCharged: 0, totalPaid: 0, balance: 0 })
+  const [profileFee, setProfileFee] = useState({ assessments: [], payments: [], totalCharged: 0, totalPaid: 0, credit: 0, balance: 0 })
   const [profileAttendance, setProfileAttendance] = useState({ records: [], present: 0, absent: 0, late: 0 })
   const [profileGrades, setProfileGrades] = useState([])
   const [profileTabLoading, setProfileTabLoading] = useState(false)
@@ -185,13 +185,27 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
     const ct = getCurrentTerm()
     const cy = getCurrentYear()
     try {
-      const [assessmentsRes, paymentsRes] = await Promise.all([
+      const [assessmentsRes, paymentsRes, ledgerRes, creditRes] = await Promise.all([
         supabase.from('fee_assessments').select('*').eq('student_id', selectedStudent.id).eq('term', ct).eq('year', cy),
         supabase.from('fee_payments').select('*').eq('student_id', selectedStudent.id).order('transaction_date', { ascending: false }),
+        supabase.from('student_ledger').select('entry_type, amount').eq('student_id', selectedStudent.id).eq('term', ct).eq('year', cy),
+        profile?.school_id ? supabase.rpc('student_credit_balance', { p_school_id: profile.school_id, p_student_id: selectedStudent.id }) : { data: 0 },
       ])
       const totalCharged = (assessmentsRes.data || []).reduce((s, a) => s + Number(a.amount_due), 0)
-      const totalPaid = (paymentsRes.data || []).reduce((s, p) => s + Number(p.amount), 0)
-      setProfileFee({ assessments: assessmentsRes.data || [], payments: paymentsRes.data || [], totalCharged, totalPaid, balance: totalCharged - totalPaid })
+      // Applied-to-fees figure: charges/penalties increase; every other entry
+      // (payment, waiver, scholarship, discount, credit application) reduces.
+      const totalPaid = (ledgerRes.data || []).reduce((s, l) => {
+        if (l.entry_type === 'charge' || l.entry_type === 'penalty') return s
+        return s + Number(l.amount || 0)
+      }, 0)
+      setProfileFee({
+        assessments: assessmentsRes.data || [],
+        payments: paymentsRes.data || [],
+        totalCharged,
+        totalPaid,
+        credit: Number(creditRes.data || 0),
+        balance: Math.max(0, totalCharged - totalPaid),
+      })
     } catch (e) { console.error(e) }
     setProfileTabLoading(false)
   }
@@ -796,7 +810,8 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
               </div>
               <div className="sp-summary-grid">
                 <div className="sp-summary-card"><p className="sp-summary-val">{fmt(fc.totalCharged)}</p><p className="sp-summary-label">Total Charged</p></div>
-                <div className="sp-summary-card"><p className="sp-summary-val" style={{ color: '#16a34a' }}>{fmt(fc.totalPaid)}</p><p className="sp-summary-label">Total Paid</p></div>
+                <div className="sp-summary-card"><p className="sp-summary-val" style={{ color: '#16a34a' }}>{fmt(fc.totalPaid)}</p><p className="sp-summary-label">Applied to Fees</p></div>
+                {fc.credit > 0 && <div className="sp-summary-card"><p className="sp-summary-val" style={{ color: '#7c3aed' }}>{fmt(fc.credit)}</p><p className="sp-summary-label">Student Credit</p></div>}
                 <div className="sp-summary-card"><p className="sp-summary-val" style={{ color: fc.balance <= 0 ? '#16a34a' : '#ef4444' }}>{fmt(fc.balance)}</p><p className="sp-summary-label">Balance</p></div>
                 <div className="sp-summary-card"><p className={`sp-badge ${feeStatus}`}>{feeStatus}</p><p className="sp-summary-label">Status</p></div>
               </div>

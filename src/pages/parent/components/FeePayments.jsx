@@ -7,7 +7,7 @@ export default function FeePayments({ activeChild, school }) {
   const [assessments, setAssessments] = useState([])
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [aggregate, setAggregate] = useState({ totalCharged: 0, totalPaid: 0, balance: 0, status: 'due' })
+  const [aggregate, setAggregate] = useState({ totalCharged: 0, totalPaid: 0, credit: 0, balance: 0, status: 'due' })
 
   useEffect(() => {
     if (activeChild) fetchFees()
@@ -18,7 +18,7 @@ export default function FeePayments({ activeChild, school }) {
     const currentTerm = school?.current_term || 'Term 1'
     const currentYear = school?.current_year || new Date().getFullYear()
 
-    const [assessmentsRes, paymentsRes] = await Promise.all([
+    const [assessmentsRes, paymentsRes, ledgerRes, creditRes] = await Promise.all([
       supabase
         .from('fee_assessments')
         .select('id, student_id, term, year, amount_due, amount_paid, status, fee_structures(amount)')
@@ -32,17 +32,32 @@ export default function FeePayments({ activeChild, school }) {
         .eq('term', currentTerm)
         .eq('year', currentYear)
         .order('transaction_date', { ascending: false }),
+      supabase
+        .from('student_ledger')
+        .select('entry_type, amount')
+        .eq('student_id', activeChild.id)
+        .eq('term', currentTerm)
+        .eq('year', currentYear),
+      school?.id ? supabase
+        .rpc('student_credit_balance', { p_school_id: school.id, p_student_id: activeChild.id }) : { data: 0 },
     ])
 
     const totalCharged = (assessmentsRes.data || []).reduce((s, a) => s + Number(a.amount_due), 0)
-    const totalPaid = (paymentsRes.data || []).reduce((s, p) => s + Number(p.amount), 0)
-    const balance = totalCharged - totalPaid
+    // Applied-to-fees figure: charges/penalties increase; every other entry
+    // (payment, waiver, scholarship, discount, credit application) reduces.
+    const totalPaid = (ledgerRes.data || []).reduce((s, l) => {
+      if (l.entry_type === 'charge' || l.entry_type === 'penalty') return s
+      return s + Number(l.amount || 0)
+    }, 0)
+    const credit = Number(creditRes.data || 0)
+    const balance = Math.max(0, totalCharged - totalPaid)
 
     setAssessments(assessmentsRes.data || [])
     setPayments(paymentsRes.data || [])
     setAggregate({
       totalCharged,
       totalPaid,
+      credit,
       balance,
       status: balance <= 0 ? 'cleared' : totalPaid > 0 ? 'partial' : 'due',
     })
@@ -64,10 +79,19 @@ export default function FeePayments({ activeChild, school }) {
         <div className="att-sum-card green">
           <CheckCircle size={20} />
           <div>
-            <p className="asc-label">Total Paid</p>
+            <p className="asc-label">Applied to Fees</p>
             <p className="asc-value">{fmt(aggregate.totalPaid)}</p>
           </div>
         </div>
+        {aggregate.credit > 0 && (
+          <div className="att-sum-card purple" style={{ backgroundColor: '#f5f3ff' }}>
+            <DollarSign size={20} />
+            <div>
+              <p className="asc-label">Student Credit (Advance)</p>
+              <p className="asc-value">{fmt(aggregate.credit)}</p>
+            </div>
+          </div>
+        )}
         <div className={`att-sum-card ${aggregate.balance <= 0 ? 'green' : 'red'}`}>
           {aggregate.balance <= 0 ? <CheckCircle size={20} /> : <XCircle size={20} />}
           <div>
@@ -151,7 +175,7 @@ export default function FeePayments({ activeChild, school }) {
                   </tr>
                 ))}
                 <tr style={{ background: '#f8fafc' }}>
-                  <td colSpan={4} style={{ fontWeight: 700, color: '#0f172a' }}>Total Paid</td>
+                  <td colSpan={4} style={{ fontWeight: 700, color: '#0f172a' }}>Applied to Fees</td>
                   <td className="text-right" style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(aggregate.totalPaid)}</td>
                 </tr>
               </tbody>
