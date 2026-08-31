@@ -299,6 +299,9 @@ export default function PlatformSettingsPage() {
       <Field label="Two-Factor Authentication (2FA)">
         <Toggle value={s.auth_security.two_factor_enabled} onChange={(v) => updateField('auth_security', 'two_factor_enabled', v)} />
       </Field>
+      <Field label="MFA Required Roles" desc="Roles that must set up two-factor authentication (used with 2FA enabled). Enter role values and press Enter: admin, superadmin, deputy_administrator, bursar, registrar, reception, hod, teacher, class_teacher, librarian, student, parent.">
+        <TagInput values={s.auth_security.mfa_required_roles || []} onChange={(v) => updateField('auth_security', 'mfa_required_roles', v)} placeholder="e.g. admin, bursar — press Enter after each" />
+      </Field>
       <Field label="Session Timeout (minutes)">
         <TextInput value={s.auth_security.session_timeout_minutes} onChange={(v) => updateField('auth_security', 'session_timeout_minutes', Number(v))} type="number" />
       </Field>
