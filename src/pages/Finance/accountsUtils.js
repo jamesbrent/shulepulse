@@ -20,6 +20,7 @@ export const DEFAULT_CHART = [
   { code: '1020', name: 'Cash at Bank (Main)',       type: 'asset',     category: 'Cash & Bank' },
   { code: '1030', name: 'Mobile Money Account',      type: 'asset',     category: 'Cash & Bank' },
   { code: '1040', name: 'Bank — Fixed Deposit',      type: 'asset',     category: 'Cash & Bank' },
+  { code: '1050', name: 'Cheques in Clearing',       type: 'asset',     category: 'Cash & Bank' },
   { code: '1110', name: 'Student Fee Receivables',   type: 'asset',     category: 'Accounts Receivable' },
   { code: '1210', name: 'Land & Buildings',          type: 'asset',     category: 'Fixed Assets' },
   { code: '1220', name: 'Furniture & Fittings',      type: 'asset',     category: 'Fixed Assets' },

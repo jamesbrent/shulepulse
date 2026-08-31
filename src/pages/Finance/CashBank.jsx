@@ -694,6 +694,7 @@ export default function CashBankPage({ initialTab }) {
             <div className="prl-stat"><p>Total Available Funds</p><strong style={{ color: '#16a34a' }}>{fmt(summary.available)}</strong></div>
             <div className="prl-stat"><p>Total Bank</p><strong style={{ color: '#2563eb' }}>{fmt(summary.bank)}</strong></div>
             <div className="prl-stat"><p>Total Mobile Money</p><strong style={{ color: '#7c3aed' }}>{fmt(summary.mobile)}</strong></div>
+            <div className="prl-stat"><p>Cheques in Clearing</p><strong style={{ color: '#0ea5e9' }}>{fmt(summary.clearing)}</strong></div>
             <div className="prl-stat"><p>Total Cash</p><strong style={{ color: '#d97706' }}>{fmt(summary.cash)}</strong></div>
             <div className="prl-stat"><p>Fixed Deposits (Restricted)</p><strong style={{ color: '#0891b2' }}>{fmt(summary.fixed)}</strong></div>
           </div>

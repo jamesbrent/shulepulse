@@ -3,7 +3,8 @@
 -- ============================================================================
 -- Run AFTER supabase/migrations/126_cheque_lifecycle.sql (and 125).
 -- Exercises FINANCE HARDENING ITEM 3:
---   A. 'cleared'  → status + clearance_date, NO journal entry posted;
+--   A. 'cleared'  → status + clearance_date + (130+) clearing→bank move entry
+--                    Dr 1020 | Cr 1050 (see 130 for the exact money movement);
 --   B. 'bounced'  → full reverse_fee_payment() (ledger + GL + status) and
 --                    cheque_tracking.status = 'bounced';
 --   C. guards     → non-cheque rejected, double-bounce refused.
@@ -83,9 +84,15 @@ BEGIN
   IF v_track_status <> 'cleared' THEN RAISE EXCEPTION 'FAILED A cheque_tracking.status=%', v_track_status; END IF;
   IF v_clearance IS NULL THEN RAISE EXCEPTION 'FAILED A clearance_date not set'; END IF;
 
-  SELECT count(*) INTO v_je_count FROM journal_entries WHERE school_id = v_school AND status = 'posted';
-  IF v_je_count <> v_je_before THEN RAISE EXCEPTION 'FAILED A: cleared posted % new journal entries (expected 0)', v_je_count - v_je_before; END IF;
-  RAISE NOTICE 'PASS A: cheque cleared — status + clearance_date, no GL entry';
+  -- 130+ semantics: clearing now posts a Dr Bank | Cr Clearing move entry.
+  SELECT count(*) INTO v_je_count
+  FROM journal_entries
+  WHERE school_id = v_school AND status = 'posted' AND source = 'transfer'
+    AND reference_type = 'fee_payment' AND reference_id = v_pay_id;
+  IF v_je_count <> 1 THEN
+    RAISE EXCEPTION 'FAILED A: expected 1 clearing-move journal after 130, found %', v_je_count;
+  END IF;
+  RAISE NOTICE 'PASS A: cheque cleared — status + clearance_date + clearing→bank move (130+)';
 
   -- ── C1. guard: clearing a non-cheque cash payment must fail ──────────────
   v_res := record_fee_payment(

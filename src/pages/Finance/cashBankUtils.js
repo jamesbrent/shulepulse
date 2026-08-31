@@ -36,7 +36,10 @@ export const RECON_LINE_STATUSES = [
   { value: 'reconciled', label: 'Reconciled', color: '#16a34a' },
 ]
 
-// Payment method → default chart code (same mapping AP uses).
+// Payment method → default chart code (same mapping AP uses). Note: 'cheque'
+// receipts are special-cased to 1050 (Cheques in Clearing) in
+// postFeePaymentToGL — this map keeps 'cheque' → 1020 so cheque METHOD
+// REFUNDS remain bank outflows (money genuinely leaves the bank).
 export const METHOD_ACCOUNT_CODE = { bank: '1020', mobile: '1030', mpesa: '1030', mobile_money: '1030', cash: '1010', cheque: '1020' }
 
 const toNum = (n) => Number(n || 0)
@@ -48,12 +51,14 @@ export const isCashAccount = (a) => !!a && a.type === 'asset' && (a.category || 
 export const isFixedDeposit = (a) => !!a && (FIXED_DEPOSIT_CODES.includes(a.code) || /fixed deposit/i.test(a.name || ''))
 export const isMobileMoney = (a) => !!a && (a.code === '1030' || /mobile|m-pesa|mpesa/i.test(a.name || ''))
 export const isPettyCash = (a) => !!a && (a.code === '1010' || /petty cash/i.test(a.name || ''))
+export const isClearingAccount = (a) => !!a && (a.code === '1050' || /clearing/i.test(a.name || ''))
 
 export const accountKind = (a) => {
   if (!isCashAccount(a)) return 'Other'
   if (isFixedDeposit(a)) return 'Fixed Deposit'
   if (isMobileMoney(a)) return 'Mobile Money'
   if (isPettyCash(a)) return 'Petty Cash'
+  if (isClearingAccount(a)) return 'Cheques in Clearing'
   return 'Bank'
 }
 
@@ -124,8 +129,11 @@ export function computeAccountBalances(accounts, lines) {
 
 // Cash & Bank summary split by kind. Available = operating funds (excludes
 // fixed deposits, which are restricted/invested and shown separately).
+// Cheques in Clearing counts toward Total/Available (money in transit the
+// school already holds) but is reported under its own bucket — never under
+// 'bank' — so cleared-cheque cash is not double-imagined as bank balance.
 export function cashSummary(balances) {
-  const out = { total: 0, bank: 0, mobile: 0, cash: 0, fixed: 0, available: 0 }
+  const out = { total: 0, bank: 0, mobile: 0, cash: 0, fixed: 0, clearing: 0, available: 0 }
   for (const b of Object.values(balances)) {
     const a = b.account
     if (!isCashAccount(a)) continue
@@ -134,6 +142,7 @@ export function cashSummary(balances) {
     if (isFixedDeposit(a)) out.fixed = round2(out.fixed + v)
     else if (isMobileMoney(a)) out.mobile = round2(out.mobile + v)
     else if (isPettyCash(a)) out.cash = round2(out.cash + v)
+    else if (isClearingAccount(a)) out.clearing = round2(out.clearing + v)
     else out.bank = round2(out.bank + v)
   }
   out.available = round2(out.total - out.fixed)
@@ -417,8 +426,10 @@ export async function postFeePaymentToGL(supabase, { schoolId, userId, payment, 
   if (payment?.journal_entry_id) return null
   const credit = Math.max(toNum(payment.credit_amount), 0)
   const applied = Math.max(toNum(payment.applied_amount ?? payment.amount) - credit, 0)
-  await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030', '1110', '2230'])
-  const code = METHOD_ACCOUNT_CODE[method] || '1020'
+  await ensureAccounts(supabase, schoolId, ['1010', '1020', '1030', '1050', '1110', '2230'])
+  // Cheque receipts park in 1050 Cheques in Clearing until 'cleared' (RPC)
+  // moves them into 1020 Cash at Bank. Bank/M-Pesa/Cash book immediately.
+  const code = method === 'cheque' ? '1050' : (METHOD_ACCOUNT_CODE[method] || '1020')
   const { data: accs } = await supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).in('code', [code, '1110', '2230'])
   const payAcc = (accs || []).find((a) => a.code === code)
   const recv = (accs || []).find((a) => a.code === '1110')
