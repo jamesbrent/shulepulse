@@ -329,19 +329,13 @@ export function usePayments(schoolId, term, year) {
     }
 
     // ── Receipt ──
-    const { data: receipt } = await supabase
-      .from('receipts')
-      .insert({
-        school_id:      schoolId,
-        student_id:     studentId,
-        payment_id:     payData.id,
-        total_amount:   amount,
-        receipt_number: receiptNumber,
-        term,
-        year:           parseInt(year),
-      })
-      .select()
-      .single()
+    // The receipts row is now created server-side by the AFTER INSERT trigger
+    // on fee_payments (migration 128). Local object keeps the modal/PDF shape.
+    const receipt = {
+      payment_id: payData.id,
+      receipt_number: receiptNumber,
+      total_amount: amount,
+    }
 
     setSaving(false)
     const studentObj = studentOverride || selected
