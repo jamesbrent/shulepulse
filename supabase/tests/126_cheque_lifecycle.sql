@@ -20,6 +20,7 @@ DECLARE
   v_a1020 UUID; v_a1110 UUID;
   v_pay_id  UUID; v_je_id UUID; v_entry_no TEXT;
   v_amt     NUMERIC; v_je_count INT; v_res JSONB;
+  v_status  TEXT;
   v_je_before INT; v_ledger_before NUMERIC;
   v_out NUMERIC;
   v_track_status TEXT;
@@ -77,8 +78,8 @@ BEGIN
   IF (v_res->>'success')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAILED A clear: %', v_res->>'error'; END IF;
   IF v_res->>'status' <> 'cleared' THEN RAISE EXCEPTION 'FAILED A status=%', v_res->>'status'; END IF;
 
-  SELECT cheque_status INTO v_amt FROM fee_payments WHERE id = v_pay_id;
-  IF v_amt <> 'cleared' THEN RAISE EXCEPTION 'FAILED A fee_payments.cheque_status=%', v_amt; END IF;
+  SELECT cheque_status INTO v_status FROM fee_payments WHERE id = v_pay_id;
+  IF v_status <> 'cleared' THEN RAISE EXCEPTION 'FAILED A fee_payments.cheque_status=%', v_status; END IF;
 
   SELECT status, clearance_date INTO v_track_status, v_clearance FROM cheque_tracking WHERE payment_id = v_pay_id;
   IF v_track_status <> 'cleared' THEN RAISE EXCEPTION 'FAILED A cheque_tracking.status=%', v_track_status; END IF;
@@ -134,8 +135,8 @@ BEGIN
   IF (v_res->>'success')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAILED B bounce: %', v_res->>'error'; END IF;
   IF v_res->>'status' <> 'bounced' THEN RAISE EXCEPTION 'FAILED B status=%', v_res->>'status'; END IF;
 
-  SELECT cheque_status INTO v_amt FROM fee_payments WHERE id = v_pay_id;
-  IF COALESCE(v_amt, '') <> 'reversed' THEN RAISE EXCEPTION 'FAILED B fee_payments.status=%', v_amt; END IF;
+  SELECT cheque_status INTO v_status FROM fee_payments WHERE id = v_pay_id;
+  IF COALESCE(v_status, '') <> 'reversed' THEN RAISE EXCEPTION 'FAILED B fee_payments.status=%', v_status; END IF;
 
   SELECT status INTO v_track_status FROM cheque_tracking WHERE payment_id = v_pay_id;
   IF v_track_status <> 'bounced' THEN RAISE EXCEPTION 'FAILED B cheque_tracking.status=%', v_track_status; END IF;
@@ -143,8 +144,8 @@ BEGIN
   SELECT student_term_outstanding(v_school, v_student, 'Term 1', 9999) INTO v_out;
   IF v_out <> v_ledger_before THEN RAISE EXCEPTION 'FAILED B: outstanding % before %, expected equal', v_out, v_ledger_before; END IF;
 
-  SELECT status INTO v_amt FROM journal_entries WHERE id = v_je_id;
-  IF v_amt <> 'reversed' THEN RAISE EXCEPTION 'FAILED B original JE status=%', v_amt; END IF;
+  SELECT status INTO v_status FROM journal_entries WHERE id = v_je_id;
+  IF v_status <> 'reversed' THEN RAISE EXCEPTION 'FAILED B original JE status=%', v_status; END IF;
   RAISE NOTICE 'PASS B: cheque bounced — full reversal + tracking';
 
   -- ── C2. guard: bouncing the reversed payment must be refused ─────────────

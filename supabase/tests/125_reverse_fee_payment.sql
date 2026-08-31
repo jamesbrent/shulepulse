@@ -29,6 +29,7 @@ DECLARE
   v_bal_a    NUMERIC;
   v_bal_b    NUMERIC;
   v_amt      NUMERIC;
+  v_status   TEXT;
   v_res      JSONB;
   v_cnt      INT;
   v_lines    INT;
@@ -123,8 +124,8 @@ BEGIN
   IF (v_res->>'ledger_reversed')::numeric <> 5000 THEN RAISE EXCEPTION 'FAILED A ledger_reversed=%', v_res->>'ledger_reversed'; END IF;
 
   -- assertions A
-  SELECT cheque_status INTO v_amt FROM fee_payments WHERE id = v_pay_id;
-  IF COALESCE(v_amt, '') <> 'reversed' THEN RAISE EXCEPTION 'FAILED A: fee_payments.cheque_status=%', v_amt; END IF;
+  SELECT cheque_status INTO v_status FROM fee_payments WHERE id = v_pay_id;
+  IF COALESCE(v_status, '') <> 'reversed' THEN RAISE EXCEPTION 'FAILED A: fee_payments.cheque_status=%', v_status; END IF;
 
   SELECT student_term_outstanding(v_school, v_student, 'Term 1', 9999) INTO v_out;
   IF v_out <> 5000 THEN RAISE EXCEPTION 'FAILED A: outstanding after reversal = % (expected 5000)', v_out; END IF;
@@ -135,8 +136,8 @@ BEGIN
   SELECT sum(amount) INTO v_amt FROM student_ledger WHERE reference_id = v_pay_id AND entry_type = 'payment';
   IF COALESCE(v_amt, 0) <> 0 THEN RAISE EXCEPTION 'FAILED A: ledger net for payment = % (expected 0)', v_amt; END IF;
 
-  SELECT status INTO v_amt FROM journal_entries WHERE id = v_je_id;
-  IF v_amt <> 'reversed' THEN RAISE EXCEPTION 'FAILED A: original JE status = %', v_amt; END IF;
+  SELECT status INTO v_status FROM journal_entries WHERE id = v_je_id;
+  IF v_status <> 'reversed' THEN RAISE EXCEPTION 'FAILED A: original JE status = %', v_status; END IF;
 
   SELECT count(*) INTO v_lines FROM journal_entry_lines WHERE journal_entry_id = v_rev_je;
   SELECT COALESCE(sum(debit),0), COALESCE(sum(credit),0) INTO v_dr, v_cr
@@ -188,8 +189,8 @@ BEGIN
     RAISE EXCEPTION 'FAILED B reverse: %', v_res->>'error';
   END IF;
 
-  SELECT status INTO v_amt FROM cheque_tracking WHERE payment_id = v_pay_id;
-  IF COALESCE(v_amt, '') <> 'reversed' THEN RAISE EXCEPTION 'FAILED B: cheque_tracking.status=%', v_amt; END IF;
+  SELECT status INTO v_status FROM cheque_tracking WHERE payment_id = v_pay_id;
+  IF COALESCE(v_status, '') <> 'reversed' THEN RAISE EXCEPTION 'FAILED B: cheque_tracking.status=%', v_status; END IF;
 
   SELECT student_term_outstanding(v_school, v_student, 'Term 1', 9999) INTO v_out;
   IF v_out <> 5000 THEN RAISE EXCEPTION 'FAILED B: outstanding after reversal = % (expected 5000)', v_out; END IF;
