@@ -304,6 +304,12 @@ export function usePayments(schoolId, term, year) {
       allocations: rpcResult.allocations || [],
     }
 
+    if (rpcResult?.duplicate) {
+      setSaving(false)
+      setError('Possible duplicate — that payment was already recorded. No changes were made.')
+      return null
+    }
+
     // ── Cheque tracking ──
     if (form.payment_type === 'cheque') {
       await supabase.from('cheque_tracking').insert({
