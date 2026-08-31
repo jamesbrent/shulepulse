@@ -18,7 +18,7 @@ import { createStudentAuth, bulkCreateStudentAuth, bulkCreateParentAccounts, gen
 import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { ReportCard, fetchStudentComments, groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
 import { rankStudentsByGrades, findRank } from '../../services/grading'
-import { fmt, fmtDate } from './fees/utils/feesHelpers'
+import { fmt, fmtDate, paidWaterfall } from './fees/utils/feesHelpers'
 import {
   generatePersonalPdf,
   generateParentsPdf,
@@ -802,6 +802,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
         case 'fees':
           if (profileTabLoading) return <div className="sp-loading">Loading fee data...</div>
           const fc = profileFee
+          const assessPaid = paidWaterfall(fc.assessments, fc.totalPaid)
           const feeStatus = fc.balance <= 0 ? 'cleared' : fc.totalPaid > 0 ? 'partial' : 'due'
           return (
             <div className="sp-section">
@@ -821,7 +822,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
                 <div className="sp-card" style={{ padding: 16 }}>
                   <p className="sp-card-title">Fee Assessments — {getCurrentTerm()} {getCurrentYear()}</p>
                   <div className="sp-table-wrap"><table className="sp-table"><thead><tr><th>Amount Due</th><th>Amount Paid</th><th>Status</th></tr></thead><tbody>
-                    {fc.assessments.map(a => (<tr key={a.id}><td>{fmt(a.amount_due)}</td><td>{fmt(a.amount_paid || 0)}</td><td><span className={`sp-badge ${a.status}`}>{a.status}</span></td></tr>))}
+                    {fc.assessments.map((a, i) => (<tr key={a.id}><td>{fmt(a.amount_due)}</td><td>{fmt(assessPaid[i])}</td><td><span className={`sp-badge ${a.status}`}>{a.status}</span></td></tr>))}
                   </tbody></table></div>
                 </div>
               )}

@@ -87,6 +87,7 @@ export default function StudentPortal() {
   const [grades, setGrades] = useState([])
   const [fees, setFees] = useState([])
   const [credit, setCredit] = useState(0)
+  const [paidTotal, setPaidTotal] = useState(0)
   const [attendance, setAttendance] = useState({ present: 0, total: 0, rate: 0 })
   const [notices, setNotices] = useState([])
   const [school, setSchool] = useState(null)
@@ -175,14 +176,13 @@ export default function StudentPortal() {
         const feesData = (assessmentsRes.data || []).map(a => ({
           ...a,
           amount_due: a.amount || 0,
-          amount_paid: 0,
         }))
         const paidFromPayments = (paymentsRes.data || []).reduce((s, p) => {
           if (p.entry_type === 'charge' || p.entry_type === 'penalty') return s
           return s + (p.amount || 0)
         }, 0)
-        if (feesData.length > 0) feesData[0].amount_paid = paidFromPayments
         setFees(feesData)
+        setPaidTotal(paidFromPayments)
         setCredit(Number(creditRes.data || 0))
 
         setAttendance({
@@ -260,7 +260,7 @@ export default function StudentPortal() {
   }
 
   const totalDue = fees.reduce((s, f) => s + (f.amount_due || 0), 0)
-  const totalPaid = fees.reduce((s, f) => s + (f.amount_paid || 0), 0)
+  const totalPaid = paidTotal
   const balance = Math.max(0, totalDue - totalPaid)
   const grouped = groupGradesBySubject(grades)
   const avgGrade = grouped.overallAverage

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { DollarSign, CheckCircle, XCircle, AlertCircle, Receipt } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { paidWaterfall } from '../admin/fees/utils/feesHelpers'
 
 const fmt = (n) => `KES ${Number(n || 0).toLocaleString()}`
 
@@ -143,7 +144,7 @@ export default function FeeStatementPage({ student, school }) {
                   <tr key={a.id}>
                     <td>{i + 1}</td>
                     <td>{fmt(a.amount_due)}</td>
-                    <td style={{ color: '#16a34a' }}>{fmt(a.amount_paid)}</td>
+                    <td style={{ color: '#16a34a' }}>{fmt(paidWaterfall(assessments, aggregate.totalPaid)[i])}</td>
                     <td>
                       <span className={`sp-status-badge ${a.status === 'paid' ? 'present' : a.status === 'partial' ? 'late' : 'absent'}`}>
                         {a.status || 'pending'}

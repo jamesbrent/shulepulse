@@ -13,6 +13,19 @@ export const fmtTime = (d) =>
 export const initials = (name) =>
   (name || '').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
+// Waterfall allocation: assign totalPaid across fee assessment lines in order.
+// Gives a deterministic per-line "paid" figure (sums exactly to totalPaid)
+// without reading the never-written fee_assessments.amount_paid column.
+export const paidWaterfall = (assessments, totalPaid) => {
+  let rem = Number(totalPaid || 0)
+  return (assessments || []).map((a) => {
+    const due = Number(a.amount_due || 0)
+    const share = Math.max(0, Math.min(due, rem))
+    rem = Math.max(0, rem - due)
+    return share
+  })
+}
+
 // ─── File Download ────────────────────────────────────────────────────────────
 import { Banknote, Smartphone, Landmark, FileText, SlidersHorizontal } from 'lucide-react'
 

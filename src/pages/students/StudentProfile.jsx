@@ -6,7 +6,7 @@ import { getStudentById } from '../../services/students/studentService'
 import { StudentAvatar } from '../../components/students/StudentAvatar'
 import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { supabase } from '../../lib/supabase'
-import { fmt, fmtDate } from '../admin/fees/utils/feesHelpers'
+import { fmt, fmtDate, paidWaterfall } from '../admin/fees/utils/feesHelpers'
 import { groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
 
 const TABS = [
@@ -246,10 +246,10 @@ export default function StudentProfile() {
                   <table className="data-table">
                     <thead><tr><th>Amount Due</th><th>Amount Paid</th><th>Status</th></tr></thead>
                     <tbody>
-                      {fc.assessments.map(a => (
+                      {fc.assessments.map((a, i) => (
                         <tr key={a.id}>
                           <td>{fmt(a.amount_due)}</td>
-                          <td>{fmt(a.amount_paid || 0)}</td>
+                          <td>{fmt(paidWaterfall(fc.assessments, fc.totalPaid)[i])}</td>
                           <td><span className={`status-badge ${a.status}`}>{a.status}</span></td>
                         </tr>
                       ))}

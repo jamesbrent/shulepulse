@@ -24,7 +24,7 @@ export default function FeePaymentsPage({ activeChild }) {
     const [assessmentsRes, paymentsRes, ledgerRes, creditRes] = await Promise.all([
       supabase
         .from('fee_assessments')
-        .select('id, student_id, term, year, amount_due, amount_paid, status, fee_structures(amount)')
+        .select('id, student_id, term, year, amount_due, status, fee_structures(amount)')
         .eq('student_id', activeChild.id)
         .eq('term', currentTerm)
         .eq('year', currentYear),
