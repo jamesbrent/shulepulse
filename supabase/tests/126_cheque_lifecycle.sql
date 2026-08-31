@@ -105,6 +105,8 @@ BEGIN
   RAISE NOTICE 'PASS C1: non-cheque payment rejected';
 
   -- ── B. second cheque, BOUNCE it → full reversal ──────────────────────────
+  SELECT student_term_outstanding(v_school, v_student, 'Term 1', 9999) INTO v_ledger_before;
+
   v_res := record_fee_payment(
     v_school, v_student, 1500, 'cheque', 'cheque', 'KCB', 'CHQ-201', 'TEST-RCT-126-B',
     v_profile, CURRENT_DATE, 'Term 1', 9999, 'AUTOTEST receipt B');
@@ -128,8 +130,6 @@ BEGIN
   INSERT INTO journal_entry_lines (journal_entry_id, account_id, debit, credit, notes)
   VALUES (v_je_id, v_a1020, 1500, 0, 'AUTOTEST Dr bank'), (v_je_id, v_a1110, 0, 1500, 'AUTOTEST Cr receivable');
   UPDATE fee_payments SET journal_entry_id = v_je_id WHERE id = v_pay_id;
-
-  SELECT student_term_outstanding(v_school, v_student, 'Term 1', 9999) INTO v_ledger_before;
 
   v_res := update_cheque_status(v_pay_id, 'bounced', v_profile, 'NSF AUTOTEST');
   IF (v_res->>'success')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAILED B bounce: %', v_res->>'error'; END IF;
