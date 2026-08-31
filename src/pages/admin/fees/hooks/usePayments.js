@@ -19,9 +19,17 @@ export function usePayments(schoolId, term, year) {
   const [saving,         setSaving]         = useState(false)
   const [error,          setError]          = useState('')
   const [autoAssessed,   setAutoAssessed]   = useState(false)   // ← new: toast trigger
+  const [balance,        setBalance]        = useState(0)
+  const [creditBalance,  setCreditBalance]  = useState(0)
 
-  // Running student-credit balance across ALL terms (credits − debits − refunds)
-  const creditBalance = creditHistory.reduce(
+  // Server-side balances (student_term_outstanding / student_credit_balance),
+  // refreshed on every selectStudent so the numbers are single-source. Local
+  // reduces remain as a fallback only if an RPC round-trip fails.
+  const localBalance = (rows) => (rows || []).reduce(
+    (acc, e) => (['charge', 'penalty'].includes(e.entry_type) ? acc + Number(e.amount) : acc - Number(e.amount)),
+    0
+  )
+  const localCreditBalance = (rows) => (rows || []).reduce(
     (bal, t) => bal + (t.type === 'credit' ? Number(t.amount) : -Number(t.amount)),
     0
   )
@@ -40,11 +48,8 @@ export function usePayments(schoolId, term, year) {
     load()
   }, [schoolId])
 
-  // Balance derived from ledger entries
-  const balance = ledger.reduce((acc, e) => {
-    if (['charge', 'penalty'].includes(e.entry_type)) return acc + Number(e.amount)
-    return acc - Number(e.amount)
-  }, 0)
+  // Balance derived from server RPC (see selectStudent); local fallback helper
+  // above keeps the returned API shape stable.
 
   // ── Select a student & load their account ────────────────────────────────
   const selectStudent = async (student) => {
@@ -53,7 +58,7 @@ export function usePayments(schoolId, term, year) {
     setAutoAssessed(false)   // reset toast on each selection
     setLoading(true)
 
-    const [ledgerRes, assRes, creditRes] = await Promise.all([
+    const [ledgerRes, assRes, creditRes, balRes, creditBalRes] = await Promise.all([
       supabase
         .from('student_ledger')
         .select('*')
@@ -75,11 +80,24 @@ export function usePayments(schoolId, term, year) {
         .eq('school_id', schoolId)
         .eq('student_id', student.id)
         .order('created_at'),
+      supabase.rpc('student_term_outstanding', {
+        p_school_id: schoolId,
+        p_student_id: student.id,
+        p_term: term,
+        p_year: year,
+      }),
+      supabase.rpc('student_credit_balance', {
+        p_school_id: schoolId,
+        p_student_id: student.id,
+      }),
     ])
 
     let assessmentData = assRes.data || []
     let ledgerData     = ledgerRes.data || []
     const creditData   = creditRes.data || []
+
+    setBalance(balRes.error ? localBalance(ledgerData) : Number(balRes.data ?? 0))
+    setCreditBalance(creditBalRes.error ? localCreditBalance(creditData) : Number(creditBalRes.data ?? 0))
 
     // ── Enrich ledger entries with actual dates from source tables ──
     const paymentRefIds = ledgerData

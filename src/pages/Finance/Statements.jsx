@@ -6,6 +6,7 @@ import { useSchool } from '../admin/useSchool'
 import { fmt, fmtDate, fmtDateTime, initials, downloadFile, TERMS, YEARS } from '../admin/fees/utils/feesHelpers'
 import { generateReceiptPdf } from '../admin/fees/utils/generateReceiptPdf'
 import { generateFeeStatementPdf } from '../admin/fees/utils/generateFeeStatementPdf'
+import { useStudentBalance } from '../admin/fees/hooks/useStudentBalance'
 
 export default function StatementsPage() {
   const { profile } = useAuthStore()
@@ -21,6 +22,16 @@ export default function StatementsPage() {
   const [studentAssessments, setStudentAssessments] = useState([])
   const [toast, setToast] = useState(null)
   const [generatingPdf, setGeneratingPdf] = useState(false)
+
+  // Server-side headline balance for the selected student (single source of
+  // truth; the sidebar list keeps its own precomputed fetch — same rows).
+  const { balance: serverBalance } = useStudentBalance(
+    profile?.school_id,
+    selectedStudent?.id,
+    term,
+    parseInt(year)
+  )
+  const headlineBal = () => selectedStudent ? serverBalance : getBalance(studentLedger)
 
   const load = useCallback(async () => {
     if (!profile?.school_id) return
@@ -312,9 +323,9 @@ export default function StatementsPage() {
                     <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>Balance</p>
                     <p style={{
                       fontSize: 20, fontWeight: 700, margin: 0,
-                      color: getBalance(studentLedger) > 0 ? '#dc2626' : '#16a34a',
+                      color: headlineBal() > 0 ? '#dc2626' : '#16a34a',
                     }}>
-                      {fmt(getBalance(studentLedger))}
+                      {fmt(headlineBal())}
                     </p>
                   </div>
                   <button className="b-btn-secondary" onClick={exportStudentStatementCSV}>
@@ -326,7 +337,7 @@ export default function StatementsPage() {
                 </div>
               </div>
 
-              {getBalance(studentLedger) <= 0 && studentLedger.length > 0 && (
+              {headlineBal() <= 0 && studentLedger.length > 0 && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '10px 14px', background: '#dcfce7', borderRadius: 8,
@@ -337,14 +348,14 @@ export default function StatementsPage() {
                 </div>
               )}
 
-              {getBalance(studentLedger) > 0 && (
+              {headlineBal() > 0 && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '10px 14px', background: '#fee2e2', borderRadius: 8,
                   color: '#dc2626', fontSize: 13, marginBottom: 16,
                 }}>
                   <AlertCircle size={16} />
-                  Outstanding balance of {fmt(getBalance(studentLedger))}.
+                  Outstanding balance of {fmt(headlineBal())}.
                 </div>
               )}
 

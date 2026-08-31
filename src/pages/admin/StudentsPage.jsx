@@ -185,15 +185,17 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
     const ct = getCurrentTerm()
     const cy = getCurrentYear()
     try {
-      const [assessmentsRes, paymentsRes, ledgerRes, creditRes] = await Promise.all([
+      const [assessmentsRes, paymentsRes, ledgerRes, creditRes, outRes] = await Promise.all([
         supabase.from('fee_assessments').select('*').eq('student_id', selectedStudent.id).eq('term', ct).eq('year', cy),
         supabase.from('fee_payments').select('*').eq('student_id', selectedStudent.id).order('transaction_date', { ascending: false }),
         supabase.from('student_ledger').select('entry_type, amount').eq('student_id', selectedStudent.id).eq('term', ct).eq('year', cy),
         profile?.school_id ? supabase.rpc('student_credit_balance', { p_school_id: profile.school_id, p_student_id: selectedStudent.id }) : { data: 0 },
+        profile?.school_id ? supabase.rpc('student_term_outstanding', { p_school_id: profile.school_id, p_student_id: selectedStudent.id, p_term: ct, p_year: cy }) : { data: 0 },
       ])
       const totalCharged = (assessmentsRes.data || []).reduce((s, a) => s + Number(a.amount_due), 0)
       // Applied-to-fees figure: charges/penalties increase; every other entry
       // (payment, waiver, scholarship, discount, credit application) reduces.
+      // Display numbers come from the server functions so every screen agrees.
       const totalPaid = (ledgerRes.data || []).reduce((s, l) => {
         if (l.entry_type === 'charge' || l.entry_type === 'penalty') return s
         return s + Number(l.amount || 0)
@@ -203,8 +205,8 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
         payments: paymentsRes.data || [],
         totalCharged,
         totalPaid,
-        credit: Number(creditRes.data || 0),
-        balance: Math.max(0, totalCharged - totalPaid),
+        credit: Number(creditRes.data ?? 0),
+        balance: outRes.error ? Math.max(0, totalCharged - totalPaid) : Math.max(0, Number(outRes.data ?? 0)),
       })
     } catch (e) { console.error(e) }
     setProfileTabLoading(false)
