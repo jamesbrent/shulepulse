@@ -86,7 +86,7 @@ BEGIN
 
   SELECT COALESCE(sum(amount), 0) INTO v_ledger FROM student_ledger
   WHERE student_id = v_student AND term = 'Term 1' AND year = 9999 AND entry_type = 'payment';
-  IF v_ledger <> 3000 THEN RAISE EXCEPTION 'FAILED ledger total = % (expected 3000 — three distinct payments)', v_ledger; END IF;
+  IF v_ledger <> 4500 THEN RAISE EXCEPTION 'FAILED ledger total = % (expected 4500 — three distinct payments: A + B + C)', v_ledger; END IF;
 
   RAISE NOTICE 'ALL 127 TESTS PASSED — transaction ROLLBACK, nothing persisted.';
 END;
