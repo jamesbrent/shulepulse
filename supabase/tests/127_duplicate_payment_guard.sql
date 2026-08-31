@@ -35,14 +35,14 @@ BEGIN
     v_school, v_student, 1500, 'cash', 'cash', NULL, 'MP-100', 'TEST-RCT-127-A1',
     v_profile, CURRENT_DATE, 'Term 1', 9999, 'AUTOTEST A1');
   IF (v_res->>'success')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAILED A record 1: %', v_res->>'error'; END IF;
-  IF (v_res->>'duplicate')::boolean IS NOT FALSE THEN RAISE EXCEPTION 'FAILED A: first call flagged duplicate'; END IF;
+  IF v_res->>'duplicate' IS NOT DISTINCT FROM 'true' THEN RAISE EXCEPTION 'FAILED A: first call flagged duplicate'; END IF;
   v_pay1 := (v_res->>'payment_id')::uuid;
 
   v_res := record_fee_payment(
     v_school, v_student, 1500, 'cash', 'cash', NULL, 'MP-100', 'TEST-RCT-127-A2',
     v_profile, CURRENT_DATE, 'Term 1', 9999, 'AUTOTEST A2 (repeat)');
   IF (v_res->>'success')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAILED A record 2: %', v_res->>'error'; END IF;
-  IF (v_res->>'duplicate')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAILED A: repeat not flagged duplicate'; END IF;
+  IF v_res->>'duplicate' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'FAILED A: repeat not flagged duplicate'; END IF;
   v_pay2 := (v_res->>'payment_id')::uuid;
   IF v_pay2 <> v_pay1 THEN RAISE EXCEPTION 'FAILED A: duplicate returned a different payment id (%)', v_pay2; END IF;
 
@@ -59,7 +59,7 @@ BEGIN
     v_school, v_student, 1500, 'cash', 'cash', NULL, 'MP-200', 'TEST-RCT-127-B',
     v_profile, CURRENT_DATE, 'Term 1', 9999, 'AUTOTEST B');
   IF (v_res->>'success')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAILED B: %', v_res->>'error'; END IF;
-  IF (v_res->>'duplicate')::boolean IS NOT FALSE THEN RAISE EXCEPTION 'FAILED B: different reference flagged duplicate'; END IF;
+  IF v_res->>'duplicate' IS NOT DISTINCT FROM 'true' THEN RAISE EXCEPTION 'FAILED B: different reference flagged duplicate'; END IF;
   IF (v_res->>'payment_id')::uuid = v_pay1 THEN RAISE EXCEPTION 'FAILED B: reused payment id for a distinct receipt'; END IF;
 
   SELECT count(*) INTO v_cnt FROM fee_payments
@@ -75,7 +75,7 @@ BEGIN
     v_school, v_student, 1500, 'cash', 'cash', NULL, 'MP-100', 'TEST-RCT-127-C',
     v_profile, CURRENT_DATE, 'Term 1', 9999, 'AUTOTEST C (after window)');
   IF (v_res->>'success')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAILED C: %', v_res->>'error'; END IF;
-  IF (v_res->>'duplicate')::boolean IS NOT FALSE THEN RAISE EXCEPTION 'FAILED C: expired payment still flagged duplicate'; END IF;
+  IF v_res->>'duplicate' IS NOT DISTINCT FROM 'true' THEN RAISE EXCEPTION 'FAILED C: expired payment still flagged duplicate'; END IF;
   RAISE NOTICE 'PASS C: window expiry allows a new payment';
 
   SELECT count(*) INTO v_cnt FROM fee_payments

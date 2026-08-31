@@ -19,6 +19,7 @@ DECLARE
   v_cnt     INT;
   v_total   NUMERIC;
   v_receipt TEXT;
+  v_term    TEXT;
 BEGIN
   SELECT s.id INTO v_school
   FROM schools s JOIN students st ON st.school_id = s.id
@@ -52,8 +53,9 @@ BEGIN
 
   SELECT count(*) INTO v_cnt FROM receipts WHERE payment_id = v_pay_id;
   IF v_cnt <> 1 THEN RAISE EXCEPTION 'FAILED B: % receipts rows (expected 1)', v_cnt; END IF;
-  SELECT receipt_number, term, year INTO v_receipt, v_total, v_cnt FROM receipts WHERE payment_id = v_pay_id;
+  SELECT receipt_number, term INTO v_receipt, v_term FROM receipts WHERE payment_id = v_pay_id;
   IF v_receipt <> 'TEST-RCT-128-B' THEN RAISE EXCEPTION 'FAILED B: receipt_no=%', v_receipt; END IF;
+  IF v_term <> 'Term 3' THEN RAISE EXCEPTION 'FAILED B: term=%', v_term; END IF;
   RAISE NOTICE 'PASS B: direct insert → receipt row created';
 
   -- ── C. legacy insert with NO receipt number → server-generated ───────────

@@ -8,7 +8,9 @@
 --   D. uncleared BOUNCED cheque → receipt reversed, bank never touched
 --   E. idempotency: re-clearing adds no duplicate move entry
 -- Every JE is balanced, so the 129 constraint trigger (if applied) passes at
--- commit. Everything runs inside a transaction that ROLLBACKs at the end.
+-- commit. Balance checks use the codebase convention: only status='posted'
+-- entries are summed (reversed originals are excluded; reversals are posted).
+-- Everything runs inside a transaction that ROLLBACKs at the end.
 -- Synthetic year 9999.
 -- ============================================================================
 
@@ -198,8 +200,8 @@ BEGIN
   SELECT COALESCE(SUM(l.debit - l.credit), 0) INTO v_d1020
   FROM journal_entry_lines l JOIN journal_entries je ON je.id = l.journal_entry_id
   WHERE je.school_id = v_school AND je.status = 'posted' AND l.account_id = v_a1020;
-  IF v_d1020 - v_base1020 <> 5000 THEN
-    RAISE EXCEPTION 'FAILED C: bank delta after bounce = % (expected 5000 — only A remains)', v_d1020 - v_base1020;
+  IF v_d1020 - v_base1020 <> 1000 THEN
+    RAISE EXCEPTION 'FAILED C: bank delta after bounce = % (expected 1000 — A move +5000 minus C move reversal −4000)', v_d1020 - v_base1020;
   END IF;
   SELECT COALESCE(SUM(l.debit - l.credit), 0) INTO v_d1050
   FROM journal_entry_lines l JOIN journal_entries je ON je.id = l.journal_entry_id
@@ -208,7 +210,7 @@ BEGIN
   SELECT COALESCE(SUM(l.debit - l.credit), 0) INTO v_d1110
   FROM journal_entry_lines l JOIN journal_entries je ON je.id = l.journal_entry_id
   WHERE je.school_id = v_school AND je.status = 'posted' AND l.account_id = v_a1110;
-  IF v_d1110 - v_base1110 <> -5000 THEN RAISE EXCEPTION 'FAILED C: receivable delta = % (expected -5000, only A)', v_d1110 - v_base1110; END IF;
+  IF v_d1110 - v_base1110 <> -1000 THEN RAISE EXCEPTION 'FAILED C: receivable delta = % (expected -1000 — A receipt −5000 plus C receipt reversal +4000)', v_d1110 - v_base1110; END IF;
 
   SELECT student_term_outstanding(v_school, v_student, 'Term 1', 9999) INTO v_out;
   IF v_out <> 4000 THEN RAISE EXCEPTION 'FAILED C: outstanding after bounce = % (expected 4000)', v_out; END IF;
@@ -226,7 +228,7 @@ BEGIN
   SELECT count(*) INTO v_move_count FROM journal_entries
   WHERE school_id = v_school AND source = 'transfer' AND status = 'posted'
     AND reference_type = 'fee_payment' AND reference_id = v_pay_id;
-  IF v_move_count <> 0 THEN RAISE EXCEPTION 'FAILED C: loose posted move entry remains (%)', v_move_count; END IF;
+  IF v_move_count <> 1 THEN RAISE EXCEPTION 'FAILED C: expected 1 posted move reversal, found %', v_move_count; END IF;
   RAISE NOTICE 'PASS C: bounced after cleared — bank, clearing, receivable all restored';
 
   -- ════════════════════════════════════════════════════════════════════════
@@ -263,11 +265,11 @@ BEGIN
   SELECT COALESCE(SUM(l.debit - l.credit), 0) INTO v_d1020
   FROM journal_entry_lines l JOIN journal_entries je ON je.id = l.journal_entry_id
   WHERE je.school_id = v_school AND je.status = 'posted' AND l.account_id = v_a1020;
-  IF v_d1020 - v_base1020 <> 5000 THEN RAISE EXCEPTION 'FAILED D: bank delta = % (expected 5000, untouched by D)', v_d1020 - v_base1020; END IF;
+  IF v_d1020 - v_base1020 <> 1000 THEN RAISE EXCEPTION 'FAILED D: bank delta = % (expected 1000, unchanged by D)', v_d1020 - v_base1020; END IF;
   SELECT COALESCE(SUM(l.debit - l.credit), 0) INTO v_d1050
   FROM journal_entry_lines l JOIN journal_entries je ON je.id = l.journal_entry_id
   WHERE je.school_id = v_school AND je.status = 'posted' AND l.account_id = v_a1050;
-  IF v_d1050 - v_base1050 <> 0 THEN RAISE EXCEPTION 'FAILED D: clearing delta = %', v_d1050 - v_base1050; END IF;
+  IF v_d1050 - v_base1050 <> -3000 THEN RAISE EXCEPTION 'FAILED D: clearing delta = % (expected -3000, D receipt reversal)', v_d1050 - v_base1050; END IF;
   SELECT status INTO v_pay_status FROM journal_entries WHERE id = v_je_id;
   IF v_pay_status <> 'reversed' THEN RAISE EXCEPTION 'FAILED D: receipt journal not reversed'; END IF;
   SELECT student_term_outstanding(v_school, v_student, 'Term 1', 9999) INTO v_out;
