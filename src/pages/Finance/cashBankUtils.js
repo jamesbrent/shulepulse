@@ -439,8 +439,14 @@ export async function postFeePaymentToGL(supabase, { schoolId, userId, payment, 
   const studentName = payment.student?.full_name || payment.student_name || 'Student'
   const lines = [
     { account_id: payAcc.id, debit: amount, credit: 0, notes: `Receipt ${payment.receipt_number || ''} — ${method || 'cash'}` },
-    { account_id: recv.id, debit: 0, credit: applied, notes: `Fee receivable cleared — ${studentName}` },
   ]
+  // Only clear receivables for the applied portion. When a student has no
+  // outstanding assessment for the term/year, the whole receipt rides as
+  // student credit (applied = 0, credit = amount) — emitting a zero-credit
+  // receivable line would trip the "each line needs a debit or credit" check.
+  if (applied > 0) {
+    lines.push({ account_id: recv.id, debit: 0, credit: applied, notes: `Fee receivable cleared — ${studentName}` })
+  }
   if (credit > 0) {
     if (!creditLiab) throw new Error('Student credit liability account (2230) missing from the chart')
     lines.push({ account_id: creditLiab.id, debit: 0, credit, notes: `Advance held as student credit — ${studentName}` })
