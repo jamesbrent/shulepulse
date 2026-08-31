@@ -2,24 +2,22 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { ROLE_ROUTES, hasRole } from '../utils/roles'
+import MfaChallenge from '../pages/MfaChallenge'
 
 export default function ProtectedRoute({ children, allowedRoles }) {
-  const { user, profile, loading } = useAuthStore()
+  const { user, profile, loading, mfaChallengeRequired, completeMfa } = useAuthStore()
   const navigate = useNavigate()
 
   useEffect(() => {
     if (loading) return
 
-    if (!user) {
-      navigate('/', { replace: true })
-      return
-    }
+    if (!user || mfaChallengeRequired) return
 
     const role = profile?.role
     if (allowedRoles && !allowedRoles.some(r => hasRole(profile, r))) {
       navigate(ROLE_ROUTES[role] || '/', { replace: true })
     }
-  }, [user, profile, loading, navigate, allowedRoles])
+  }, [user, profile, loading, navigate, allowedRoles, mfaChallengeRequired])
 
   if (loading) {
     return (
@@ -41,6 +39,20 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   }
 
   if (!user) return null
+
+  // Hard MFA gate for persistent sessions (Google OAuth return / page reload).
+  if (mfaChallengeRequired) {
+    return (
+      <div className="login-page" style={{ padding: 24 }}>
+        <div className="login-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+          <div style={{ width: '100%', maxWidth: 360 }}>
+            <MfaChallenge onSuccess={completeMfa} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (allowedRoles && !allowedRoles.some(r => hasRole(profile, r))) return null
 
   return children

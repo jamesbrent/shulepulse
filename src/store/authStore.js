@@ -2,13 +2,34 @@ import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { loadGradingConfig } from '../services/grading/config'
 import { logAction } from '../features/audit/auditService'
+import { resolveMfaStatus } from '../features/auth/mfa'
 
 export const useAuthStore = create((set, get) => ({
   user: null,
   profile: null,
   loading: true,
   selectedSchool: null,
+  mfaChallengeRequired: false,
+  mfaSetupSuggested: false,
   _disabledChannel: null,
+
+  // Completes the MFA gate after the user passes a TOTP challenge. Also called
+  // by routes that hold a persistent session and gate on mfaChallengeRequired.
+  completeMfa: () => set({ mfaChallengeRequired: false }),
+
+  // Apply MFA posture (and the school-provision guard) to a live profile + user.
+  // Non-breaking: returns safe defaults when MFA is not configured.
+  applySecurityState: async (user, profile) => {
+    const status = await resolveMfaStatus(profile).catch(() => ({
+      challengeRequired: false,
+      setupSuggested: false,
+    }))
+    set({
+      mfaChallengeRequired: status.challengeRequired || false,
+      mfaSetupSuggested: status.setupSuggested || false,
+    })
+    return status
+  },
 
   selectSchool: async (school) => {
     const { profile } = get()
@@ -44,6 +65,17 @@ export const useAuthStore = create((set, get) => ({
         return
       }
 
+      // School-provision guard: only grant access to users who belong to a school
+      // (or are a superadmin). Blocks auto-provisioned/arbitrary accounts (e.g.
+      // fresh Google OAuth identities) that have no school_id yet.
+      const provisioned = profile?.school_id || profile?.role === 'superadmin'
+      if (session.user && profile && !provisioned) {
+        await supabase.auth.signOut()
+        set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
+        return
+      }
+
+      await get().applySecurityState(session.user, profile)
       set({ user: session.user, profile: { ...profile, roles: profile?.roles || (profile?.role ? [profile.role] : []) }, loading: false })
       loadGradingConfig()
     } else {
@@ -60,14 +92,22 @@ export const useAuthStore = create((set, get) => ({
 
         if (profile?.disabled) {
           await supabase.auth.signOut()
-          set({ user: null, profile: null, loading: false })
+          set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
           return
         }
 
+        const provisioned = profile?.school_id || profile?.role === 'superadmin'
+        if (profile && !provisioned) {
+          await supabase.auth.signOut()
+          set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
+          return
+        }
+
+        await get().applySecurityState(session.user, profile)
         set({ user: session.user, profile: { ...profile, roles: profile?.roles || (profile?.role ? [profile.role] : []) }, loading: false })
         loadGradingConfig()
       } else {
-        set({ user: null, profile: null, loading: false })
+        set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
       }
     })
 
@@ -104,6 +144,6 @@ export const useAuthStore = create((set, get) => ({
     } catch (err) {
       console.error('[AuthStore] signOut error:', err)
     }
-    set({ user: null, profile: null, selectedSchool: null })
+    set({ user: null, profile: null, selectedSchool: null, mfaChallengeRequired: false, mfaSetupSuggested: false })
   },
 }))

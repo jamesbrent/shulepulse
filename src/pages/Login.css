@@ -538,3 +538,132 @@
   margin: 0 8px;
   color: #475569;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   GOOGLE SIGN-IN + OR DIVIDER
+   ═══════════════════════════════════════════════════════════ */
+.login-google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px;
+  background: #f8fafc;
+  color: #1e293b;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.login-google-btn:hover {
+  background: #ffffff;
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.login-google-btn:active {
+  transform: scale(0.985);
+}
+
+.login-google-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.login-google-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.login-google-icon {
+  flex-shrink: 0;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 2px;
+}
+
+.login-divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.login-divider-text {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MFA PANEL (challenge + setup) — inline on the login card
+   ═══════════════════════════════════════════════════════════ */
+.mfa-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mfa-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: #f1f5f9;
+}
+
+.mfa-hint {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.mfa-qr {
+  width: 168px;
+  height: 168px;
+  border-radius: 10px;
+  align-self: center;
+  background: #fff;
+  padding: 8px;
+}
+
+.mfa-secret-block {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.mfa-secret-block code {
+  font-size: 12px;
+  color: #e2e8f0;
+  background: #1e293b;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+.mfa-secondary-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  align-self: center;
+}
+
+.mfa-secondary-btn:hover {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.1);
+}

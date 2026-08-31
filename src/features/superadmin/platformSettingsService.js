@@ -52,6 +52,7 @@ const DEFAULT_SETTINGS = {
   auth_security: {
     min_password_length: 8,
     two_factor_enabled: false,
+    mfa_required_roles: [],
     session_timeout_minutes: 60,
     max_login_attempts: 5,
     account_lock_duration_minutes: 30,
