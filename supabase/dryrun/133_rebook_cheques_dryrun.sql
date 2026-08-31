@@ -1,8 +1,8 @@
 -- ============================================================================
--- 132_rebook_cheques_dryrun.sql — READ-ONLY. NO WRITES.
+-- 133_rebook_cheques_dryrun.sql — READ-ONLY. NO WRITES.
 -- ============================================================================
--- Preview for the historical cheque rebooking (migration 132, NOT yet written;
--- 131 was used by the cheque_status CHECK hotfix).
+-- Preview for the historical cheque rebooking (migration 133, NOT yet written;
+-- 131/132 were the status-CHECK hotfixes).
 -- After migration 130, cheque receipts must live in 1050 'Cheques in Clearing'
 -- until they clear. This script shows exactly what a rebooking WOULD change:
 --
@@ -12,7 +12,7 @@
 --            a Dr 1020 | Cr 1050 move entry so their money lands in the bank.
 --
 -- Plus anomaly checks (receipts with no GL link, debit lines not on 1020).
--- Run this AFTER 130, in the SQL editor, and share the output before 132 is
+-- Run this AFTER 130, in the SQL editor, and share the output before 133 is
 -- written. Nothing here modifies data. Nothing here persists.
 -- ============================================================================
 
@@ -80,7 +80,7 @@ WHERE (p.payment_type = 'cheque' OR p.payment_method = 'cheque')
   AND COALESCE(p.cheque_status, 'pending') = 'cleared';
 
 -- ────────────────────────────────────────────────────────────────────────────
--- ANOMALIES — review these before 131 is written.
+-- ANOMALIES — review these before 133 is written.
 -- 1. Cheque receipts with NO GL link (postFeePaymentToGL never ran) — cannot
 --    be rebooked; they are listed so the client can decide how to handle.
 -- 2. Cheque receipts whose debit line is NOT 1020 — unexpected for the rebook
