@@ -102,6 +102,8 @@ BEGIN
 
     -- Net position of ALL rebook moves for this cleared payment on bank and
     -- clearing must be ZERO (Part-1 Dr1050|Cr1020 cancels Part-2 Dr1020|Cr1050).
+    -- NB: match BOTH markers ('[rebook-133]' and '[rebook-133:cleared]') via
+    -- the shared prefix, otherwise Part-2 is wrongly excluded from the sum.
     SELECT
       sum(CASE WHEN l.account_id = v_bank_acc  THEN COALESCE(l.debit, 0) - COALESCE(l.credit, 0) ELSE 0 END),
       sum(CASE WHEN l.account_id = v_clear_acc THEN COALESCE(l.debit, 0) - COALESCE(l.credit, 0) ELSE 0 END)
@@ -109,7 +111,7 @@ BEGIN
     FROM journal_entries j
     JOIN journal_entry_lines l ON l.journal_entry_id = j.id
     WHERE j.reference_id = v_je.pay_id AND j.source = 'transfer'
-      AND j.description LIKE '%[rebook-133]%' AND j.status = 'posted';
+      AND j.description LIKE '%[rebook-133%' AND j.status = 'posted';
     IF COALESCE(v_net_bank, 0) <> 0 OR COALESCE(v_net_clear, 0) <> 0 THEN
       RAISE EXCEPTION 'FAILED B: cleared payment % net bank=% clear=% (expected 0/0)',
         v_je.pay_id, v_net_bank, v_net_clear;
