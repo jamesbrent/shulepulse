@@ -228,13 +228,14 @@ export default function TeacherDashboard() {
     return h * 60 + m > nowMins
   }) || null
 
+  // Deliberately small + single accent: quick actions are shortcuts, not a
+  // vanity showcase. The full module set stays reachable in the bottom nav
+  // ("More"), so keeping only the two most-used actions reduces noise without
+  // removing any function. "Classes" is surfaced as a Today stat (see below)
+  // instead of duplicating the per-feature quick-action grid.
   const quickActions = [
-    { key: 'attendance', label: 'Mark Attendance', icon: <ClipboardList size={18} />, color: '#16a34a' },
-    { key: 'marks', label: 'Enter Marks', icon: <BarChart2 size={18} />, color: '#2563eb' },
-    { key: 'myclasses', label: 'My Classes', icon: <BookOpen size={18} />, color: '#7c3aed' },
-    { key: 'grades', label: 'Submit Grades', icon: <BarChart2 size={18} />, color: '#ca8a04' },
-    { key: 'timetable', label: 'Timetable', icon: <Calendar size={18} />, color: '#0891b2' },
-    { key: 'notices', label: 'Notices', icon: <Bell size={18} />, color: '#dc2626' },
+    { key: 'attendance', label: 'Mark Attendance', icon: <ClipboardList size={18} />, color: 'var(--color-primary)' },
+    { key: 'marks', label: 'Enter Marks', icon: <BarChart2 size={18} />, color: 'var(--color-primary)' },
   ]
 
   const pageTitles = {
@@ -280,6 +281,8 @@ export default function TeacherDashboard() {
 
   const renderDashboard = () => {
     if (loading) return <div className="loading-state">Loading dashboard...</div>
+    const presentCount = Object.values(attendance).filter((v) => v === 'present').length
+    const activeClassName = activeClass || classes[0] || ''
     return (
       <>
         {/* ── Mobile: day snapshot ── */}
@@ -322,13 +325,54 @@ export default function TeacherDashboard() {
               </button>
             ))}
           </div>
+
+          <section className="tp-today">
+            <span className="tp-section-label">Today</span>
+            <div className="tp-today-card">
+              <button className="tp-today-row tp-today-row--link" onClick={() => handleNav('myclasses')}>
+                <span className="tp-today-key">Classes</span>
+                <span className="tp-today-value">{stats.classes}</span>
+                <ChevronRight size={16} className="tp-today-chev" />
+              </button>
+              <div className="tp-today-row">
+                <span className="tp-today-key">Students today</span>
+                <span className="tp-today-value">{stats.students}</span>
+              </div>
+              <div className="tp-today-row">
+                <span className="tp-today-key">Present today</span>
+                <span className="tp-today-value">{presentCount}</span>
+              </div>
+              <div className="tp-today-row">
+                <span className="tp-today-key">Pending grades</span>
+                <span className="tp-today-value">{stats.pendingGrades}</span>
+              </div>
+            </div>
+          </section>
+
+          {activeClassName && (
+            <section className="tp-attend">
+              <span className="tp-section-label">Attendance</span>
+              <div className="tp-attend-card">
+                <p className="tp-attend-cls">{activeClassName}</p>
+                <p className="tp-attend-meta">
+                  {students.length} students · {presentCount} present
+                </p>
+                <button className="tp-attend-cta" onClick={() => handleNav('attendance')}>
+                  Mark attendance <ChevronRight size={16} />
+                </button>
+              </div>
+            </section>
+          )}
         </div>
+
+        {/* ── Desktop: full summary + inline tools (hidden on mobile) ── */}
+        <div className="teacher-desktop-summary">
 
         <div className="teacher-stats">
           {[
             { label: 'My Classes', value: stats.classes, color: '#2563eb', icon: <Calendar size={20} /> },
             { label: 'Students Today', value: stats.students, color: '#16a34a', icon: <ClipboardList size={20} /> },
-            { label: 'Present Today', value: stats.present, color: '#7c3aed', icon: <CheckCircle size={20} /> },
+            { label: 'Present Today', value: presentCount, color: '#7c3aed', icon: <CheckCircle size={20} /> },
             { label: 'Pending Grades', value: stats.pendingGrades, color: '#ca8a04', icon: <BarChart2 size={20} /> },
           ].map((s) => (
             <div className="t-stat-card" key={s.label}>
@@ -434,9 +478,7 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="summary-row">
                   <span>Present</span>
-                  <strong className="text-green">
-                    {Object.values(attendance).filter(v => v === 'present').length}
-                  </strong>
+                  <strong className="text-green">{presentCount}</strong>
                 </div>
                 <div className="summary-row">
                   <span>Absent</span>
@@ -448,13 +490,15 @@ export default function TeacherDashboard() {
                   <span>Rate</span>
                   <strong className="text-blue">
                     {students.length > 0
-                      ? Math.round((Object.values(attendance).filter(v => v === 'present').length / students.length) * 100)
+                      ? Math.round((presentCount / students.length) * 100)
                       : 0}%
                   </strong>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
         </div>
       </>
     )

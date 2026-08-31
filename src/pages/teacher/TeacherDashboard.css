@@ -577,17 +577,17 @@
 
   .tp-actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
   .tp-action {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 12px 6px;
-    min-height: 68px;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    min-height: 52px;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     background: #fff;
@@ -601,6 +601,7 @@
   .tp-action-icon {
     width: 34px;
     height: 34px;
+    flex-shrink: 0;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -609,11 +610,104 @@
     color: var(--accent);
   }
   .tp-action-label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     line-height: 1.2;
-    text-align: center;
+    text-align: left;
   }
+
+  /* Shared section label (Today / Attendance / etc.) */
+  .tp-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+  }
+
+  /* Today — one quiet summary card, stats as rows not coloured tiles */
+  .tp-today {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .tp-today-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .tp-today-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 13px 16px;
+    background: #fff;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    font-family: inherit;
+  }
+  .tp-today-row:last-child { border-bottom: none; }
+  .tp-today-key {
+    font-size: 14px;
+    color: #475569;
+  }
+  .tp-today-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+  }
+  .tp-today-row--link { cursor: pointer; }
+  .tp-today-row--link .tp-today-key { color: #0f172a; font-weight: 600; }
+  .tp-today-chev { color: #cbd5e1; flex-shrink: 0; }
+
+  /* Attendance — single calm card + clear CTA */
+  .tp-attend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .tp-attend-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .tp-attend-cls {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .tp-attend-meta {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: #64748b;
+  }
+  .tp-attend-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--color-primary) 8%, white);
+    color: var(--color-primary);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .tp-attend-cta:active { transform: scale(0.97); }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -630,6 +724,9 @@
     margin-left: 0;
     padding: calc(70px + env(safe-area-inset-top, 0px)) 14px calc(86px + env(safe-area-inset-bottom, 0px));
   }
+
+  /* The compact mobile snapshot replaces the full desktop layout on phones */
+  .teacher-desktop-summary { display: none; }
 
   .teacher-header h1 { font-size: 20px; }
   .teacher-header p { font-size: 12px; }
