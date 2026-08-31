@@ -482,6 +482,12 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
             </button>
           </>
         )}
+        <div className="pay-toolbar-sep" />
+        <div className="pay-toolbar-group">
+          <button className="pay-btn-primary" onClick={() => setShowPayModal(true)}>
+            <Plus size={15} /> Receive Payment
+          </button>
+        </div>
       </div>
 
       {/* ═══ 3. KPI Cards ═══ */}
