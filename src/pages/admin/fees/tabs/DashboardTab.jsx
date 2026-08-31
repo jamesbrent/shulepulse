@@ -134,13 +134,14 @@ export function DashboardTab({ profile, term, year, search, filterClass, filterS
   const executeConfirm = async () => {
     if (!confirmAction) return
     const { type, payment } = confirmAction
-    const newStatus = type === 'refund' ? 'refunded' : 'reversed'
-    const { error } = await supabase
-      .from('fee_payments')
-      .update({ cheque_status: newStatus, updated_at: new Date().toISOString() })
-      .eq('id', payment.id)
-    if (error) {
-      setToast({ type: 'error', msg: `Failed to ${type} payment.` })
+    const { data, error } = await supabase.rpc('reverse_fee_payment', {
+      p_payment_id: payment.id,
+      p_user_id: profile.id,
+      p_reason: null,
+      p_entry_date: new Date().toISOString().split('T')[0],
+    })
+    if (error || !data?.success) {
+      setToast({ type: 'error', msg: data?.error || error?.message || `Failed to ${type} payment.` })
     } else {
       setToast({ type: 'success', msg: `Payment ${type === 'refund' ? 'refunded' : 'reversed'} successfully.` })
       reload()

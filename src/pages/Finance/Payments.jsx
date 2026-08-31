@@ -13,7 +13,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { fmt, fmtDate, fmtDateTime, downloadFile, TERMS, YEARS } from '../admin/fees/utils/feesHelpers'
 import { generateReceiptPdf } from '../admin/fees/utils/generateReceiptPdf'
-import { postFeePaymentToGL, reverseJournal } from './cashBankUtils'
+import { postFeePaymentToGL } from './cashBankUtils'
 import './Payments.css'
 
 const METHODS = ['all', 'mpesa', 'bank', 'cash', 'mobile_money', 'cheque']
@@ -344,38 +344,16 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
 
   const executeConfirm = async () => {
     if (!confirmAction) return
-    const { type, payment } = confirmAction
-    const { error } = await supabase
-      .from('fee_payments')
-      .update({ cheque_status: 'reversed', updated_at: new Date().toISOString() })
-      .eq('id', payment.id)
-    if (error) {
-      setToast({ type: 'error', msg: 'Failed to reverse payment.' })
+    const { payment } = confirmAction
+    const { data, error } = await supabase.rpc('reverse_fee_payment', {
+      p_payment_id: payment.id,
+      p_user_id: profile.id,
+      p_reason: null,
+      p_entry_date: new Date().toISOString().split('T')[0],
+    })
+    if (error || !data?.success) {
+      setToast({ type: 'error', msg: data?.error || error?.message || 'Failed to reverse payment.' })
     } else {
-      if (payment.journal_entry_id) {
-        try {
-          const { data: je } = await supabase.from('journal_entries').select('*').eq('id', payment.journal_entry_id).single()
-          if (je && je.status === 'posted') {
-            await reverseJournal(supabase, { schoolId: profile.school_id, userId: profile.id, entry: je })
-          }
-        } catch {
-          setToast({ type: 'error', msg: 'Payment reversed but GL reversal failed.' })
-        }
-      }
-      try {
-        if (payment.student_id && payment.term && payment.year) {
-          await supabase.from('student_ledger').insert({
-            school_id: profile.school_id,
-            student_id: payment.student_id,
-            entry_type: 'payment',
-            amount: -Number(payment.amount),
-            term: payment.term,
-            year: parseInt(payment.year),
-            description: `Reversal of payment ${payment.receipt_number || ''}`,
-            reference_id: payment.id,
-          })
-        }
-      } catch { /* ledger stays in sync via GL */ }
       setToast({ type: 'success', msg: 'Payment reversed successfully.' })
       setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, cheque_status: 'reversed' } : p))
     }
