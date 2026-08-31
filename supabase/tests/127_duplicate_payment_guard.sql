@@ -80,8 +80,9 @@ BEGIN
 
   SELECT count(*) INTO v_cnt FROM fee_payments
   WHERE student_id = v_student AND amount = 1500 AND term = 'Term 1' AND year = 9999
+    AND reference = 'MP-100'
     AND created_at > now() - interval '60 seconds';
-  IF v_cnt <> 1 THEN RAISE EXCEPTION 'FAILED C: expected exactly 1 recent payment, found %', v_cnt; END IF;
+  IF v_cnt <> 1 THEN RAISE EXCEPTION 'FAILED C: expected exactly 1 recent MP-100 payment, found %', v_cnt; END IF;
 
   SELECT COALESCE(sum(amount), 0) INTO v_ledger FROM student_ledger
   WHERE student_id = v_student AND term = 'Term 1' AND year = 9999 AND entry_type = 'payment';

@@ -25,7 +25,7 @@ DECLARE
   v_base1020 NUMERIC; v_base1050 NUMERIC; v_base1110 NUMERIC;
   v_d1020 NUMERIC; v_d1050 NUMERIC; v_d1110 NUMERIC;
   v_dr1020 NUMERIC; v_cr1050 NUMERIC;
-  v_rev_je UUID; v_move_count INT; v_pay_status TEXT; v_track_status TEXT;
+  v_move_count INT; v_move_count2 INT; v_pay_status TEXT; v_track_status TEXT;
   v_ledger_neg NUMERIC;
 BEGIN
   -- ── environment probe + chart ────────────────────────────────────────────
@@ -285,11 +285,11 @@ BEGIN
     AND reference_type = 'fee_payment' AND reference_id = v_pay_id;
   v_res := update_cheque_status(v_pay_id, 'cleared', v_profile);
   IF v_res->>'already' <> 'cleared' THEN RAISE EXCEPTION 'FAILED E: expected already=cleared, got %', v_res; END IF;
-  SELECT count(*) INTO v_rev_je FROM journal_entries
+  SELECT count(*) INTO v_move_count2 FROM journal_entries
   WHERE school_id = v_school AND source = 'transfer' AND status = 'posted'
     AND reference_type = 'fee_payment' AND reference_id = v_pay_id;
-  IF v_rev_je <> v_move_count THEN
-    RAISE EXCEPTION 'FAILED E: duplicate clearing-move entries (% → %)', v_move_count, v_rev_je;
+  IF v_move_count2 <> v_move_count THEN
+    RAISE EXCEPTION 'FAILED E: duplicate clearing-move entries (% → %)', v_move_count, v_move_count2;
   END IF;
   RAISE NOTICE 'PASS E: re-clear is idempotent — no duplicate move entry';
 
