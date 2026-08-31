@@ -337,6 +337,26 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
     setConfirmAction({ type: 'reverse', payment: p })
   }
 
+  const isPendingCheque = (p) =>
+    (p.payment_type === 'cheque' || p.payment_method === 'cheque') &&
+    (!p.cheque_status || p.cheque_status === 'pending')
+
+  const markChequeStatus = async (p, status) => {
+    setContextMenu(null)
+    const { data, error } = await supabase.rpc('update_cheque_status', {
+      p_payment_id: p.id,
+      p_new_status: status,
+      p_user_id: profile.id,
+      p_note: null,
+    })
+    if (error || !data?.success) {
+      setToast({ type: 'error', msg: data?.error || error?.message || `Failed to mark cheque ${status}.` })
+    } else {
+      setToast({ type: 'success', msg: `Cheque marked ${status}.` })
+      setPayments((prev) => prev.map((pm) => pm.id === p.id ? { ...pm, cheque_status: status === 'bounced' ? 'reversed' : 'cleared' } : pm))
+    }
+  }
+
   const handleAudit = (p) => {
     setContextMenu(null)
     setViewModal(p)
@@ -643,6 +663,17 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
             <Printer /> Print receipt
           </button>
           <div className="pay-context-sep" />
+          {isPendingCheque(contextMenu.payment) && (
+            <>
+              <button className="pay-context-item" onClick={() => markChequeStatus(contextMenu.payment, 'cleared')}>
+                <CheckCircle /> Mark cheque cleared
+              </button>
+              <button className="pay-context-item danger" onClick={() => markChequeStatus(contextMenu.payment, 'bounced')}>
+                <XCircle /> Mark cheque bounced
+              </button>
+              <div className="pay-context-sep" />
+            </>
+          )}
           <button className="pay-context-item danger" onClick={() => handleReverse(contextMenu.payment)}>
             <RotateCcw /> Reverse payment
           </button>

@@ -131,6 +131,26 @@ export function DashboardTab({ profile, term, year, search, filterClass, filterS
     setConfirmAction({ type: 'reverse', payment: p })
   }
 
+  const isPendingCheque = (p) =>
+    (p.payment_type === 'cheque' || p.payment_method === 'cheque') &&
+    (!p.cheque_status || p.cheque_status === 'pending')
+
+  const handleChequeStatus = async (p, status) => {
+    setContextMenu(null)
+    const { data, error } = await supabase.rpc('update_cheque_status', {
+      p_payment_id: p.id,
+      p_new_status: status,
+      p_user_id: profile.id,
+      p_note: null,
+    })
+    if (error || !data?.success) {
+      setToast({ type: 'error', msg: data?.error || error?.message || `Failed to mark cheque ${status}.` })
+    } else {
+      setToast({ type: 'success', msg: `Cheque marked ${status}.` })
+      reload()
+    }
+  }
+
   const executeConfirm = async () => {
     if (!confirmAction) return
     const { type, payment } = confirmAction
@@ -325,6 +345,17 @@ export function DashboardTab({ profile, term, year, search, filterClass, filterS
             <ArrowDownToLine /> Download PDF
           </button>
           <div className="fees-context-sep" />
+          {isPendingCheque(contextMenu.payment) && (
+            <>
+              <button className="fees-context-item" onClick={() => handleChequeStatus(contextMenu.payment, 'cleared')}>
+                <CheckCircle /> Mark cheque cleared
+              </button>
+              <button className="fees-context-item danger" onClick={() => handleChequeStatus(contextMenu.payment, 'bounced')}>
+                <XCircle /> Mark cheque bounced
+              </button>
+              <div className="fees-context-sep" />
+            </>
+          )}
           <button className="fees-context-item" onClick={() => handleRefund(contextMenu.payment)}>
             <Undo2 /> Refund payment
           </button>
