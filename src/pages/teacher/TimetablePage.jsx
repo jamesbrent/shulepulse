@@ -128,8 +128,28 @@ export default function TimetablePage({ profile }) {
   const [pdfHtml, setPdfHtml]         = useState('')
   const [pdfBlobUrl, setPdfBlobUrl]   = useState('')
   const [pdfFilename, setPdfFilename] = useState('')
+  const [pdfScale, setPdfScale]       = useState(0.5)
 
   const printRef = useRef(null)
+  const pdfWrapRef = useRef(null)
+
+  // Keep the whole A4 landscape page in view: scale it to fit the preview box
+  useEffect(() => {
+    if (!pdfOpen) return
+    const compute = () => {
+      const wrap = pdfWrapRef.current
+      if (!wrap) return
+      const cs = getComputedStyle(wrap)
+      const availW = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+      const availH = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
+      const s = Math.min(1, availW / 1123, availH / 794)
+      setPdfScale(Math.max(0.15, Number(s.toFixed(3))))
+    }
+    compute()
+    const id = window.setTimeout(compute, 60)
+    window.addEventListener('resize', compute)
+    return () => { window.clearTimeout(id); window.removeEventListener('resize', compute) }
+  }, [pdfOpen, pdfHtml])
 
   const buildPrintHtml = () => {
     const content = printRef.current
@@ -543,18 +563,24 @@ export default function TimetablePage({ profile }) {
                 <X size={18} />
               </button>
             </div>
-            <div className="tt-pdf-frame-wrap">
+            <div className="tt-pdf-frame-wrap" ref={pdfWrapRef}>
               {pdfBusy ? (
                 <div className="tt-pdf-busy">
                   <Loader2 size={22} className="tt-pdf-spin" />
                   <span>Preparing your timetable PDF…</span>
                 </div>
               ) : pdfHtml ? (
-                <iframe
-                  title="Timetable PDF preview"
-                  className="tt-pdf-frame"
-                  srcDoc={pdfHtml}
-                />
+                <div
+                  className="tt-pdf-sizer"
+                  style={{ width: 1123 * pdfScale, height: 794 * pdfScale }}
+                >
+                  <iframe
+                    title="Timetable PDF preview"
+                    className="tt-pdf-frame"
+                    srcDoc={pdfHtml}
+                    style={{ transform: `scale(${pdfScale})` }}
+                  />
+                </div>
               ) : (
                 <div className="tt-pdf-busy"><span>No timetable to preview.</span></div>
               )}
