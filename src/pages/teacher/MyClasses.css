@@ -189,7 +189,7 @@
   }
   .mc-tiles {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
     gap: 8px;
   }
   .mc-tile {
@@ -197,8 +197,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     aspect-ratio: 1 / 1;
+    min-height: 0;
+    overflow: hidden;
     border-radius: 12px;
     border: 1px solid var(--mc-border);
     background: var(--mc-surf);
@@ -216,6 +218,10 @@
     color: var(--mc-text);
     line-height: 1.2;
     overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .mc-tile-codes {
     display: flex;
