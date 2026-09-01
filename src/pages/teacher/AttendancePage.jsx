@@ -3,6 +3,7 @@ import {
   ClipboardList, Calendar, AlertTriangle, TrendingUp, FileSpreadsheet,
   Clock, Users, Award, Activity, Target, BarChart3, Download,
   UserCheck, UserX, Save, Eye, BookOpen,
+  ChevronRight, ChevronDown, School,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
@@ -38,6 +39,7 @@ export default function AttendancePage({ profile }) {
   const [teacherRec, setTeacherRec] = useState(null)
   const [teacherName, setTeacherName] = useState('')
   const [activityFeed, setActivityFeed] = useState([])
+  const [todaySlots, setTodaySlots] = useState([])
 
   useEffect(() => { fetchTeacherInfo() }, [profile])
   useEffect(() => {
@@ -75,6 +77,15 @@ export default function AttendancePage({ profile }) {
     if (unique.length > 0 && filterClass === 'all') {
       setFilterClass(unique[0])
     }
+
+    const weekday = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+    const { data: slotsToday } = await supabase
+      .from('timetable_slots')
+      .select('*, classes(class_name), subjects(name)')
+      .eq('teacher_id', data.id)
+      .eq('day', weekday)
+      .order('start_time')
+    setTodaySlots(slotsToday || [])
     const { data: allStudents } = await supabase
       .from('students')
       .select('stream')
@@ -190,6 +201,31 @@ export default function AttendancePage({ profile }) {
     const reset = {}
     students.forEach(s => { reset[s.id] = 'present' })
     setAttendance(prev => ({ ...prev, ...reset }))
+  }
+
+  const fmtTime = (t) => {
+    if (!t) return ''
+    const [h, m] = String(t).split(':').map(Number)
+    if (isNaN(h)) return t
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const hh = h % 12 === 0 ? 12 : h % 12
+    return `${hh}:${String(m || 0).padStart(2, '0')} ${ampm}`
+  }
+
+  const classBadge = (cn) => {
+    if (!cn) return '?'
+    return cn.replace(/^(Form|Grade|Class|Standard)\s*/i, '').split(' ')[0]
+  }
+
+  const scrollToMarksheet = () => {
+    document.getElementById('att-mobile-marksheet')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const markClass = (cls) => {
+    if (!cls) return
+    setFilterClass(cls)
+    setActiveTab('mark')
+    requestAnimationFrame(scrollToMarksheet)
   }
 
   const saveAttendance = async () => {
@@ -332,7 +368,7 @@ export default function AttendancePage({ profile }) {
       </div>
 
       {activeTab === 'mark' && (
-        <>
+        <div className="desktop-attendance-layout">
 
           <div className="ad-header">
             <div className="ad-header-top">
@@ -560,11 +596,157 @@ export default function AttendancePage({ profile }) {
               </div>
             )}
           </div>
-        </>
+        </div>
+      )}
+
+      {/* ─── Mobile: Mark Attendance ─────────────────────────── */}
+      {activeTab === 'mark' && (
+        <div className="mobile-attendance-layout">
+          {profile?.schools?.school_name && (
+            <div className="att-mob-school">
+              <School size={14} />
+              <span>{profile.schools.school_name}</span>
+              <ChevronDown size={14} />
+            </div>
+          )}
+
+          <div className="att-mob-title">
+            <h3>Attendance</h3>
+            <p>{formattedDate}</p>
+          </div>
+
+          <div className="att-card att-glance">
+            <div className="att-card-head">
+              <h4>Today at a Glance</h4>
+              <ChevronRight size={18} />
+            </div>
+            <div className="att-glance-grid">
+              <div className="att-glance-stat">
+                <span className="att-glance-val att-glance-val--green">{kpiData.present}</span>
+                <span className="att-glance-label">Present</span>
+              </div>
+              <div className="att-glance-stat">
+                <span className="att-glance-val att-glance-val--red">{kpiData.absent}</span>
+                <span className="att-glance-label">Absent</span>
+              </div>
+              <div className="att-glance-stat">
+                <span className="att-glance-val att-glance-val--amber">{kpiData.late}</span>
+                <span className="att-glance-label">Late</span>
+              </div>
+              <div className="att-glance-stat">
+                <span className="att-glance-val att-glance-val--blue">{kpiData.rate}%</span>
+                <span className="att-glance-label">Attendance Rate</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="att-section-head">
+            <h4>Classes Today</h4>
+            <span className="att-badge">{todaySlots.length}</span>
+          </div>
+          <div className="att-classes-list">
+            {todaySlots.map(slot => {
+              const cn = slot.classes?.class_name?.trim() || ''
+              const d = classData[cn] || { total: 0, marked: 0 }
+              const done = d.total > 0 && d.marked >= d.total
+              const tone = d.marked > 0 ? (done ? 'complete' : 'partial') : 'empty'
+              const label = d.marked > 0 ? `${d.marked}/${d.total} marked` : 'Not marked'
+              const empty = !cn || !slot.subjects?.name
+              return (
+                <div key={slot.id || cn} className="att-class-item" onClick={() => markClass(cn)}>
+                  <div className="att-class-badge">{classBadge(cn)}</div>
+                  <div className="att-class-body">
+                    <div className="att-class-name">{cn || 'Free period'}</div>
+                    <div className="att-class-time">
+                      {fmtTime(slot.start_time)} – {fmtTime(slot.end_time)}
+                    </div>
+                    <div className="att-class-meta">
+                      <span className={`att-class-subj ${empty ? 'att-class-subj--empty' : ''}`}>
+                        {slot.subjects?.name || empty ? 'No subject' : slot.subjects?.name}
+                      </span>
+                      <span className={`att-class-status att-class-status--${tone}`}>{label}</span>
+                    </div>
+                  </div>
+                  <button className="att-mark-btn" onClick={(e) => { e.stopPropagation(); markClass(cn) }}>
+                    Mark
+                  </button>
+                  <ChevronRight size={18} className="att-class-chev" />
+                </div>
+              )
+            })}
+            {todaySlots.length === 0 && (
+              <div className="att-empty">
+                <ClipboardList size={28} color="#cbd5e1" />
+                <p>No classes scheduled today</p>
+                <span>Classes appear here once in the timetable</span>
+              </div>
+            )}
+          </div>
+
+          <div className="att-quickcard">
+            <div className="att-quickcard-body">
+              <h4>Quick Mark Attendance</h4>
+              <p>Mark attendance for any class in just a few taps.</p>
+            </div>
+            <button className="att-quick-btn" onClick={scrollToMarksheet}>
+              Quick Mark
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <div className="att-mob-marksheet" id="att-mobile-marksheet">
+            <div className="att-section-head">
+              <h4>{filterClass === 'all' ? 'All Classes' : filterClass}</h4>
+              <span className="att-badge">{students.length}</span>
+            </div>
+            <AttendanceFilters
+              filterDate={filterDate}
+              onDateChange={setFilterDate}
+              filterClass={filterClass}
+              onClassChange={setFilterClass}
+              classes={classes}
+              showAllOption={true}
+              search={search}
+              onSearchChange={setSearch}
+              onMarkAllPresent={markAllPresent}
+              onMarkAllAbsent={markAllAbsent}
+              onResetAll={resetAttendance}
+              onSave={saveAttendance}
+              saving={saving}
+              saved={saved}
+              canSave={students.length > 0 && !submitted}
+              showBulkActions={students.length > 0}
+              showSave={false}
+            />
+            {submitted && (
+              <div className="ad-notification ad-notification--info">
+                <AlertTriangle size={14} />
+                Attendance already submitted for this date. Contact admin to override.
+              </div>
+            )}
+            <AttendanceTable
+              students={students}
+              attendance={attendance}
+              onStatusChange={submitted ? undefined : setStatus}
+              notes={notes}
+              onNotesChange={submitted ? undefined : setNote}
+              loading={loading}
+              canEdit={!submitted}
+              showNotes={true}
+              showAdm={true}
+              showClass={true}
+              noStudentMessage="No students found for your assigned classes."
+            />
+            <button className="att-mob-save" onClick={saveAttendance} disabled={saving || submitted}>
+              <Save size={16} />
+              {saving ? 'Saving...' : 'Save Attendance'}
+            </button>
+          </div>
+        </div>
       )}
 
       {activeTab === 'history' && (
-        <>
+        <div className="desktop-attendance-layout">
 
           <div className="ad-header">
             <div className="ad-header-top">
@@ -607,10 +789,48 @@ export default function AttendancePage({ profile }) {
             showTime={true}
             showNotes={true}
           />
+        </div>
+      )}
 
+      {/* ─── Mobile: Records ─────────────────────────────────── */}
+      {activeTab === 'history' && (
+        <div className="mobile-attendance-layout">
+          <div className="att-mob-title">
+            <h3>Attendance Records</h3>
+            <p>{formattedDate}</p>
+          </div>
+          <div className="att-card att-history-card">
+            <AttendanceFilters
+              filterDate={filterDate}
+              onDateChange={setFilterDate}
+              filterClass={filterClass}
+              onClassChange={setFilterClass}
+              classes={classes}
+              showAllOption={true}
+              search={search}
+              onSearchChange={setSearch}
+              showExport={true}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+            />
+          </div>
+          <AttendanceTable
+            records={records}
+            loading={loading}
+            canEdit={false}
+            showAdm={true}
+            showClass={true}
+            showTime={true}
+            showNotes={true}
+          />
+        </div>
+      )}
+
+      {activeTab === 'history' && (
+        <div className="att-shared-analytics">
           <AttendanceTrends schoolId={profile.school_id} filterClass={filterClass} />
           <StudentAnalytics schoolId={profile.school_id} filterClass={filterClass} />
-        </>
+        </div>
       )}
 
       {activeTab === 'export' && (

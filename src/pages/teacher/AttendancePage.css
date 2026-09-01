@@ -220,3 +220,360 @@
   .ad-kpi-val { font-size: 20px; }
   .ad-dash { gap: 14px; }
 }
+
+/* ═══════════════════════════════════════════════════
+   Mobile-first Teacher Attendance UI
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  --sp-green: #16a34a;
+  --sp-green-dark: #15803d;
+  --sp-blue: #2563eb;
+  --sp-purple: #7c3aed;
+  --sp-orange: #f59e0b;
+  --sp-red: #ef4444;
+
+  --sp-bg: #f8fafc;
+  --sp-card: #ffffff;
+  --sp-text: #0f172a;
+  --sp-muted: #64748b;
+  --sp-border: #e2e8f0;
+
+  --sp-radius: 16px;
+  --sp-radius-sm: 12px;
+  --sp-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+/* Desktop / mobile toggle --------------------------- */
+.desktop-attendance-layout { display: block; }
+.mobile-attendance-layout { display: none; }
+
+@media (max-width: 767px) {
+  .desktop-attendance-layout { display: none; }
+  .mobile-attendance-layout { display: block; width: 100%; }
+  .att-shared-analytics,
+  .att-shared-analytics > * { display: none; }
+  .ad-dash { gap: 16px; }
+}
+
+/* Keep charts/analytics visible across both on desktop */
+@media (min-width: 768px) {
+  .att-shared-analytics { display: block; }
+}
+
+/* Mobile container ----------------------------------- */
+@media (max-width: 767px) {
+  .mobile-attendance-layout {
+    padding: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .mobile-attendance-layout *,
+  .mobile-attendance-layout *::before,
+  .mobile-attendance-layout *::after {
+    box-sizing: border-box;
+  }
+}
+
+/* School selector strip ------------------------------ */
+.att-mob-school {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 9px 12px;
+  background: var(--sp-card);
+  border: 1px solid var(--sp-border);
+  border-radius: 12px;
+  box-shadow: var(--sp-shadow);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sp-text);
+}
+.att-mob-school svg { flex-shrink: 0; color: var(--sp-green); }
+.att-mob-school span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Page title ------------------------------------------ */
+.att-mob-title { margin: 2px 0 14px; }
+.att-mob-title h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--sp-text);
+  line-height: 1.2;
+}
+.att-mob-title p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--sp-muted);
+}
+
+/* Cards ----------------------------------------------- */
+.att-card {
+  background: var(--sp-card);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius);
+  box-shadow: var(--sp-shadow);
+  width: 100%;
+  box-sizing: border-box;
+}
+.att-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 0;
+}
+.att-card-head h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sp-text);
+}
+.att-card-head svg { color: #cbd5e1; }
+
+/* Today at a Glance ----------------------------------- */
+.att-glance { margin-bottom: 18px; }
+.att-glance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+}
+.att-glance-stat {
+  min-width: 0;
+  padding: 14px 8px;
+  text-align: center;
+  border-radius: var(--sp-radius-sm);
+  background: var(--sp-bg);
+}
+.att-glance-val {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--sp-text);
+}
+.att-glance-label {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--sp-muted);
+}
+.att-glance-val--green { color: var(--sp-green-dark); }
+.att-glance-val--red { color: var(--sp-red); }
+.att-glance-val--amber { color: var(--sp-orange); }
+.att-glance-val--blue { color: var(--sp-blue); }
+
+/* Section headers ------------------------------------- */
+.att-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 0 10px;
+}
+.att-section-head h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sp-text);
+}
+.att-badge {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: var(--sp-green-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Classes list ---------------------------------------- */
+.att-classes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.att-class-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  box-sizing: border-box;
+  background: var(--sp-card);
+  border: 1px solid var(--sp-border);
+  border-radius: 14px;
+  box-shadow: var(--sp-shadow);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.att-class-item:active { background: #f1f5f9; }
+.att-class-badge {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--sp-radius-sm);
+  background: #dcfce7;
+  color: var(--sp-green-dark);
+  font-weight: 700;
+  font-size: 16px;
+}
+.att-class-body { flex: 1; min-width: 0; }
+.att-class-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sp-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.att-class-time {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--sp-muted);
+}
+.att-class-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.att-class-subj {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--sp-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.att-class-subj--empty { color: var(--sp-muted); }
+.att-class-status {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.att-class-status--complete { background: #dcfce7; color: var(--sp-green-dark); }
+.att-class-status--partial { background: #fef3c7; color: #b45309; }
+.att-class-status--empty { background: #f1f5f9; color: var(--sp-muted); }
+.att-mark-btn {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #dcfce7;
+  color: var(--sp-green-dark);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.att-class-chev { flex-shrink: 0; color: #cbd5e1; }
+.att-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 16px;
+  text-align: center;
+  background: var(--sp-card);
+  border: 1px dashed var(--sp-border);
+  border-radius: var(--sp-radius);
+}
+.att-empty p { margin: 0; font-size: 14px; font-weight: 600; color: var(--sp-text); }
+.att-empty span { font-size: 12px; color: var(--sp-muted); }
+
+/* Quick Mark card ------------------------------------- */
+.att-quickcard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0fdf4, #ecfeff);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--sp-radius);
+}
+.att-quickcard-body { flex: 1; min-width: 0; }
+.att-quickcard-body h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sp-text);
+}
+.att-quickcard-body p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--sp-muted);
+  line-height: 1.45;
+}
+.att-quick-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: var(--sp-radius-sm);
+  padding: 11px 16px;
+  background: var(--sp-green);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile marksheet ------------------------------------ */
+.att-mob-marksheet { margin-top: 8px; }
+.att-mob-marksheet .att-section-head { margin-top: 20px; }
+.att-mob-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px;
+  border: 0;
+  border-radius: var(--sp-radius-sm);
+  background: var(--sp-green);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  -webkit-tap-highlight-color: transparent;
+}
+.att-mob-save:disabled { background: #cbd5e1; color: #fff; cursor: not-allowed; }
+
+/* History card wrapper --------------------------------- */
+.att-history-card { padding: 8px; }
+.att-history-card .att-toolbar,
+.att-history-card .att-toolbar-left,
+.att-history-card .att-toolbar-right {
+  box-shadow: none;
+  border: 0;
+}
+
+/* Small phones (<360px) -------------------------------- */
+@media (max-width: 359px) {
+  .mobile-attendance-layout { padding: 0; }
+  .att-class-item { gap: 8px; padding: 11px; }
+  .att-class-badge { width: 42px; height: 42px; flex-basis: 42px; font-size: 15px; }
+  .att-mark-btn { padding: 7px 10px; font-size: 12px; }
+  .att-quickcard { gap: 10px; padding: 13px; }
+  .att-quick-btn { padding: 10px 12px; font-size: 12px; }
+  .att-glance-stat { padding: 12px 6px; }
+  .att-glance-val { font-size: 21px; }
+}
