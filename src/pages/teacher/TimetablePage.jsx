@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { Calendar, Clock, BookOpen, Users, GraduationCap, Download } from 'lucide-react'
+import { Calendar, Clock, BookOpen, Users, GraduationCap, Download, X, FileText, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { buildTimetablePdfBlob } from '../../utils/timetablePdfExport'
 import './TimetablePage.css'
 
 // ── Constants (mirrors admin) ────────────────────────────────
@@ -122,15 +123,18 @@ export default function TimetablePage({ profile }) {
   const [classMap, setClassMap]       = useState({})   // classId → class object
   const [teacherCode, setTeacherCode] = useState('')
   const [loading, setLoading]         = useState(true)
+  const [pdfOpen, setPdfOpen]         = useState(false)
+  const [pdfBusy, setPdfBusy]         = useState(false)
+  const [pdfHtml, setPdfHtml]         = useState('')
+  const [pdfBlobUrl, setPdfBlobUrl]   = useState('')
+  const [pdfFilename, setPdfFilename] = useState('')
 
   const printRef = useRef(null)
 
-  const handlePrint = () => {
+  const buildPrintHtml = () => {
     const content = printRef.current
-    if (!content) return
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`
+    if (!content) return ''
+    return `
       <html>
         <head>
           <title>${profile?.full_name || 'Teacher'} Timetable</title>
@@ -156,9 +160,55 @@ export default function TimetablePage({ profile }) {
         </head>
         <body>${content.outerHTML}</body>
       </html>
-    `)
+    `
+  }
+
+  const handlePrint = () => {
+    const html = buildPrintHtml()
+    if (!html) return
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
     win.document.close()
     win.onload = () => { win.focus(); win.print(); win.close() }
+  }
+
+  const openPdfPreview = async () => {
+    setPdfOpen(true)
+    if (!pdfHtml) setPdfHtml(buildPrintHtml())
+    if (pdfBlobUrl) return
+    setPdfBusy(true)
+    try {
+      const { blob, filename } = await buildTimetablePdfBlob({
+        school: profile?.schools,
+        profile,
+        teacherCode,
+        timetable,
+        slots: activeTimeSlots,
+        getCell,
+        days: DAYS,
+        dayShort: DAY_SHORT,
+      })
+      setPdfBlobUrl(URL.createObjectURL(blob))
+      setPdfFilename(filename)
+    } catch (err) {
+      console.error('PDF generation error:', err)
+    }
+    setPdfBusy(false)
+  }
+
+  const downloadPdf = () => {
+    if (!pdfBlobUrl) return
+    const a = document.createElement('a')
+    a.href = pdfBlobUrl
+    a.download = pdfFilename || 'Timetable.pdf'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
+
+  const closePdf = () => {
+    setPdfOpen(false)
   }
 
   useEffect(() => { if (profile) fetchTimetable() }, [profile])
@@ -313,8 +363,8 @@ export default function TimetablePage({ profile }) {
           <div className="tt-toolbar">
             <div className="tt-toolbar-spacer" />
             {timetable.length > 0 && (
-              <button className="tt-btn tt-btn--dark" onClick={handlePrint}>
-                <Download size={15} /> Download PDF
+              <button className="tt-btn tt-btn--dark" onClick={openPdfPreview}>
+                <Download size={15} /> View / Download PDF
               </button>
             )}
           </div>
@@ -470,6 +520,46 @@ export default function TimetablePage({ profile }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {pdfOpen && (
+        <div className="tt-pdf-overlay" onClick={closePdf}>
+          <div className="tt-pdf-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="tt-pdf-bar">
+              <span className="tt-pdf-title">
+                <FileText size={16} /> Timetable PDF Preview
+              </span>
+              <button
+                className="tt-pdf-btn tt-pdf-btn--dark"
+                onClick={downloadPdf}
+                disabled={pdfBusy || !pdfBlobUrl}
+              >
+                {pdfBusy
+                  ? <><Loader2 size={15} className="tt-pdf-spin" /> Preparing…</>
+                  : <><Download size={15} /> Download PDF</>}
+              </button>
+              <button className="tt-pdf-close" onClick={closePdf} aria-label="Close preview">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="tt-pdf-frame-wrap">
+              {pdfBusy ? (
+                <div className="tt-pdf-busy">
+                  <Loader2 size={22} className="tt-pdf-spin" />
+                  <span>Preparing your timetable PDF…</span>
+                </div>
+              ) : pdfHtml ? (
+                <iframe
+                  title="Timetable PDF preview"
+                  className="tt-pdf-frame"
+                  srcDoc={pdfHtml}
+                />
+              ) : (
+                <div className="tt-pdf-busy"><span>No timetable to preview.</span></div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
