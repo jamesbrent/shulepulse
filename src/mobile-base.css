@@ -124,10 +124,13 @@
   .teacher-stats,
   .ad-kpi-grid,
   .mk-kpi-grid,
-  .gd-kpi-grid,
-  .tt-summary {
+  .gd-kpi-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
+  }
+  .tt-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
   }
 }
 @media (max-width: 480px) {
@@ -140,7 +143,8 @@
     grid-template-columns: 1fr !important;
   }
   .tt-summary {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
   }
 }
 
