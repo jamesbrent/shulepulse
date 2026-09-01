@@ -785,3 +785,8 @@
 @media (max-width: 768px) {
   .teacher-root.mc-nohdr .teacher-header { display: none; }
 }
+
+/* -- Attendance: hide duplicate page-title header on mobile - */
+@media (max-width: 768px) {
+  .teacher-root.att-nohdr .teacher-header { display: none; }
+}

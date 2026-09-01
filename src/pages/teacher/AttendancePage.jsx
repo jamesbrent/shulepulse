@@ -331,6 +331,8 @@ export default function AttendancePage({ profile }) {
     }
   }, [classData])
 
+  const sheetStudents = filterClass === 'all' ? students : students.filter(s => s.class === filterClass)
+
   if (!teacherRec && loading) return (
     <div className="ad-load">
       <div className="ad-spin" />
@@ -700,7 +702,7 @@ export default function AttendancePage({ profile }) {
           <div className="att-mob-marksheet" id="att-mobile-marksheet">
             <div className="att-section-head">
               <h4>{filterClass === 'all' ? 'All Classes' : filterClass}</h4>
-              <span className="att-badge">{students.length}</span>
+              <span className="att-badge">{sheetStudents.length}</span>
             </div>
             <AttendanceFilters
               filterDate={filterDate}
@@ -717,8 +719,8 @@ export default function AttendancePage({ profile }) {
               onSave={saveAttendance}
               saving={saving}
               saved={saved}
-              canSave={students.length > 0 && !submitted}
-              showBulkActions={students.length > 0}
+              canSave={sheetStudents.length > 0 && !submitted}
+              showBulkActions={sheetStudents.length > 0}
               showSave={false}
             />
             {submitted && (
@@ -729,7 +731,7 @@ export default function AttendancePage({ profile }) {
             )}
             <AttendanceTable
               mobileCards
-              students={students}
+              students={sheetStudents}
               attendance={attendance}
               onStatusChange={submitted ? undefined : setStatus}
               notes={notes}

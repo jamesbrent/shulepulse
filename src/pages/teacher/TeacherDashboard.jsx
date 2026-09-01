@@ -463,7 +463,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className={`teacher-root ${activeNav === 'dashboard' ? 'tah-active' : ''} ${activeNav === 'myclasses' ? 'mc-nohdr' : ''}`}>
+    <div className={`teacher-root ${activeNav === 'dashboard' ? 'tah-active' : ''} ${activeNav === 'myclasses' ? 'mc-nohdr' : ''} ${activeNav === 'attendance' ? 'att-nohdr' : ''}`}>
       <TeacherMobileHeader
         schoolName={schoolName}
         logoUrl={logoUrl}
