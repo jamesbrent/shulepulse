@@ -28,6 +28,17 @@ import Messages from './components/Messages'
 import Notices from './components/Notices'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import RoleSwitcher from '../../components/RoleSwitcher'
+import TeacherMobileHeader from '../../components/TeacherMobileHeader'
+import '../../components/TeacherMobileHeader.css'
+import TeacherMobileNav from '../../components/TeacherMobileNav'
+import '../../components/TeacherMobileNav.css'
+
+const MOBILE_PRIMARY = [
+  { key: 'dashboard', label: 'Home', icon: LayoutDashboard },
+  { key: 'grades', label: 'Results', icon: BarChart2 },
+  { key: 'attendance', label: 'Attendance', icon: ClipboardList },
+  { key: 'fees', label: 'Fees', icon: DollarSign },
+]
 
 export default function ParentPortal() {
   const [activeNav, setActiveNav] = useState('dashboard')
@@ -37,6 +48,7 @@ export default function ParentPortal() {
   const [loading, setLoading] = useState(true)
   const [showChildDropdown, setShowChildDropdown] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [userId, setUserId] = useState(null)
   const [profile, setProfile] = useState(null)
   const { logoUrl, schoolName } = useBrandingStore()
@@ -73,6 +85,12 @@ export default function ParentPortal() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     window.location.href = basePath('/')
+  }
+
+  const handleNav = (key) => {
+    setMobileOpen(false)
+    if (key === 'notices') markNoticesSeen(userId)
+    setActiveNav(key)
   }
 
   const navItems = [
@@ -112,6 +130,29 @@ export default function ParentPortal() {
 
   return (
     <div className="parent-root">
+      <TeacherMobileHeader
+        schoolName={schoolName}
+        logoUrl={logoUrl}
+        profile={profile}
+        notifCount={notifCount}
+        onOpenMore={() => setMoreOpen(true)}
+        onOpenNotices={() => handleNav('notices')}
+      />
+
+      <TeacherMobileNav
+        items={navItems}
+        primary={MOBILE_PRIMARY}
+        activeNav={activeNav}
+        onNavigate={handleNav}
+        onNoticesSeen={() => markNoticesSeen(userId)}
+        notifCount={notifCount}
+        profile={profile}
+        schoolName={schoolName}
+        onLogout={handleLogout}
+        moreOpen={moreOpen}
+        setMoreOpen={setMoreOpen}
+      />
+
       <button className="parent-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu size={20} />
       </button>
@@ -206,6 +247,11 @@ export default function ParentPortal() {
       </aside>
 
       <main className="parent-main">
+        <div className={`ptm-title ${activeNav === 'dashboard' ? 'ptm-title--home' : ''}`}>
+          <h1>{pageTitles[activeNav]}</h1>
+          {activeNav !== 'dashboard' && <p>{school?.name || ''}</p>}
+        </div>
+
         <header className="parent-header">
           <div>
             <h1>{pageTitles[activeNav]}</h1>
@@ -252,7 +298,51 @@ export default function ParentPortal() {
             <span>Please contact the school to link your children</span>
           </div>
         ) : (
-          renderContent()
+          <>
+            <div className="parent-desktop-dashboard">
+              {renderContent()}
+            </div>
+            {activeNav === 'dashboard' && (
+              <div className="parent-mobile-home">
+                <div className="ptm-child">
+                  <div className="ptm-child-avatar">
+                    {activeChild?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'C'}
+                  </div>
+                  <div className="ptm-child-info">
+                    <p className="ptm-child-name">{activeChild?.full_name || 'Child'}</p>
+                    <p className="ptm-child-class">{activeChild?.class || ''}{activeChild?.stream ? ` ${activeChild.stream}` : ''} · {school?.name || ''}</p>
+                  </div>
+                </div>
+
+                <div className="ptm-actions">
+                  {[
+                    { label: 'Results', icon: <BarChart2 size={20} />, nav: 'grades' },
+                    { label: 'Attendance', icon: <ClipboardList size={20} />, nav: 'attendance' },
+                    { label: 'Fees', icon: <DollarSign size={20} />, nav: 'fees' },
+                    { label: 'Notices', icon: <Bell size={20} />, nav: 'notices' },
+                    { label: 'Messages', icon: <MessageSquare size={20} />, nav: 'messages' },
+                    { label: 'Pay Fees', icon: <CreditCard size={20} />, nav: 'fees' },
+                  ].map(a => (
+                    <button key={a.label} className="ptm-action" onClick={() => handleNav(a.nav)}>
+                      {a.icon}
+                      <span>{a.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="ptm-card">
+                  <p className="ptm-card-label">School Contact</p>
+                  {school?.phone ? (
+                    <a href={`tel:${school.phone}`} className="ptm-contact">
+                      <Phone size={16} /> {school.phone}
+                    </a>
+                  ) : (
+                    <p className="ptm-empty">No phone on file</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

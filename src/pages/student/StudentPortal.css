@@ -1730,6 +1730,57 @@
 
 .sp-download-btn span { flex: 1; text-align: left; }
 
+.sp-desktop-dashboard { display: block; }
+.sp-mobile-home { display: none; }
+.spm-title { display: none; }
+
+/* ── Compact mobile home ─────────────────────────── */
+.spm-welcome { padding: 4px 2px 8px; }
+.spm-welcome h2 { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
+.spm-welcome p { font-size: 13px; color: #64748b; margin: 0; }
+
+.spm-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.spm-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 84px;
+  padding: 12px 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.spm-action:active { background: #f8fafc; }
+
+.spm-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+}
+.spm-card-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; margin: 0 0 8px; }
+.spm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.spm-row:last-child { border-bottom: none; }
+.spm-row span { font-size: 13px; color: #64748b; }
+.spm-row strong { font-size: 15px; font-weight: 700; color: #0f172a; }
+
 @media (max-width: 1200px) {
   .sp-quick-actions { grid-template-columns: repeat(4, 1fr); }
   .sp-self-service-grid { grid-template-columns: repeat(4, 1fr); }
@@ -1746,8 +1797,12 @@
 }
 
 @media (max-width: 768px) {
+  .sp-topbar { display: none; }
+  .sp-mobile-menu-btn { display: none; }
+
   .sp-sidebar {
     transform: translateX(-100%);
+    display: flex;
   }
 
   .sp-sidebar.mobile-open {
@@ -1774,7 +1829,15 @@
 
   .sp-topbar-subtitle { display: none; }
 
-  .sp-content { padding: 16px; }
+  .sp-content { padding: calc(58px + env(safe-area-inset-top, 0px) + 16px) 16px calc(80px + env(safe-area-inset-bottom, 0px)); }
+
+  .sp-desktop-dashboard { display: none; }
+  .sp-mobile-home { display: flex; flex-direction: column; gap: 14px; }
+
+  .spm-title { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+  .spm-title h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; }
+  .spm-title p { font-size: 12px; color: #64748b; margin: 0; }
+  .spm-title--home { display: none; }
 
   .sp-quick-actions {
     grid-template-columns: repeat(2, 1fr);

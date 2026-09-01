@@ -422,28 +422,62 @@
   .ct-grid { grid-template-columns: 1fr; }
 }
 
+.ct-desktop-dashboard { display: block; }
+.ct-mobile-home { display: none; }
+
+/* ── Compact mobile home ──────────────────────────── */
+.ctm-welcome { padding: 4px 2px 8px; }
+.ctm-welcome h2 { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
+.ctm-welcome p { font-size: 13px; color: #64748b; margin: 0; }
+
+.ctm-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+}
+.ctm-card-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; margin: 0 0 12px; }
+
+.ctm-today-rows { display: flex; flex-direction: column; }
+.ctm-today-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ctm-today-row:last-child { border-bottom: none; }
+.ctm-today-row span { font-size: 13px; color: #64748b; }
+.ctm-today-row strong { font-size: 15px; font-weight: 700; color: #0f172a; }
+.ctm-today-row strong small { font-size: 12px; font-weight: 500; color: #94a3b8; }
+
+.ctm-footer { padding: 0 2px 4px; }
+.ctm-footer p { font-size: 12px; color: #94a3b8; margin: 0; }
+
 @media (max-width: 768px) {
-  .ct-mobile-toggle { display: flex; }
-  .ct-mobile-overlay { display: block; }
+  .ct-mobile-toggle { display: none; }
+  .ct-mobile-overlay { display: none; }
+
+  .ct-desktop-dashboard { display: none; }
+  .ct-mobile-home { display: flex; flex-direction: column; gap: 14px; }
 
   .ct-sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    width: 260px;
-    left: 0;
-    top: 0;
+    display: none;
   }
-  .ct-sidebar.open { transform: translateX(0); }
 
   .ct-main {
     margin-left: 0;
-    padding: 56px 16px 16px;
+    padding: calc(58px + env(safe-area-inset-top, 0px) + 16px) 16px calc(76px + env(safe-area-inset-bottom, 0px));
   }
+
+  .ct-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ct-header h1 { font-size: 18px; }
+  .ct-header p { font-size: 12px; }
+  .ct-header-actions { display: none; }
 
   .ct-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .ct-quick-actions { grid-template-columns: 1fr; }
 
-  .ct-header { flex-direction: column; align-items: flex-start; gap: 12px; }
   .ct-header-actions { width: 100%; flex-wrap: wrap; gap: 8px; }
 }
 

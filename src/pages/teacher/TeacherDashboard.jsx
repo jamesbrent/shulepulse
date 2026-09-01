@@ -36,6 +36,17 @@ import FeatureGate from '../../features/access/FeatureGate'
 import TeacherMobileNav from '../../components/TeacherMobileNav'
 import TeacherMobileHeader from '../../components/TeacherMobileHeader'
 
+function timeAgo(isoDate) {
+  if (!isoDate) return ''
+  const diffMs = Date.now() - new Date(isoDate).getTime()
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  return `${Math.floor(hours / 24)} day${Math.floor(hours / 24) === 1 ? '' : 's'} ago`
+}
+
 export default function TeacherDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard')
   const [activeClass, setActiveClass] = useState(null)
@@ -43,6 +54,9 @@ export default function TeacherDashboard() {
   const [students, setStudents] = useState([])
   const [attendance, setAttendance] = useState({})
   const [timetable, setTimetable] = useState([])
+  const [notices, setNotices] = useState([])
+  const [teacherName, setTeacherName] = useState('')
+  const [teacherSubjectRole, setTeacherSubjectRole] = useState('')
   const [stats, setStats] = useState({ classes: 0, students: 0, present: 0, pendingGrades: 0 })
   const [profile, setProfile] = useState(null)
   const [teacherId, setTeacherId] = useState(null)
@@ -105,13 +119,14 @@ export default function TeacherDashboard() {
     // Look up the teachers table record (timetable_slots.teacher_id references teachers.id, not auth.users.id)
     const { data: teacherRec } = await supabase
       .from('teachers')
-      .select('id')
+      .select('id, full_name')
       .eq('email', profileData.email)
       .eq('school_id', profileData.school_id)
       .maybeSingle()
 
     const tid = teacherRec?.id || user.id
     setTeacherId(tid)
+    if (teacherRec?.full_name) setTeacherName(teacherRec.full_name)
 
     const { data: timetableData } = await supabase
       .from('timetable_slots')
@@ -146,6 +161,15 @@ export default function TeacherDashboard() {
       present: presentCount || 0,
       pendingGrades: pendingGrades || 0,
     })
+
+    const { data: noticesData } = await supabase
+      .from('notices')
+      .select('*, profiles(full_name)')
+      .eq('school_id', profileData.school_id)
+      .order('created_at', { ascending: false })
+      .limit(3)
+
+    setNotices(noticesData || [])
 
     setLoading(false)
   }
@@ -220,23 +244,58 @@ export default function TeacherDashboard() {
   const nowDate = new Date()
   const greeting = nowDate.getHours() < 12 ? 'Good morning'
     : nowDate.getHours() < 17 ? 'Good afternoon' : 'Good evening'
-  const firstName = (profile?.full_name || 'Teacher').split(' ')[0]
+  const firstName = (profile?.full_name || teacherName || 'Teacher').split(' ')[0]
   const todayLabel = nowDate.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' })
   const nowMins = nowDate.getHours() * 60 + nowDate.getMinutes()
-  const upNext = timetable.find((t) => {
-    const [h, m] = (t.start_time || '00:00').split(':').map(Number)
-    return h * 60 + m > nowMins
-  }) || null
 
-  // Deliberately small + single accent: quick actions are shortcuts, not a
-  // vanity showcase. The full module set stays reachable in the bottom nav
-  // ("More"), so keeping only the two most-used actions reduces noise without
-  // removing any function. "Classes" is surfaced as a Today stat (see below)
-  // instead of duplicating the per-feature quick-action grid.
+  const presentCount = Object.values(attendance).filter((v) => v === 'present').length
+  const attendanceRate = stats.students > 0
+    ? Math.round((presentCount / stats.students) * 100)
+    : (stats.classes > 0 ? 0 : 0)
+
+  const scheduleRows = timetable.map((t) => {
+    const [hs, ms] = (t.start_time || '00:00').split(':').map(Number)
+    const [he, me] = (t.end_time || '00:00').split(':').map(Number)
+    const startM = hs * 60 + ms
+    const endM = he * 60 + me
+    let status = 'upcoming'
+    if (nowMins >= startM && nowMins <= endM) status = 'ongoing'
+    else if (startM > nowMins && startM === Math.min(...timetable.map(x => { const [a,b]=(x.start_time||'00:00').split(':').map(Number); return a*60+b }).filter(m => m > nowMins))) status = 'next'
+    return {
+      id: t.id,
+      startTime: t.start_time?.slice(0, 5),
+      endTime: t.end_time?.slice(0, 5),
+      subject: t.subjects?.name || t.subject,
+      className: t.classes?.class_name?.trim() || t.class,
+      room: t.room || t.venue || '',
+      status,
+    }
+  })
+
+  // Quick actions mirror the target mobile design but each maps to a real page.
   const quickActions = [
-    { key: 'attendance', label: 'Mark Attendance', icon: <ClipboardList size={18} />, color: 'var(--color-primary)' },
-    { key: 'marks', label: 'Enter Marks', icon: <BarChart2 size={18} />, color: 'var(--color-primary)' },
+    { key: 'attendance', label: 'Take attendance', icon: <ClipboardList size={20} />, color: 'green', nav: 'attendance' },
+    { key: 'marks', label: 'Enter grades', icon: <BarChart2 size={20} />, color: 'amber', nav: 'marks' },
+    { key: 'grades', label: 'View reports', icon: <BarChart2 size={20} />, color: 'cyan', nav: 'grades' },
+    { key: 'myclasses', label: 'My classes', icon: <BookOpen size={20} />, color: 'blue', nav: 'myclasses' },
+    { key: 'library', label: 'Upload resources', icon: <BookOpen size={20} />, color: 'violet', nav: 'library' },
+    { key: 'comments', label: 'Send message', icon: <MessageSquare size={20} />, color: 'green', nav: 'comments' },
   ]
+  const QUICK_ACTION_STYLES = {
+    green: 'bg-emerald-50 text-emerald-600',
+    blue: 'bg-blue-50 text-blue-600',
+    violet: 'bg-violet-50 text-violet-600',
+    amber: 'bg-amber-50 text-amber-600',
+    cyan: 'bg-cyan-50 text-cyan-600',
+  }
+
+  const mobileAnnouncements = notices.map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    author: n.profiles?.full_name || 'Admin',
+    timeAgo: timeAgo(n.created_at),
+  }))
 
   const pageTitles = {
     dashboard: 'Teacher Dashboard',
@@ -281,88 +340,139 @@ export default function TeacherDashboard() {
 
   const renderDashboard = () => {
     if (loading) return <div className="loading-state">Loading dashboard...</div>
-    const presentCount = Object.values(attendance).filter((v) => v === 'present').length
     const activeClassName = activeClass || classes[0] || ''
     return (
       <>
         {/* ── Mobile: day snapshot ── */}
         <div className="tp-mobile">
-          <div className="tp-hello">
-            <p className="tp-hello-line">{greeting}, {firstName}</p>
-            <p className="tp-hello-sub">{todayLabel}</p>
+          {/* Greeting */}
+          <div className="px-5 pt-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[13px] text-slate-400">{todayLabel}</p>
+                <h1 className="mt-1 text-[22px] font-bold leading-tight text-slate-900">
+                  {greeting}, {firstName}
+                </h1>
+              </div>
+              <button
+                onClick={() => handleNav('notices')}
+                className="relative flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+                aria-label="Notifications"
+              >
+                <Bell size={20} />
+                {notifCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                    {notifCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Stats */}
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {[
+                { label: 'My classes', value: stats.classes, icon: <BookOpen size={22} />, cls: 'bg-violet-100 text-violet-700' },
+                { label: "Today's lessons", value: timetable.length, icon: <Calendar size={22} />, cls: 'bg-blue-100 text-blue-700' },
+                { label: 'Pending grades', value: stats.pendingGrades, icon: <BarChart2 size={22} />, cls: 'bg-amber-100 text-amber-700' },
+                { label: 'Attendance', value: `${attendanceRate}%`, icon: <CheckCircle size={22} />, cls: 'bg-emerald-100 text-emerald-700' },
+              ].map((s) => (
+                <div key={s.label} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${s.cls}`}>{s.icon}</div>
+                  <p className="mt-3 text-2xl font-bold text-slate-900">{s.value}</p>
+                  <p className="text-[13px] text-slate-500">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick actions */}
+            <p className="mt-6 mb-3 text-[13px] font-semibold uppercase tracking-wide text-slate-400">Quick actions</p>
+            <div className="grid grid-cols-3 gap-3">
+              {quickActions.map((a) => (
+                <button
+                  key={a.key}
+                  onClick={() => handleNav(a.nav)}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <span className={`flex h-12 w-12 items-center justify-center rounded-full ${QUICK_ACTION_STYLES[a.color]}`}>
+                    {a.icon}
+                  </span>
+                  <span className="text-center text-[11px] text-slate-600">{a.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="tp-upnext">
-            <span className="tp-upnext-label">Up next</span>
-            {upNext ? (
-              <button className="tp-upnext-card" onClick={() => handleNav('timetable')}>
-                <div className="tp-upnext-time">
-                  <Clock size={14} /> {upNext.start_time?.slice(0, 5)} – {upNext.end_time?.slice(0, 5)}
-                </div>
-                <p className="tp-upnext-subj">{upNext.subjects?.name || upNext.subject}</p>
-                <p className="tp-upnext-cls">
-                  <Users size={12} /> {upNext.classes?.class_name?.trim() || upNext.class}{upNext.room ? ` · Room ${upNext.room}` : ''}
-                </p>
-                <ChevronRight size={18} className="tp-upnext-chev" />
-              </button>
+          {/* Today's schedule */}
+          <div className="mt-6 border-t border-slate-100 bg-slate-50/60">
+            <div className="border-b border-slate-100 bg-white px-5 py-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[15px] font-semibold text-slate-900">Today&apos;s schedule</p>
+                <button onClick={() => handleNav('timetable')} className="flex items-center gap-1 text-[13px] font-medium text-blue-600">
+                  View all <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            {scheduleRows.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 px-5 py-8 text-center">
+                <CheckCircle size={28} className="text-emerald-400" />
+                <p className="text-sm text-slate-500">No lessons scheduled for today</p>
+              </div>
             ) : (
-              <div className="tp-upnext-card tp-upnext-card--done">
-                <CheckCircle size={20} /> No more lessons today
+              <div className="space-y-2 px-5 py-4">
+                {scheduleRows.map((s) => {
+                  const statusStyle =
+                    s.status === 'ongoing'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : s.status === 'next'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-slate-200 text-slate-500'
+                  const statusLabel =
+                    s.status === 'ongoing' ? 'Ongoing' : s.status === 'next' ? 'Next' : 'Upcoming'
+                  return (
+                    <div key={s.id} className="flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-full bg-slate-100">
+                          <span className="text-[10px] font-semibold text-slate-400">{s.startTime}</span>
+                        </div>
+                        <div>
+                          <p className="text-[15px] font-semibold text-slate-900">{s.subject || 'Lesson'}</p>
+                          <p className="text-[12px] text-slate-500">
+                            {s.className}{s.room ? ` · ${s.room}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusStyle}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
 
-          <div className="tp-actions">
-            {quickActions.map((a) => (
-              <button
-                key={a.key}
-                className="tp-action"
-                style={{ ['--accent']: a.color }}
-                onClick={() => handleNav(a.key)}
-              >
-                <span className="tp-action-icon">{a.icon}</span>
-                <span className="tp-action-label">{a.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <section className="tp-today">
-            <span className="tp-section-label">Today</span>
-            <div className="tp-today-card">
-              <button className="tp-today-row tp-today-row--link" onClick={() => handleNav('myclasses')}>
-                <span className="tp-today-key">Classes</span>
-                <span className="tp-today-value">{stats.classes}</span>
-                <ChevronRight size={16} className="tp-today-chev" />
-              </button>
-              <div className="tp-today-row">
-                <span className="tp-today-key">Students today</span>
-                <span className="tp-today-value">{stats.students}</span>
-              </div>
-              <div className="tp-today-row">
-                <span className="tp-today-key">Present today</span>
-                <span className="tp-today-value">{presentCount}</span>
-              </div>
-              <div className="tp-today-row">
-                <span className="tp-today-key">Pending grades</span>
-                <span className="tp-today-value">{stats.pendingGrades}</span>
-              </div>
+          {/* Announcements */}
+          <div className="mt-6 px-5 pb-6">
+            <div className="flex items-center justify-between">
+              <p className="text-[15px] font-semibold text-slate-900">Announcements</p>
             </div>
-          </section>
-
-          {activeClassName && (
-            <section className="tp-attend">
-              <span className="tp-section-label">Attendance</span>
-              <div className="tp-attend-card">
-                <p className="tp-attend-cls">{activeClassName}</p>
-                <p className="tp-attend-meta">
-                  {students.length} students · {presentCount} present
-                </p>
-                <button className="tp-attend-cta" onClick={() => handleNav('attendance')}>
-                  Mark attendance <ChevronRight size={16} />
-                </button>
-              </div>
-            </section>
-          )}
+            <div className="mt-3 space-y-3">
+              {mobileAnnouncements.length === 0 ? (
+                <div className="rounded-2xl bg-slate-50 p-4 text-center text-sm text-slate-500">No announcements</div>
+              ) : (
+                mobileAnnouncements.map((n) => (
+                  <div key={n.id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] font-semibold text-slate-800">{n.title}</span>
+                    </div>
+                    <p className="mt-1 text-[13px] leading-relaxed text-slate-500 line-clamp-2">{n.body}</p>
+                    <p className="mt-2 text-[11px] text-slate-400">{n.author} · {n.timeAgo}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ── Desktop: full summary + inline tools (hidden on mobile) ── */}

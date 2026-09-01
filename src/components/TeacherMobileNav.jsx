@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import './TeacherMobileNav.css'
 
-const PRIMARY = [
+const DEFAULT_PRIMARY = [
   { key: 'dashboard', label: 'Home', icon: LayoutDashboard },
   { key: 'timetable', label: 'Timetable', icon: Calendar },
   { key: 'myclasses', label: 'Classes', icon: BookOpen },
@@ -14,6 +14,7 @@ const PRIMARY = [
 
 export default function TeacherMobileNav({
   items = [],
+  primary = DEFAULT_PRIMARY,
   activeNav,
   onNavigate,
   onNoticesSeen,
@@ -29,7 +30,7 @@ export default function TeacherMobileNav({
     return () => { document.body.style.overflow = '' }
   }, [moreOpen])
 
-  const isPrimary = (key) => PRIMARY.some((p) => p.key === key)
+  const isPrimary = (key) => primary.some((p) => p.key === key)
   const moreItems = items.filter((i) => !isPrimary(i.key))
   const moreActive = moreOpen || (activeNav && !isPrimary(activeNav))
 
@@ -49,18 +50,22 @@ export default function TeacherMobileNav({
   return (
     <>
       <nav className="tmn-nav" aria-label="Teacher mobile navigation">
-        {PRIMARY.map((p) => {
+        {primary.map((p) => {
           const Icon = p.icon
           const active = activeNav === p.key
+          const showBadge = p.key === 'notices' && notifCount > 0
           return (
             <button
               key={p.key}
               className={`tmn-item ${active ? 'tmn-item--active' : ''}`}
-              onClick={() => go(p.key)}
+              onClick={() => go(p.key, p.key === 'notices')}
               aria-label={p.label}
               aria-current={active ? 'page' : undefined}
             >
-              <span className="tmn-item-icon"><Icon size={20} /></span>
+              <span className="tmn-item-icon">
+                <Icon size={20} />
+                {showBadge && <span className="tmn-badge">{notifCount > 9 ? '9+' : notifCount}</span>}
+              </span>
               <span className="tmn-item-label">{p.label}</span>
             </button>
           )

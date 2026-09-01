@@ -23,7 +23,18 @@ import ReportCardsPage from './ReportCardsPage'
 import TranscriptsPage from './TranscriptsPage'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import RoleSwitcher from '../../components/RoleSwitcher'
+import TeacherMobileHeader from '../../components/TeacherMobileHeader'
+import '../../components/TeacherMobileHeader.css'
+import TeacherMobileNav from '../../components/TeacherMobileNav'
+import '../../components/TeacherMobileNav.css'
 import { groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
+
+const MOBILE_PRIMARY = [
+  { key: 'dashboard', label: 'Home', icon: LayoutDashboard },
+  { key: 'timetable', label: 'Timetable', icon: Calendar },
+  { key: 'grades', label: 'Results', icon: BarChart2 },
+  { key: 'assignments', label: 'Tasks', icon: Notebook },
+]
 
 const NAV_GROUPS = [
   {
@@ -105,6 +116,7 @@ export default function StudentPortal() {
   const [unreadMessages, setUnreadMessages] = useState(0)
 
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState(() => new Set(NAV_GROUPS.map(g => g.label)))
   const { logoUrl, schoolName } = useBrandingStore()
   const notifRef = useRef(null)
@@ -368,6 +380,8 @@ export default function StudentPortal() {
   ]
 
   const navGroups = NAV_GROUPS
+
+  const mobileNavItems = NAV_GROUPS.flatMap(g => g.items)
 
   const pageTitles = {
     dashboard: 'Student Dashboard',
@@ -898,6 +912,8 @@ export default function StudentPortal() {
     }))
 
     return (
+      <>
+      <div className="sp-desktop-dashboard">
       <div className="sp-dashboard">
         <div className="sp-quick-actions">
           {quickActions.map(action => (
@@ -1377,11 +1393,78 @@ export default function StudentPortal() {
           </div>
         </div>
       </div>
+      </div>
+
+      <div className="sp-mobile-home">
+        <div className="spm-welcome">
+          <h2>Hi, {student?.full_name?.split(' ')[0] || 'Student'}</h2>
+          <p>{student?.class || ''}{student?.stream ? ` ${student.stream}` : ''} · {school?.name || ''}</p>
+        </div>
+
+        <div className="spm-actions">
+          {[
+            { label: 'Grades', icon: <BarChart2 size={20} />, nav: 'grades' },
+            { label: 'Timetable', icon: <Calendar size={20} />, nav: 'timetable' },
+            { label: 'Attendance', icon: <ClipboardList size={20} />, nav: 'attendance' },
+            { label: 'Fee Balance', icon: <DollarSign size={20} />, nav: 'fees' },
+            { label: 'Assignments', icon: <Notebook size={20} />, nav: 'assignments' },
+            { label: 'Notices', icon: <Bell size={20} />, nav: 'notices' },
+          ].map(a => (
+            <button key={a.label} className="spm-action" onClick={() => handleNav(a.nav)}>
+              {a.icon}
+              <span>{a.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="spm-card">
+          <p className="spm-card-label">Overview</p>
+          <div className="spm-row">
+            <span>Average Grade</span>
+            <strong>{avgGrade}%</strong>
+          </div>
+          <div className="spm-row">
+            <span>Attendance</span>
+            <strong>{attendance.rate}%</strong>
+          </div>
+          <div className="spm-row">
+            <span>Fee Balance</span>
+            <strong>{balance === 0 ? 'Paid' : `KES ${balance.toLocaleString()}`}</strong>
+          </div>
+          <div className="spm-row">
+            <span>Assignments</span>
+            <strong>{assignments.length}{overdueAssignments.length > 0 ? ` (${overdueAssignments.length} overdue)` : ''}</strong>
+          </div>
+        </div>
+      </div>
+      </>
     )
   }
 
   return (
     <div className="sp-root">
+      <TeacherMobileHeader
+        schoolName={schoolName}
+        logoUrl={logoUrl}
+        profile={{ full_name: student?.full_name || profile?.full_name }}
+        notifCount={unreadNotices}
+        onOpenMore={() => setMoreOpen(true)}
+        onOpenNotices={() => handleNav('notices')}
+      />
+
+      <TeacherMobileNav
+        items={mobileNavItems}
+        primary={MOBILE_PRIMARY}
+        activeNav={activeNav}
+        onNavigate={handleNav}
+        notifCount={unreadNotices}
+        profile={{ full_name: student?.full_name || profile?.full_name }}
+        schoolName={schoolName}
+        onLogout={handleLogout}
+        moreOpen={moreOpen}
+        setMoreOpen={setMoreOpen}
+      />
+
       <aside className={`sp-sidebar ${showMobileMenu ? 'mobile-open' : ''}`}>
         <div className="sp-sidebar-header">
           <div className="sp-sidebar-brand">
@@ -1526,6 +1609,10 @@ export default function StudentPortal() {
         </header>
 
         <div className="sp-content">
+          <div className={`spm-title ${activeNav === 'dashboard' ? 'spm-title--home' : ''}`}>
+            <h1>{pageTitles[activeNav]}</h1>
+            {activeNav !== 'dashboard' && <p>{school?.name || ''}</p>}
+          </div>
           {renderContent()}
         </div>
       </main>

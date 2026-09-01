@@ -28,6 +28,10 @@ import ClassTeacherLibrary from '../library/ClassTeacherLibrary'
 import TimetablePage from '../teacher/TimetablePage'
 import '../teacher/TimetablePage.css'
 import RoleSwitcher from '../../components/RoleSwitcher'
+import TeacherMobileHeader from '../../components/TeacherMobileHeader'
+import '../../components/TeacherMobileHeader.css'
+import TeacherMobileNav from '../../components/TeacherMobileNav'
+import '../../components/TeacherMobileNav.css'
 import './ParentCommunication.css'
 import './ClassTeacherDashboard.css'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
@@ -37,12 +41,20 @@ import FeatureGate from '../../features/access/FeatureGate'
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
 
+const MOBILE_PRIMARY = [
+  { key: 'dashboard', label: 'Home', icon: LayoutDashboard },
+  { key: 'timetable', label: 'Timetable', icon: Calendar },
+  { key: 'attendance', label: 'Attendance', icon: ClipboardList },
+  { key: 'marks', label: 'Marks', icon: PencilLine },
+]
+
 export default function ClassTeacherDashboard() {
   const { profile: authProfile } = useAuthStore()
   const { logoUrl, schoolName } = useBrandingStore()
   const { features, isSuperadmin } = useFeatureAccess()
   const [activeNav, setActiveNav] = useState('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [teacherData, setTeacherData] = useState(null)
   const [school, setSchool] = useState(null)
   const [currentTerm, setCurrentTerm] = useState('Term 1')
@@ -159,6 +171,12 @@ export default function ClassTeacherDashboard() {
     window.location.href = basePath('/')
   }
 
+  const handleMobileNav = (key) => {
+    setMobileOpen(false)
+    if (key === 'notices') markNoticesSeen(authProfile?.id)
+    setActiveNav(key)
+  }
+
   const pageTitles = {
     dashboard: 'Class Teacher Dashboard',
     attendance: 'Class Attendance',
@@ -209,87 +227,118 @@ export default function ClassTeacherDashboard() {
 
     return (
       <>
-        <div className="ct-welcome-banner">
-          <div>
-            <h2>Welcome, {teacherData.full_name || teacherData.name || 'Teacher'}</h2>
-            <p>{school?.name || ''} · {getAssignedClasses(teacherData).join(', ') || 'No class assigned'}</p>
+        <div className="ct-desktop-dashboard">
+          <div className="ct-welcome-banner">
+            <div>
+              <h2>Welcome, {teacherData.full_name || teacherData.name || 'Teacher'}</h2>
+              <p>{school?.name || ''} · {getAssignedClasses(teacherData).join(', ') || 'No class assigned'}</p>
+            </div>
+            <div className="ct-avatar-large">
+              {(teacherData.full_name || teacherData.name || 'T')?.[0]?.toUpperCase() || 'T'}
+            </div>
           </div>
-          <div className="ct-avatar-large">
-            {(teacherData.full_name || teacherData.name || 'T')?.[0]?.toUpperCase() || 'T'}
+
+          <div className="ct-stats-grid">
+            {[
+              { label: 'Total Students', value: stats.totalStudents, icon: <Users size={20} />, color: '#2563eb' },
+              { label: 'Present Today', value: stats.attendanceRate, suffix: `of ${stats.totalStudents}`, icon: <CheckCircle size={20} />, color: '#16a34a' },
+              { label: 'Attendance Rate', value: `${attendancePercent}%`, icon: <TrendingUp size={20} />, color: '#7c3aed' },
+              { label: 'Avg Performance', value: stats.averagePerformance ? `${stats.averagePerformance}%` : '—', icon: <BarChart3 size={20} />, color: '#ca8a04' },
+            ].map((s) => (
+              <div className="ct-stat-card" key={s.label}>
+                <div className="ct-stat-icon" style={{ color: s.color }}>{s.icon}</div>
+                <p className="ct-stat-label">{s.label}</p>
+                <p className="ct-stat-value" style={{ color: s.color }}>{s.value}</p>
+                {s.suffix && <p className="ct-stat-suffix">{s.suffix}</p>}
+              </div>
+            ))}
+          </div>
+
+          <div className="ct-grid">
+            <div className="ct-card">
+              <div className="ct-card-header">
+                <h3>Quick Actions</h3>
+              </div>
+              <div className="ct-quick-actions">
+                <button className="ct-quick-action-btn" onClick={() => { setActiveNav('attendance'); setMobileOpen(false) }}>
+                  <ClipboardList size={20} />
+                  <span>Mark Attendance</span>
+                </button>
+                <button className="ct-quick-action-btn" onClick={() => { setActiveNav('marks'); setMobileOpen(false) }}>
+                  <PencilLine size={20} />
+                  <span>Enter Marks</span>
+                </button>
+                <button className="ct-quick-action-btn" onClick={() => { setActiveNav('performance'); setMobileOpen(false) }}>
+                  <BarChart3 size={20} />
+                  <span>View Performance</span>
+                </button>
+                <button className="ct-quick-action-btn" onClick={() => { setActiveNav('comments'); setMobileOpen(false) }}>
+                  <MessageSquare size={20} />
+                  <span>Class Comments</span>
+                </button>
+                <button className="ct-quick-action-btn" onClick={() => { setActiveNav('communication'); setMobileOpen(false) }}>
+                  <Phone size={20} />
+                  <span>Contact Parents</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="ct-card">
+              <div className="ct-card-header">
+                <h3>Class Information</h3>
+              </div>
+              <div className="ct-info-list">
+                <div className="ct-info-item">
+                  <span className="ct-info-label">Class</span>
+                  <span className="ct-info-value">{getAssignedClasses(teacherData).join(', ') || '—'}</span>
+                </div>
+                <div className="ct-info-item">
+                  <span className="ct-info-label">Students</span>
+                  <span className="ct-info-value">{stats.totalStudents}</span>
+                </div>
+                <div className="ct-info-item">
+                  <span className="ct-info-label">Term</span>
+                  <span className="ct-info-value">{currentTerm} {currentYear}</span>
+                </div>
+                <div className="ct-info-item">
+                  <span className="ct-info-label">Attendance Rate</span>
+                  <span className="ct-info-value">{attendancePercent}%</span>
+                </div>
+                <div className="ct-info-item">
+                  <span className="ct-info-label">Average Score</span>
+                  <span className="ct-info-value">{stats.averagePerformance ? `${stats.averagePerformance}%` : '—'}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="ct-stats-grid">
-          {[
-            { label: 'Total Students', value: stats.totalStudents, icon: <Users size={20} />, color: '#2563eb' },
-            { label: 'Present Today', value: stats.attendanceRate, suffix: `of ${stats.totalStudents}`, icon: <CheckCircle size={20} />, color: '#16a34a' },
-            { label: 'Attendance Rate', value: `${attendancePercent}%`, icon: <TrendingUp size={20} />, color: '#7c3aed' },
-            { label: 'Avg Performance', value: stats.averagePerformance ? `${stats.averagePerformance}%` : '—', icon: <BarChart3 size={20} />, color: '#ca8a04' },
-          ].map((s) => (
-            <div className="ct-stat-card" key={s.label}>
-              <div className="ct-stat-icon" style={{ color: s.color }}>{s.icon}</div>
-              <p className="ct-stat-label">{s.label}</p>
-              <p className="ct-stat-value" style={{ color: s.color }}>{s.value}</p>
-              {s.suffix && <p className="ct-stat-suffix">{s.suffix}</p>}
-            </div>
-          ))}
-        </div>
+        <div className="ct-mobile-home">
+          <div className="ctm-welcome">
+            <h2>Welcome back, {teacherData.full_name?.split(' ')[0] || 'Teacher'}</h2>
+            <p>{getAssignedClasses(teacherData).join(', ') || 'No class assigned'}</p>
+          </div>
 
-        <div className="ct-grid">
-          <div className="ct-card">
-            <div className="ct-card-header">
-              <h3>Quick Actions</h3>
-            </div>
-            <div className="ct-quick-actions">
-              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('attendance'); setMobileOpen(false) }}>
-                <ClipboardList size={20} />
-                <span>Mark Attendance</span>
-              </button>
-              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('marks'); setMobileOpen(false) }}>
-                <PencilLine size={20} />
-                <span>Enter Marks</span>
-              </button>
-              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('performance'); setMobileOpen(false) }}>
-                <BarChart3 size={20} />
-                <span>View Performance</span>
-              </button>
-              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('comments'); setMobileOpen(false) }}>
-                <MessageSquare size={20} />
-                <span>Class Comments</span>
-              </button>
-              <button className="ct-quick-action-btn" onClick={() => { setActiveNav('communication'); setMobileOpen(false) }}>
-                <Phone size={20} />
-                <span>Contact Parents</span>
-              </button>
+          <div className="ctm-card ctm-today">
+            <p className="ctm-card-label">Today</p>
+            <div className="ctm-today-rows">
+              <div className="ctm-today-row">
+                <span>Present</span>
+                <strong>{stats.attendanceRate} <small>/ {stats.totalStudents}</small></strong>
+              </div>
+              <div className="ctm-today-row">
+                <span>Attendance Rate</span>
+                <strong>{attendancePercent}%</strong>
+              </div>
+              <div className="ctm-today-row">
+                <span>Avg Performance</span>
+                <strong>{stats.averagePerformance ? `${stats.averagePerformance}%` : '—'}</strong>
+              </div>
             </div>
           </div>
 
-          <div className="ct-card">
-            <div className="ct-card-header">
-              <h3>Class Information</h3>
-            </div>
-            <div className="ct-info-list">
-              <div className="ct-info-item">
-                <span className="ct-info-label">Class</span>
-                <span className="ct-info-value">{getAssignedClasses(teacherData).join(', ') || '—'}</span>
-              </div>
-              <div className="ct-info-item">
-                <span className="ct-info-label">Students</span>
-                <span className="ct-info-value">{stats.totalStudents}</span>
-              </div>
-              <div className="ct-info-item">
-                <span className="ct-info-label">Term</span>
-                <span className="ct-info-value">{currentTerm} {currentYear}</span>
-              </div>
-              <div className="ct-info-item">
-                <span className="ct-info-label">Attendance Rate</span>
-                <span className="ct-info-value">{attendancePercent}%</span>
-              </div>
-              <div className="ct-info-item">
-                <span className="ct-info-label">Average Score</span>
-                <span className="ct-info-value">{stats.averagePerformance ? `${stats.averagePerformance}%` : '—'}</span>
-              </div>
-            </div>
+          <div className="ctm-footer">
+            <p>{currentTerm}, {currentYear} · {school?.name || ''}</p>
           </div>
         </div>
       </>
@@ -301,6 +350,28 @@ export default function ClassTeacherDashboard() {
       <button className="ct-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu size={20} />
       </button>
+
+      <TeacherMobileHeader
+        schoolName={schoolName}
+        logoUrl={logoUrl}
+        profile={authProfile}
+        notifCount={notifCount}
+        onOpenMore={() => setMoreOpen(true)}
+        onOpenNotices={() => handleMobileNav('notices')}
+      />
+
+      <TeacherMobileNav
+        items={filteredNavItems}
+        primary={MOBILE_PRIMARY}
+        activeNav={activeNav}
+        onNavigate={handleMobileNav}
+        notifCount={notifCount}
+        profile={authProfile}
+        schoolName={schoolName}
+        onLogout={handleLogout}
+        moreOpen={moreOpen}
+        setMoreOpen={setMoreOpen}
+      />
 
       {mobileOpen && <div className="ct-mobile-overlay" onClick={() => setMobileOpen(false)} />}
 
