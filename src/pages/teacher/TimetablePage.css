@@ -285,6 +285,9 @@
   background: #eef2f7;
   padding: 16px;
   box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 .tt-pdf-frame {
   width: 1123px;
@@ -294,6 +297,7 @@
   box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12);
   transform-origin: top left;
   display: block;
+  flex-shrink: 0;
 }
 .tt-pdf-busy {
   height: 100%;
@@ -313,13 +317,19 @@
   to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-/* Scale the landscape A4 preview to fit phone width */
+/* Scale the landscape A4 preview to fit the phone width.
+   zoom resizes the layout box too, so no empty space is left behind. */
 @media (max-width: 768px) {
   .tt-pdf-frame-wrap { padding: 10px; }
-  .tt-pdf-frame { transform: scale(0.42); }
+  .tt-pdf-frame { width: 1123px; height: 794px; }
 }
-@media (max-width: 480px) {
-  .tt-pdf-frame { transform: scale(0.33); }
+@supports (zoom: 1) {
+  @media (max-width: 768px) { .tt-pdf-frame { zoom: 0.42; } }
+  @media (max-width: 480px) { .tt-pdf-frame { zoom: 0.33; } }
+}
+@supports not (zoom: 1) {
+  @media (max-width: 768px) { .tt-pdf-frame { transform: scale(0.42); margin-bottom: -460px; } }
+  @media (max-width: 480px) { .tt-pdf-frame { transform: scale(0.33); margin-bottom: -530px; } }
   .tt-pdf-btn { padding: 9px 12px; font-size: 12px; }
 }
 
