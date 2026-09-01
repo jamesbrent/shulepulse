@@ -743,3 +743,63 @@
   .att-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .att-tab { white-space: nowrap; padding: 11px 14px; min-height: 44px; }
 }
+
+/* Mobile-only override to stop card overflow/overlap inside the
+   teacher AttendanceTable card view (widths 320–430px). */
+@media (max-width: 767px) {
+  .teacher-root .att-card-table tbody {
+    gap: 10px;
+  }
+  .teacher-root .att-card-table tr {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .teacher-root .att-card-table td {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 2px;
+  }
+  .teacher-root .att-card-table td::before {
+    flex: 0 0 100%;
+  }
+  .teacher-root .att-card-table .student-name-cell {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .teacher-root .att-card-table .att-status-buttons {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .teacher-root .att-card-table .att-status-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    padding: 5px 2px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .teacher-root .att-card-table .att-notes-input {
+    width: 100%;
+    min-height: 42px;
+    box-sizing: border-box;
+  }
+  .teacher-root .att-card-table .adm-no {
+    font-size: 12px;
+    word-break: normal;
+  }
+  .teacher-root .att-card-table .att-badge {
+    width: 100%;
+    justify-content: center;
+  }
+}
