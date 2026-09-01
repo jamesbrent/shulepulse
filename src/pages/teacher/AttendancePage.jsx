@@ -60,7 +60,7 @@ export default function AttendancePage({ profile }) {
     if (!profile?.school_id) return
     const { data } = await supabase
       .from('teachers')
-      .select('id, full_name')
+      .select('id, full_name, class, classes_assigned')
       .eq('email', profile.email)
       .eq('school_id', profile.school_id)
       .maybeSingle()
@@ -68,14 +68,27 @@ export default function AttendancePage({ profile }) {
     setTeacherRec(data)
     setTeacherName(data.full_name || 'Teacher')
 
+    const classMap = new Map()
+    const pushClass = (name) => {
+      const n = typeof name === 'string' ? name.trim() : ''
+      if (!n) return
+      const key = n.toLowerCase()
+      if (!classMap.has(key)) classMap.set(key, n)
+    }
+
     const { data: slots } = await supabase
       .from('timetable_slots')
       .select('class_id, classes(class_name, stream)')
       .eq('teacher_id', data.id)
-    const unique = [...new Set((slots || []).map(s => {
-      const n = s.classes?.class_name?.trim()
-      return n ? `${n}${s.classes?.stream ? ` ${s.classes.stream.trim()}` : ''}` : null
-    }).filter(Boolean))].sort()
+    ;(slots || []).forEach(s => {
+      const base = s.classes?.class_name?.trim()
+      if (base) pushClass(`${base}${s.classes?.stream ? ` ${s.classes.stream.trim()}` : ''}`)
+    })
+
+    ;(data.classes_assigned || []).forEach(pushClass)
+    pushClass(data.class)
+
+    const unique = [...classMap.values()].sort()
     setClasses(unique)
     if (unique.length > 0 && filterClass === 'all') {
       setFilterClass(unique[0])
@@ -109,9 +122,9 @@ export default function AttendancePage({ profile }) {
     const list = (data || [])
       .map(s => {
         const combined = classNameOf(s)
-        const matched = classNames.has(combined)
-          ? combined
-          : classNames.has((s.class || '').trim()) ? (s.class || '').trim() : null
+        const matched = teacherClassMap.get(combined.toLowerCase())
+          || teacherClassMap.get((s.class || '').trim().toLowerCase())
+          || null
         return matched ? { ...s, _cls: matched } : null
       })
       .filter(Boolean)
@@ -236,7 +249,11 @@ export default function AttendancePage({ profile }) {
     return plain ? `${plain}${s.stream ? ` ${String(s.stream).trim()}` : ''}` : ''
   }
 
-  const classNames = new Set((classes || []).map(c => c.trim()).filter(Boolean))
+  const teacherClassMap = (classes || []).reduce((m, c) => {
+    const n = typeof c === 'string' ? c.trim() : ''
+    if (n && !m.has(n.toLowerCase())) m.set(n.toLowerCase(), n)
+    return m
+  }, new Map())
 
   const scrollToMarksheet = () => {
     document.getElementById('att-mobile-marksheet')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
