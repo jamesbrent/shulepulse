@@ -350,9 +350,16 @@
   .tt-summary { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
-  .tt-summary { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .tt-stat { padding: 12px !important; }
-  .tt-stat-value { font-size: 20px !important; }
+  .tt-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .tt-stat {
+    padding: 10px 2px !important;
+    flex-direction: column;
+    text-align: center;
+    gap: 4px;
+  }
+  .tt-stat-icon { width: 32px; height: 32px; }
+  .tt-stat-value { font-size: 18px !important; }
+  .tt-stat-label { font-size: 10px !important; line-height: 1.25; }
   .tt-today-list { flex-direction: column; }
   .tt-toolbar { padding: 10px 14px; flex-wrap: wrap; }
   .tt-today { padding: 14px; }
@@ -364,7 +371,10 @@
   .tt-grid-wrap { border-radius: 10px; }
 }
 @media (max-width: 480px) {
-  .tt-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .tt-stat-value { font-size: 18px; }
+  .tt-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .tt-stat { padding: 8px 2px !important; }
+  .tt-stat-icon { display: none; }
+  .tt-stat-value { font-size: 18px !important; }
+  .tt-stat-label { font-size: 10px !important; line-height: 1.2; }
   .tt-dash { gap: 14px; }
 }

@@ -790,3 +790,8 @@
 @media (max-width: 768px) {
   .teacher-root.att-nohdr .teacher-header { display: none; }
 }
+
+/* -- Timetable: hide duplicate page-title header on mobile -- */
+@media (max-width: 768px) {
+  .teacher-root.tt-nohdr .teacher-header { display: none; }
+}
