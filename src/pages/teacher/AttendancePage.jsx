@@ -49,7 +49,7 @@ export default function AttendancePage({ profile }) {
     } else if (activeTab === 'history') {
       fetchRecords()
     }
-  }, [filterDate, filterClass, activeTab, teacherRec])
+  }, [filterDate, filterClass, activeTab, teacherRec, classes])
   useEffect(() => {
     if (activeTab === 'mark' && classes.length > 0 && teacherRec) {
       fetchActivityFeed()
@@ -102,6 +102,7 @@ export default function AttendancePage({ profile }) {
       .select('id, full_name, admission_number, class')
       .eq('school_id', profile.school_id)
       .eq('status', 'active')
+      .in('class', classes.length > 0 ? classes : ['__no_classes__'])
       .order('full_name')
     setStudents(data || [])
     setLoading(false)
@@ -138,6 +139,8 @@ export default function AttendancePage({ profile }) {
       .order('created_at', { ascending: false })
     if (filterClass !== 'all') {
       query = query.eq('students.class', filterClass)
+    } else if (classes.length > 0) {
+      query = query.in('students.class', classes)
     }
     const { data } = await query
     const recs = (data || []).filter(r => r.students)

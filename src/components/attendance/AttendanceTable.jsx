@@ -1,5 +1,12 @@
 import { CheckCircle, XCircle, Clock, UserMinus, ClipboardList } from 'lucide-react'
 
+const getInitials = (name) => {
+  const parts = (name || '').trim().split(/\s+/)
+  if (parts.length === 0) return ''
+  if (parts.length === 1) return (parts[0].slice(0, 2)).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 const STATUS_META = {
   present: { icon: <CheckCircle size={14} />, label: 'Present', cls: 'present' },
   absent: { icon: <XCircle size={14} />, label: 'Absent', cls: 'absent' },
@@ -103,7 +110,7 @@ export default function AttendanceTable({
                   <td data-label="Student">
                     <div className="student-name-cell">
                       <div className="student-avatar-sm">
-                        {s.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                        {getInitials(s.full_name)}
                       </div>
                       {s.full_name}
                     </div>
@@ -132,9 +139,9 @@ export default function AttendanceTable({
               <tr key={r.id}>
                 <td data-label="Student">
                   <div className="student-name-cell">
-                    <div className="student-avatar-sm">
-                      {r.students?.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                    </div>
+<div className="student-avatar-sm">
+                        {getInitials(r.students?.full_name)}
+                      </div>
                     {r.students?.full_name}
                   </div>
                 </td>
