@@ -254,11 +254,51 @@
   .att-shared-analytics,
   .att-shared-analytics > * { display: none; }
   .ad-dash { gap: 16px; }
+
+  /* Tab bar: fit ALL tabs on one screen, no horizontal scroll */
+  .att-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    overflow-x: visible;
+    overflow-y: hidden;
+    width: 100%;
+    border-bottom: 1px solid var(--sp-border);
+    padding-bottom: 6px;
+  }
+  .att-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    margin: 0;
+    padding: 9px 2px;
+    min-height: 52px;
+    border-radius: 10px;
+    border-bottom: 2px solid transparent;
+    text-align: center;
+    white-space: normal;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--sp-muted);
+  }
+  .att-tab svg { flex-shrink: 0; }
+  .att-tab.active {
+    color: var(--sp-green-dark);
+    background: #f0fdf4;
+    border-bottom-color: var(--sp-green);
+    font-weight: 700;
+  }
+  .att-tab:active { background: #f1f5f9; }
 }
 
 /* Keep charts/analytics visible across both on desktop */
 @media (min-width: 768px) {
   .att-shared-analytics { display: block; }
+  /* Web: tabs wrap onto a second line instead of scrolling horizontally */
+  .att-tabs { flex-wrap: wrap; }
 }
 
 /* Mobile container ----------------------------------- */
