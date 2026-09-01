@@ -1061,6 +1061,33 @@
     overflow-wrap: anywhere;
   }
 
+  .teacher-root .att-toolbar-left {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .teacher-root .date-nav {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: none;
+    justify-content: flex-start;
+  }
+  .teacher-root .date-nav-btn { min-width: 40px; height: 42px; }
+  .teacher-root .date-nav .date-input { min-height: 42px; flex: 1 1 auto; width: auto; }
+  .teacher-root .search-wrap {
+    flex: 1 1 130px;
+    width: auto;
+    max-width: none;
+    min-width: 100px;
+  }
+  .teacher-root .search-input { min-height: 42px; font-size: 14px; }
+  .teacher-root .filter-select {
+    flex-basis: 100%;
+    width: 100%;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
   .teacher-root .att-mob-list,
   .teacher-root .att-mob-row,
   .teacher-root .att-mob-row-main,
