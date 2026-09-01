@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import AvatarUpload from '../../components/AvatarUpload';
 
 /*
   TeacherAppHome
@@ -128,15 +129,17 @@ const QUICK_ACTION_STYLES = {
 
 function StatCard({ icon: Icn, iconBg, iconColor, value, label, sublabel }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-      <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${iconBg}`}>
-        <Icn className={`h-5 w-5 ${iconColor}`} />
+    <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <p className="text-[32px] font-bold leading-none text-slate-900">{value}</p>
+        <div className={`mb-0 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
+          <Icn className={`h-5 w-5 ${iconColor}`} />
+        </div>
       </div>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-      <p className="text-sm font-medium text-slate-700">{label}</p>
-      {sublabel && <p className="text-xs text-slate-400">{sublabel}</p>}
+      <p className="mt-6 text-[14px] font-medium" style={{ color: '#2D3748' }}>{label}</p>
+      {sublabel && <p className="mt-1 text-[12px]" style={{ color: '#9AA0A6' }}>{sublabel}</p>}
     </div>
-  );
+  )
 }
 
 function ScheduleRow({ index, period, isLast }) {
@@ -237,13 +240,7 @@ export default function TeacherAppHome({
             <p className="text-xl font-bold leading-tight">{teacher.name}</p>
             <p className="mt-2 text-sm text-blue-100">Here's what's happening in your classes today.</p>
           </div>
-          {teacher.avatarUrl ? (
-            <img src={teacher.avatarUrl} alt="" className="h-16 w-16 shrink-0 rounded-full border-2 border-white/60 object-cover" />
-          ) : (
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-white/60 bg-blue-400 text-lg font-semibold">
-              {teacher.name?.split(' ').map((n) => n[0]).slice(0, 2).join('') || ''}
-            </div>
-          )}
+          <AvatarUpload size={64} fallbackChar="T" className="shrink-0 rounded-full border-2 border-white/60 overflow-hidden" />
         </div>
         {teacher.subjectRole && (
           <span className="mt-3 inline-block rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold">{teacher.subjectRole}</span>
