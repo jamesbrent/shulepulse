@@ -217,26 +217,34 @@ export default function MyClasses({ profile }) {
                 <span><Calendar size={13} /> {selected.schedule.length} slots</span>
               </div>
 
-              <div>
+              <div className="mcm-group">
                 <p className="mc-section-label"><BookOpen size={13} /> Subjects</p>
-                <div className="mc-pills">
-                  {selected.subjects.map(sub => (
-                    <span key={sub} className="mc-pill">{sub}</span>
+                <div className="mcm-subjects">
+                  {selected.subjects.map((sub, i) => (
+                    <div key={sub} className="mcm-subject-card">
+                      <span className="mcm-subject-idx">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="mcm-subject-name">{sub}</span>
+                    </div>
                   ))}
                 </div>
               </div>
 
-              <div>
+              <div className="mcm-group">
                 <p className="mc-section-label"><Calendar size={13} /> Schedule</p>
-                <div className="mc-schedule">
-                  {selected.schedule.map((slot, i) => (
-                    <div key={i} className="mc-slot">
-                      <span className="mc-slot-day">{slot.day?.slice(0, 3)}</span>
-                      <span className="mc-slot-time">
-                        <Clock size={11} style={{ marginRight: 4, verticalAlign: -1 }} />
-                        {slot.start?.slice(0, 5)} – {slot.end?.slice(0, 5)}
-                      </span>
-                      <span className="mc-slot-subj">{slot.subject}</span>
+                <div className="mcm-days">
+                  {[...new Set(selected.schedule.map(s => s.day))].map(day => (
+                    <div key={day} className="mcm-day-card">
+                      <span className="mcm-day-name">{day}</span>
+                      <div className="mcm-day-slots">
+                        {selected.schedule.filter(s => s.day === day).map((slot, i) => (
+                          <div key={i} className="mcm-slot-card">
+                            <span className="mcm-slot-time">
+                              <Clock size={11} /> {slot.start?.slice(0, 5)} – {slot.end?.slice(0, 5)}
+                            </span>
+                            <span className="mcm-slot-subj">{slot.subject}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
