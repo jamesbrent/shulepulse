@@ -732,12 +732,12 @@ export default function GradesPage({ profile }) {
                           <tbody>
                             {analyticsData.ranked.map((s, i) => (
                               <tr key={i}>
-                                <td className="me-muted">{i + 1}</td>
-                                <td className="me-adm">{s.adm}</td>
-                                <td style={{ fontWeight: 500 }}>{s.name}</td>
-                                <td style={{ fontWeight: 600 }}>{s.score ?? '—'}%</td>
-                                <td><span className={`cbe-badge ${s.color || ''}`}>{s.grade}</span></td>
-                                <td>
+                                <td className="me-muted" data-label="Rank">{i + 1}</td>
+                                <td className="me-adm" data-label="Adm No.">{s.adm}</td>
+                                <td data-label="Name" style={{ fontWeight: 500 }}>{s.name}</td>
+                                <td data-label="Marks" style={{ fontWeight: 600 }}>{s.score ?? '—'}%</td>
+                                <td data-label="Grade"><span className={`cbe-badge ${s.color || ''}`}>{s.grade}</span></td>
+                                <td data-label="Status">
                                   {s.status === 'approved' ? (
                                     <span className="me-status-dot" style={{ background: '#16a34a', color: '#fff' }}>Approved</span>
                                   ) : s.status === 'submitted' ? (

@@ -63,3 +63,30 @@
   .cbc-level-legend { gap: 8px; }
   .cbc-legend-dot { width: 8px; height: 8px; }
 }
+
+/* ── Responsive grids ─────────────────────────────── */
+.cbc-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.cbc-grid-4--tight { gap: 12px; }
+
+.cbc-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 768px) {
+  .cbc-grid-4 { gap: 12px; }
+}
+
+@media (max-width: 640px) {
+  .cbc-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .cbc-grid-4 .ct-perf-sum-card { padding: 16px !important; }
+}
+
+.cbc-tabs { flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+  .cbc-page .att-table-wrap { overflow-x: auto; border: 1px solid #e2e8f0; }
+  .cbc-page .att-toolbar { overflow-x: auto; }
+  .cbc-tabs button { padding: 10px 12px; font-size: 12px; }
+}

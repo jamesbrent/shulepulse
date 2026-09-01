@@ -525,7 +525,7 @@ export default function CBCCompetency({ profile, mode }) {
 
   return (
     <div className="cbc-page">
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginBottom: 4 }}>
+      <div className="cbc-tabs" style={{ display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginBottom: 4 }}>
         {[
           { key: 'proficiency', label: 'CBC Proficiency', icon: <BarChart3 size={15} /> },
           { key: 'rating', label: 'Competency Rating', icon: <Award size={15} /> },
@@ -561,7 +561,7 @@ export default function CBCCompetency({ profile, mode }) {
             </select>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          <div className="cbc-grid-4">
             <div className="ct-perf-sum-card blue" style={{ padding: 20, borderRadius: 12 }}>
               <Users size={20} />
               <div><p className="ct-psc-label">Classes</p><p className="ct-psc-value">{displayedClasses.length}</p></div>
@@ -580,7 +580,7 @@ export default function CBCCompetency({ profile, mode }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div className="cbc-grid-4 cbc-grid-4--tight">
             {['EE', 'ME', 'AE', 'BE'].map(band => (
               <div key={band} style={{ textAlign: 'center', padding: '14px 10px', background: CBC_BAND_COLORS[band].bg, borderRadius: 10, border: `1px solid ${CBC_BAND_COLORS[band].color}22` }}>
                 <div style={{ fontSize: 26, fontWeight: 700, color: CBC_BAND_COLORS[band].color }}>{overallDistPct[band]}%</div>
@@ -591,6 +591,7 @@ export default function CBCCompetency({ profile, mode }) {
           </div>
 
           <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+            <div className="cbc-table-scroll">
             <table className="att-table" style={{ margin: 0 }}>
               <thead>
                 <tr>
@@ -669,7 +670,7 @@ export default function CBCCompetency({ profile, mode }) {
                                   Mean: {c.meanPoints}/8 — {c.meanGrade}
                                 </span>
                               </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+                              <div className="cbc-grid-4" style={{ marginBottom: 16 }}>
                                 {['EE', 'ME', 'AE', 'BE'].map(band => (
                                   <div key={band} style={{ padding: '12px 10px', background: CBC_BAND_COLORS[band].bg, borderRadius: 8, textAlign: 'center' }}>
                                     <div style={{ fontSize: 20, fontWeight: 700, color: CBC_BAND_COLORS[band].color }}>{c.dist[band]}%</div>
@@ -713,6 +714,7 @@ export default function CBCCompetency({ profile, mode }) {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}

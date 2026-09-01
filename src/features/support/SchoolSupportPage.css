@@ -395,3 +395,70 @@
   align-items: center;
   gap: 6px;
 }
+
+/* ── Shared button/toast styles (scoped to this screen) ─────────── */
+.ssp-root .btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: #fff;
+  color: #374151;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ssp-root .btn-secondary:hover { background: #f8fafc; }
+
+.ssp-root .onboard-toast {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  background: #16a34a;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(22, 163, 74, 0.3);
+  z-index: 1100;
+  animation: sspToastIn 0.3s ease;
+  justify-content: center;
+  text-align: center;
+}
+@keyframes sspToastIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mobile ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ssp-nav { width: 100%; flex-wrap: wrap; }
+  .ssp-nav-btn { flex: 1 1 auto; justify-content: center; min-height: 44px; }
+  .ssp-tabs { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .ssp-tabs::-webkit-scrollbar { display: none; }
+  .ssp-tab { white-space: nowrap; min-height: 40px; }
+
+  .ssp-ticket-stats { flex-wrap: wrap; }
+  .ssp-stat-box { flex: 1 1 120px; min-width: 0; padding: 12px 14px; }
+  .ssp-stat-num { font-size: 20px; }
+
+  .ssp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ssp-table { min-width: 640px; }
+
+  .ssp-form { padding: 18px; }
+  .ssp-row { flex-direction: column; gap: 12px; }
+  .ssp-form-actions { flex-direction: column-reverse; gap: 8px; }
+  .ssp-form-actions .btn-primary,
+  .ssp-form-actions .btn-secondary { width: 100%; justify-content: center; min-height: 46px; }
+
+  .ssp-conversation { padding: 16px; }
+  .ssp-msg { max-width: 100%; }
+  .ssp-reply textarea { min-height: 52px; }
+}

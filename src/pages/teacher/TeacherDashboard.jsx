@@ -463,7 +463,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className={`teacher-root ${activeNav === 'dashboard' ? 'tah-active' : ''} ${activeNav === 'myclasses' ? 'mc-nohdr' : ''} ${activeNav === 'attendance' ? 'att-nohdr' : ''} ${activeNav === 'timetable' ? 'tt-nohdr' : ''}`}>
+    <div className={`teacher-root ${activeNav === 'dashboard' ? 'tah-active' : ''} ${activeNav === 'myclasses' ? 'mc-nohdr' : ''} ${activeNav === 'attendance' ? 'att-nohdr' : ''} ${activeNav === 'timetable' ? 'tt-nohdr' : ''} ${['grades','marks','cbc','comments','library','notices','support'].includes(activeNav) ? 'tc-nohdr' : ''}`}>
       <TeacherMobileHeader
         schoolName={schoolName}
         logoUrl={logoUrl}

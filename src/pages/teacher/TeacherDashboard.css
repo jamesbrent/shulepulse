@@ -795,3 +795,8 @@
 @media (max-width: 768px) {
   .teacher-root.tt-nohdr .teacher-header { display: none; }
 }
+
+/* -- More-tab screens: hide duplicate page-title header on mobile -- */
+@media (max-width: 768px) {
+  .teacher-root.tc-nohdr .teacher-header { display: none; }
+}
