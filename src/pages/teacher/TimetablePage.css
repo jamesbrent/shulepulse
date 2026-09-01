@@ -208,26 +208,29 @@
 }
 @keyframes tt-spin { to { transform: rotate(360deg); } }
 
-/* ── In-app Timetable PDF Preview ── */
+/* ── In-app Timetable PDF Preview (popup dialog) ── */
 .tt-pdf-overlay {
   position: fixed;
   inset: 0;
   z-index: 1300;
   background: rgba(15, 23, 42, 0.52);
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
+  padding: 16px;
   animation: tt-fade 0.18s ease;
 }
 .tt-pdf-panel {
   width: 100%;
-  max-width: 1080px;
-  height: 100%;
+  max-width: 980px;
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
   background: #fff;
-  box-shadow: -4px 0 30px rgba(15, 23, 42, 0.2);
-  animation: tt-slide 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.35);
+  animation: tt-pop 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tt-pdf-bar {
   display: flex;
@@ -305,9 +308,9 @@
 .tt-pdf-spin { animation: tt-spin 0.6s linear infinite; }
 
 @keyframes tt-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes tt-slide {
-  from { transform: translateX(40px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+@keyframes tt-pop {
+  from { transform: translateY(24px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 /* Scale the landscape A4 preview to fit phone width */
