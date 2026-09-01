@@ -111,7 +111,13 @@ export default function AttendanceTable({
                 </div>
               </div>
               <div className="att-mob-row-right">
-                <span className={`att-mob-chip att-mob-chip--${status}`}>{STATUS_META[status]?.label}</span>
+                <span
+                  className={`att-mob-chip att-mob-chip--${status}`}
+                  aria-label={STATUS_META[status]?.label}
+                  title={STATUS_META[status]?.label}
+                >
+                  {STATUS_META[status]?.icon || <CheckCircle size={16} />}
+                </span>
                 <button
                   className="att-mob-row-btn"
                   aria-label={`Mark ${s.full_name}`}
