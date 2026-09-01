@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, ClipboardList, BarChart2, Calendar,
   Bell, LogOut, Save, CheckCircle, XCircle, MessageSquare,
@@ -35,6 +35,7 @@ import { TEACHER_NAV_FEATURES, navItemAllowed } from '../../features/access/feat
 import FeatureGate from '../../features/access/FeatureGate'
 import TeacherMobileNav from '../../components/TeacherMobileNav'
 import TeacherMobileHeader from '../../components/TeacherMobileHeader'
+import TeacherAppHome from './TeacherAppHome'
 
 function timeAgo(isoDate) {
   if (!isoDate) return ''
@@ -240,12 +241,8 @@ export default function TeacherDashboard() {
     window.scrollTo({ top: 0 })
   }
 
-  // ── Mobile dashboard helpers ──
+  // Mobile dashboard helpers
   const nowDate = new Date()
-  const greeting = nowDate.getHours() < 12 ? 'Good morning'
-    : nowDate.getHours() < 17 ? 'Good afternoon' : 'Good evening'
-  const firstName = (profile?.full_name || teacherName || 'Teacher').split(' ')[0]
-  const todayLabel = nowDate.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' })
   const nowMins = nowDate.getHours() * 60 + nowDate.getMinutes()
 
   const presentCount = Object.values(attendance).filter((v) => v === 'present').length
@@ -271,23 +268,6 @@ export default function TeacherDashboard() {
       status,
     }
   })
-
-  // Quick actions mirror the target mobile design but each maps to a real page.
-  const quickActions = [
-    { key: 'attendance', label: 'Take attendance', icon: <ClipboardList size={20} />, color: 'green', nav: 'attendance' },
-    { key: 'marks', label: 'Enter grades', icon: <BarChart2 size={20} />, color: 'amber', nav: 'marks' },
-    { key: 'grades', label: 'View reports', icon: <BarChart2 size={20} />, color: 'cyan', nav: 'grades' },
-    { key: 'myclasses', label: 'My classes', icon: <BookOpen size={20} />, color: 'blue', nav: 'myclasses' },
-    { key: 'library', label: 'Upload resources', icon: <BookOpen size={20} />, color: 'violet', nav: 'library' },
-    { key: 'comments', label: 'Send message', icon: <MessageSquare size={20} />, color: 'green', nav: 'comments' },
-  ]
-  const QUICK_ACTION_STYLES = {
-    green: 'bg-emerald-50 text-emerald-600',
-    blue: 'bg-blue-50 text-blue-600',
-    violet: 'bg-violet-50 text-violet-600',
-    amber: 'bg-amber-50 text-amber-600',
-    cyan: 'bg-cyan-50 text-cyan-600',
-  }
 
   const mobileAnnouncements = notices.map((n) => ({
     id: n.id,
@@ -343,139 +323,7 @@ export default function TeacherDashboard() {
     const activeClassName = activeClass || classes[0] || ''
     return (
       <>
-        {/* ── Mobile: day snapshot ── */}
-        <div className="tp-mobile">
-          {/* Greeting */}
-          <div className="px-5 pt-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[13px] text-slate-400">{todayLabel}</p>
-                <h1 className="mt-1 text-[22px] font-bold leading-tight text-slate-900">
-                  {greeting}, {firstName}
-                </h1>
-              </div>
-              <button
-                onClick={() => handleNav('notices')}
-                className="relative flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600"
-                aria-label="Notifications"
-              >
-                <Bell size={20} />
-                {notifCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                    {notifCount}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              {[
-                { label: 'My classes', value: stats.classes, icon: <BookOpen size={22} />, cls: 'bg-violet-100 text-violet-700' },
-                { label: "Today's lessons", value: timetable.length, icon: <Calendar size={22} />, cls: 'bg-blue-100 text-blue-700' },
-                { label: 'Pending grades', value: stats.pendingGrades, icon: <BarChart2 size={22} />, cls: 'bg-amber-100 text-amber-700' },
-                { label: 'Attendance', value: `${attendanceRate}%`, icon: <CheckCircle size={22} />, cls: 'bg-emerald-100 text-emerald-700' },
-              ].map((s) => (
-                <div key={s.label} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${s.cls}`}>{s.icon}</div>
-                  <p className="mt-3 text-2xl font-bold text-slate-900">{s.value}</p>
-                  <p className="text-[13px] text-slate-500">{s.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Quick actions */}
-            <p className="mt-6 mb-3 text-[13px] font-semibold uppercase tracking-wide text-slate-400">Quick actions</p>
-            <div className="grid grid-cols-3 gap-3">
-              {quickActions.map((a) => (
-                <button
-                  key={a.key}
-                  onClick={() => handleNav(a.nav)}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <span className={`flex h-12 w-12 items-center justify-center rounded-full ${QUICK_ACTION_STYLES[a.color]}`}>
-                    {a.icon}
-                  </span>
-                  <span className="text-center text-[11px] text-slate-600">{a.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Today's schedule */}
-          <div className="mt-6 border-t border-slate-100 bg-slate-50/60">
-            <div className="border-b border-slate-100 bg-white px-5 py-4">
-              <div className="flex items-center justify-between">
-                <p className="text-[15px] font-semibold text-slate-900">Today&apos;s schedule</p>
-                <button onClick={() => handleNav('timetable')} className="flex items-center gap-1 text-[13px] font-medium text-blue-600">
-                  View all <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-
-            {scheduleRows.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 px-5 py-8 text-center">
-                <CheckCircle size={28} className="text-emerald-400" />
-                <p className="text-sm text-slate-500">No lessons scheduled for today</p>
-              </div>
-            ) : (
-              <div className="space-y-2 px-5 py-4">
-                {scheduleRows.map((s) => {
-                  const statusStyle =
-                    s.status === 'ongoing'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : s.status === 'next'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-slate-200 text-slate-500'
-                  const statusLabel =
-                    s.status === 'ongoing' ? 'Ongoing' : s.status === 'next' ? 'Next' : 'Upcoming'
-                  return (
-                    <div key={s.id} className="flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-full bg-slate-100">
-                          <span className="text-[10px] font-semibold text-slate-400">{s.startTime}</span>
-                        </div>
-                        <div>
-                          <p className="text-[15px] font-semibold text-slate-900">{s.subject || 'Lesson'}</p>
-                          <p className="text-[12px] text-slate-500">
-                            {s.className}{s.room ? ` · ${s.room}` : ''}
-                          </p>
-                        </div>
-                      </div>
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusStyle}`}>
-                        {statusLabel}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Announcements */}
-          <div className="mt-6 px-5 pb-6">
-            <div className="flex items-center justify-between">
-              <p className="text-[15px] font-semibold text-slate-900">Announcements</p>
-            </div>
-            <div className="mt-3 space-y-3">
-              {mobileAnnouncements.length === 0 ? (
-                <div className="rounded-2xl bg-slate-50 p-4 text-center text-sm text-slate-500">No announcements</div>
-              ) : (
-                mobileAnnouncements.map((n) => (
-                  <div key={n.id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[13px] font-semibold text-slate-800">{n.title}</span>
-                    </div>
-                    <p className="mt-1 text-[13px] leading-relaxed text-slate-500 line-clamp-2">{n.body}</p>
-                    <p className="mt-2 text-[11px] text-slate-400">{n.author} · {n.timeAgo}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Desktop: full summary + inline tools (hidden on mobile) ── */}
+        {/* Desktop: full summary + inline tools (hidden on mobile) */}
         <div className="teacher-desktop-summary">
 
         <div className="teacher-stats">
@@ -615,7 +463,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="teacher-root">
+    <div className={`teacher-root ${activeNav === 'dashboard' ? 'tah-active' : ''}`}>
       <TeacherMobileHeader
         schoolName={schoolName}
         logoUrl={logoUrl}
@@ -686,6 +534,38 @@ export default function TeacherDashboard() {
           {renderContent()}
         </FeatureGate>
       </main>
+
+      <div className="teacher-app-home">
+        <TeacherAppHome
+          teacher={{ name: profile?.full_name || 'Teacher', subjectRole: '', avatarUrl: profile?.avatar_url || null }}
+          school={{ name: schoolName || 'School', options: [] }}
+          stats={{
+            myClasses: stats.classes,
+            todaysLessons: timetable.length,
+            pendingAssignments: 0,
+            attendanceAverage: attendanceRate,
+          }}
+          schedule={scheduleRows}
+          announcements={mobileAnnouncements}
+          unreadNotifications={notifCount}
+          activeNav="home"
+          onSelectNav={(key) => {
+            if (key === 'home') return
+            if (key === 'more') { setMoreOpen(true); return }
+            if (key === 'classes') { handleNav('myclasses'); return }
+            if (key === 'students') { handleNav('attendance'); return }
+            if (key === 'assignments') return
+          }}
+          onSelectSchool={() => {}}
+          onQuickAction={(key) => {
+            if (key === 'take-attendance') handleNav('attendance')
+            else if (key === 'enter-grades') handleNav('marks')
+            else if (key === 'view-reports') handleNav('grades')
+          }}
+          onViewTimetable={() => handleNav('timetable')}
+          onViewAllAnnouncements={() => handleNav('notices')}
+        />
+      </div>
 
       <TeacherMobileNav
         items={filteredNavItems}

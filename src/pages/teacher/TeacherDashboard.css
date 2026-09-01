@@ -768,3 +768,14 @@
   .teacher-main { padding: calc(64px + env(safe-area-inset-top, 0px)) 10px calc(86px + env(safe-area-inset-bottom, 0px)); }
   .teacher-card { padding: 12px 10px !important; }
 }
+/* -- Teacher App Home (mobile design) ----------------------- */
+.teacher-app-home { display: none; }
+@media (max-width: 768px) {
+  .teacher-root.tah-active .teacher-app-home { display: block; }
+  .teacher-root.tah-active .tmh-shell,
+  .teacher-root.tah-active .tmn-nav,
+  .teacher-root.tah-active .teacher-main,
+  .teacher-root.tah-active .tp-mobile,
+  .teacher-root.tah-active .teacher-sidebar,
+  .teacher-root.tah-active .teacher-mobile-toggle { display: none !important; }
+}
