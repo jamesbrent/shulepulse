@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   ClipboardList, Save, Calendar, BookOpen, Clock, Users,
-  CheckCircle, XCircle, UserMinus, Search, ChevronLeft, ChevronRight,
+  CheckCircle, XCircle, UserMinus, Search,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import '../../components/attendance/AttendanceModule.css'
@@ -203,12 +203,6 @@ export default function LessonAttendancePanel({ profile, assignedClasses = [], i
     setSaving(false)
   }
 
-  const shiftDate = (dir) => {
-    const d = new Date(date + 'T00:00:00')
-    d.setDate(d.getDate() + dir)
-    setDate(d.toISOString().split('T')[0])
-  }
-
   const filteredStudents = useMemo(() => {
     if (!search) return students
     const q = search.toLowerCase()
@@ -233,11 +227,7 @@ export default function LessonAttendancePanel({ profile, assignedClasses = [], i
       <div className="lam-controls">
         <div className="lam-field">
           <label>Date</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button className="lam-input" onClick={() => shiftDate(-1)} style={{ cursor: 'pointer', minWidth: 34 }}><ChevronLeft size={14} /></button>
-            <input className="lam-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
-            <button className="lam-input" onClick={() => shiftDate(1)} style={{ cursor: 'pointer', minWidth: 34 }}><ChevronRight size={14} /></button>
-          </div>
+          <input className="lam-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
         </div>
         <div className="lam-field">
           <label>Class</label>
