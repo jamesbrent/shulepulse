@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BookOpen, Users, Calendar, Clock, X, GraduationCap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import './MyClasses.css'
@@ -9,6 +9,26 @@ export default function MyClasses({ profile }) {
   const [expanded, setExpanded] = useState(null)
   const [selected, setSelected] = useState(null)
   const [counts, setCounts] = useState({})
+  const modalRef = useRef(null)
+
+  useEffect(() => {
+    if (!selected) return
+    const el = modalRef.current
+    if (!el) return
+    const max = el.scrollHeight - el.clientHeight
+    if (max <= 0) return
+    let raf
+    const start = performance.now()
+    const duration = 2800
+    const step = (t) => {
+      const p = Math.min((t - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - p, 3)
+      el.scrollTop = max * eased
+      if (p < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [selected])
 
   useEffect(() => {
     if (!profile?.school_id) return
@@ -196,7 +216,7 @@ export default function MyClasses({ profile }) {
 
       {selected && (
         <div className="mc-modal-overlay" onClick={closeModal}>
-          <div className="mc-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="mc-modal" ref={modalRef} onClick={(e) => e.stopPropagation()}>
             <div className="mc-modal-hdr">
               <div className="mc-modal-title">
                 <span className="mc-modal-icon"><GraduationCap size={18} /></span>
