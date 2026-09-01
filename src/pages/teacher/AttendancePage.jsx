@@ -728,6 +728,7 @@ export default function AttendancePage({ profile }) {
               </div>
             )}
             <AttendanceTable
+              mobileCards
               students={students}
               attendance={attendance}
               onStatusChange={submitted ? undefined : setStatus}

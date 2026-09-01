@@ -1,4 +1,5 @@
-import { CheckCircle, XCircle, Clock, UserMinus, ClipboardList } from 'lucide-react'
+import { useState } from 'react'
+import { CheckCircle, XCircle, Clock, UserMinus, ClipboardList, ChevronRight, X } from 'lucide-react'
 
 const getInitials = (name) => {
   const parts = (name || '').trim().split(/\s+/)
@@ -29,9 +30,11 @@ export default function AttendanceTable({
   showMarkedBy = false,
   showTime = false,
   showRemarks = false,
+  mobileCards = false,
   noRecordsMessage = 'No attendance records for this date',
   noStudentMessage = 'No students found',
 }) {
+  const [sheetStudent, setSheetStudent] = useState(null)
   if (loading) {
     return <p className="loading-state">Loading attendance...</p>
   }
@@ -85,6 +88,92 @@ export default function AttendanceTable({
   const rows = isEditMode
     ? students
     : (records || [])
+
+  if (mobileCards && isEditMode) {
+    return (
+      <div className="att-mob-list">
+        {rows.map((s) => {
+          const status = attendance[s.id] || 'present'
+          return (
+            <div
+              key={s.id}
+              className="att-mob-row"
+              onClick={() => setSheetStudent(s)}
+            >
+              <div className="att-mob-row-main">
+                <div className="student-avatar-sm">{getInitials(s.full_name)}</div>
+                <div className="att-mob-row-info">
+                  <div className="att-mob-row-name">{s.full_name}</div>
+                  <div className="att-mob-row-sub">
+                    {s.admission_number || '—'}
+                    {s.class ? ` · ${s.class}` : ''}
+                  </div>
+                </div>
+              </div>
+              <div className="att-mob-row-right">
+                <span className={`att-mob-chip att-mob-chip--${status}`}>{STATUS_META[status]?.label}</span>
+                <button
+                  className="att-mob-row-btn"
+                  aria-label={`Mark ${s.full_name}`}
+                  onClick={(e) => { e.stopPropagation(); setSheetStudent(s) }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )
+        })}
+
+        {sheetStudent && (
+          <div className="att-sheet-overlay" onClick={() => setSheetStudent(null)}>
+            <div className="att-sheet" onClick={(e) => e.stopPropagation()}>
+              <div className="att-sheet-handle" />
+              <div className="att-sheet-head">
+                <div className="att-sheet-title">
+                  <div className="student-avatar-sm">{getInitials(sheetStudent.full_name)}</div>
+                  <div>
+                    <div className="att-sheet-name">{sheetStudent.full_name}</div>
+                    <div className="att-sheet-sub">
+                      {sheetStudent.admission_number || '—'}
+                      {sheetStudent.class ? ` · ${sheetStudent.class}` : ''}
+                    </div>
+                  </div>
+                </div>
+                <button className="att-sheet-close" aria-label="Close" onClick={() => setSheetStudent(null)}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="att-sheet-options">
+                {Object.entries(STATUS_META).map(([key, meta]) => {
+                  const active = (attendance[sheetStudent.id] || 'present') === key
+                  return (
+                    <button
+                      key={key}
+                      className={`att-sheet-opt ${meta.cls} ${active ? 'active' : ''}`}
+                      onClick={() => { onStatusChange?.(sheetStudent.id, key); setSheetStudent(null) }}
+                    >
+                      {meta.icon}
+                      {meta.label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {showNotes && (
+                <textarea
+                  className="att-sheet-note"
+                  placeholder="Optional note..."
+                  value={notes?.[sheetStudent.id] || ''}
+                  onChange={(e) => onNotesChange?.(sheetStudent.id, e.target.value)}
+                />
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="att-table-wrap">
