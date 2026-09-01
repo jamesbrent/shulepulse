@@ -122,6 +122,8 @@ export default function MyClasses({ profile }) {
   const openModal = (cls) => setSelected(cls)
   const closeModal = () => setSelected(null)
 
+  const abbreviate = (name = '') => name.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()
+
   if (loading) return (
     <div className="mc-load">
       <div className="mc-spin" />
@@ -147,7 +149,14 @@ export default function MyClasses({ profile }) {
             {classes.map((cls) => (
               <button key={cls.className} className="mc-tile" onClick={() => openModal(cls)}>
                 <span className="mc-tile-name">{cls.className}</span>
-                {cls.level && <span className="mc-tile-level">{cls.level}</span>}
+                <span className="mc-tile-codes">
+                  {cls.subjects.slice(0, 3).map(sub => (
+                    <span key={sub} className="mc-tile-code">{abbreviate(sub)}</span>
+                  ))}
+                  {cls.subjects.length > 3 && (
+                    <span className="mc-tile-code mc-tile-code--more">+{cls.subjects.length - 3}</span>
+                  )}
+                </span>
               </button>
             ))}
           </div>

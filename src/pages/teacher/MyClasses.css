@@ -211,20 +211,31 @@
   }
   .mc-tile:active { transform: scale(0.97); }
   .mc-tile-name {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--mc-text);
     line-height: 1.2;
     overflow-wrap: anywhere;
   }
-  .mc-tile-level {
-    font-size: 10px;
-    font-weight: 500;
+  .mc-tile-codes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+  .mc-tile-code {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--mc-blue);
+    background: color-mix(in srgb, var(--color-primary) 9%, white);
+    padding: 3px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .mc-tile-code--more {
     color: var(--mc-text-sec);
     background: #F1F5F9;
-    padding: 2px 7px;
-    border-radius: 999px;
-    white-space: nowrap;
   }
   .mc-card-list { display: none; }
 
