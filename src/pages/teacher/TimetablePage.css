@@ -370,7 +370,7 @@
   .tt-mobile-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     padding: 14px;
   }
 

@@ -129,15 +129,13 @@ const QUICK_ACTION_STYLES = {
 
 function StatCard({ icon: Icn, iconBg, iconColor, value, label, sublabel }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-[32px] font-bold leading-none text-slate-900">{value}</p>
-        <div className={`mb-0 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
-          <Icn className={`h-5 w-5 ${iconColor}`} />
-        </div>
+    <div className="flex flex-col items-center justify-center gap-1 rounded-[10px] border border-slate-200 bg-white p-2 text-center shadow-sm">
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+        <Icn className={`h-4 w-4 ${iconColor}`} />
       </div>
-      <p className="mt-6 text-[14px] font-medium" style={{ color: '#2D3748' }}>{label}</p>
-      {sublabel && <p className="mt-1 text-[12px]" style={{ color: '#9AA0A6' }}>{sublabel}</p>}
+      <p className="text-[18px] font-bold leading-none text-slate-900">{value}</p>
+      <p className="text-[10px] font-medium leading-tight text-slate-500">{label}</p>
+      {sublabel && <p className="text-[9px] leading-tight text-slate-400">{sublabel}</p>}
     </div>
   )
 }
@@ -158,7 +156,7 @@ function ScheduleRow({ index, period, isLast }) {
       </div>
       <div
         className={`mb-3 flex flex-1 items-center justify-between rounded-xl px-4 py-3 ${
-          isOngoing ? 'bg-emerald-50' : 'bg-white border border-slate-100'
+          isOngoing ? 'bg-emerald-50' : 'bg-white border border-slate-200'
         }`}
       >
         <div className="flex gap-4">
@@ -279,14 +277,14 @@ export default function TeacherAppHome({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 px-4 pt-4">
+      <div className="grid grid-cols-4 gap-2 px-3 pt-3">
         <StatCard icon={Icon.Users} iconBg="bg-blue-50" iconColor="text-blue-500" value={stats.myClasses} label="My classes" sublabel="Active" />
         <StatCard icon={Icon.ClipboardList} iconBg="bg-emerald-50" iconColor="text-emerald-500" value={stats.todaysLessons} label="Today's lessons" sublabel="Periods" />
         <StatCard icon={Icon.FileText} iconBg="bg-violet-50" iconColor="text-violet-500" value={stats.pendingAssignments} label="Pending assignments" />
         <StatCard icon={Icon.TrendUp} iconBg="bg-amber-50" iconColor="text-amber-500" value={`${stats.attendanceAverage}%`} label="Attendance" sublabel="Average" />
       </div>
 
-      <div className="mx-4 mt-4 rounded-2xl border border-slate-100 bg-white p-4">
+      <div className="mx-4 mt-4 rounded-xl border border-slate-200 bg-white p-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-base font-bold text-slate-900">Today's schedule</p>
           <button onClick={onViewTimetable} className="text-sm font-medium text-blue-600">
@@ -304,7 +302,7 @@ export default function TeacherAppHome({
 
       {/* Floating action button (replaces Quick actions card) */}
       {faOpen && (
-        <div className="fixed z-30 bottom-32 right-4 w-56 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl">
+        <div className="fixed z-30 bottom-32 right-4 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
           {actions.map((action) => {
             const ActionIcon = action.icon;
             return (
@@ -337,7 +335,7 @@ export default function TeacherAppHome({
         <Icon.Plus className={`h-6 w-6 transition-transform ${faOpen ? 'rotate-45' : ''}`} />
       </button>
 
-      <div className="mx-4 my-4 rounded-2xl border border-slate-100 bg-white p-4">
+      <div className="mx-4 my-4 rounded-xl border border-slate-200 bg-white p-4">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-base font-bold text-slate-900">Announcements</p>
           <button onClick={onViewAllAnnouncements} className="text-sm font-medium text-blue-600">

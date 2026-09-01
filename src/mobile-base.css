@@ -256,3 +256,54 @@
     justify-content: center;
   }
 }
+
+/* ═══════════════════════════════════════════════════
+   Teacher mobile: uniform card & item auto-sizes
+   Applied to the whole teacher mobile shell so every
+   tab (Home, Timetable, Classes, Attendance, More)
+   shares one consistent look:
+     - stat/compact cards  → 10px radius
+     - regular cards       → 12px radius
+     - 8px grid gaps everywhere
+     - one border colour (#e5e7eb)
+   Desktop/tablet layouts are untouched.
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .teacher-root {
+    --u-border: #e5e7eb;
+    --u-card-radius: 12px;
+    --u-stat-radius: 10px;
+    --u-gap: 8px;
+  }
+
+  /* Regular cards across tabs */
+  .teacher-root .att-card,
+  .teacher-root .att-quickcard,
+  .teacher-root .att-class-item,
+  .teacher-root .tt-mobile-day,
+  .teacher-root .mc-tile,
+  .teacher-root .mcm-group,
+  .teacher-root .mcm-day-card,
+  .teacher-root .mcm-subject-card,
+  .teacher-root .tmn-more-item {
+    border-radius: var(--u-card-radius) !important;
+    border-color: var(--u-border) !important;
+  }
+
+  /* Compact stat cards */
+  .teacher-root .tt-stat,
+  .teacher-root .att-glance-stat {
+    border-radius: var(--u-stat-radius) !important;
+    border-color: var(--u-border) !important;
+  }
+
+  /* Uniform item grids */
+  .teacher-root .tt-summary,
+  .teacher-root .tt-mobile-list,
+  .teacher-root .att-glance-grid,
+  .teacher-root .mc-tiles,
+  .teacher-root .mcm-subjects,
+  .teacher-root .tmn-more-grid {
+    gap: var(--u-gap) !important;
+  }
+}
