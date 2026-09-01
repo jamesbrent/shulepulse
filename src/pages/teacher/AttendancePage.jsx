@@ -78,11 +78,10 @@ export default function AttendancePage({ profile }) {
 
     const { data: slots } = await supabase
       .from('timetable_slots')
-      .select('class_id, classes(class_name, stream)')
+      .select('class_id, classes(class_name)')
       .eq('teacher_id', data.id)
     ;(slots || []).forEach(s => {
-      const base = s.classes?.class_name?.trim()
-      if (base) pushClass(`${base}${s.classes?.stream ? ` ${s.classes.stream.trim()}` : ''}`)
+      pushClass(s.classes?.class_name)
     })
 
     ;(data.classes_assigned || []).forEach(pushClass)
@@ -97,7 +96,7 @@ export default function AttendancePage({ profile }) {
     const weekday = new Date().toLocaleDateString('en-US', { weekday: 'long' })
     const { data: slotsToday } = await supabase
       .from('timetable_slots')
-      .select('*, classes(class_name, stream), subjects(name)')
+      .select('*, classes(class_name), subjects(name)')
       .eq('teacher_id', data.id)
       .eq('day', weekday)
       .order('start_time')
@@ -121,11 +120,8 @@ export default function AttendancePage({ profile }) {
       .order('full_name')
     const list = (data || [])
       .map(s => {
-        const combined = classNameOf(s)
-        const matched = teacherClassMap.get(combined.toLowerCase())
-          || teacherClassMap.get((s.class || '').trim().toLowerCase())
-          || null
-        return matched ? { ...s, _cls: matched } : null
+        const cls = classes.find(c => studentMatchesClass(s, c))
+        return cls ? { ...s, _cls: cls } : null
       })
       .filter(Boolean)
     setStudents(list)
@@ -249,11 +245,18 @@ export default function AttendancePage({ profile }) {
     return plain ? `${plain}${s.stream ? ` ${String(s.stream).trim()}` : ''}` : ''
   }
 
-  const teacherClassMap = (classes || []).reduce((m, c) => {
-    const n = typeof c === 'string' ? c.trim() : ''
-    if (n && !m.has(n.toLowerCase())) m.set(n.toLowerCase(), n)
-    return m
-  }, new Map())
+  const normName = (v) => String(v || '').trim().toLowerCase()
+
+  const studentMatchesClass = (s, cls) => {
+    const c = normName(cls)
+    const pc = normName(s?.class)
+    const comb = normName(classNameOf(s))
+    if (!c || !pc) return false
+    return pc === c
+      || comb === c
+      || pc.startsWith(`${c} `)
+      || c.startsWith(`${pc} `)
+  }
 
   const scrollToMarksheet = () => {
     document.getElementById('att-mobile-marksheet')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -687,8 +690,7 @@ export default function AttendancePage({ profile }) {
           </div>
           <div className="att-classes-list">
             {todaySlots.map(slot => {
-              const rawCn = slot.classes?.class_name?.trim() || ''
-              const cn = `${rawCn}${slot.classes?.stream ? ` ${slot.classes.stream.trim()}` : ''}`.trim()
+              const cn = slot.classes?.class_name?.trim() || ''
               const d = classData[cn] || { total: 0, marked: 0 }
               const done = d.total > 0 && d.marked >= d.total
               const tone = d.marked > 0 ? (done ? 'complete' : 'partial') : 'empty'
