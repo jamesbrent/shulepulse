@@ -464,14 +464,16 @@ export default function TeacherDashboard() {
 
   return (
     <div className={`teacher-root ${activeNav === 'dashboard' ? 'tah-active' : ''} ${activeNav === 'myclasses' ? 'mc-nohdr' : ''}`}>
-      <TeacherMobileHeader
-        schoolName={schoolName}
-        logoUrl={logoUrl}
-        profile={profile}
-        notifCount={notifCount}
-        onOpenMore={() => setMoreOpen(true)}
-        onOpenNotices={() => handleNav('notices')}
-      />
+      {activeNav !== 'dashboard' && (
+        <TeacherMobileHeader
+          schoolName={schoolName}
+          logoUrl={logoUrl}
+          profile={profile}
+          notifCount={notifCount}
+          onOpenMore={() => setMoreOpen(true)}
+          onOpenNotices={() => handleNav('notices')}
+        />
+      )}
 
       <button className="teacher-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu size={20} />
@@ -567,18 +569,20 @@ export default function TeacherDashboard() {
         />
       </div>
 
-      <TeacherMobileNav
-        items={filteredNavItems}
-        activeNav={activeNav}
-        onNavigate={handleNav}
-        onNoticesSeen={() => markNoticesSeen(profile?.id)}
-        notifCount={notifCount}
-        profile={profile}
-        schoolName={schoolName}
-        onLogout={handleLogout}
-        moreOpen={moreOpen}
-        setMoreOpen={setMoreOpen}
-      />
+      {activeNav !== 'dashboard' && (
+        <TeacherMobileNav
+          items={filteredNavItems}
+          activeNav={activeNav}
+          onNavigate={handleNav}
+          onNoticesSeen={() => markNoticesSeen(profile?.id)}
+          notifCount={notifCount}
+          profile={profile}
+          schoolName={schoolName}
+          onLogout={handleLogout}
+          moreOpen={moreOpen}
+          setMoreOpen={setMoreOpen}
+        />
+      )}
     </div>
   )
 }
