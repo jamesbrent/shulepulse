@@ -382,20 +382,20 @@
 .att-glance { margin-bottom: 18px; }
 .att-glance-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 10px;
 }
 .att-glance-stat {
   min-width: 0;
-  padding: 14px 8px;
+  padding: 10px 4px;
   text-align: center;
   border-radius: var(--sp-radius-sm);
   background: var(--sp-bg);
 }
 .att-glance-val {
   display: block;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.1;
   color: var(--sp-text);
@@ -403,7 +403,8 @@
 .att-glance-label {
   display: block;
   margin-top: 5px;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.3;
   color: var(--sp-muted);
 }
 .att-glance-val--green { color: var(--sp-green-dark); }
