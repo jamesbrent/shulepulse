@@ -771,9 +771,10 @@
 /* -- Teacher App Home (mobile design) ----------------------- */
 .teacher-app-home { display: none; }
 @media (max-width: 768px) {
-  .teacher-root.tah-active .teacher-app-home { display: block; }
-  .teacher-root.tah-active .tmh-shell,
-  .teacher-root.tah-active .tmn-nav,
+  .teacher-root.tah-active .teacher-app-home {
+    display: block;
+    padding: calc(64px + env(safe-area-inset-top, 0px)) 0 calc(86px + env(safe-area-inset-bottom, 0px));
+  }
   .teacher-root.tah-active .teacher-main,
   .teacher-root.tah-active .tp-mobile,
   .teacher-root.tah-active .teacher-sidebar,

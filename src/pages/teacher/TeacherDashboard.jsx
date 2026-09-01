@@ -464,16 +464,14 @@ export default function TeacherDashboard() {
 
   return (
     <div className={`teacher-root ${activeNav === 'dashboard' ? 'tah-active' : ''} ${activeNav === 'myclasses' ? 'mc-nohdr' : ''}`}>
-      {activeNav !== 'dashboard' && (
-        <TeacherMobileHeader
-          schoolName={schoolName}
-          logoUrl={logoUrl}
-          profile={profile}
-          notifCount={notifCount}
-          onOpenMore={() => setMoreOpen(true)}
-          onOpenNotices={() => handleNav('notices')}
-        />
-      )}
+      <TeacherMobileHeader
+        schoolName={schoolName}
+        logoUrl={logoUrl}
+        profile={profile}
+        notifCount={notifCount}
+        onOpenMore={() => setMoreOpen(true)}
+        onOpenNotices={() => handleNav('notices')}
+      />
 
       <button className="teacher-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu size={20} />
@@ -537,46 +535,45 @@ export default function TeacherDashboard() {
         </FeatureGate>
       </main>
 
-      {activeNav === 'dashboard' && (
-        <div className="teacher-app-home">
-          <TeacherAppHome
-            teacher={{ name: profile?.full_name || 'Teacher', subjectRole: '', avatarUrl: profile?.avatar_url || null }}
-            school={{ name: schoolName || 'School', options: [] }}
-            stats={{
-              myClasses: stats.classes,
-              todaysLessons: timetable.length,
-              pendingAssignments: 0,
-              attendanceAverage: attendanceRate,
-            }}
-            schedule={scheduleRows}
-            announcements={mobileAnnouncements}
-            unreadNotifications={notifCount}
-            activeNav="home"
-            onSelectNav={(key) => {
-              if (key === 'home') return
-              if (key === 'more') { setMoreOpen(true); return }
-              if (key === 'classes') { handleNav('myclasses'); return }
-              if (key === 'students') { handleNav('attendance'); return }
-              if (key === 'assignments') return
-            }}
-            onSelectSchool={() => {}}
-            onQuickAction={(key) => {
-              if (key === 'take-attendance') handleNav('attendance')
-              else if (key === 'enter-grades') handleNav('marks')
-              else if (key === 'view-reports') handleNav('grades')
-            }}
-            onViewTimetable={() => handleNav('timetable')}
-            onViewAllAnnouncements={() => handleNav('notices')}
-          />
-        </div>
-      )}
+      <div className="teacher-app-home">
+        <TeacherAppHome
+          teacher={{ name: profile?.full_name || 'Teacher', subjectRole: '', avatarUrl: profile?.avatar_url || null }}
+          school={{ name: schoolName || 'School', options: [] }}
+          stats={{
+            myClasses: stats.classes,
+            todaysLessons: timetable.length,
+            pendingAssignments: 0,
+            attendanceAverage: attendanceRate,
+          }}
+          schedule={scheduleRows}
+          announcements={mobileAnnouncements}
+          unreadNotifications={notifCount}
+          activeNav="home"
+          hideHeader
+          hideNav
+          onSelectNav={(key) => {
+            if (key === 'home') return
+            if (key === 'more') { setMoreOpen(true); return }
+            if (key === 'classes') { handleNav('myclasses'); return }
+            if (key === 'students') { handleNav('attendance'); return }
+            if (key === 'assignments') return
+          }}
+          onSelectSchool={() => {}}
+          onQuickAction={(key) => {
+            if (key === 'take-attendance') handleNav('attendance')
+            else if (key === 'enter-grades') handleNav('marks')
+            else if (key === 'view-reports') handleNav('grades')
+          }}
+          onViewTimetable={() => handleNav('timetable')}
+          onViewAllAnnouncements={() => handleNav('notices')}
+        />
+      </div>
 
-      {activeNav !== 'dashboard' && (
-        <TeacherMobileNav
-          items={filteredNavItems}
-          activeNav={activeNav}
-          onNavigate={handleNav}
-          onNoticesSeen={() => markNoticesSeen(profile?.id)}
+      <TeacherMobileNav
+        items={filteredNavItems}
+        activeNav={activeNav}
+        onNavigate={handleNav}
+        onNoticesSeen={() => markNoticesSeen(profile?.id)}
           notifCount={notifCount}
           profile={profile}
           schoolName={schoolName}
@@ -584,7 +581,6 @@ export default function TeacherDashboard() {
           moreOpen={moreOpen}
           setMoreOpen={setMoreOpen}
         />
-      )}
     </div>
   )
 }

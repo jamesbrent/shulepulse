@@ -198,6 +198,8 @@ export default function TeacherAppHome({
   announcements = [],
   unreadNotifications = 0,
   activeNav = 'home',
+  hideHeader = false,
+  hideNav = false,
   onSelectNav = () => {},
   onSelectSchool = () => {},
   onQuickAction = () => {},
@@ -216,21 +218,23 @@ export default function TeacherAppHome({
   const actions = quickActions.length ? quickActions : defaultQuickActions;
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-slate-50 font-sans">
-      <header className="flex items-center justify-between px-5 py-4">
-        <button aria-label="Open menu" className="text-slate-700">
-          <Icon.Menu className="h-6 w-6" />
-        </button>
-        <p className="text-lg font-bold text-slate-900">ShulePulse</p>
-        <button aria-label="Notifications" className="relative text-slate-700">
-          <Icon.Bell className="h-6 w-6" />
-          {unreadNotifications > 0 && (
-            <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
-              {unreadNotifications}
-            </span>
-          )}
-        </button>
-      </header>
+    <div className={`mx-auto min-h-screen max-w-md bg-slate-50 font-sans ${hideHeader ? 'pt-4' : ''}`}>
+      {!hideHeader && (
+        <header className="flex items-center justify-between px-5 py-4">
+          <button aria-label="Open menu" className="text-slate-700">
+            <Icon.Menu className="h-6 w-6" />
+          </button>
+          <p className="text-lg font-bold text-slate-900">ShulePulse</p>
+          <button aria-label="Notifications" className="relative text-slate-700">
+            <Icon.Bell className="h-6 w-6" />
+            {unreadNotifications > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                {unreadNotifications}
+              </span>
+            )}
+          </button>
+        </header>
+      )}
 
       <div className="mx-4 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-500 p-5 text-white">
         <div className="flex items-start justify-between gap-3">
@@ -361,32 +365,34 @@ export default function TeacherAppHome({
         )}
       </div>
 
-      <nav className="sticky bottom-0 flex justify-around border-t border-slate-100 bg-white px-2 py-2 pb-[env(safe-area-inset-bottom)]">
-        {NAV_ITEMS.map((item) => {
-          const ItemIcon = item.icon;
-          const active = activeNav === item.key;
-          const badge = item.badgeKey ? stats[item.badgeKey] : null;
-          return (
-            <button
-              key={item.key}
-              onClick={() => onSelectNav(item.key)}
-              className={`relative flex flex-col items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium ${
-                active ? 'text-blue-600' : 'text-slate-400'
-              }`}
-            >
-              <span className={`relative flex h-9 w-14 items-center justify-center rounded-lg ${active ? 'bg-blue-50' : ''}`}>
-                <ItemIcon className="h-5 w-5" />
-                {badge > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-semibold text-white">
-                    {badge}
-                  </span>
-                )}
-              </span>
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
+      {!hideNav && (
+        <nav className="sticky bottom-0 flex justify-around border-t border-slate-100 bg-white px-2 py-2 pb-[env(safe-area-inset-bottom)]">
+          {NAV_ITEMS.map((item) => {
+            const ItemIcon = item.icon;
+            const active = activeNav === item.key;
+            const badge = item.badgeKey ? stats[item.badgeKey] : null;
+            return (
+              <button
+                key={item.key}
+                onClick={() => onSelectNav(item.key)}
+                className={`relative flex flex-col items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium ${
+                  active ? 'text-blue-600' : 'text-slate-400'
+                }`}
+              >
+                <span className={`relative flex h-9 w-14 items-center justify-center rounded-lg ${active ? 'bg-blue-50' : ''}`}>
+                  <ItemIcon className="h-5 w-5" />
+                  {badge > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-semibold text-white">
+                      {badge}
+                    </span>
+                  )}
+                </span>
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }
