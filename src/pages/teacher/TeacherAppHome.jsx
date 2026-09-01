@@ -209,11 +209,9 @@ export default function TeacherAppHome({
 
   const defaultQuickActions = [
     { key: 'take-attendance', label: 'Take attendance', icon: Icon.Users, color: 'green' },
-    { key: 'create-assignment', label: 'Create assignment', icon: Icon.FileText, color: 'blue' },
-    { key: 'upload-resources', label: 'Upload resources', icon: Icon.Upload, color: 'violet' },
+    { key: 'create-assignment', label: 'Create assignment', icon: Icon.FileText, color: 'blue', comingSoon: true },
     { key: 'enter-grades', label: 'Enter grades', icon: Icon.Star, color: 'amber' },
     { key: 'view-reports', label: 'View reports', icon: Icon.BarChart, color: 'cyan' },
-    { key: 'send-message', label: 'Send message', icon: Icon.MessageCircle, color: 'green' },
   ];
   const actions = quickActions.length ? quickActions : defaultQuickActions;
 
@@ -312,12 +310,15 @@ export default function TeacherAppHome({
                   onQuickAction(action.key);
                   setFaOpen(false);
                 }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-slate-50"
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-slate-50 ${action.comingSoon ? 'opacity-70' : ''}`}
               >
                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${QUICK_ACTION_STYLES[action.color] || QUICK_ACTION_STYLES.blue}`}>
                   <ActionIcon className="h-4 w-4" />
                 </span>
-                <span className="text-sm font-medium text-slate-700">{action.label}</span>
+                <span className="flex-1 text-sm font-medium text-slate-700">{action.label}</span>
+                {action.comingSoon && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Soon</span>
+                )}
               </button>
             );
           })}
