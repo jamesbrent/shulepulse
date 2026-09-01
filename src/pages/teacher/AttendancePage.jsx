@@ -70,9 +70,12 @@ export default function AttendancePage({ profile }) {
 
     const { data: slots } = await supabase
       .from('timetable_slots')
-      .select('class_id, classes(class_name)')
+      .select('class_id, classes(class_name, stream)')
       .eq('teacher_id', data.id)
-    const unique = [...new Set((slots || []).map(s => s.classes?.class_name?.trim()).filter(Boolean))].sort()
+    const unique = [...new Set((slots || []).map(s => {
+      const n = s.classes?.class_name?.trim()
+      return n ? `${n}${s.classes?.stream ? ` ${s.classes.stream.trim()}` : ''}` : null
+    }).filter(Boolean))].sort()
     setClasses(unique)
     if (unique.length > 0 && filterClass === 'all') {
       setFilterClass(unique[0])
@@ -81,7 +84,7 @@ export default function AttendancePage({ profile }) {
     const weekday = new Date().toLocaleDateString('en-US', { weekday: 'long' })
     const { data: slotsToday } = await supabase
       .from('timetable_slots')
-      .select('*, classes(class_name), subjects(name)')
+      .select('*, classes(class_name, stream), subjects(name)')
       .eq('teacher_id', data.id)
       .eq('day', weekday)
       .order('start_time')
@@ -99,12 +102,20 @@ export default function AttendancePage({ profile }) {
     setLoading(true)
     const { data } = await supabase
       .from('students')
-      .select('id, full_name, admission_number, class')
+      .select('id, full_name, admission_number, class, stream')
       .eq('school_id', profile.school_id)
       .eq('status', 'active')
-      .in('class', classes.length > 0 ? classes : ['__no_classes__'])
       .order('full_name')
-    setStudents(data || [])
+    const list = (data || [])
+      .map(s => {
+        const combined = classNameOf(s)
+        const matched = classNames.has(combined)
+          ? combined
+          : classNames.has((s.class || '').trim()) ? (s.class || '').trim() : null
+        return matched ? { ...s, _cls: matched } : null
+      })
+      .filter(Boolean)
+    setStudents(list)
     setLoading(false)
   }
 
@@ -138,9 +149,9 @@ export default function AttendancePage({ profile }) {
       .eq('date', filterDate)
       .order('created_at', { ascending: false })
     if (filterClass !== 'all') {
-      query = query.eq('students.class', filterClass)
+      query = query.eq('class_name', filterClass)
     } else if (classes.length > 0) {
-      query = query.in('students.class', classes)
+      query = query.in('class_name', classes)
     }
     const { data } = await query
     const recs = (data || []).filter(r => r.students)
@@ -220,6 +231,13 @@ export default function AttendancePage({ profile }) {
     return cn.replace(/^(Form|Grade|Class|Standard)\s*/i, '').split(' ')[0]
   }
 
+  const classNameOf = (s) => {
+    const plain = (s?.class || '').trim()
+    return plain ? `${plain}${s.stream ? ` ${String(s.stream).trim()}` : ''}` : ''
+  }
+
+  const classNames = new Set((classes || []).map(c => c.trim()).filter(Boolean))
+
   const scrollToMarksheet = () => {
     document.getElementById('att-mobile-marksheet')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -240,14 +258,14 @@ export default function AttendancePage({ profile }) {
     setSaved(false)
     const email = profile?.email || (await supabase.auth.getUser()).data.user?.email
     const records = students
-      .filter(s => filterClass === 'all' || s.class === filterClass)
+      .filter(s => filterClass === 'all' || (s._cls || classNameOf(s)) === filterClass)
       .map(s => ({
         school_id: profile.school_id,
         student_id: s.id,
         date: filterDate,
         status: attendance[s.id] || 'present',
         notes: notes[s.id] || '',
-        class_name: s.class,
+        class_name: s._cls || classNameOf(s),
         teacher_name: teacherRec?.full_name || email,
         teacher_id: teacherRec?.id,
       }))
@@ -295,8 +313,9 @@ export default function AttendancePage({ profile }) {
   const classData = useMemo(() => {
     const map = {}
     students.forEach(s => {
-      if (filterClass !== 'all' && s.class !== filterClass) return
-      const cls = s.class
+      const cls = s._cls || classNameOf(s)
+      if (!cls) return
+      if (filterClass !== 'all' && cls !== filterClass) return
       if (!map[cls]) map[cls] = { total: 0, present: 0, absent: 0, late: 0, excused: 0, marked: 0 }
       map[cls].total++
       const status = attendance[s.id]
@@ -331,7 +350,9 @@ export default function AttendancePage({ profile }) {
     }
   }, [classData])
 
-  const sheetStudents = filterClass === 'all' ? students : students.filter(s => s.class === filterClass)
+  const sheetStudents = filterClass === 'all'
+    ? students
+    : students.filter(s => (s._cls || classNameOf(s)) === filterClass)
 
   if (!teacherRec && loading) return (
     <div className="ad-load">
@@ -649,7 +670,8 @@ export default function AttendancePage({ profile }) {
           </div>
           <div className="att-classes-list">
             {todaySlots.map(slot => {
-              const cn = slot.classes?.class_name?.trim() || ''
+              const rawCn = slot.classes?.class_name?.trim() || ''
+              const cn = `${rawCn}${slot.classes?.stream ? ` ${slot.classes.stream.trim()}` : ''}`.trim()
               const d = classData[cn] || { total: 0, marked: 0 }
               const done = d.total > 0 && d.marked >= d.total
               const tone = d.marked > 0 ? (done ? 'complete' : 'partial') : 'empty'
@@ -665,7 +687,7 @@ export default function AttendancePage({ profile }) {
                     </div>
                     <div className="att-class-meta">
                       <span className={`att-class-subj ${empty ? 'att-class-subj--empty' : ''}`}>
-                        {slot.subjects?.name || empty ? 'No subject' : slot.subjects?.name}
+                        {empty ? 'No subject' : slot.subjects?.name}
                       </span>
                       <span className={`att-class-status att-class-status--${tone}`}>{label}</span>
                     </div>
