@@ -886,6 +886,14 @@
   -webkit-tap-highlight-color: transparent;
 }
 .att-mob-row-btn:active { background: #e2e8f0; }
+.att-mob-row-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Bottom sheet */
 .att-sheet-overlay {

@@ -860,6 +860,7 @@ export default function AttendancePage({ profile }) {
             />
           </div>
           <AttendanceTable
+            mobileCards
             records={records}
             loading={loading}
             canEdit={false}

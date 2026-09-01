@@ -89,42 +89,55 @@ export default function AttendanceTable({
     ? students
     : (records || [])
 
-  if (mobileCards && isEditMode) {
+  if (mobileCards && (isEditMode ? students.length > 0 : (records || []).length > 0)) {
+    const recMode = !isEditMode
+    const list = isEditMode ? students : (records || [])
     return (
       <div className="att-mob-list">
-        {rows.map((s) => {
-          const status = attendance[s.id] || 'present'
+        {list.map((it) => {
+          const name = recMode ? it.students?.full_name : it.full_name
+          const adm = recMode ? it.students?.admission_number : it.admission_number
+          const klass = recMode ? it.students?.class : it.class
+          const status = recMode ? (it.status || 'present') : (attendance[it.id] || 'present')
+          const note = recMode ? (it.notes || '') : (notes?.[it.id] || '')
+          const rowId = recMode ? (it.student_id || it.id) : it.id
+          const time = recMode && showTime && it.created_at
+            ? new Date(it.created_at).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })
+            : ''
           return (
             <div
-              key={s.id}
+              key={rowId}
               className="att-mob-row"
-              onClick={() => setSheetStudent(s)}
+              onClick={isEditMode ? () => setSheetStudent(it) : undefined}
             >
               <div className="att-mob-row-main">
-                <div className="student-avatar-sm">{getInitials(s.full_name)}</div>
+                <div className="student-avatar-sm">{getInitials(name)}</div>
                 <div className="att-mob-row-info">
-                  <div className="att-mob-row-name">{s.full_name}</div>
+                  <div className="att-mob-row-name">{name || 'Unknown student'}</div>
                   <div className="att-mob-row-sub">
-                    {s.admission_number || '—'}
-                    {s.class ? ` · ${s.class}` : ''}
+                    {adm || '—'}
+                    {klass ? ` · ${klass}` : ''}
+                    {time ? ` · ${time}` : ''}
                   </div>
+                  {showNotes && note && <div className="att-mob-row-note">{note}</div>}
                 </div>
               </div>
               <div className="att-mob-row-right">
                 <span
                   className={`att-mob-chip att-mob-chip--${status}`}
-                  aria-label={STATUS_META[status]?.label}
                   title={STATUS_META[status]?.label}
                 >
                   {STATUS_META[status]?.icon || <CheckCircle size={16} />}
                 </span>
-                <button
-                  className="att-mob-row-btn"
-                  aria-label={`Mark ${s.full_name}`}
-                  onClick={(e) => { e.stopPropagation(); setSheetStudent(s) }}
-                >
-                  <ChevronRight size={18} />
-                </button>
+                {isEditMode && (
+                  <button
+                    className="att-mob-row-btn"
+                    aria-label={`Mark ${name}`}
+                    onClick={(e) => { e.stopPropagation(); setSheetStudent(it) }}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                )}
               </div>
             </div>
           )
