@@ -278,17 +278,21 @@ export default function LessonAttendancePanel({ profile, assignedClasses = [], i
 
       {/* Summary */}
       <div className="lam-summary">
-        <span className="acx-legend-item"><span className="acx-dot" style={{ background: '#16a34a' }} /> Present {counts.present}</span>
-        <span className="acx-legend-item"><span className="acx-dot" style={{ background: '#ef4444' }} /> Absent {counts.absent}</span>
-        <span className="acx-legend-item"><span className="acx-dot" style={{ background: '#f59e0b' }} /> Late {counts.late}</span>
-        <span className="acx-legend-item"><span className="acx-dot" style={{ background: '#2563eb' }} /> Excused {counts.excused}</span>
-        <span className="acx-legend-item"><Calendar size={13} /> {new Date(date + 'T00:00:00').toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-        <span className="acx-legend-item"><BookOpen size={13} /> {selectedSubject?.name || 'Subject'}</span>
-        <span className="acx-legend-item"><Clock size={13} /> P{period} {startTime} - {endTime}</span>
-        <span className="acx-legend-item"><Users size={13} /> {filteredStudents.length} students</span>
-        <span className="acx-legend-item" style={{ color: savedCount > 0 ? '#16a34a' : '#94a3b8' }}>
-          {savedCount > 0 ? `\u2713 ${savedCount} saved` : 'Not yet saved'}
-        </span>
+        <div className="lam-summary-stats">
+          <span className="acx-legend-item"><span className="acx-dot" style={{ background: '#16a34a' }} /> Present {counts.present}</span>
+          <span className="acx-legend-item"><span className="acx-dot" style={{ background: '#ef4444' }} /> Absent {counts.absent}</span>
+          <span className="acx-legend-item"><span className="acx-dot" style={{ background: '#f59e0b' }} /> Late {counts.late}</span>
+          <span className="acx-legend-item"><span className="acx-dot" style={{ background: '#2563eb' }} /> Excused {counts.excused}</span>
+        </div>
+        <div className="lam-summary-meta">
+          <span className="acx-legend-item"><Calendar size={13} /> {new Date(date + 'T00:00:00').toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+          <span className="acx-legend-item"><BookOpen size={13} /> {selectedSubject?.name || 'Subject'}</span>
+          <span className="acx-legend-item"><Clock size={13} /> P{period} {startTime} - {endTime}</span>
+          <span className="acx-legend-item"><Users size={13} /> {filteredStudents.length} students</span>
+          <span className="acx-legend-item" style={{ color: savedCount > 0 ? '#16a34a' : '#94a3b8' }}>
+            {savedCount > 0 ? `\u2713 ${savedCount} saved` : 'Not yet saved'}
+          </span>
+        </div>
       </div>
 
       {message && <div className="ad-notification ad-notification--info">{message}</div>}
