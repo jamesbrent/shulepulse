@@ -615,14 +615,12 @@ export default function AttendancePage({ profile }) {
             </div>
           )}
 
-          <div className="att-mob-title">
-            <h3>Attendance</h3>
-            <p>{formattedDate}</p>
-          </div>
-
           <div className="att-card att-glance">
             <div className="att-card-head">
-              <h4>Today at a Glance</h4>
+              <div>
+                <h4>Today at a Glance</h4>
+                <p className="att-card-date">{formattedDate}</p>
+              </div>
               <ChevronRight size={18} />
             </div>
             <div className="att-glance-grid">

@@ -371,6 +371,11 @@
   font-weight: 700;
   color: var(--sp-text);
 }
+.att-card-head .att-card-date {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--sp-muted);
+}
 .att-card-head svg { color: #cbd5e1; }
 
 /* Today at a Glance ----------------------------------- */
