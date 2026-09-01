@@ -1002,6 +1002,56 @@
 }
 .att-sheet-note:focus { border-color: #16a34a; background: #fff; }
 
+/* Fit everything in the mobile viewport, no horizontal scrolling */
+@media (max-width: 767px) {
+  .teacher-root .mobile-attendance-layout,
+  .teacher-root .att-mob-marksheet,
+  .teacher-root .att-history-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .teacher-root .att-toolbar,
+  .teacher-root .att-toolbar-left,
+  .teacher-root .att-toolbar-right,
+  .teacher-root .att-toolbar-left > *,
+  .teacher-root .att-toolbar-right > *,
+  .teacher-root .date-nav,
+  .teacher-root .search-wrap,
+  .teacher-root .att-bulk-actions,
+  .teacher-root .att-save-wrap {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .teacher-root .date-nav .date-input {
+    min-width: 0;
+    width: auto;
+    flex: 1 1 auto;
+    max-width: 100%;
+  }
+
+  .teacher-root .search-input,
+  .teacher-root .filter-select,
+  .teacher-root .att-bulk-btn,
+  .teacher-root .att-save-btn {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .teacher-root .att-mob-list,
+  .teacher-root .att-mob-row,
+  .teacher-root .att-mob-row-main,
+  .teacher-root .att-mob-row-info {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 359px) {
   .att-mob-chip { padding: 3px 7px; font-size: 10px; }
   .att-sheet-opt { padding: 11px 2px; font-size: 10px; }
