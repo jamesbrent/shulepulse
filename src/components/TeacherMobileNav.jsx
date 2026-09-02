@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Calendar, BookOpen, ClipboardList,
   MoreHorizontal, X, LogOut,
 } from 'lucide-react'
+import RoleSwitcher from './RoleSwitcher'
 import './TeacherMobileNav.css'
 
 const DEFAULT_PRIMARY = [
@@ -124,6 +125,9 @@ export default function TeacherMobileNav({
             </div>
 
             <div className="tmn-sheet-footer">
+              <div className="tmn-role-switcher">
+                <RoleSwitcher />
+              </div>
               <button className="tmn-logout" onClick={() => { setMoreOpen(false); onLogout?.() }}>
                 <LogOut size={16} /> Logout
               </button>

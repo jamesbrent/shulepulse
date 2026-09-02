@@ -246,6 +246,51 @@
   }
   .tmn-logout:active { background: #fef2f2; }
 
+  /* ── Role switcher (light theme, fits the sheet) ── */
+  .tmn-role-switcher {
+    margin-bottom: 10px;
+  }
+
+  .tmn-role-switcher .role-switcher {
+    margin-bottom: 0;
+  }
+
+  .tmn-role-switcher .role-switcher-trigger {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .tmn-role-switcher .role-switcher-trigger:hover { background: #f1f5f9; }
+
+  .tmn-role-switcher .role-switcher-dropdown {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    margin-bottom: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+  }
+
+  .tmn-role-switcher .role-switcher-option {
+    justify-content: center;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .tmn-role-switcher .role-switcher-option:hover { background: #f1f5f9; color: #0f172a; }
+
   @keyframes tmn-fade {
     from { opacity: 0; }
     to { opacity: 1; }
