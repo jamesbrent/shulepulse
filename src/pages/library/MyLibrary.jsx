@@ -33,15 +33,19 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
 
     if (!m && userId) {
       const code = await memberCodeForUser(schoolId, email, role)
-      const { data: created } = await supabase.from('library_members').upsert({
-        school_id: schoolId,
-        profile_id: userId,
-        full_name: name,
-        email,
-        member_type: role,
-        member_code: code,
-        status: 'active',
-      }, { onConflict: 'school_id,profile_id' }).select().single().catch(() => null)
+      let created
+      try {
+        const res = await supabase.from('library_members').upsert({
+          school_id: schoolId,
+          profile_id: userId,
+          full_name: name,
+          email,
+          member_type: role,
+          member_code: code,
+          status: 'active',
+        }, { onConflict: 'school_id,profile_id' }).select().single()
+        created = res.data ?? null
+      } catch { created = null }
       m = created
     }
     return m
