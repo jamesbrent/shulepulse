@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+﻿import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   Save, CheckCircle, Search, Users, BookOpen,
   AlertCircle, FileSpreadsheet, Send, Clock,
   BarChart3, History, ShieldCheck, ArrowLeft, Download,
-  FileText, ChevronRight,
+  FileText, ChevronRight, X,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import * as XLSX from 'xlsx'
@@ -703,123 +703,8 @@ export default function MarksEntry({ profile }) {
     setShowExportModal(false)
   }
 
-  if (loading) return <p className="loading-state">Loading marks entry...</p>
-
-  if (classes.length === 0) {
-    return (
-      <div className="me-page">
-        <div className="me-header"><h2 className="me-title">Marks Entry</h2></div>
-        <div className="empty-att">
-          <BookOpen size={40} color="#cbd5e1" />
-          <p>No classes assigned to you</p>
-          <span>Classes appear here once assigned in the timetable</span>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="me-page">
-      {/* ── Dashboard View ── */}
-      {view === 'dashboard' && (
-        <>
-
-          <div className="mk-info">
-            <span className="mk-info-pill"><strong>Teacher:</strong> {teacherName}</span>
-            <span className="mk-info-pill mk-info-pill--blue"><strong>Term:</strong> {term} {year}</span>
-            <span className="mk-info-pill"><strong>Classes:</strong> {classes.length}</span>
-          </div>
-
-          <div className="mk-kpi-grid">
-            <div className="mk-kpi">
-              <div className="mk-kpi-icon mk-kpi-icon--blue"><BookOpen size={16} /></div>
-              <p className="mk-kpi-val">{classes.length}</p>
-              <p className="mk-kpi-label">My Classes</p>
-            </div>
-            <div className="mk-kpi">
-              <div className="mk-kpi-icon mk-kpi-icon--green"><Users size={16} /></div>
-              <p className="mk-kpi-val">{students.filter(s => classes.includes(s.class)).length}</p>
-              <p className="mk-kpi-label">Students</p>
-            </div>
-            <div className="mk-kpi">
-              <div className="mk-kpi-icon mk-kpi-icon--amber"><Clock size={16} /></div>
-              <p className="mk-kpi-val">{classCards.filter(c => c.pendingExam).length}</p>
-              <p className="mk-kpi-label">Pending Marks</p>
-            </div>
-            <div className="mk-kpi">
-              <div className="mk-kpi-icon mk-kpi-icon--purple"><CheckCircle size={16} /></div>
-              <p className="mk-kpi-val">{classCards.filter(c => !c.pendingExam).length}</p>
-              <p className="mk-kpi-label">Completed</p>
-            </div>
-          </div>
-
-          {classes.map(cls => {
-            const clsCards = classCards.filter(c => c.className === cls)
-            const isOpen = expandedClass === cls
-            return (
-              <div key={cls} className="mk-class">
-                <div className="mk-class-hdr" onClick={() => setExpandedClass(isOpen ? null : cls)}>
-                  <div className="mk-class-hdr-left">
-                    <div className="mk-class-icon"><BookOpen size={17} /></div>
-                    <div className="mk-class-info">
-                      <h3 className="mk-class-name">{cls}</h3>
-                      <p className="mk-class-meta">{clsCards.length} subject{clsCards.length > 1 ? 's' : ''}</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={18} className={`mk-chevron ${isOpen ? 'mk-chevron--open' : ''}`} />
-                </div>
-                <div className={`mk-body-wrap ${isOpen ? 'mk-body-wrap--open' : ''}`}>
-                  <div className="mk-body">
-                    <div className="mk-subj-grid">
-                      {clsCards.map(card => {
-                        const allApproved = FORM_EXAMS.every(et => card.examStatuses[et] === 'approved')
-                        return (
-                          <div key={`${card.className}-${card.subjectName}`} className="mk-subj">
-                            <div className="mk-subj-top">
-                              <span className="mk-subj-name">{card.subjectName}</span>
-                              <span className={`mk-badge ${allApproved ? 'mk-badge--approved' : 'mk-badge--pending'}`}>
-                                {allApproved ? 'Approved' : 'Pending'}
-                              </span>
-                            </div>
-                            <div className="mk-subj-body">
-                              <div className="mk-subj-stat"><Users size={12} /> {card.studentCount} Students</div>
-                              <div className="mk-subj-comps">
-                                {FORM_EXAMS.map(et => {
-                                  const st = card.examStatuses[et]
-                                  const mean = card.examStatuses[`${et}_mean`]
-                                  const clsName = st === 'approved' ? 'mk-subj-comp--approved'
-                                    : st === 'submitted' ? 'mk-subj-comp--submitted'
-                                    : st === 'draft' ? 'mk-subj-comp--draft'
-                                    : st === 'completed' ? 'mk-subj-comp--completed'
-                                    : 'mk-subj-comp--pending'
-                                  return (
-                                    <span key={et} className={`mk-subj-comp ${clsName}`} title={`${et}: ${st}${mean ? ` (${mean}%)` : ''}`}>
-                                      {et === 'End Term' ? 'ET' : et === 'Midterm' ? 'Mid' : 'Open'}
-                                    </span>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                            <div className="mk-subj-actions">
-                              <button className="mk-btn mk-btn--primary" onClick={() => handleOpenClass(card.className, card.subjectName)}>
-                                {card.pendingExam ? 'Enter Marks' : 'View'}
-                              </button>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </>
-      )}
-
-      {/* ── Marks Entry ── */}
-      {view === 'entry' && (
-        <>
+  const renderEntryContent = () => (
+    <>
           <div className="me-breadcrumb">
             <button className="me-bc-link" onClick={() => setView('dashboard')}><ArrowLeft size={14} /> Classes</button>
             <ChevronRight size={14} className="me-bc-sep" />
@@ -1135,8 +1020,138 @@ export default function MarksEntry({ profile }) {
               </div>
             </div>
           )}
+    </>
+  )
+  if (loading) return <p className="loading-state">Loading marks entry...</p>
+
+  if (classes.length === 0) {
+    return (
+      <div className="me-page">
+        <div className="me-header"><h2 className="me-title">Marks Entry</h2></div>
+        <div className="empty-att">
+          <BookOpen size={40} color="#cbd5e1" />
+          <p>No classes assigned to you</p>
+          <span>Classes appear here once assigned in the timetable</span>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="me-page">
+      {/* ── Dashboard View ── */}
+      {view === 'dashboard' && (
+        <>
+
+          <div className="mk-info">
+            <span className="mk-info-pill"><strong>Teacher:</strong> {teacherName}</span>
+            <span className="mk-info-pill mk-info-pill--blue"><strong>Term:</strong> {term} {year}</span>
+            <span className="mk-info-pill"><strong>Classes:</strong> {classes.length}</span>
+          </div>
+
+          <div className="mk-kpi-grid">
+            <div className="mk-kpi">
+              <div className="mk-kpi-icon mk-kpi-icon--blue"><BookOpen size={16} /></div>
+              <p className="mk-kpi-val">{classes.length}</p>
+              <p className="mk-kpi-label">My Classes</p>
+            </div>
+            <div className="mk-kpi">
+              <div className="mk-kpi-icon mk-kpi-icon--green"><Users size={16} /></div>
+              <p className="mk-kpi-val">{students.filter(s => classes.includes(s.class)).length}</p>
+              <p className="mk-kpi-label">Students</p>
+            </div>
+            <div className="mk-kpi">
+              <div className="mk-kpi-icon mk-kpi-icon--amber"><Clock size={16} /></div>
+              <p className="mk-kpi-val">{classCards.filter(c => c.pendingExam).length}</p>
+              <p className="mk-kpi-label">Pending Marks</p>
+            </div>
+            <div className="mk-kpi">
+              <div className="mk-kpi-icon mk-kpi-icon--purple"><CheckCircle size={16} /></div>
+              <p className="mk-kpi-val">{classCards.filter(c => !c.pendingExam).length}</p>
+              <p className="mk-kpi-label">Completed</p>
+            </div>
+          </div>
+
+          {classes.map(cls => {
+            const clsCards = classCards.filter(c => c.className === cls)
+            const isOpen = expandedClass === cls
+            return (
+              <div key={cls} className="mk-class">
+                <div className="mk-class-hdr" onClick={() => setExpandedClass(isOpen ? null : cls)}>
+                  <div className="mk-class-hdr-left">
+                    <div className="mk-class-icon"><BookOpen size={17} /></div>
+                    <div className="mk-class-info">
+                      <h3 className="mk-class-name">{cls}</h3>
+                      <p className="mk-class-meta">{clsCards.length} subject{clsCards.length > 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} className={`mk-chevron ${isOpen ? 'mk-chevron--open' : ''}`} />
+                </div>
+                <div className={`mk-body-wrap ${isOpen ? 'mk-body-wrap--open' : ''}`}>
+                  <div className="mk-body">
+                    <div className="mk-subj-grid">
+                      {clsCards.map(card => {
+                        const allApproved = FORM_EXAMS.every(et => card.examStatuses[et] === 'approved')
+                        return (
+                          <div key={`${card.className}-${card.subjectName}`} className="mk-subj">
+                            <div className="mk-subj-top">
+                              <span className="mk-subj-name">{card.subjectName}</span>
+                              <span className={`mk-badge ${allApproved ? 'mk-badge--approved' : 'mk-badge--pending'}`}>
+                                {allApproved ? 'Approved' : 'Pending'}
+                              </span>
+                            </div>
+                            <div className="mk-subj-body">
+                              <div className="mk-subj-stat"><Users size={12} /> {card.studentCount} Students</div>
+                              <div className="mk-subj-comps">
+                                {FORM_EXAMS.map(et => {
+                                  const st = card.examStatuses[et]
+                                  const mean = card.examStatuses[`${et}_mean`]
+                                  const clsName = st === 'approved' ? 'mk-subj-comp--approved'
+                                    : st === 'submitted' ? 'mk-subj-comp--submitted'
+                                    : st === 'draft' ? 'mk-subj-comp--draft'
+                                    : st === 'completed' ? 'mk-subj-comp--completed'
+                                    : 'mk-subj-comp--pending'
+                                  return (
+                                    <span key={et} className={`mk-subj-comp ${clsName}`} title={`${et}: ${st}${mean ? ` (${mean}%)` : ''}`}>
+                                      {et === 'End Term' ? 'ET' : et === 'Midterm' ? 'Mid' : 'Open'}
+                                    </span>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                            <div className="mk-subj-actions">
+                              <button className="mk-btn mk-btn--primary" onClick={() => handleOpenClass(card.className, card.subjectName)}>
+                                {card.pendingExam ? 'Enter Marks' : 'View'}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </>
       )}
+
+      {/* ── Marks Entry ── */}
+      {view === 'entry' && (
+        <>
+          <div className="me-entry-inline">{renderEntryContent()}</div>
+          <div className="me-entry-modal-overlay" onClick={() => setView('dashboard')}>
+            <div className="me-entry-modal" onClick={e => e.stopPropagation()}>
+              <div className="me-entry-modal-head">
+                <h3><FileText size={16} /> Combined Marks Entry</h3>
+                <button className="me-entry-modal-close" onClick={() => setView('dashboard')} aria-label="Close"><X size={18} /></button>
+              </div>
+              <div className="me-entry-modal-body">{renderEntryContent()}</div>
+            </div>
+          </div>
+        </>
+      )}
+
 
       {/* ── Export Modal ── */}
       {showExportModal && (

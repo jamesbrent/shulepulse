@@ -731,3 +731,79 @@
   .me-analysis-big { font-size: 24px; }
   .me-breadcrumb { flex-wrap: wrap; }
 }
+
+/* ───────────────────────────────────────────────
+   Marks Entry — mobile popup view
+   Desktop: entry renders inline (.me-entry-inline)
+   Mobile: entry opens as a full-screen popup (.me-entry-modal-overlay)
+   ─────────────────────────────────────────────── */
+.me-entry-modal-overlay {
+  display: none;
+}
+@media (min-width: 769px) {
+  .me-entry-modal-overlay {
+    display: none !important;
+  }
+}
+@media (max-width: 768px) {
+  .me-entry-inline {
+    display: none !important;
+  }
+  .me-entry-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .me-entry-modal {
+    background: #fff;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+  }
+  .me-entry-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+  .me-entry-modal-head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .me-entry-modal-close {
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .me-entry-modal-close:hover { background: #e2e8f0; color: #0f172a; }
+  .me-entry-modal-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px;
+  }
+  .me-entry-modal-body .me-header { padding: 14px; }
+}
+
