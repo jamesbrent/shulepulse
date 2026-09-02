@@ -124,8 +124,8 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
   const limit = rule?.books_allowed || 3
 
   return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
+    <div className="lib-my">
+      <div className="lib-my-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16, marginBottom: 20 }}>
         <div className="lib-stat-card">
           <div className="lib-stat-icon">
             <span style={{ width: 38, height: 38, borderRadius: 10, background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -170,10 +170,10 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
                   const od = daysOverdue(l)
                   return (
                     <tr key={l.id}>
-                      <td style={{ fontWeight: 600 }}>{l.books?.title || '—'}</td>
-                      <td>{l.books?.author || '—'}</td>
-                      <td>{fmtDate(l.due_date)}</td>
-                      <td>
+                      <td data-label="Book" style={{ fontWeight: 600 }}>{l.books?.title || '—'}</td>
+                      <td data-label="Author">{l.books?.author || '—'}</td>
+                      <td data-label="Due Date">{fmtDate(l.due_date)}</td>
+                      <td data-label="Status">
                         {od > 0 ? (
                           <span className="lib-badge" style={{ background: '#fee2e2', color: '#dc2626' }}>
                             <AlertTriangle size={11} /> {od} days overdue
@@ -182,7 +182,7 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
                           <span className="lib-badge" style={{ background: '#dbeafe', color: '#2563eb' }}>{l.status}</span>
                         )}
                       </td>
-                      <td>
+                      <td data-label="Actions">
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                           <button className="lib-btn" onClick={() => renewLoan(l)} disabled={l.renewed_count >= (rule?.renewal_limit || 1)}>
                             <RefreshCw size={14} /> Renew
@@ -219,14 +219,14 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
               <tbody>
                 {myReservations.map(r => (
                   <tr key={r.id}>
-                    <td style={{ fontWeight: 600 }}>{r.books?.title || '—'}</td>
-                    <td>{fmtDate(r.reserved_at)}</td>
-                    <td>
+                    <td data-label="Book" style={{ fontWeight: 600 }}>{r.books?.title || '—'}</td>
+                    <td data-label="Reserved On">{fmtDate(r.reserved_at)}</td>
+                    <td data-label="Status">
                       <span className="lib-badge" style={{ background: r.status === 'pending' ? '#fef3c7' : r.status === 'available' ? '#dcfce7' : '#f1f5f9', color: r.status === 'pending' ? '#ca8a04' : r.status === 'available' ? '#16a34a' : '#64748b' }}>
                         {r.status}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                         {['pending', 'available'].includes(r.status) && (
                           <button className="lib-btn" onClick={() => cancelReservation(r)}><X size={14} /> Cancel</button>
@@ -275,17 +275,17 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
                   const reserved = myReservations.find(r => r.book_id === b.id && ['pending', 'available'].includes(r.status))
                   return (
                     <tr key={b.id}>
-                      <td style={{ fontWeight: 600 }}>{b.title}</td>
-                      <td>{b.author || '—'}</td>
-                      <td>{b.subject || '—'}</td>
-                      <td>{b.categories?.name || '—'}</td>
-                      <td>
+                      <td data-label="Book" style={{ fontWeight: 600 }}>{b.title}</td>
+                      <td data-label="Author">{b.author || '—'}</td>
+                      <td data-label="Subject">{b.subject || '—'}</td>
+                      <td data-label="Category">{b.categories?.name || '—'}</td>
+                      <td data-label="Availability">
                         <span className="lib-badge" style={{ background: avail ? '#dcfce7' : '#fee2e2', color: avail ? '#16a34a' : '#dc2626' }}>
                           <span className="lib-dot" style={{ background: avail ? '#16a34a' : '#dc2626' }} />
                           {avail ? `${b.available_copies} available` : 'Borrowed'}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Actions">
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                           {borrowedCount >= limit ? (
                             <span className="text-muted" style={{ fontSize: 11, color: '#94a3b8' }}>Limit reached</span>
@@ -323,10 +323,10 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
               <tbody>
                 {history.slice(0, 10).map(l => (
                   <tr key={l.id}>
-                    <td style={{ fontWeight: 600 }}>{l.books?.title || '—'}</td>
-                    <td>{fmtDate(l.created_at)}</td>
-                    <td>{l.returned_at ? fmtDate(l.returned_at) : '—'}</td>
-                    <td><span className="lib-badge" style={{ background: '#f1f5f9', color: '#475569' }}>{l.status}</span></td>
+                    <td data-label="Book" style={{ fontWeight: 600 }}>{l.books?.title || '—'}</td>
+                    <td data-label="Borrowed">{fmtDate(l.created_at)}</td>
+                    <td data-label="Returned">{l.returned_at ? fmtDate(l.returned_at) : '—'}</td>
+                    <td data-label="Status"><span className="lib-badge" style={{ background: '#f1f5f9', color: '#475569' }}>{l.status}</span></td>
                   </tr>
                 ))}
               </tbody>

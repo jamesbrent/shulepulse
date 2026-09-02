@@ -670,3 +670,67 @@ textarea.lib-input { resize: vertical; }
   body { background: #fff !important; }
 }
 
+/* ── Teacher "My Library" mobile (scoped, desktop + librarian unchanged) ── */
+@media (max-width: 768px) {
+  .lib-my .lib-my-stats { gap: 12px; }
+
+  .lib-my .lib-card { padding: 14px !important; }
+  .lib-my .lib-card-header { margin-bottom: 12px; }
+  .lib-my .lib-card-header h2 { font-size: 14px; }
+
+  .lib-my .lib-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .lib-my .lib-search { max-width: 100%; min-width: 0; width: 100%; min-height: 44px; }
+  .lib-my .lib-select { width: 100%; min-height: 44px; }
+
+  .lib-my .lib-table-wrap {
+    overflow: visible;
+    border: none;
+    background: none;
+  }
+  .lib-my .lib-table thead { display: none; }
+  .lib-my .lib-table,
+  .lib-my .lib-table tbody,
+  .lib-my .lib-table tr,
+  .lib-my .lib-table td { display: block; }
+  .lib-my .lib-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .lib-my .lib-table tr {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 6px 14px 10px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+  .lib-my .lib-table tbody tr:hover { background: #fff; }
+  .lib-my .lib-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    min-height: 42px;
+    text-align: right;
+  }
+  .lib-my .lib-table td:last-child { border-bottom: none; }
+  .lib-my .lib-table td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    text-align: left;
+  }
+  .lib-my .lib-table td > div:not(.lib-dot) { justify-content: flex-end; }
+  .lib-my .lib-table .lib-btn { min-height: 38px; }
+}
+
