@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, BookOpen, BookMarked, RefreshCw, Clock, AlertTriangle, X } from 'lucide-react'
+import { Search, BookOpen, BookMarked, RefreshCw, Clock, AlertTriangle, X, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import {
   fmtDate, daysOverdue, fetchRules, ruleForType, memberCodeForUser
@@ -17,6 +17,7 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
   const [catFilter, setCatFilter] = useState('all')
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [openSection, setOpenSection] = useState(null)
 
   useEffect(() => {
     fetchAll()
@@ -117,6 +118,89 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
     return matchQ && matchCat
   })
 
+  const renderBorrowedBody = () => {
+    return myLoans.length === 0 ? (
+      <div className="lib-empty">
+        <BookOpen size={36} color="#cbd5e1" />
+        <p>No books borrowed</p>
+        <span>Search the catalogue below to reserve a book</span>
+      </div>
+    ) : (
+      <div className="lib-table-wrap">
+        <table className="lib-table">
+          <thead>
+            <tr><th>Book</th><th>Author</th><th>Due Date</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
+          </thead>
+          <tbody>
+            {myLoans.map(l => {
+              const od = daysOverdue(l)
+              return (
+                <tr key={l.id}>
+                  <td data-label="Book" style={{ fontWeight: 600 }}>{l.books?.title || '—'}</td>
+                  <td data-label="Author">{l.books?.author || '—'}</td>
+                  <td data-label="Due Date">{fmtDate(l.due_date)}</td>
+                  <td data-label="Status">
+                    {od > 0 ? (
+                      <span className="lib-badge" style={{ background: '#fee2e2', color: '#dc2626' }}>
+                        <AlertTriangle size={11} /> {od} days overdue
+                      </span>
+                    ) : (
+                      <span className="lib-badge" style={{ background: '#dbeafe', color: '#2563eb' }}>{l.status}</span>
+                    )}
+                  </td>
+                  <td data-label="Actions">
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <button className="lib-btn" onClick={() => renewLoan(l)} disabled={l.renewed_count >= (rule?.renewal_limit || 1)}>
+                        <RefreshCw size={14} /> Renew
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  const renderReservationsBody = () => {
+    return myReservations.length === 0 ? (
+      <div className="lib-empty">
+        <BookMarked size={36} color="#cbd5e1" />
+        <p>No reservations</p>
+      </div>
+    ) : (
+      <div className="lib-table-wrap">
+        <table className="lib-table">
+          <thead>
+            <tr><th>Book</th><th>Reserved On</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
+          </thead>
+          <tbody>
+            {myReservations.map(r => (
+              <tr key={r.id}>
+                <td data-label="Book" style={{ fontWeight: 600 }}>{r.books?.title || '—'}</td>
+                <td data-label="Reserved On">{fmtDate(r.reserved_at)}</td>
+                <td data-label="Status">
+                  <span className="lib-badge" style={{ background: r.status === 'pending' ? '#fef3c7' : r.status === 'available' ? '#dcfce7' : '#f1f5f9', color: r.status === 'pending' ? '#ca8a04' : r.status === 'available' ? '#16a34a' : '#64748b' }}>
+                    {r.status}
+                  </span>
+                </td>
+                <td data-label="Actions">
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    {['pending', 'available'].includes(r.status) && (
+                      <button className="lib-btn" onClick={() => cancelReservation(r)}><X size={14} /> Cancel</button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
   if (loading) return <div className="lib-loading">Loading your library...</div>
 
   const rule = ruleForType(rules, member?.member_type)
@@ -146,99 +230,45 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
         </div>
       </div>
 
-      <div className="lib-card" style={{ marginBottom: 16 }}>
-        <div className="lib-card-header">
-          <div>
-            <h2>Currently Borrowed</h2>
-            <p>Books you have on loan</p>
-          </div>
-        </div>
-        {myLoans.length === 0 ? (
-          <div className="lib-empty">
-            <BookOpen size={36} color="#cbd5e1" />
-            <p>No books borrowed</p>
-            <span>Search the catalogue below to reserve a book</span>
-          </div>
-        ) : (
-          <div className="lib-table-wrap">
-            <table className="lib-table">
-              <thead>
-                <tr><th>Book</th><th>Author</th><th>Due Date</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
-              </thead>
-              <tbody>
-                {myLoans.map(l => {
-                  const od = daysOverdue(l)
-                  return (
-                    <tr key={l.id}>
-                      <td data-label="Book" style={{ fontWeight: 600 }}>{l.books?.title || '—'}</td>
-                      <td data-label="Author">{l.books?.author || '—'}</td>
-                      <td data-label="Due Date">{fmtDate(l.due_date)}</td>
-                      <td data-label="Status">
-                        {od > 0 ? (
-                          <span className="lib-badge" style={{ background: '#fee2e2', color: '#dc2626' }}>
-                            <AlertTriangle size={11} /> {od} days overdue
-                          </span>
-                        ) : (
-                          <span className="lib-badge" style={{ background: '#dbeafe', color: '#2563eb' }}>{l.status}</span>
-                        )}
-                      </td>
-                      <td data-label="Actions">
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                          <button className="lib-btn" onClick={() => renewLoan(l)} disabled={l.renewed_count >= (rule?.renewal_limit || 1)}>
-                            <RefreshCw size={14} /> Renew
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <div className="lib-my-quick">
+        <button className="lib-quick-card" onClick={() => setOpenSection('borrowed')}>
+          <span className="lib-quick-icon" style={{ background: '#dbeafe', color: '#2563eb' }}><BookMarked size={18} /></span>
+          <span className="lib-quick-info">
+            <span className="lib-quick-title">Currently Borrowed</span>
+            <span className="lib-quick-count">{borrowedCount}</span>
+          </span>
+          <ChevronRight size={16} />
+        </button>
+        <button className="lib-quick-card" onClick={() => setOpenSection('reservations')}>
+          <span className="lib-quick-icon" style={{ background: '#f3e8ff', color: '#7c3aed' }}><Clock size={18} /></span>
+          <span className="lib-quick-info">
+            <span className="lib-quick-title">My Reservations</span>
+            <span className="lib-quick-count">{myReservations.length}</span>
+          </span>
+          <ChevronRight size={16} />
+        </button>
       </div>
 
-      <div className="lib-card" style={{ marginBottom: 16 }}>
-        <div className="lib-card-header">
-          <div>
-            <h2>My Reservations</h2>
-            <p>Books you are waiting for</p>
+      <div className="lib-my-full">
+        <div className="lib-card" style={{ marginBottom: 16 }}>
+          <div className="lib-card-header">
+            <div>
+              <h2>Currently Borrowed</h2>
+              <p>Books you have on loan</p>
+            </div>
           </div>
+          {renderBorrowedBody()}
         </div>
-        {myReservations.length === 0 ? (
-          <div className="lib-empty">
-            <BookMarked size={36} color="#cbd5e1" />
-            <p>No reservations</p>
+
+        <div className="lib-card" style={{ marginBottom: 16 }}>
+          <div className="lib-card-header">
+            <div>
+              <h2>My Reservations</h2>
+              <p>Books you are waiting for</p>
+            </div>
           </div>
-        ) : (
-          <div className="lib-table-wrap">
-            <table className="lib-table">
-              <thead>
-                <tr><th>Book</th><th>Reserved On</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
-              </thead>
-              <tbody>
-                {myReservations.map(r => (
-                  <tr key={r.id}>
-                    <td data-label="Book" style={{ fontWeight: 600 }}>{r.books?.title || '—'}</td>
-                    <td data-label="Reserved On">{fmtDate(r.reserved_at)}</td>
-                    <td data-label="Status">
-                      <span className="lib-badge" style={{ background: r.status === 'pending' ? '#fef3c7' : r.status === 'available' ? '#dcfce7' : '#f1f5f9', color: r.status === 'pending' ? '#ca8a04' : r.status === 'available' ? '#16a34a' : '#64748b' }}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td data-label="Actions">
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        {['pending', 'available'].includes(r.status) && (
-                          <button className="lib-btn" onClick={() => cancelReservation(r)}><X size={14} /> Cancel</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          {renderReservationsBody()}
+        </div>
       </div>
 
       <div className="lib-card">
@@ -331,6 +361,22 @@ export default function MyLibrary({ schoolId, name, email, role, userId }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {openSection && (
+        <div className="lib-my-modal-overlay" onClick={() => setOpenSection(null)}>
+          <div className="lib-my-modal" onClick={e => e.stopPropagation()}>
+            <div className="lib-my-modal-head">
+              <h3>{openSection === 'borrowed' ? 'Currently Borrowed' : 'My Reservations'}</h3>
+              <button className="lib-my-modal-close" onClick={() => setOpenSection(null)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="lib-my-modal-body">
+              {openSection === 'borrowed' ? renderBorrowedBody() : renderReservationsBody()}
+            </div>
           </div>
         </div>
       )}
