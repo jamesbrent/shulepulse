@@ -510,15 +510,75 @@
   .ct-header-actions .ct-avatar { display: none; }
 }
 
-/* ═══════════════════════════════════════════════════════
-   Class Teacher Dashboard — desktop uniform spacing only
+/* ══════════════════════════════════════════════════════════════
+   Class Teacher Dashboard — desktop layout (>=769px)
    (the mobile dashboard home is a separate hidden component)
-   ═══════════════════════════════════════════════════════ */
+   ─ Max-width container · consistent gutters · aligned grid
+   ─ equal-height stat cards · balanced 2-col lower section
+   ─ responsive collapse · no horizontal overflow
+   ══════════════════════════════════════════════════════════════ */
 @media (min-width: 769px) {
-  .ct-stats-grid { gap: 16px; }
+  /* Centered max-width container, consistent vertical rhythm */
+  .ct-desktop-dashboard {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
 
-  .ct-quick-actions { gap: 12px; }
+  /* Consistent gutter across the banner */
+  .ct-welcome-banner {
+    padding: 24px 28px;
+  }
 
+  /* Stats: equal-height cards, overflow-safe columns */
+  .ct-stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .ct-stat-card {
+    height: 100%;
+    min-height: 128px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ct-stat-card .ct-stat-icon {
+    margin-bottom: auto;
+  }
+
+  /* Lower section: clean 2-column, balanced card heights */
+  .ct-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .ct-grid > .ct-card {
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Quick Actions: evenly-spaced 3-col fill inside its card */
+  .ct-quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    flex: 1;
+    align-content: start;
+  }
+
+  .ct-quick-action-btn {
+    padding: 18px 12px;
+    min-height: 92px;
+  }
+
+  /* Class Information: uniform, aligned rows */
   .ct-info-list { gap: 0; }
 
   .ct-info-item {
@@ -538,6 +598,24 @@
 
   .ct-info-value {
     flex: 1;
+    min-width: 0;
     text-align: right;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Tablet collapse: stack lower section, 2-col stats */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .ct-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 769px) and (max-width: 920px) {
+  .ct-grid {
+    grid-template-columns: 1fr;
+  }
+  .ct-quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
