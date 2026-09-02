@@ -732,32 +732,24 @@ export default function MarksEntry({ profile }) {
 
           <div className="mk-kpi-grid">
             <div className="mk-kpi">
-              <div className="mk-kpi-icon mk-kpi-icon--blue"><BookOpen size={20} /></div>
-              <div className="mk-kpi-body">
-                <p className="mk-kpi-val">{classes.length}</p>
-                <p className="mk-kpi-label">My Classes</p>
-              </div>
+              <div className="mk-kpi-icon mk-kpi-icon--blue"><BookOpen size={16} /></div>
+              <p className="mk-kpi-val">{classes.length}</p>
+              <p className="mk-kpi-label">My Classes</p>
             </div>
             <div className="mk-kpi">
-              <div className="mk-kpi-icon mk-kpi-icon--green"><Users size={20} /></div>
-              <div className="mk-kpi-body">
-                <p className="mk-kpi-val">{students.filter(s => classes.includes(s.class)).length}</p>
-                <p className="mk-kpi-label">Students</p>
-              </div>
+              <div className="mk-kpi-icon mk-kpi-icon--green"><Users size={16} /></div>
+              <p className="mk-kpi-val">{students.filter(s => classes.includes(s.class)).length}</p>
+              <p className="mk-kpi-label">Students</p>
             </div>
             <div className="mk-kpi">
-              <div className="mk-kpi-icon mk-kpi-icon--amber"><Clock size={20} /></div>
-              <div className="mk-kpi-body">
-                <p className="mk-kpi-val">{classCards.filter(c => c.pendingExam).length}</p>
-                <p className="mk-kpi-label">Pending Marks</p>
-              </div>
+              <div className="mk-kpi-icon mk-kpi-icon--amber"><Clock size={16} /></div>
+              <p className="mk-kpi-val">{classCards.filter(c => c.pendingExam).length}</p>
+              <p className="mk-kpi-label">Pending Marks</p>
             </div>
             <div className="mk-kpi">
-              <div className="mk-kpi-icon mk-kpi-icon--purple"><CheckCircle size={20} /></div>
-              <div className="mk-kpi-body">
-                <p className="mk-kpi-val">{classCards.filter(c => !c.pendingExam).length}</p>
-                <p className="mk-kpi-label">Completed</p>
-              </div>
+              <div className="mk-kpi-icon mk-kpi-icon--purple"><CheckCircle size={16} /></div>
+              <p className="mk-kpi-val">{classCards.filter(c => !c.pendingExam).length}</p>
+              <p className="mk-kpi-label">Completed</p>
             </div>
           </div>
 
