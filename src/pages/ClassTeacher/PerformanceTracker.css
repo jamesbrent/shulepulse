@@ -983,15 +983,27 @@
   .ct-cbc-mobile-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
   .ct-perf-grid { grid-template-columns: 1fr; }
   .ct-perf-sidebar { order: 2; }
 
-  .ct-perf-summary { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .ct-perf-sum-card { padding: 14px; gap: 10px; min-height: 68px; }
-  .ct-psc-value { font-size: 17px; }
+  /* Compact KPI-style summary (matches Marks Entry / Timetable) */
+  .ct-perf-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .ct-perf-sum-card {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 5px;
+    padding: 10px 6px;
+    min-height: 0;
+    border-radius: 10px;
+  }
+  .ct-perf-sum-card > svg { width: 20px; height: 20px; }
+  .ct-psc-label { font-size: 9px; margin: 0; }
+  .ct-psc-value { font-size: 15px; line-height: 1.2; }
 
   .ct-perf-tabs {
     width: 100%;
@@ -1008,39 +1020,81 @@
     font-size: 12px;
   }
 
-  .ct-perf-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
-  .ct-perf-toolbar-left { flex-wrap: wrap; gap: 8px; }
-  .ct-perf-toolbar-right { justify-content: flex-end; }
-  .ct-search-input { width: 100%; flex: 1 1 100%; }
-  .ct-filter-select { flex: 1 1 45%; min-width: 120px; }
+  /* Toolbar: horizontally scrollable pill row (matches .mk-info) */
+  .ct-perf-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .ct-perf-toolbar-left {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    gap: 8px;
+  }
+  .ct-perf-toolbar-left::-webkit-scrollbar { display: none; }
+  .ct-search-wrap,
+  .ct-perf-toolbar-left .ct-filter-select { flex: 0 0 auto; }
+  .ct-search-input { width: 160px; height: 38px; font-size: 12px; }
+  .ct-filter-select { height: 38px; font-size: 12px; padding: 0 10px; min-height: 38px; }
+  .ct-perf-export-btn { height: 38px; padding: 0 12px; font-size: 12px; }
+  .ct-perf-toolbar-right { justify-content: flex-start; }
 
-  .ct-perf-card { padding: 16px; }
-  .ct-perf-card-title { font-size: 13px; }
+  .ct-perf-card { padding: 14px; gap: 12px; border-radius: 12px; }
+  .ct-perf-card-title { font-size: 12px; padding-bottom: 10px; }
 
-  .ct-rank-filters { flex-direction: column; align-items: stretch; padding: 12px; }
-  .ct-rank-filter-group { width: 100%; }
-  .ct-rank-search { width: 100%; }
-  .ct-rank-select { width: 100%; }
+  /* Rank filters: horizontal scroll pills */
+  .ct-rank-filters {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .ct-rank-filters::-webkit-scrollbar { display: none; }
+  .ct-rank-filter-group { flex: 0 0 auto; width: auto; }
+  .ct-rank-search { width: 150px; height: 38px; font-size: 12px; }
+  .ct-rank-select { height: 38px; font-size: 12px; padding: 0 10px; width: auto; }
 
-  .ct-cbc-metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .ct-cbc-band-grid { flex-wrap: wrap; }
+  .ct-cbc-metric-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .ct-cbc-metric-card { padding: 10px 4px; }
+  .ct-cbc-metric-value { font-size: 18px; }
+  .ct-cbc-metric-label { font-size: 10px; }
+  .ct-cbc-metric-sublabel { font-size: 9px; }
+  .ct-cbc-band-grid { flex-wrap: wrap; gap: 8px; }
 
-  .ct-cbc-subject-grid { grid-template-columns: 1fr; }
-  .ct-cbc-class-detail { padding: 16px; }
-  .ct-cbc-proficiency-labels { flex-wrap: wrap; }
+  .ct-cbc-subject-grid { grid-template-columns: 1fr; gap: 8px; }
+  .ct-cbc-subject-card { padding: 12px 14px; }
+  .ct-cbc-class-detail { padding: 14px; }
 
   .ct-reports-header { flex-direction: column; align-items: flex-start; gap: 10px; }
   .ct-reports-actions { width: 100%; justify-content: space-between; }
 
-  .ct-modal-info-row { gap: 12px; }
+  .ct-modal-info-row { gap: 10px; font-size: 12px; }
+  .ct-modal-body { padding: 14px 16px; }
+
+  /* Tighter mobile cards */
+  .ct-pm-card,
+  .ct-cbc-mcard { padding: 12px 14px; gap: 10px; border-radius: 12px; }
+  .ct-pm-sname { font-size: 13px; }
+  .ct-pm-sub { font-size: 11px; }
+  .ct-pm-stat-value { font-size: 13px; }
+  .ct-pm-stat-label { font-size: 9px; }
+  .ct-cbc-mcard-class { font-size: 14px; }
+  .ct-cbc-mcard-btn { padding: 8px; font-size: 12px; }
 }
 
 @media (max-width: 480px) {
-  .ct-perf-summary { grid-template-columns: 1fr 1fr; }
+  .ct-perf-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .ct-perf-sum-card { padding: 8px 4px; }
+  .ct-perf-sum-card > svg { display: none; }
+  .ct-psc-value { font-size: 14px; }
   .ct-pm-bottom { gap: 10px; }
-  .ct-pm-stat { min-width: 46px; }
+  .ct-pm-stat { min-width: 44px; }
+  .ct-cbc-metric-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
 }
 
 @media (max-width: 400px) {
-  .ct-perf-summary { grid-template-columns: 1fr; }
+  .ct-perf-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
