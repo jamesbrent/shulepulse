@@ -12,8 +12,7 @@ import { useBrandingStore } from '../../features/branding/brandingStore'
 import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import { weightedScoreMean } from '../../services/grading'
 import TeacherAppHome from '../teacher/TeacherAppHome'
-import ClassAttendance from './ClassAttendance'
-import './ClassAttendance.css'
+import AttendancePage from '../teacher/AttendancePage'
 import MarksEntry from '../teacher/MarksEntry'
 import '../teacher/MarksEntry.css'
 import PerformanceTracker from './PerformanceTracker'
@@ -264,7 +263,7 @@ export default function ClassTeacherDashboard() {
     const sharedProps = { teacherData, currentTerm, currentYear, assignedClasses: classes }
     switch (activeNav) {
       case 'attendance':
-        return <ClassAttendance {...sharedProps} />
+        return <AttendancePage profile={authProfile} />
       case 'marks':
         return <MarksEntry profile={authProfile} />
       case 'performance':
