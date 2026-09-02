@@ -789,6 +789,12 @@
 /* -- Attendance: hide duplicate page-title header on mobile - */
 @media (max-width: 768px) {
   .teacher-root.att-nohdr .teacher-header { display: none; }
+
+  /* Keep the fixed bottom nav clear of the scrolling attendance content so
+     nothing is hidden behind it while scrolling the marksheet/history. */
+  .teacher-root.att-nohdr .teacher-main {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* -- Timetable: hide duplicate page-title header on mobile -- */

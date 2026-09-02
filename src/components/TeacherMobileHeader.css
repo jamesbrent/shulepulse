@@ -124,6 +124,14 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    overflow: hidden;
+    padding: 0;
   }
   .tmh-avatar:active { filter: brightness(0.95); }
+  .tmh-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
 }

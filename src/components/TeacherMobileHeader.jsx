@@ -1,8 +1,8 @@
 import { Bell } from 'lucide-react'
+import logoImg from '../assets/logo.png'
 import './TeacherMobileHeader.css'
 
 export default function TeacherMobileHeader({
-  logoUrl,
   profile,
   notifCount = 0,
   onOpenMore,
@@ -15,14 +15,12 @@ export default function TeacherMobileHeader({
     .slice(0, 2)
     .toUpperCase()
 
+  const avatarUrl = profile?.photo_url || null
+
   return (
     <header className="tmh-shell" aria-label="Teacher header">
       <div className="tmh-brand">
-        {logoUrl ? (
-          <img src={logoUrl} alt="" className="tmh-logo" />
-        ) : (
-          <span className="tmh-brand-mark">S</span>
-        )}
+        <img src={logoImg} alt="" className="tmh-logo" />
         <span className="tmh-app-name">
           <span className="tmh-app-shule">Shule</span><span className="tmh-app-pulse">Pulse</span>
         </span>
@@ -36,7 +34,11 @@ export default function TeacherMobileHeader({
           )}
         </button>
         <button className="tmh-avatar" onClick={onOpenMore} aria-label="Open profile menu">
-          {initials || 'T'}
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="tmh-avatar-img" />
+          ) : (
+            initials || 'T'
+          )}
         </button>
       </div>
     </header>

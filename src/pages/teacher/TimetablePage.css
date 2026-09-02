@@ -325,7 +325,15 @@
 }
 
 @media (max-width: 768px) {
-  .tt-pdf-frame-wrap { padding: 10px; }
+  .tt-pdf-overlay { padding: 0; }
+  .tt-pdf-panel {
+    max-width: 100%;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+    height: 100%;
+  }
+  .tt-pdf-frame-wrap { padding: 0; }
   .tt-pdf-btn { padding: 9px 12px; font-size: 12px; }
 }
 
