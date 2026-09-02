@@ -454,12 +454,31 @@
 .ctm-footer { padding: 0 2px 4px; }
 .ctm-footer p { font-size: 12px; color: #94a3b8; margin: 0; }
 
+/* ── Mobile App Home (mirrors teacher mobile home) ──── */
+.ct-app-home { display: none; }
+
+@media (max-width: 768px) {
+  .ct-root.ct-ctah-active .ct-app-home {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    padding: calc(64px + env(safe-area-inset-top, 0px)) 0 calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+  .ct-root.ct-ctah-active .ct-main,
+  .ct-root.ct-ctah-active .ct-mobile-toggle { display: none !important; }
+}
+
+@media (max-width: 480px) {
+  .ct-root.ct-ctah-active .ct-app-home {
+    padding: calc(64px + env(safe-area-inset-top, 0px)) 0 calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 @media (max-width: 768px) {
   .ct-mobile-toggle { display: none; }
   .ct-mobile-overlay { display: none; }
 
   .ct-desktop-dashboard { display: none; }
-  .ct-mobile-home { display: flex; flex-direction: column; gap: 14px; }
 
   .ct-sidebar {
     display: none;

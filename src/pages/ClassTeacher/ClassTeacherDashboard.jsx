@@ -11,6 +11,7 @@ import AvatarUpload from '../../components/AvatarUpload'
 import { useBrandingStore } from '../../features/branding/brandingStore'
 import { useNoticeCount, markNoticesSeen } from '../../hooks/useNoticeCount'
 import { weightedScoreMean } from '../../services/grading'
+import TeacherAppHome from '../teacher/TeacherAppHome'
 import ClassAttendance from './ClassAttendance'
 import './ClassAttendance.css'
 import MarksEntry from '../teacher/MarksEntry'
@@ -41,6 +42,17 @@ import FeatureGate from '../../features/access/FeatureGate'
 const TERMS = ['Term 1', 'Term 2', 'Term 3']
 const CURRENT_YEAR = new Date().getFullYear()
 
+function timeAgo(isoDate) {
+  if (!isoDate) return ''
+  const diffMs = Date.now() - new Date(isoDate).getTime()
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  return `${Math.floor(hours / 24)} day${Math.floor(hours / 24) === 1 ? '' : 's'} ago`
+}
+
 const MOBILE_PRIMARY = [
   { key: 'dashboard', label: 'Home', icon: LayoutDashboard },
   { key: 'timetable', label: 'Timetable', icon: Calendar },
@@ -64,6 +76,8 @@ export default function ClassTeacherDashboard() {
     attendanceRate: 0,
     averagePerformance: 0,
   })
+  const [timetable, setTimetable] = useState([])
+  const [notices, setNotices] = useState([])
   const [loading, setLoading] = useState(true)
   const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
 
@@ -113,6 +127,25 @@ export default function ClassTeacherDashboard() {
     setSchool(teacher.schools || null)
     setCurrentTerm(teacher.schools?.current_term || 'Term 1')
     setCurrentYear(teacher.schools?.current_year || CURRENT_YEAR)
+
+    const tid = teacher.id || authProfile?.id
+
+    const [timetableRes, noticesRes] = await Promise.all([
+      supabase
+        .from('timetable_slots')
+        .select('*, classes(class_name), subjects(name)')
+        .eq('teacher_id', tid)
+        .eq('day', new Date().toLocaleDateString('en-US', { weekday: 'long' }))
+        .order('start_time'),
+      supabase
+        .from('notices')
+        .select('*, profiles(full_name)')
+        .eq('school_id', teacher.school_id)
+        .order('created_at', { ascending: false })
+        .limit(3),
+    ])
+    setTimetable(timetableRes.data || [])
+    setNotices(noticesRes.data || [])
 
     if (teacher.class || teacher.assigned_classes?.length) {
       await fetchClassStats(teacher)
@@ -175,7 +208,43 @@ export default function ClassTeacherDashboard() {
     setMobileOpen(false)
     if (key === 'notices') markNoticesSeen(authProfile?.id)
     setActiveNav(key)
+    window.scrollTo({ top: 0 })
   }
+
+  // Mobile home helpers (mirrors teacher dashboard)
+  const nowDate = new Date()
+  const nowMins = nowDate.getHours() * 60 + nowDate.getMinutes()
+
+  const scheduleRows = timetable.map((t) => {
+    const [hs, ms] = (t.start_time || '00:00').split(':').map(Number)
+    const [he, me] = (t.end_time || '00:00').split(':').map(Number)
+    const startM = hs * 60 + ms
+    const endM = he * 60 + me
+    let status = 'upcoming'
+    if (nowMins >= startM && nowMins <= endM) status = 'ongoing'
+    else if (startM > nowMins && startM === Math.min(...(timetable.map(x => { const [a,b]=(x.start_time||'00:00').split(':').map(Number); return a*60+b }).filter(m => m > nowMins) || [0]))) status = 'next'
+    return {
+      id: t.id,
+      startTime: t.start_time?.slice(0, 5),
+      endTime: t.end_time?.slice(0, 5),
+      subject: t.subjects?.name || t.subject,
+      className: t.classes?.class_name?.trim() || t.class,
+      room: t.room || t.venue || '',
+      status,
+    }
+  })
+
+  const mobileAnnouncements = notices.map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    author: n.profiles?.full_name || 'Admin',
+    timeAgo: timeAgo(n.created_at),
+  }))
+
+  const attendancePercent = stats.totalStudents > 0
+    ? Math.round((stats.attendanceRate / stats.totalStudents) * 100)
+    : 0
 
   const pageTitles = {
     dashboard: 'Class Teacher Dashboard',
@@ -220,10 +289,6 @@ export default function ClassTeacherDashboard() {
   const renderDashboard = () => {
     if (loading) return <div className="ct-loading-state">Loading dashboard...</div>
     if (!teacherData) return <div className="ct-empty-state">No teacher record found. Contact the admin.</div>
-
-    const attendancePercent = stats.totalStudents > 0
-      ? Math.round((stats.attendanceRate / stats.totalStudents) * 100)
-      : 0
 
     return (
       <>
@@ -312,41 +377,12 @@ export default function ClassTeacherDashboard() {
             </div>
           </div>
         </div>
-
-        <div className="ct-mobile-home">
-          <div className="ctm-welcome">
-            <h2>Welcome back, {teacherData.full_name?.split(' ')[0] || 'Teacher'}</h2>
-            <p>{getAssignedClasses(teacherData).join(', ') || 'No class assigned'}</p>
-          </div>
-
-          <div className="ctm-card ctm-today">
-            <p className="ctm-card-label">Today</p>
-            <div className="ctm-today-rows">
-              <div className="ctm-today-row">
-                <span>Present</span>
-                <strong>{stats.attendanceRate} <small>/ {stats.totalStudents}</small></strong>
-              </div>
-              <div className="ctm-today-row">
-                <span>Attendance Rate</span>
-                <strong>{attendancePercent}%</strong>
-              </div>
-              <div className="ctm-today-row">
-                <span>Avg Performance</span>
-                <strong>{stats.averagePerformance ? `${stats.averagePerformance}%` : '—'}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="ctm-footer">
-            <p>{currentTerm}, {currentYear} · {school?.name || ''}</p>
-          </div>
-        </div>
       </>
     )
   }
 
   return (
-    <div className="ct-root">
+    <div className={`ct-root ${activeNav === 'dashboard' ? 'ct-ctah-active' : ''}`}>
       <button className="ct-mobile-toggle" onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <Menu size={20} />
       </button>
@@ -437,6 +473,41 @@ export default function ClassTeacherDashboard() {
           {renderContent()}
         </FeatureGate>
       </main>
+
+      <div className="ct-app-home">
+        <TeacherAppHome
+          teacher={{ name: authProfile?.full_name || teacherData?.full_name || 'Teacher', subjectRole: '', avatarUrl: authProfile?.photo_url || null }}
+          school={{ name: schoolName || 'School', options: [] }}
+          stats={{
+            myClasses: getAssignedClasses(teacherData || {}).length,
+            todaysLessons: timetable.length,
+            pendingAssignments: 0,
+            attendanceAverage: attendancePercent,
+          }}
+          schedule={scheduleRows}
+          announcements={mobileAnnouncements}
+          unreadNotifications={notifCount}
+          activeNav="home"
+          hideHeader
+          hideNav
+          onSelectNav={(key) => {
+            if (key === 'home') return
+            if (key === 'more') { setMoreOpen(true); return }
+            if (key === 'classes') { handleMobileNav('attendance'); return }
+            if (key === 'students') { handleMobileNav('attendance'); return }
+            if (key === 'assignments') return
+          }}
+          onSelectSchool={() => {}}
+          onQuickAction={(key) => {
+            if (key === 'take-attendance') handleMobileNav('attendance')
+            else if (key === 'enter-grades') handleMobileNav('marks')
+            else if (key === 'view-performance') handleMobileNav('performance')
+            else if (key === 'view-reports') handleMobileNav('comments')
+          }}
+          onViewTimetable={() => handleMobileNav('timetable')}
+          onViewAllAnnouncements={() => handleMobileNav('notices')}
+        />
+      </div>
     </div>
   )
 }
