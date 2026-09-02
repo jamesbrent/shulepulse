@@ -75,18 +75,123 @@
 .cbc-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 @media (max-width: 768px) {
-  .cbc-grid-4 { gap: 12px; }
-}
-
-@media (max-width: 640px) {
-  .cbc-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .cbc-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
   .cbc-grid-4 .ct-perf-sum-card { padding: 16px !important; }
 }
 
 .cbc-tabs { flex-wrap: wrap; }
 
 @media (max-width: 768px) {
-  .cbc-page .att-table-wrap { overflow-x: auto; border: 1px solid #e2e8f0; }
-  .cbc-page .att-toolbar { overflow-x: auto; }
-  .cbc-tabs button { padding: 10px 12px; font-size: 12px; }
+  .cbc-page .att-toolbar {
+    overflow: visible;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .cbc-page .att-toolbar-left,
+  .cbc-page .att-toolbar-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .cbc-page .att-toolbar .filter-select,
+  .cbc-page .att-toolbar .search-wrap { width: 100%; }
+  .cbc-page .att-toolbar .btn-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .cbc-tabs button { padding: 10px 12px; font-size: 12px; min-height: 44px; }
+}
+
+/* ── Mobile: tables become stacked cards ───────────────
+   Mirrors the Grades/Marks card-table pattern (≤768px only;
+   desktop layout stays untouched). */
+@media (max-width: 768px) {
+  .cbc-page .att-table-wrap {
+    overflow: visible;
+    border: none;
+    background: none;
+  }
+  .cbc-page .att-table thead { display: none; }
+  .cbc-page .att-table,
+  .cbc-page .att-table tbody,
+  .cbc-page .att-table tr,
+  .cbc-page .att-table td { display: block; }
+  .cbc-page .att-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cbc-page .att-table tr {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 6px 14px 10px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+  .cbc-page .att-table tbody tr:hover { background: #fff; }
+  .cbc-page .att-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    min-height: 42px;
+    text-align: right;
+  }
+  .cbc-page .att-table td:last-child { border-bottom: none; }
+  .cbc-page .att-table td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    text-align: left;
+  }
+  .cbc-page .att-table td[data-label="No."] { display: none; }
+
+  .cbc-page .att-table .student-name-cell {
+    justify-content: flex-end;
+    font-size: 14px;
+  }
+  .cbc-page .att-table td[data-label="Students"],
+  .cbc-page .att-table td[data-label="Mean Points"],
+  .cbc-page .att-table td[data-label="Highest"],
+  .cbc-page .att-table td[data-label="Lowest"],
+  .cbc-page .att-table td[data-label="Median"] {
+    text-align: right;
+  }
+  .cbc-page .att-table td textarea,
+  .cbc-page .att-table td input { font-size: 14px; }
+
+  .cbc-page .att-table .cbc-rating-group {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  .cbc-page .att-table td[data-label="Actions"] > div {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .cbc-page .att-table td[data-label="Actions"] button { min-height: 36px; }
+
+  /* Expanded per-class detail: render as its own card below */
+  .cbc-page .att-table td.cbc-detail-expand {
+    display: block;
+    background: #faf5ff;
+    border: none;
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .cbc-page .att-table td.cbc-detail-expand::before { content: none; }
+  .cbc-page .att-table td.cbc-detail-expand > div { padding: 14px !important; }
 }

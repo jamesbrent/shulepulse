@@ -269,13 +269,13 @@ export default function SchoolSupportPage() {
                 <tbody>
                   {(activeTab === 'openTab' ? openTickets : activeTab === 'resolvedTab' ? resolvedTickets : tickets).map((t) => (
                     <tr key={t.id} className="ssp-clickable" onClick={() => openDetail(t)}>
-                      <td className="ssp-id">{formatId(t.id)}</td>
-                      <td className="ssp-subject">{t.subject}</td>
-                      <td className="ssp-category">{CATEGORY_OPTIONS.find(c => c.value === t.category)?.label || t.category}</td>
-                      <td><span className="ssp-badge" style={{ background: STATUS_META[t.status]?.bg, color: STATUS_META[t.status]?.color }}>{STATUS_META[t.status]?.label || t.status}</span></td>
-                      <td><span className="ssp-priority" style={{ color: PRIORITY_META[t.priority]?.color }}>{(PRIORITY_META[t.priority]?.label || t.priority)}</span></td>
-                      <td className="ssp-time">{timeAgo(t.updated_at || t.created_at)}</td>
-                      <td><ChevronRight size={14} className="ssp-chevron" /></td>
+                      <td className="ssp-id" data-label="ID">{formatId(t.id)}</td>
+                      <td className="ssp-subject" data-label="Subject">{t.subject}</td>
+                      <td className="ssp-category" data-label="Category">{CATEGORY_OPTIONS.find(c => c.value === t.category)?.label || t.category}</td>
+                      <td data-label="Status"><span className="ssp-badge" style={{ background: STATUS_META[t.status]?.bg, color: STATUS_META[t.status]?.color }}>{STATUS_META[t.status]?.label || t.status}</span></td>
+                      <td data-label="Priority"><span className="ssp-priority" style={{ color: PRIORITY_META[t.priority]?.color }}>{(PRIORITY_META[t.priority]?.label || t.priority)}</span></td>
+                      <td data-label="Last Update" className="ssp-time">{timeAgo(t.updated_at || t.created_at)}</td>
+                      <td data-label=""><ChevronRight size={14} className="ssp-chevron" /></td>
                     </tr>
                   ))}
                 </tbody>

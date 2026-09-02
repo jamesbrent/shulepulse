@@ -445,12 +445,73 @@
   .ssp-tabs::-webkit-scrollbar { display: none; }
   .ssp-tab { white-space: nowrap; min-height: 40px; }
 
-  .ssp-ticket-stats { flex-wrap: wrap; }
-  .ssp-stat-box { flex: 1 1 120px; min-width: 0; padding: 12px 14px; }
+  .ssp-ticket-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+  .ssp-stat-box { width: 100%; min-width: 0; padding: 12px 14px; }
   .ssp-stat-num { font-size: 20px; }
 
-  .ssp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .ssp-table { min-width: 640px; }
+  /* Ticket table → stacked cards (desktop table untouched) */
+  .ssp-table-wrap {
+    overflow: visible;
+    border: none;
+    background: none;
+  }
+  .ssp-table {
+    min-width: 0;
+    border: none;
+  }
+  .ssp-table thead { display: none; }
+  .ssp-table,
+  .ssp-table tbody,
+  .ssp-table tr,
+  .ssp-table td { display: block; }
+  .ssp-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ssp-table tr {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 6px 14px 10px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+  .ssp-table tbody tr:hover { background: #fff; }
+  .ssp-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    min-height: 42px;
+    text-align: right;
+  }
+  .ssp-table td:last-child { border-bottom: none; }
+  .ssp-table td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    text-align: left;
+  }
+  .ssp-table td[data-label=""] { display: none; }
+  .ssp-table .ssp-subject {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    font-weight: 600;
+  }
+  .ssp-table .ssp-priority-dot { display: inline-block; }
 
   .ssp-form { padding: 18px; }
   .ssp-row { flex-direction: column; gap: 12px; }

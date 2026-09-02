@@ -613,13 +613,13 @@ export default function CBCCompetency({ profile, mode }) {
                   return (
                     <Fragment key={c.name}>
                       <tr onClick={() => setExpandedClass(prev => prev === c.name ? null : c.name)} style={{ cursor: 'pointer' }}>
-                        <td style={{ fontWeight: 600 }}>{c.name}</td>
-                        <td style={{ textAlign: 'center' }}>{c.students}</td>
-                        <td style={{ textAlign: 'center', fontWeight: 700, color: bColor?.color }}>{c.meanPoints}/8</td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Class" style={{ fontWeight: 600 }}>{c.name}</td>
+                        <td data-label="Students" style={{ textAlign: 'center' }}>{c.students}</td>
+                        <td data-label="Mean Points" style={{ textAlign: 'center', fontWeight: 700, color: bColor?.color }}>{c.meanPoints}/8</td>
+                        <td data-label="Grade" style={{ textAlign: 'center' }}>
                           <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: bColor?.bg, color: bColor?.color }}>{c.meanGrade}</span>
                         </td>
-                        <td style={{ minWidth: 180 }}>
+                        <td data-label="Proficiency" style={{ minWidth: 180 }}>
                           <div style={{ display: 'flex', gap: 2, height: 6, borderRadius: 3, overflow: 'hidden' }}>
                             {['EE', 'ME', 'AE', 'BE'].map(band => (
                               <div key={band} style={{ width: `${bandBarWidth(c.dist[band])}%`, background: CBC_BAND_COLORS[band].color }} />
@@ -631,10 +631,10 @@ export default function CBCCompetency({ profile, mode }) {
                             ))}
                           </div>
                         </td>
-                        <td style={{ textAlign: 'center', color: '#16a34a', fontWeight: 500 }}>{c.highest}</td>
-                        <td style={{ textAlign: 'center', color: '#dc2626', fontWeight: 500 }}>{c.lowest}</td>
-                        <td style={{ textAlign: 'center', color: '#64748b' }}>{c.median}</td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Highest" style={{ textAlign: 'center', color: '#16a34a', fontWeight: 500 }}>{c.highest}</td>
+                        <td data-label="Lowest" style={{ textAlign: 'center', color: '#dc2626', fontWeight: 500 }}>{c.lowest}</td>
+                        <td data-label="Median" style={{ textAlign: 'center', color: '#64748b' }}>{c.median}</td>
+                        <td data-label="Actions" style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                             <button
                               onClick={(e) => { e.stopPropagation(); setExpandedClass(prev => prev === c.name ? null : c.name) }}
@@ -661,7 +661,7 @@ export default function CBCCompetency({ profile, mode }) {
                       </tr>
                       {isExpanded && (
                         <tr key={`${c.name}-detail`}>
-                          <td colSpan={9} style={{ padding: 0, background: '#faf5ff', borderBottom: '2px solid #e2e8f0' }}>
+                          <td colSpan={9} className="cbc-detail-expand" style={{ padding: 0, background: '#faf5ff', borderBottom: '2px solid #e2e8f0' }}>
                             <div style={{ padding: 20 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                                 <span style={{ fontWeight: 700, fontSize: 14 }}>{c.name}</span>
@@ -796,8 +796,8 @@ export default function CBCCompetency({ profile, mode }) {
                     <tbody>
                       {filteredStudents.map((s, i) => (
                         <tr key={s.id}>
-                          <td className="text-muted">{i + 1}</td>
-                          <td>
+                          <td data-label="No." className="text-muted">{i + 1}</td>
+                          <td data-label="Student">
                             <div className="student-name-cell">
                               <div className="student-avatar-sm">
                                 {s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -805,8 +805,8 @@ export default function CBCCompetency({ profile, mode }) {
                               {s.full_name}
                             </div>
                           </td>
-                          <td className="adm-no">{s.admission_number || '\u2014'}</td>
-                          <td>
+                          <td data-label="Adm No." className="adm-no">{s.admission_number || '\u2014'}</td>
+                          <td data-label="Competency Level">
                             <div className="cbc-rating-group">
                               {competencyLevels.map(l => (
                                 <button
@@ -825,7 +825,7 @@ export default function CBCCompetency({ profile, mode }) {
                               ))}
                             </div>
                           </td>
-                          <td>
+                          <td data-label="Status">
                             {ratings[s.id] ? (
                               <span className="cbe-badge" style={{
                                 background: `${levelColorMap[ratings[s.id]] || '#94a3b8'}20`,

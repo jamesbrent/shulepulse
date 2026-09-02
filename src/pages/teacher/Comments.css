@@ -209,17 +209,30 @@
 }
 @media (max-width: 768px) {
   .cmt-toolbar { flex-direction: column; align-items: stretch; padding: 12px; }
-  .cmt-filters { flex-direction: column; }
-  .cmt-select { width: 100%; min-height: 40px; }
+  .cmt-filters { flex-direction: column; align-items: stretch; }
+  .cmt-select { width: 100%; min-height: 44px; font-size: 14px; }
+  .cmt-search { width: 100%; min-width: 0; }
+  .cmt-search-input { min-height: 44px; font-size: 14px; }
   .cmt-save-btn { width: 100%; justify-content: center; min-height: 44px; }
+  .cmt-layout { gap: 12px; }
+  .cmt-students { max-height: 320px; border-radius: 12px; }
+  .cmt-students-hdr { padding: 12px 14px; }
+  .cmt-students-list { padding: 6px; }
+  .cmt-student { padding: 10px; min-height: 48px; border-radius: 10px; }
+  .cmt-avatar { width: 36px; height: 36px; font-size: 12px; border-radius: 10px; }
+  .cmt-student-name { font-size: 14px; }
+  .cmt-editor { border-radius: 12px; }
   .cmt-editor-hdr { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+  .cmt-editor-avatar { width: 40px; height: 40px; font-size: 13px; }
+  .cmt-editor-name { font-size: 15px; }
   .cmt-editor-body { padding: 14px; }
-  .cmt-textarea { min-height: 150px; font-size: 14px; }
+  .cmt-textarea { min-height: 180px; font-size: 15px; }
   .cmt-editor-footer { padding: 12px 14px; }
-  .cmt-student { padding: 10px; min-height: 44px; }
   .cmt-empty { min-height: 300px; }
 }
 @media (max-width: 480px) {
   .cmt-page { gap: 10px; }
-  .cmt-students { max-height: 240px; }
+  .cmt-students { max-height: 300px; }
+  .cmt-editor-body { padding: 12px; }
+  .cmt-textarea { min-height: 200px; }
 }
