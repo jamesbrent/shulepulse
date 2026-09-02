@@ -144,7 +144,7 @@ export default function ClassTeacherLibrary({ schoolId, classes = [] }) {
   if (loading) return <div className="lib-loading">Loading class library...</div>
 
   return (
-    <div>
+    <div className="lib-ctl">
       <div className="lib-card" style={{ marginBottom: 16 }}>
         <div className="lib-card-header">
           <div>

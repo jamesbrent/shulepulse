@@ -752,6 +752,35 @@ textarea.lib-input { resize: vertical; }
   .lib-my .lib-table .lib-btn { min-height: 38px; }
 }
 
+/* ── Class Teacher library (Borrow Request for Class Students) mobile ── */
+@media (max-width: 768px) {
+  .lib-ctl { max-width: 100%; overflow-x: hidden; }
+  .lib-ctl > * { min-width: 0; max-width: 100%; }
+  .lib-ctl .lib-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .lib-ctl .lib-select {
+    flex: 1 1 100%;
+    flex-basis: auto;
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    font-size: 13px;
+  }
+  .lib-ctl .lib-toolbar .lib-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .lib-ctl .lib-card { padding: 14px !important; }
+  .lib-ctl .lib-card-header { margin-bottom: 12px; }
+  .lib-ctl .lib-card-header h2 { font-size: 14px; }
+}
+
 /* ── Quick tappable cards: Currently Borrowed / My Reservations ── */
 @media (max-width: 768px) {
   .lib-my-quick {
