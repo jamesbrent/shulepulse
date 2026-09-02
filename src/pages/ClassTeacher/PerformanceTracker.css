@@ -994,9 +994,9 @@
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
-  .ct-perf-summary { grid-template-columns: repeat(3, 1fr); }
+  .ct-perf-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ct-perf-grid { grid-template-columns: 1fr; }
-  .ct-cbc-metric-grid { grid-template-columns: repeat(2, 1fr); }
+  .ct-cbc-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 768px) {
@@ -1104,6 +1104,20 @@
   .ct-performance-page {
     background: #f8fafc;
     gap: 16px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .ct-performance-page > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .ct-perf-grid,
+  .ct-perf-card,
+  .ct-perf-sidebar,
+  .ct-perf-toolbar,
+  .ct-perf-mobile-list,
+  .ct-cbc-mobile-list {
+    min-width: 0;
   }
 
   .ct-perf-card {

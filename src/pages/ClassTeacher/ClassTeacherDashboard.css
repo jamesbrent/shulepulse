@@ -156,6 +156,7 @@
 .ct-main {
   margin-left: 240px;
   flex: 1;
+  min-width: 0;
   padding: 32px;
   display: flex;
   flex-direction: column;
