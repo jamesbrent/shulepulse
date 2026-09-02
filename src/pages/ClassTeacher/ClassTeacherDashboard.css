@@ -509,3 +509,35 @@
   .ct-stat-value { font-size: 22px; }
   .ct-header-actions .ct-avatar { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Class Teacher Dashboard — desktop uniform spacing only
+   (the mobile dashboard home is a separate hidden component)
+   ═══════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+  .ct-stats-grid { gap: 16px; }
+
+  .ct-quick-actions { gap: 12px; }
+
+  .ct-info-list { gap: 0; }
+
+  .ct-info-item {
+    padding: 14px 0;
+    gap: 16px;
+  }
+
+  .ct-info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .ct-info-label {
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+
+  .ct-info-value {
+    flex: 1;
+    text-align: right;
+  }
+}
