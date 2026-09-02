@@ -674,6 +674,14 @@ textarea.lib-input { resize: vertical; }
 .lib-my-quick { display: none; }
 
 @media (max-width: 768px) {
+  .lib-my {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .lib-my > * {
+    min-width: 0;
+    max-width: 100%;
+  }
   .lib-my .lib-my-stats { gap: 12px; }
 
   .lib-my .lib-card { padding: 14px !important; }
