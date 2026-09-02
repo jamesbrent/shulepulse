@@ -2,7 +2,6 @@ import { Bell } from 'lucide-react'
 import './TeacherMobileHeader.css'
 
 export default function TeacherMobileHeader({
-  schoolName,
   logoUrl,
   profile,
   notifCount = 0,
@@ -22,9 +21,11 @@ export default function TeacherMobileHeader({
         {logoUrl ? (
           <img src={logoUrl} alt="" className="tmh-logo" />
         ) : (
-          <span className="tmh-brand-mark">{schoolName?.[0] || 'S'}</span>
+          <span className="tmh-brand-mark">S</span>
         )}
-        <span className="tmh-name">{schoolName || 'School'}</span>
+        <span className="tmh-app-name">
+          <span className="tmh-app-shule">Shule</span><span className="tmh-app-pulse">Pulse</span>
+        </span>
       </div>
 
       <div className="tmh-actions">

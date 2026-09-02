@@ -56,13 +56,18 @@
     flex-shrink: 0;
   }
 
-  .tmh-name {
-    font-size: 15px;
+  .tmh-app-name {
+    font-size: 17px;
     font-weight: 800;
-    color: #0f172a;
+    letter-spacing: -0.3px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    user-select: none;
+  }
+  .tmh-app-shule {
+    color: #0f172a;
+  }
+  .tmh-app-pulse {
+    color: #16a34a;
   }
 
   .tmh-actions {
