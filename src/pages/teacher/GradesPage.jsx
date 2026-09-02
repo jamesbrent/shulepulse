@@ -512,6 +512,8 @@ export default function GradesPage({ profile }) {
             <span className="gd-pill gd-pill--amber"><Target size={12} /> {overallStats.totalStudents} Students</span>
           </div>
 
+          <div className="gd-overall"><Users size={16} /> Across All Classes</div>
+
           <div className="gd-kpi-grid">
             <div className="gd-kpi gd-kpi-students">
               <div className="gd-kpi-top">
