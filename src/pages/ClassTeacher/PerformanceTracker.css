@@ -970,6 +970,28 @@
 
 .ct-cbc-mcard-btn:hover { background: var(--color-secondary); color: #fff; }
 
+/* ── Sidebar mobile trigger (hidden on desktop) ── */
+.ct-sidebar-mobile-trigger { display: none; }
+
+.ct-sidebar-mobile-trigger {
+  width: 100%;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ct-sidebar-trigger-val { font-size: 12px; color: #64748b; font-weight: 600; }
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .ct-perf-summary { grid-template-columns: repeat(3, 1fr); }
@@ -1074,15 +1096,113 @@
   .ct-modal-info-row { gap: 10px; font-size: 12px; }
   .ct-modal-body { padding: 14px 16px; }
 
-  /* Tighter mobile cards */
-  .ct-pm-card,
-  .ct-cbc-mcard { padding: 12px 14px; gap: 10px; border-radius: 12px; }
-  .ct-pm-sname { font-size: 13px; }
-  .ct-pm-sub { font-size: 11px; }
-  .ct-pm-stat-value { font-size: 13px; }
-  .ct-pm-stat-label { font-size: 9px; }
-  .ct-cbc-mcard-class { font-size: 14px; }
-  .ct-cbc-mcard-btn { padding: 8px; font-size: 12px; }
+  /* Uniform slate treatment (matches Home / Timetable mobile) */
+  .ct-performance-page {
+    background: #f8fafc;
+  }
+
+  .ct-perf-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .ct-perf-card-title {
+    font-size: 14px;
+    color: #0f172a;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 10px;
+    margin-bottom: 2px;
+  }
+
+  /* Student / report list -> single grouped card with divided rows (Home-style) */
+  .ct-perf-mobile-list {
+    display: block;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .ct-perf-mobile-list .ct-pm-card.ct-pm-compact {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+    box-shadow: none;
+  }
+  .ct-perf-mobile-list .ct-pm-card.ct-pm-compact:last-child { border-bottom: none; }
+  .ct-perf-mobile-list .ct-pm-card:not(.ct-pm-compact) { margin-bottom: 10px; }
+  .ct-perf-mobile-list .ct-pm-card:not(.ct-pm-compact):last-child { margin-bottom: 0; }
+  .ct-perf-mobile-list .ct-pm-top { flex: 1; min-width: 0; }
+  .ct-perf-mobile-list .ct-pm-name { flex: 1; }
+  .ct-perf-mobile-list .ct-pm-sname { font-size: 14px; color: #0f172a; }
+  .ct-perf-mobile-list .ct-pm-arrow { color: #cbd5e1; background: transparent; }
+
+  /* Home-style compact stat cards */
+  .ct-perf-summary { gap: 8px; }
+  .ct-perf-sum-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .ct-perf-sum-card > svg { opacity: 0.85; }
+  .ct-psc-value { color: #0f172a; }
+
+  /* Sidebar trigger rows (Home-style) */
+  .ct-overview-sidebar .ct-perf-card { padding: 0; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; }
+  .ct-overview-sidebar .ct-perf-card-title { margin: 0; padding: 12px 14px; }
+  .ct-overview-sidebar .ct-sidebar-mobile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-top: 1px solid #f1f5f9;
+    border-radius: 0;
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+  }
+  .ct-overview-sidebar .ct-sidebar-mobile-trigger svg { color: #cbd5e1; margin-left: auto; }
+  .ct-overview-sidebar .ct-sidebar-mobile-trigger .ct-sidebar-trigger-val { color: #64748b; }
+
+  /* Hide verbose desktop sidebar content on mobile (shown in pop-ups) */
+  .ct-overview-sidebar .ct-perf-card > .ct-perf-grade-dist,
+  .ct-overview-sidebar .ct-perf-card > .ct-perf-student-row,
+  .ct-overview-sidebar .ct-perf-card > .ct-perf-bar-row,
+  .ct-overview-sidebar .ct-perf-card > .ct-text-muted { display: none !important; }
+
+  /* Class averages mobile cards -> uniform slate style */
+  .ct-cbc-mobile-list .ct-cbc-mcard {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .ct-cbc-mcard-class { color: #0f172a; }
+  .ct-cbc-mcard-btn {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #2563eb;
+    border-radius: 10px;
+  }
+  .ct-cbc-mcard-btn:hover { background: #2563eb; color: #fff; }
+  .ct-cbc-mcard-stats { border-color: #f1f5f9; }
+
+  /* Modal -> rounded slate */
+  .ct-modal {
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+  }
+  .ct-modal-header h3 { font-size: 15px; }
+  .ct-modal-body { background: #f8fafc; }
 }
 
 @media (max-width: 480px) {

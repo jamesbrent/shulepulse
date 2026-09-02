@@ -2,7 +2,7 @@ import { useState, useEffect, Fragment } from 'react'
 import {
   BarChart3, Search, TrendingUp, TrendingDown, Award, BookOpen,
   Star, ArrowUp, Users, FileText, FileSpreadsheet,
-  Printer, X, Eye
+  Printer, X, Eye, ChevronRight
 } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -59,6 +59,9 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
   const [filterClass, setFilterClass] = useState('all')
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedStudent, setSelectedStudent] = useState(null)
+  const [distModal, setDistModal] = useState(false)
+  const [topModal, setTopModal] = useState(false)
+  const [subjModal, setSubjModal] = useState(false)
   const [reportEntries, setReportEntries] = useState([])
   const [reportLoading, setReportLoading] = useState(false)
   const [reportProgress, setReportProgress] = useState({ done: 0, total: 0 })
@@ -618,29 +621,14 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
             {!loading && studentMeans.length > 0 && (
               <div className="ct-perf-mobile-list">
                 {studentMeans.map((s, i) => (
-                  <div key={s.id} className="ct-pm-card" onClick={() => setSelectedStudent(s)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedStudent(s) }}>
+                  <div key={s.id} className="ct-pm-card ct-pm-compact" onClick={() => setSelectedStudent(s)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedStudent(s) }}>
                     <div className="ct-pm-top">
                       <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>{s.rank}</span>
                       <div className="ct-student-avatar-sm">{s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>
                       <div className="ct-pm-name">
                         <span className="ct-pm-sname">{s.full_name || '\u2014'}</span>
-                        <span className="ct-pm-sub">{s.admission_number || ''}{assignedClasses.length > 1 && s.class ? ` · ${s.class}` : ''} · {s.subjectCount} subjects</span>
                       </div>
-                    </div>
-                    <div className="ct-pm-bottom">
-                      <div className="ct-pm-stat">
-                        <span className="ct-pm-stat-label">Avg</span>
-                        <span className="ct-pm-stat-value" style={{ color: getScoreColor(s.avg) }}>{s.avg}%</span>
-                      </div>
-                      <div className="ct-pm-stat">
-                        <span className="ct-pm-stat-label">Grade</span>
-                        <span className="ct-score-badge" style={{ background: s.avg >= 80 ? '#dcfce7' : s.avg >= 60 ? '#dbeafe' : s.avg >= 50 ? '#fef9c3' : '#fee2e2', color: getScoreColor(s.avg) }}>{gradeDisplay(s.cbe)}</span>
-                      </div>
-                      <div className="ct-pm-stat">
-                        <span className="ct-pm-stat-label">Status</span>
-                        <span className="ct-score-badge" style={{ background: s.avg >= 50 ? '#dcfce7' : '#fee2e2', color: s.avg >= 50 ? '#16a34a' : '#dc2626' }}>{s.avg >= 50 ? 'Pass' : 'Fail'}</span>
-                      </div>
-                      <div className="ct-pm-arrow"><Eye size={16} /></div>
+                      <div className="ct-pm-arrow"><ChevronRight size={16} /></div>
                     </div>
                   </div>
                 ))}
@@ -648,9 +636,14 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
             )}
           </div>
 
-          <div className="ct-perf-sidebar">
+          <div className="ct-perf-sidebar ct-overview-sidebar">
             <div className="ct-perf-card">
               <p className="ct-perf-card-title"><BarChart3 size={15} /> Grade Distribution</p>
+              <button className="ct-sidebar-mobile-trigger" onClick={() => setDistModal(true)}>
+                <span>{distBands.length} grade bands</span>
+                <span className="ct-sidebar-trigger-val">{summary.total} records</span>
+                <ChevronRight size={16} />
+              </button>
               {summary.total === 0 ? (
                 <p className="ct-text-muted">No data yet.</p>
               ) : (
@@ -676,6 +669,10 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
 
             <div className="ct-perf-card">
               <p className="ct-perf-card-title"><Star size={15} /> Top Students</p>
+              <button className="ct-sidebar-mobile-trigger" onClick={() => setTopModal(true)}>
+                <span>Top {Math.min(5, studentMeans.length)} students</span>
+                <ChevronRight size={16} />
+              </button>
               {studentMeans.length === 0 ? (
                 <p className="ct-text-muted">No data yet.</p>
               ) : (
@@ -697,6 +694,10 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
 
             <div className="ct-perf-card">
               <p className="ct-perf-card-title"><BarChart3 size={15} /> Subject Averages</p>
+              <button className="ct-sidebar-mobile-trigger" onClick={() => setSubjModal(true)}>
+                <span>{subjectMeans.length} subjects</span>
+                <ChevronRight size={16} />
+              </button>
               {subjectMeans.length === 0 ? (
                 <p className="ct-text-muted">No data yet.</p>
               ) : (
@@ -1106,6 +1107,100 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                 </div>
               ) : (
                 <p className="ct-text-muted" style={{ textAlign: 'center', padding: 20 }}>No grades recorded for this student.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {distModal && (
+        <div className="ct-modal-overlay" onClick={() => setDistModal(false)}>
+          <div className="ct-modal" onClick={e => e.stopPropagation()}>
+            <div className="ct-modal-header">
+              <h3>Grade Distribution</h3>
+              <button className="ct-modal-close" onClick={() => setDistModal(false)}><X size={18} /></button>
+            </div>
+            <div className="ct-modal-body">
+              {summary.total === 0 ? (
+                <p className="ct-text-muted" style={{ textAlign: 'center', padding: 20 }}>No data yet.</p>
+              ) : (
+                <div className="ct-perf-grade-dist">
+                  {distBands.map(b => {
+                    const count = gradeDist[b] || 0
+                    const pct = summary.total > 0 ? Math.round((count / summary.total) * 100) : 0
+                    return (
+                      <div key={b} className="ct-perf-grade-row">
+                        <div className="ct-perf-grade-label">
+                          <span className="ct-perf-grade-letter" style={{ color: bandColor(b) }}>{b}</span>
+                          <span className="ct-perf-grade-count">{count} ({pct}%)</span>
+                        </div>
+                        <div className="ct-perf-grade-track">
+                          <div className="ct-perf-grade-fill" style={{ width: `${pct}%`, background: bandColor(b) }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {topModal && (
+        <div className="ct-modal-overlay" onClick={() => setTopModal(false)}>
+          <div className="ct-modal" onClick={e => e.stopPropagation()}>
+            <div className="ct-modal-header">
+              <h3>Top Students</h3>
+              <button className="ct-modal-close" onClick={() => setTopModal(false)}><X size={18} /></button>
+            </div>
+            <div className="ct-modal-body">
+              {studentMeans.length === 0 ? (
+                <p className="ct-text-muted" style={{ textAlign: 'center', padding: 20 }}>No data yet.</p>
+              ) : (
+                studentMeans.slice(0, 5).map((s, i) => (
+                  <div key={s.id} className="ct-perf-student-row" onClick={() => { setTopModal(false); setSelectedStudent(s) }} style={{ cursor: 'pointer' }}>
+                    <span className="ct-perf-rank" style={{ color: s.rank === 1 ? '#ca8a04' : s.rank <= 3 ? '#2563eb' : '#94a3b8' }}>{s.rank}</span>
+                    <div className="ct-student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9 }}>
+                      {s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
+                    <div className="ct-perf-student-info">
+                      <span className="ct-perf-student-name">{s.full_name}</span>
+                      <span className="ct-perf-student-class">{s.class}</span>
+                    </div>
+                    <span className="ct-perf-student-avg" style={{ color: getScoreColor(s.avg) }}>{s.avg}%</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {subjModal && (
+        <div className="ct-modal-overlay" onClick={() => setSubjModal(false)}>
+          <div className="ct-modal" onClick={e => e.stopPropagation()}>
+            <div className="ct-modal-header">
+              <h3>Subject Averages</h3>
+              <button className="ct-modal-close" onClick={() => setSubjModal(false)}><X size={18} /></button>
+            </div>
+            <div className="ct-modal-body">
+              {subjectMeans.length === 0 ? (
+                <p className="ct-text-muted" style={{ textAlign: 'center', padding: 20 }}>No data yet.</p>
+              ) : (
+                subjectMeans.map(s => (
+                  <div key={s.name} className="ct-perf-bar-row">
+                    <span className="ct-perf-bar-label">{s.name}</span>
+                    <div className="ct-perf-bar-track">
+                      <div className="ct-perf-bar-fill" style={{
+                        width: `${s.avg}%`,
+                        background: s.avg >= 80 ? '#16a34a' : s.avg >= 60 ? '#2563eb' : s.avg >= 50 ? '#ca8a04' : s.avg >= 40 ? '#f97316' : '#dc2626'
+                      }} />
+                    </div>
+                    <span className="ct-perf-bar-val">{s.avg}%</span>
+                    <span className="ct-perf-count">{s.count} rec</span>
+                  </div>
+                ))
               )}
             </div>
           </div>
