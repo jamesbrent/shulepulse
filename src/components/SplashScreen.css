@@ -1,0 +1,177 @@
+/* ═══════════════════════════════════════════════════════
+   Splash Screen — mobile only, desktop hidden
+   ═══════════════════════════════════════════════════════ */
+
+.sp-root {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sp-root {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #f0fdf4 0%, #ffffff 35%, #eff6ff 70%, #f0fdf4 100%);
+    overflow: hidden;
+  }
+
+  /* ── soft background blobs ── */
+  .sp-root::before,
+  .sp-root::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .sp-root::before {
+    width: 320px;
+    height: 320px;
+    background: #16a34a;
+    top: -60px;
+    right: -60px;
+    animation: sp-blob-drift 6s ease-in-out infinite alternate;
+  }
+  .sp-root::after {
+    width: 260px;
+    height: 260px;
+    background: #0f172a;
+    bottom: -40px;
+    left: -40px;
+    animation: sp-blob-drift 7s ease-in-out 1s infinite alternate-reverse;
+  }
+
+  /* ── content card ── */
+  .sp-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 40px 32px;
+    animation: sp-fade-in 0.7s ease both;
+  }
+
+  /* ── logo mark (circle with initial) ── */
+  .sp-logo-wrap {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 20px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 8px 32px rgba(15, 23, 42, 0.2),
+      0 0 0 4px rgba(22, 163, 74, 0.12);
+    animation: sp-logo-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+  }
+
+  .sp-logo-initial {
+    font-size: 40px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+    letter-spacing: -1px;
+    user-select: none;
+  }
+
+  /* ── brand name ── */
+  .sp-brand {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    animation: sp-slide-up 0.6s ease 0.3s both;
+  }
+  .sp-brand-shule {
+    color: #0f172a;
+  }
+  .sp-brand-pulse {
+    color: #16a34a;
+  }
+
+  /* ── tagline ── */
+  .sp-tagline {
+    margin: 0 0 28px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    letter-spacing: 0.3px;
+    animation: sp-slide-up 0.6s ease 0.45s both;
+  }
+
+  /* ── loading dots ── */
+  .sp-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    animation: sp-slide-up 0.6s ease 0.6s both;
+  }
+
+  .sp-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #16a34a;
+    animation: sp-dot-bounce 1.2s ease-in-out infinite;
+  }
+  .sp-dot:nth-child(2) { animation-delay: 0.15s; }
+  .sp-dot:nth-child(3) { animation-delay: 0.3s; }
+
+  /* ── version tag ── */
+  .sp-version {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+    letter-spacing: 0.4px;
+    animation: sp-fade-in 0.6s ease 0.8s both;
+  }
+
+  /* ── fade-out transition ── */
+  .sp-root.sp-exiting {
+    animation: sp-fade-out 0.45s ease forwards;
+    pointer-events: none;
+  }
+}
+
+/* ── keyframes ── */
+
+@keyframes sp-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sp-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes sp-logo-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sp-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sp-dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes sp-blob-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(20px, -16px) scale(1.1); }
+}

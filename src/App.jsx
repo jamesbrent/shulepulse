@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
+import SplashScreen from './components/SplashScreen'
 import ProtectedRoute from './components/ProtectedRoute'
 import BrandingProvider from './features/branding/BrandingProvider'
 import { FeatureAccessProvider } from './features/access/FeatureAccessContext'
@@ -31,8 +32,11 @@ import LibrarianDashboard from './pages/library/LibrarianDashboard'
 
 export default function App() {
   const init = useAuthStore((s) => s.init)
+  const loading = useAuthStore((s) => s.loading)
   const profile = useAuthStore((s) => s.profile)
   const [maintenance, setMaintenance] = useState(null)
+  const [splashDone, setSplashDone] = useState(false)
+  const dismissSplash = useCallback(() => setSplashDone(true), [])
 
   useEffect(() => {
     init()
@@ -66,13 +70,18 @@ export default function App() {
 
   useSessionTimeout(isSuperadmin ? 0 : sessionTimeout)
 
-  if (maintenance === null) return null
-
   if (isMaintenance) {
     return <MaintenancePage message={maintenance.message} />
   }
 
+  const splashReady = !loading && maintenance !== null
+
   return (
+    <>
+      {!splashDone && (
+        <SplashScreen ready={splashReady} onDone={dismissSplash} />
+      )}
+
     <BrowserRouter basename={basePath()}>
       <BrandingProvider>
       <FeatureAccessProvider>
@@ -152,5 +161,6 @@ export default function App() {
       </FeatureAccessProvider>
       </BrandingProvider>
     </BrowserRouter>
+    </>
   )
 }
