@@ -685,8 +685,16 @@ textarea.lib-input { resize: vertical; }
     align-items: stretch;
     gap: 10px;
   }
-  .lib-my .lib-search { max-width: 100%; min-width: 0; width: 100%; min-height: 44px; }
-  .lib-my .lib-select { width: 100%; min-height: 44px; }
+  .lib-my .lib-search,
+  .lib-my .lib-select {
+    flex: 1 1 100%;
+    flex-basis: auto;
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
 
   .lib-my .lib-table-wrap {
     overflow: visible;
