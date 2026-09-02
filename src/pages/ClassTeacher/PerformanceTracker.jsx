@@ -148,7 +148,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
       ? Math.round(weightedScoreMean(sg))
       : null
     const cbe = avg !== null ? getCBEGrade(avg, s.class) : null
-    return { ...s, avg, subjectCount: sg.length, grades: sg, cbe }
+    return { ...s, avg, subjectCount: new Set(sg.map(g => g.subject).filter(Boolean)).size, grades: sg, cbe }
   }).filter(s => s.avg !== null).sort((a, b) => b.avg - a.avg)
 
   const studentRankById = new Map(
