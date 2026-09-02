@@ -614,6 +614,38 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                 </table>
               </div>
             )}
+
+            {!loading && studentMeans.length > 0 && (
+              <div className="ct-perf-mobile-list">
+                {studentMeans.map((s, i) => (
+                  <div key={s.id} className="ct-pm-card" onClick={() => setSelectedStudent(s)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedStudent(s) }}>
+                    <div className="ct-pm-top">
+                      <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>{s.rank}</span>
+                      <div className="ct-student-avatar-sm">{s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>
+                      <div className="ct-pm-name">
+                        <span className="ct-pm-sname">{s.full_name || '\u2014'}</span>
+                        <span className="ct-pm-sub">{s.admission_number || ''}{assignedClasses.length > 1 && s.class ? ` · ${s.class}` : ''} · {s.subjectCount} subjects</span>
+                      </div>
+                    </div>
+                    <div className="ct-pm-bottom">
+                      <div className="ct-pm-stat">
+                        <span className="ct-pm-stat-label">Avg</span>
+                        <span className="ct-pm-stat-value" style={{ color: getScoreColor(s.avg) }}>{s.avg}%</span>
+                      </div>
+                      <div className="ct-pm-stat">
+                        <span className="ct-pm-stat-label">Grade</span>
+                        <span className="ct-score-badge" style={{ background: s.avg >= 80 ? '#dcfce7' : s.avg >= 60 ? '#dbeafe' : s.avg >= 50 ? '#fef9c3' : '#fee2e2', color: getScoreColor(s.avg) }}>{gradeDisplay(s.cbe)}</span>
+                      </div>
+                      <div className="ct-pm-stat">
+                        <span className="ct-pm-stat-label">Status</span>
+                        <span className="ct-score-badge" style={{ background: s.avg >= 50 ? '#dcfce7' : '#fee2e2', color: s.avg >= 50 ? '#16a34a' : '#dc2626' }}>{s.avg >= 50 ? 'Pass' : 'Fail'}</span>
+                      </div>
+                      <div className="ct-pm-arrow"><Eye size={16} /></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="ct-perf-sidebar">
@@ -821,6 +853,38 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                 </table>
               </div>
             )}
+
+            {studentMeans.length > 0 && rankedStudents.length > 0 && (
+              <div className="ct-perf-mobile-list">
+                {rankedStudents.map((s, i) => (
+                  <div key={s.id} className="ct-pm-card" onClick={() => setSelectedStudent(s)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedStudent(s) }}>
+                    <div className="ct-pm-top">
+                      <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>{s.rank}</span>
+                      <div className="ct-student-avatar-sm">{s.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>
+                      <div className="ct-pm-name">
+                        <span className="ct-pm-sname">{s.full_name || '\u2014'}</span>
+                        <span className="ct-pm-sub">{s.admission_number || ''}{assignedClasses.length > 1 && s.class ? ` · ${s.class}` : ''} · {s.subjectCount} subjects</span>
+                      </div>
+                    </div>
+                    <div className="ct-pm-bottom">
+                      <div className="ct-pm-stat">
+                        <span className="ct-pm-stat-label">Avg</span>
+                        <span className="ct-pm-stat-value" style={{ color: getScoreColor(s.avg) }}>{s.avg}%</span>
+                      </div>
+                      <div className="ct-pm-stat">
+                        <span className="ct-pm-stat-label">Grade</span>
+                        <span className="ct-score-badge" style={{ background: s.avg >= 80 ? '#dcfce7' : s.avg >= 60 ? '#dbeafe' : s.avg >= 50 ? '#fef9c3' : '#fee2e2', color: getScoreColor(s.avg) }}>{gradeDisplay(s.cbe)}</span>
+                      </div>
+                      <div className="ct-pm-stat">
+                        <span className="ct-pm-stat-label">Status</span>
+                        <span className="ct-score-badge" style={{ background: s.avg >= 50 ? '#dcfce7' : '#fee2e2', color: s.avg >= 50 ? '#16a34a' : '#dc2626' }}>{s.avg >= 50 ? 'Pass' : 'Fail'}</span>
+                      </div>
+                      <div className="ct-pm-arrow"><Eye size={16} /></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="ct-perf-sidebar">
@@ -950,6 +1014,38 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
               </table>
             </div>
           )}
+
+          {!reportLoading && reportEntries.length > 0 && (
+            <div className="ct-perf-mobile-list">
+              {reportEntries.map((e, i) => (
+                <div key={e.student.id} className="ct-pm-card" onClick={() => setSelectedStudent({ ...e.student, avg: e.avg, grades: e.grades })} role="button" tabIndex={0} onKeyDown={(ev) => { if (ev.key === 'Enter') setSelectedStudent({ ...e.student, avg: e.avg, grades: e.grades }) }}>
+                  <div className="ct-pm-top">
+                    <span className="ct-pm-idx">{i + 1}</span>
+                    <div className="ct-student-avatar-sm">{e.student.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>
+                    <div className="ct-pm-name">
+                      <span className="ct-pm-sname">{e.student.full_name || '\u2014'}</span>
+                      <span className="ct-pm-sub">{e.student.admission_number || ''}{assignedClasses.length > 1 && e.student.class ? ` · ${e.student.class}` : ''} · {e.grades.length} subjects</span>
+                    </div>
+                  </div>
+                  <div className="ct-pm-bottom">
+                    <div className="ct-pm-stat">
+                      <span className="ct-pm-stat-label">Avg</span>
+                      <span className="ct-pm-stat-value" style={{ color: getScoreColor(e.avg) }}>{e.avg}%</span>
+                    </div>
+                    <div className="ct-pm-stat">
+                      <span className="ct-pm-stat-label">Grade</span>
+                      <span className="ct-score-badge" style={{ background: e.avg >= 80 ? '#dcfce7' : e.avg >= 60 ? '#dbeafe' : e.avg >= 50 ? '#fef9c3' : '#fee2e2', color: getScoreColor(e.avg) }}>{gradeDisplay(getCBEGrade(e.avg, e.student.class))}</span>
+                    </div>
+                    <div className="ct-pm-stat">
+                      <span className="ct-pm-stat-label">Points</span>
+                      <span className="ct-pm-stat-value">{getCBEGrade(e.avg, e.student.class).points || '\u2014'}</span>
+                    </div>
+                    <div className="ct-pm-arrow"><Eye size={16} /></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1077,6 +1173,7 @@ function printClassReport(html) {
 
 function ClassAveragesTab({ classCBCAverages, grades, assignedClasses, filterSubject, filterClass, subjectsList, currentTerm, currentYear, teacherData }) {
   const [expandedClass, setExpandedClass] = useState(null)
+  const [detailClass, setDetailClass] = useState(null)
 
   const bandBarWidth = (pct) => Math.max(pct, 2)
 
@@ -1085,10 +1182,11 @@ function ClassAveragesTab({ classCBCAverages, grades, assignedClasses, filterSub
     : classCBCAverages
 
   const classSubjectBreakdown = (() => {
-    if (!expandedClass) return []
+    const activeFor = expandedClass || detailClass
+    if (!activeFor) return []
     const map = {}
     grades.forEach(g => {
-      if (g.students?.class !== expandedClass) return
+      if (g.students?.class !== activeFor) return
       if (!g.subject) return
       if (!map[g.subject]) map[g.subject] = { scores: [], points: [], count: 0, bands: { EE: 0, ME: 0, AE: 0, BE: 0 } }
       const score = Number(g.total_score || 0)
@@ -1370,11 +1468,123 @@ function ClassAveragesTab({ classCBCAverages, grades, assignedClasses, filterSub
                     </Fragment>
                   )
                 })}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="ct-cbc-mobile-list">
+          {displayedClasses.length === 0 ? (
+            <p className="ct-text-muted" style={{ textAlign: 'center', padding: 20 }}>No class data available for this term.</p>
+          ) : (
+            displayedClasses.map((c, i) => {
+              const bColor = CBC_BAND_COLORS[c.band]
+              return (
+                <div key={c.name} className="ct-cbc-mcard" onClick={() => setDetailClass(c)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setDetailClass(c) }}>
+                  <div className="ct-cbc-mcard-head">
+                    <div>
+                      <span className="ct-cbc-mcard-rank">{i + 1}</span>
+                      <span className="ct-cbc-mcard-class">{c.name}</span>
+                    </div>
+                    <span className="ct-score-badge" style={{ background: bColor?.bg, color: bColor?.color }}>{c.meanGrade}</span>
+                  </div>
+                  <div className="ct-cbc-mcard-stats">
+                    <div className="ct-cbc-mcard-stat">
+                      <span className="ct-pm-stat-label">Students</span>
+                      <span className="ct-pm-stat-value">{c.students}</span>
+                    </div>
+                    <div className="ct-cbc-mcard-stat">
+                      <span className="ct-pm-stat-label">Mean</span>
+                      <span className="ct-pm-stat-value" style={{ color: bColor?.color }}>{c.meanPoints}/8</span>
+                    </div>
+                    <div className="ct-cbc-mcard-stat">
+                      <span className="ct-pm-stat-label">Highest</span>
+                      <span className="ct-pm-stat-value" style={{ color: '#16a34a' }}>{c.highest}</span>
+                    </div>
+                    <div className="ct-cbc-mcard-stat">
+                      <span className="ct-pm-stat-label">Lowest</span>
+                      <span className="ct-pm-stat-value" style={{ color: '#dc2626' }}>{c.lowest}</span>
+                    </div>
+                    <div className="ct-cbc-mcard-stat">
+                      <span className="ct-pm-stat-label">Median</span>
+                      <span className="ct-pm-stat-value">{c.median}</span>
+                    </div>
+                  </div>
+                  <div className="ct-cbc-proficiency-bar" style={{ height: 8 }}>
+                    {['EE', 'ME', 'AE', 'BE'].map(band => (
+                      <div key={band} style={{ width: `${bandBarWidth(c.dist[band])}%`, background: CBC_BAND_COLORS[band].color }} />
+                    ))}
+                  </div>
+                  <div className="ct-cbc-proficiency-labels" style={{ justifyContent: 'center' }}>
+                    {['EE', 'ME', 'AE', 'BE'].map(band => (
+                      <span key={band} className="ct-cbc-proficiency-label" style={{ color: CBC_BAND_COLORS[band].color, fontSize: 9 }}>
+                        {band} {c.dist[band]}%
+                      </span>
+                    ))}
+                  </div>
+                  <button className="ct-cbc-mcard-btn" onClick={(e) => { e.stopPropagation(); setDetailClass(c) }}>
+                    View Subject Breakdown <Eye size={14} />
+                  </button>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {detailClass && (
+          <div className="ct-modal-overlay" onClick={() => setDetailClass(null)}>
+            <div className="ct-modal" onClick={e => e.stopPropagation()}>
+              <div className="ct-modal-header">
+                <h3>{detailClass.name} — Subject Breakdown</h3>
+                <button className="ct-modal-close" onClick={() => setDetailClass(null)}><X size={18} /></button>
+              </div>
+              <div className="ct-modal-body">
+                <div className="ct-pm-top" style={{ marginBottom: 14 }}>
+                  <div className="ct-student-avatar-sm">{detailClass.name?.[0] || 'C'}</div>
+                  <div className="ct-pm-name">
+                    <span className="ct-pm-sname">{detailClass.name}</span>
+                    <span className="ct-pm-sub">{detailClass.students} students · Mean {detailClass.meanPoints}/8 · {detailClass.meanGrade}</span>
+                  </div>
+                </div>
+                <div className="ct-cbc-band-grid" style={{ marginBottom: 16 }}>
+                  {['EE', 'ME', 'AE', 'BE'].map(band => (
+                    <div key={band} className="ct-cbc-band-card" style={{ background: CBC_BAND_COLORS[band].bg }}>
+                      <div className="ct-cbc-band-value" style={{ color: CBC_BAND_COLORS[band].color }}>{detailClass.dist[band]}%</div>
+                      <div className="ct-cbc-band-label" style={{ color: CBC_BAND_COLORS[band].color }}>{band}</div>
+                    </div>
+                  ))}
+                </div>
+                {classSubjectBreakdown.length > 0 ? (
+                  <div className="ct-cbc-subject-grid">
+                    {classSubjectBreakdown.map((s, si) => {
+                      const sBand = CBC_BAND_COLORS[s.band]
+                      return (
+                        <div key={si} className="ct-cbc-subject-card" style={{ borderLeft: `3px solid ${sBand?.color || '#94a3b8'}` }}>
+                          <div className="ct-cbc-subject-header">
+                            <span className="ct-cbc-subject-name">{s.name}</span>
+                            <div className="ct-cbc-subject-score">
+                              <span className="ct-cbc-subject-points" style={{ color: sBand?.color || '#64748b' }}>{s.meanPoints}/8</span>
+                              <span className="ct-cbc-subject-band" style={{ background: sBand?.bg, color: sBand?.color }}>{s.grade}</span>
+                            </div>
+                          </div>
+                          <div className="ct-cbc-proficiency-bar" style={{ height: 6 }}>
+                            {['EE', 'ME', 'AE', 'BE'].map(band => (
+                              <div key={band} style={{ width: `${bandBarWidth(s.dist[band])}%`, background: CBC_BAND_COLORS[band].color }} />
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {classSubjectBreakdown.length === 0 && <span className="ct-text-muted">No subject data</span>}
+                  </div>
+                ) : (
+                  <p className="ct-text-muted" style={{ textAlign: 'center', padding: 20 }}>Expand this class inline on desktop to load subject breakdown, or select it above.</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
-    </div>
   )
 }
