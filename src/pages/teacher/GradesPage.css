@@ -51,6 +51,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
+.gd-kpi-students { display: none; }
 .gd-kpi {
   background: var(--gd-surf);
   border: 1px solid var(--gd-border);
@@ -306,7 +307,28 @@
 }
 
 @media (max-width: 600px) {
-  .gd-kpi-grid { grid-template-columns: 1fr 1fr; }
+  .gd-kpi-grid {
+    grid-template-columns: none;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .gd-kpi-students { display: flex; }
+  .gd-status .gd-pill--amber { display: none; }
+  .gd-kpi {
+    padding: 10px 8px !important;
+    gap: 4px;
+    min-width: 0;
+  }
+  .gd-kpi-top { gap: 4px; }
+  .gd-kpi-icon { display: none; }
+  .gd-kpi-val { font-size: 16px !important; white-space: nowrap; }
+  .gd-kpi-label { font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
+  .gd-kpi-sub { font-size: 9px; overflow: hidden; text-overflow: ellipsis; }
   .gd-panel-hdr { flex-direction: column; align-items: flex-start; gap: 6px; }
   .gd-row { grid-template-columns: 1fr; gap: 4px; }
   .gd-row-stat { font-size: 12px; }

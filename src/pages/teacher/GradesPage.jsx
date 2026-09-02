@@ -513,6 +513,16 @@ export default function GradesPage({ profile }) {
           </div>
 
           <div className="gd-kpi-grid">
+            <div className="gd-kpi gd-kpi-students">
+              <div className="gd-kpi-top">
+                <div>
+                  <p className="gd-kpi-val">{overallStats.totalStudents}</p>
+                  <p className="gd-kpi-label">Students</p>
+                </div>
+                <div className="gd-kpi-icon gd-kpi-icon--amber"><Users size={20} /></div>
+              </div>
+              <p className="gd-kpi-sub">Across all classes</p>
+            </div>
             <div className="gd-kpi">
               <div className="gd-kpi-top">
                 <div>
