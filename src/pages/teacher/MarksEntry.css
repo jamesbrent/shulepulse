@@ -194,7 +194,6 @@
 }
 @media (max-width: 768px) {
   .me-page .mk-kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 8px !important; }
-  .me-page .mk-info { display: none; }
   .mk-subj-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
   .mk-info {
     flex-direction: row;
