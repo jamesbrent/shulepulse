@@ -563,7 +563,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                     </tr>
                   </thead>
                   <tbody>
-                    {studentMeans.map((s, i) => (
+                    {studentMeans.map((s) => (
                       <tr key={s.id} onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
                         <td>
                           <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>
@@ -620,7 +620,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
 
             {!loading && studentMeans.length > 0 && (
               <div className="ct-perf-mobile-list">
-                {studentMeans.map((s, i) => (
+                {studentMeans.map((s) => (
                   <div key={s.id} className="ct-pm-card ct-pm-compact" onClick={() => setSelectedStudent(s)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedStudent(s) }}>
                     <div className="ct-pm-top">
                       <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>{s.rank}</span>
@@ -676,7 +676,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
               {studentMeans.length === 0 ? (
                 <p className="ct-text-muted">No data yet.</p>
               ) : (
-                studentMeans.slice(0, 5).map((s, i) => (
+                studentMeans.slice(0, 5).map((s) => (
                   <div key={s.id} className="ct-perf-student-row" onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
                     <span className="ct-perf-rank">{s.rank}</span>
                     <div className="ct-student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9 }}>
@@ -809,7 +809,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
                     </tr>
                   </thead>
                   <tbody>
-                    {rankedStudents.map((s, i) => (
+                    {rankedStudents.map((s) => (
                       <tr key={s.id} onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
                         <td>
                           <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>
@@ -857,7 +857,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
 
             {studentMeans.length > 0 && rankedStudents.length > 0 && (
               <div className="ct-perf-mobile-list">
-                {rankedStudents.map((s, i) => (
+                {rankedStudents.map((s) => (
                   <div key={s.id} className="ct-pm-card" onClick={() => setSelectedStudent(s)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedStudent(s) }}>
                     <div className="ct-pm-top">
                       <span className={`ct-perf-rank-cell ${s.rank <= 3 ? `rank-${s.rank}` : ''}`}>{s.rank}</span>
@@ -893,7 +893,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
               <>
                 <div className="ct-perf-card">
                   <p className="ct-perf-card-title"><Star size={15} /> Top 5 Performers</p>
-                  {studentMeans.slice(0, 5).map((s, i) => (
+                  {studentMeans.slice(0, 5).map((s) => (
                     <div key={s.id} className="ct-perf-student-row" onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
                       <span className="ct-perf-rank" style={{ color: s.rank === 1 ? '#ca8a04' : s.rank <= 3 ? '#2563eb' : '#94a3b8' }}>{s.rank}</span>
                       <div className="ct-student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9 }}>
@@ -910,7 +910,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
 
                 <div className="ct-perf-card">
                   <p className="ct-perf-card-title"><TrendingDown size={15} /> Bottom 5 (Needs Support)</p>
-                  {studentMeans.slice(-5).reverse().map((s, i) => (
+                  {studentMeans.slice(-5).reverse().map((s) => (
                     <div key={s.id} className="ct-perf-student-row" onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer' }}>
                       <span className="ct-perf-rank" style={{ color: '#dc2626' }}>{s.rank}</span>
                       <div className="ct-student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9, background: '#fef2f2', color: '#dc2626' }}>
@@ -1158,7 +1158,7 @@ export default function PerformanceTracker({ teacherData, currentTerm, currentYe
               {studentMeans.length === 0 ? (
                 <p className="ct-text-muted" style={{ textAlign: 'center', padding: 20 }}>No data yet.</p>
               ) : (
-                studentMeans.slice(0, 5).map((s, i) => (
+                studentMeans.slice(0, 5).map((s) => (
                   <div key={s.id} className="ct-perf-student-row" onClick={() => { setTopModal(false); setSelectedStudent(s) }} style={{ cursor: 'pointer' }}>
                     <span className="ct-perf-rank" style={{ color: s.rank === 1 ? '#ca8a04' : s.rank <= 3 ? '#2563eb' : '#94a3b8' }}>{s.rank}</span>
                     <div className="ct-student-avatar-sm" style={{ width: 28, height: 28, fontSize: 9 }}>
