@@ -341,6 +341,7 @@
     padding: 12px 10px !important;
     gap: 6px;
     min-width: 0;
+    height: 150px;
     justify-content: center;
     text-align: center;
   }
