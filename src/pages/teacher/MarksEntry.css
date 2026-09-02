@@ -191,8 +191,22 @@
 @media (max-width: 768px) {
   .mk-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .mk-subj-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-  .mk-info { flex-direction: column; align-items: stretch; }
-  .mk-info-pill { justify-content: center; }
+  .mk-info {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .mk-info-pill {
+    flex-shrink: 0;
+    justify-content: flex-start;
+    padding: 4px 10px;
+    font-size: 11px;
+    min-height: 30px;
+  }
   .mk-class-hdr { padding: 12px 14px; }
   .mk-class-name { font-size: 13px; }
   .mk-body { padding: 0 14px 14px; padding-top: 12px; }

@@ -195,3 +195,217 @@
   .cbc-page .att-table td.cbc-detail-expand::before { content: none; }
   .cbc-page .att-table td.cbc-detail-expand > div { padding: 14px !important; }
 }
+
+/* ── Mobile: per-grade cards + detail popup ─────────────
+   Proficiency table stays untouched on desktop; on mobile it
+   is replaced by tappable grade cards that open a uniform popup
+   with every detail, so nothing collides. */
+.cbc-perf-cards { display: none; }
+
+@media (max-width: 768px) {
+  .cbc-perf-table { display: none; }
+  .cbc-perf-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+  .cbc-perf-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cbc-perf-card:active { background: #f8fafc; border-color: #c7d2fe; }
+  .cbc-perf-card-badge {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .cbc-perf-card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cbc-perf-card-name { font-size: 14px; font-weight: 700; color: #0f172a; }
+  .cbc-perf-card-sub { font-size: 11px; color: #94a3b8; }
+  .cbc-perf-card-meta {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cbc-perf-card-grade {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+
+/* ── Detail popup (mobile grade card → modal) ───────────
+   Desktop never touches this overlay; it only opens from the
+   mobile grade cards. */
+.cbc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.cbc-modal {
+  background: #fff;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px 16px 0 0;
+  overflow: hidden;
+  box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.25);
+}
+.cbc-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.cbc-modal-head h4 { margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; }
+.cbc-modal-head span { font-size: 12px; color: #94a3b8; }
+.cbc-modal-close {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  color: #475569;
+  cursor: pointer;
+}
+.cbc-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 18px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cbc-modal-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+.cbc-modal-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.cbc-modal-stat-val { font-size: 17px; font-weight: 800; color: #0f172a; }
+.cbc-modal-stat-label { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+.cbc-modal-section { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+.cbc-modal-bands {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 8px;
+}
+.cbc-modal-band {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: center;
+  text-align: center;
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 10px 6px;
+}
+.cbc-modal-band-pct { font-size: 16px; font-weight: 800; }
+.cbc-modal-band-name { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; }
+.cbc-modal-band-label { font-size: 10px; color: #64748b; }
+.cbc-modal-subjects {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cbc-modal-subject {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cbc-modal-subject-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cbc-modal-subject-name { flex: 1; font-size: 13px; font-weight: 700; color: #0f172a; }
+.cbc-modal-subject-grade {
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.cbc-modal-subject-bar {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cbc-modal-subject-bands {
+  display: flex;
+  gap: 8px;
+  font-size: 9px;
+}
+.cbc-modal-foot {
+  padding: 12px 18px 16px;
+  border-top: 1px solid #f1f5f9;
+}
+.cbc-modal-foot .btn-secondary { width: 100%; justify-content: center; min-height: 44px; }
+
+@media (min-width: 768px) {
+  .cbc-modal-overlay {
+    align-items: center;
+    padding: 16px;
+  }
+  .cbc-modal { border-radius: 16px; }
+}

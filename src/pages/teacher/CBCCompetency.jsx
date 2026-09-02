@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react'
 import {
   Award, Save, CheckCircle, Users, Search, BarChart3,
-  TrendingUp, FileText, BookOpen, ChevronDown, ChevronRight,
+  TrendingUp, FileText, BookOpen, ChevronDown, ChevronRight, X,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { esc } from '../../utils/escapeHtml'
@@ -122,6 +122,7 @@ export default function CBCCompetency({ profile, mode }) {
   const [subjectsList, setSubjectsList] = useState([])
   const [filterClass, setFilterClass] = useState('all')
   const [expandedClass, setExpandedClass] = useState(null)
+  const [modalClass, setModalClass] = useState(null)
   const [schoolData, setSchoolData] = useState(null)
 
   const isAdmin = mode === 'admin'
@@ -421,11 +422,11 @@ export default function CBCCompetency({ profile, mode }) {
     ? classCBCAverages.filter(c => c.name === filterClass)
     : classCBCAverages
 
-  const classSubjectBreakdown = (() => {
-    if (!expandedClass) return []
+  const buildClassSubjectBreakdown = (clsName) => {
+    if (!clsName) return []
     const map = {}
     grades.forEach(g => {
-      if (g.students?.class !== expandedClass) return
+      if (g.students?.class !== clsName) return
       if (!g.subject) return
       if (!map[g.subject]) map[g.subject] = { scores: [], points: [], count: 0, bands: { EE: 0, ME: 0, AE: 0, BE: 0 } }
       const score = Number(g.total_score || 0)
@@ -441,7 +442,10 @@ export default function CBCCompetency({ profile, mode }) {
       Object.keys(d.bands).forEach(b => { dist[b] = d.count > 0 ? Math.round((d.bands[b] / d.count) * 100) : 0 })
       return { name, meanPoints: meanPts, grade: cbcBandLabel(Math.round(meanPts)), band: cbcBand(Math.round(meanPts)), count: d.count, dist }
     }).sort((a, b) => b.meanPoints - a.meanPoints)
-  })()
+  }
+
+  const classSubjectBreakdown = buildClassSubjectBreakdown(expandedClass)
+  const modalSubjectBreakdown = modalClass ? buildClassSubjectBreakdown(modalClass.name) : []
 
   const overallMeanPoints = displayedClasses.length > 0
     ? Math.round(displayedClasses.reduce((s, c) => s + c.meanPoints, 0) / displayedClasses.length * 10) / 10 : 0
@@ -590,7 +594,32 @@ export default function CBCCompetency({ profile, mode }) {
             ))}
           </div>
 
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div className="cbc-perf-cards">
+            {displayedClasses.length === 0 && (
+              <div className="empty-att">
+                <Users size={40} color="#cbd5e1" />
+                <p>No class data</p>
+              </div>
+            )}
+            {displayedClasses.map(c => {
+              const bColor = CBC_BAND_COLORS[c.band]
+              return (
+                <button key={c.name} className="cbc-perf-card" onClick={() => setModalClass(c)}>
+                  <span className="cbc-perf-card-badge" style={{ background: bColor?.bg, color: bColor?.color }}>{c.name.replace(/\D+/g, '') || '\u2014'}</span>
+                  <span className="cbc-perf-card-info">
+                    <span className="cbc-perf-card-name">{c.name}</span>
+                    <span className="cbc-perf-card-sub">{c.students} students · {c.meanPoints}/8 points</span>
+                  </span>
+                  <span className="cbc-perf-card-meta">
+                    <span className="cbc-perf-card-grade" style={{ background: bColor?.bg, color: bColor?.color }}>{c.meanGrade}</span>
+                    <ChevronRight size={16} color="#cbd5e1" />
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="cbc-perf-table" style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
             <div className="cbc-table-scroll">
             <table className="att-table" style={{ margin: 0 }}>
               <thead>
@@ -846,6 +875,87 @@ export default function CBCCompetency({ profile, mode }) {
             </>
           )}
         </>
+      )}
+
+      {modalClass && (
+        <div className="cbc-modal-overlay" onClick={() => setModalClass(null)}>
+          <div className="cbc-modal" onClick={e => e.stopPropagation()}>
+            <div className="cbc-modal-head">
+              <div>
+                <h4>{modalClass.name}</h4>
+                <span>{modalClass.students} students · {term} {year}</span>
+              </div>
+              <button className="cbc-modal-close" onClick={() => setModalClass(null)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="cbc-modal-body">
+              <div className="cbc-modal-stats">
+                {[
+                  { label: 'Students', value: modalClass.students, color: undefined },
+                  { label: 'Mean Points', value: `${modalClass.meanPoints}/8`, color: CBC_BAND_COLORS[modalClass.band]?.color },
+                  { label: 'Grade', value: modalClass.meanGrade, color: CBC_BAND_COLORS[modalClass.band]?.color },
+                  { label: 'Highest', value: modalClass.highest, color: '#16a34a' },
+                  { label: 'Lowest', value: modalClass.lowest, color: '#dc2626' },
+                  { label: 'Median', value: modalClass.median, color: undefined },
+                ].map(s => (
+                  <div key={s.label} className="cbc-modal-stat">
+                    <span className="cbc-modal-stat-val" style={{ color: s.color }}>{s.value}</span>
+                    <span className="cbc-modal-stat-label">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="cbc-modal-section">Proficiency Distribution</div>
+              <div className="cbc-modal-bands">
+                {['EE', 'ME', 'AE', 'BE'].map(band => (
+                  <div key={band} className="cbc-modal-band" style={{ background: CBC_BAND_COLORS[band].bg, borderColor: `${CBC_BAND_COLORS[band].color}22` }}>
+                    <span className="cbc-modal-band-pct" style={{ color: CBC_BAND_COLORS[band].color }}>{modalClass.dist[band]}%</span>
+                    <span className="cbc-modal-band-name" style={{ color: CBC_BAND_COLORS[band].color }}>{band}</span>
+                    <span className="cbc-modal-band-label">{CBC_BAND_COLORS[band].label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {modalSubjectBreakdown.length > 0 && (
+                <>
+                  <div className="cbc-modal-section">Subject Breakdown</div>
+                  <div className="cbc-modal-subjects">
+                    {modalSubjectBreakdown.map((s, si) => {
+                      const sBand = CBC_BAND_COLORS[s.band]
+                      return (
+                        <div key={si} className="cbc-modal-subject" style={{ borderLeft: `3px solid ${sBand?.color || '#94a3b8'}` }}>
+                          <div className="cbc-modal-subject-top">
+                            <span className="cbc-modal-subject-name">{s.name}</span>
+                            <span style={{ fontWeight: 700, color: sBand?.color || '#64748b' }}>{s.meanPoints}/8</span>
+                            <span className="cbc-modal-subject-grade" style={{ background: sBand?.bg, color: sBand?.color }}>{s.grade}</span>
+                          </div>
+                          <div className="cbc-modal-subject-bar">
+                            {['EE', 'ME', 'AE', 'BE'].map(band => (
+                              <div key={band} style={{ width: `${bandBarWidth(s.dist[band])}%`, background: CBC_BAND_COLORS[band].color }} />
+                            ))}
+                          </div>
+                          <div className="cbc-modal-subject-bands">
+                            {['EE', 'ME', 'AE', 'BE'].map(band => (
+                              <span key={band} style={{ color: CBC_BAND_COLORS[band].color }}>{band} {s.dist[band]}%</span>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="cbc-modal-foot">
+              <button className="btn-secondary" onClick={() => exportClassPDF(modalClass)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <FileText size={14} /> Export Class PDF
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

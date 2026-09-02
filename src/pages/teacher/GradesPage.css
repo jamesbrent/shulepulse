@@ -310,7 +310,20 @@
   .gd-panel-hdr { flex-direction: column; align-items: flex-start; gap: 6px; }
   .gd-row { grid-template-columns: 1fr; gap: 4px; }
   .gd-row-stat { font-size: 12px; }
-  .gd-status { flex-wrap: wrap; gap: 6px; }
+  .gd-status {
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .gd-status .gd-pill {
+    flex-shrink: 0;
+    padding: 3px 9px;
+    font-size: 11px;
+    min-height: 28px;
+  }
+  .gd-status .gd-pill svg { display: none; }
   .gd-dash { gap: 14px; }
 }
 
