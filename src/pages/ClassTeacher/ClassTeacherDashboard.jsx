@@ -456,7 +456,7 @@ export default function ClassTeacherDashboard() {
       </aside>
 
       <main className="ct-main">
-        <header className={`ct-header ${['performance', 'comments', 'communication', 'notices', 'library', 'support'].includes(activeNav) ? 'ct-header-hide-mobile' : ''}`}>
+        <header className={`ct-header ${['attendance', 'marks', 'performance', 'comments', 'communication', 'timetable', 'notices', 'library', 'support'].includes(activeNav) ? 'ct-header-hide-mobile' : ''}`}>
           <div>
             <h1>{pageTitles[activeNav]}</h1>
             <p>{currentTerm ? `${currentTerm}, ${currentYear}` : `${currentYear}`} · {school?.name || ''}</p>
