@@ -494,6 +494,8 @@
   .ct-header p { font-size: 12px; }
   .ct-header-actions { display: none; }
 
+  .ct-main .ct-header-hide-mobile { display: none; }
+
   .ct-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .ct-quick-actions { grid-template-columns: 1fr; }
 
