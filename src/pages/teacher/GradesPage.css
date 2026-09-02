@@ -661,9 +661,31 @@
   .me-header-meta { flex-direction: column; gap: 6px; }
   .me-header-meta span { padding: 6px 10px; }
 
-  .me-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .me-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    border-bottom: none;
+  }
   .me-tabs::-webkit-scrollbar { display: none; }
-  .me-tab { white-space: nowrap; min-height: 46px; }
+  .me-tab {
+    white-space: nowrap;
+    min-height: 46px;
+    justify-content: center;
+    padding: 8px 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 0;
+    font-size: 12px;
+  }
+  .me-tab.active {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
 
   .att-table-wrap { overflow: visible; border: none; background: none; }
 
@@ -683,8 +705,9 @@
     border-radius: 12px;
     padding: 10px 14px;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
   }
-  .me-table tbody tr:hover { background: #fff; }
   .me-table tr.me-row-error { background: #fef2f2; border-color: #fecaca; }
   .me-table tbody tr.me-row-error:hover { background: #fee2e2; }
   .me-table td {
@@ -695,6 +718,7 @@
     padding: 8px 0;
     border-bottom: 1px solid #f1f5f9;
     min-height: 42px;
+    flex: none;
   }
   .me-table td:last-child { border-bottom: none; }
   .me-table td::before {
@@ -712,9 +736,26 @@
   .me-table .me-input { width: 120px !important; min-height: 44px; font-size: 15px; padding: 8px 10px; }
   .me-table .me-remarks-input { width: 100% !important; max-width: 180px; }
 
-  .me-student-cell { font-size: 14px; }
+  .me-student-cell { font-size: 14px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .me-avatar { flex-shrink: 0; }
 
-  .me-summary-strip { gap: 8px; padding: 10px 12px; }
+  .me-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .me-summary-item {
+    justify-content: center;
+    text-align: center;
+    padding: 8px 4px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    min-width: 0;
+    font-size: 12px;
+  }
+  .me-summary-item svg { flex-shrink: 0; }
 
   .me-actions { flex-direction: column; align-items: stretch; gap: 10px; }
   .me-actions-left, .me-actions-right { width: 100%; }
