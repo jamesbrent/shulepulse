@@ -43,6 +43,38 @@ export default function GradesPage({ profile }) {
   const [view, setView] = useState('dashboard')
   const [analyticsData, setAnalyticsData] = useState(null)
   const [exporting, setExporting] = useState(false)
+
+  const kpiCarouselRef = useRef(null)
+
+  useEffect(() => {
+    const el = kpiCarouselRef.current
+    if (!el) return
+    let rafId = 0
+    let pos = 0
+    let dir = 1
+    const speed = 0.55
+    let running = true
+    const step = () => {
+      if (!running) return
+      if (window.matchMedia('(min-width: 601px)').matches) {
+        el.scrollLeft = 0
+        rafId = requestAnimationFrame(step)
+        return
+      }
+      const max = Math.max(0, el.scrollWidth - el.clientWidth)
+      if (max <= 0) {
+        rafId = requestAnimationFrame(step)
+        return
+      }
+      pos += dir * speed
+      if (pos >= max) { pos = max; dir = -1 }
+      if (pos <= 0) { pos = 0; dir = 1 }
+      el.scrollLeft = pos
+      rafId = requestAnimationFrame(step)
+    }
+    rafId = requestAnimationFrame(step)
+    return () => { running = false; cancelAnimationFrame(rafId) }
+  }, [view])
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState('summary')
   const termInited = useRef(false)
@@ -514,7 +546,7 @@ export default function GradesPage({ profile }) {
 
           <div className="gd-overall"><Users size={16} /> Across All Classes</div>
 
-          <div className="gd-kpi-grid">
+          <div className="gd-kpi-grid" ref={kpiCarouselRef}>
             <div className="gd-kpi gd-kpi-students">
               <div className="gd-kpi-top">
                 <div>

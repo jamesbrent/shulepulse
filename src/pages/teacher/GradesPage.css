@@ -312,12 +312,15 @@
     grid-template-columns: none;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    gap: 8px;
+    grid-auto-columns: 150px;
+    gap: 10px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 0;
   }
+  .gd-kpi-grid::-webkit-scrollbar { display: none; }
   .gd-kpi-students { display: flex; }
   .gd-status { display: none; }
   .gd-overall {
@@ -335,14 +338,27 @@
   }
   .gd-overall svg { color: var(--color-primary); flex-shrink: 0; }
   .gd-kpi {
-    padding: 10px 8px !important;
-    gap: 4px;
+    padding: 12px 10px !important;
+    gap: 6px;
     min-width: 0;
+    justify-content: center;
+    text-align: center;
   }
-  .gd-kpi-top { gap: 4px; }
-  .gd-kpi-icon { display: none; }
-  .gd-kpi-val { font-size: 16px !important; white-space: nowrap; }
-  .gd-kpi-label { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gd-kpi-top {
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .gd-kpi-icon {
+    display: flex;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+  .gd-kpi-icon svg { width: 18px; height: 18px; }
+  .gd-kpi-val { font-size: 18px !important; white-space: nowrap; }
+  .gd-kpi-label { display: none; }
   .gd-kpi-sub { display: none; }
   .gd-panel-hdr { flex-direction: column; align-items: flex-start; gap: 6px; }
   .gd-row { grid-template-columns: 1fr; gap: 4px; }
