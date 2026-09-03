@@ -20,6 +20,7 @@ export default function AcademicResults({ activeChild, school }) {
       .from('grades')
       .select('*')
       .eq('student_id', activeChild.id)
+      .eq('school_id', school?.id)
       .eq('term', currentTerm)
       .eq('year', currentYear)
       .in('status', ['approved', 'published'])

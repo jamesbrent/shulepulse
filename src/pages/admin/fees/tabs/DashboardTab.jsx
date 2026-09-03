@@ -235,6 +235,13 @@ export function DashboardTab({ profile, term, year, search, filterClass, filterS
           Bounced
           <span className="seg-count">{summary.bounced || 0}</span>
         </div>
+        {summary.other > 0 && (
+          <div className="seg-status-item" data-status="other" title="Assessments with an unrecognized status value (possible dirty data)">
+            <span className="seg-dot" />
+            Other/Unknown
+            <span className="seg-count">{summary.other}</span>
+          </div>
+        )}
       </div>
 
       {/* Recent payments table */}

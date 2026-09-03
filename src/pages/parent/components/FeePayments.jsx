@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { DollarSign, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-import { fmt, fmtDate } from '../../admin/fees/utils/feesHelpers'
+import { fmt, fmtDate, computeFeeBalance } from '../../admin/fees/utils/feesHelpers'
 
 export default function FeePayments({ activeChild, school }) {
   const [assessments, setAssessments] = useState([])
@@ -42,15 +42,8 @@ export default function FeePayments({ activeChild, school }) {
         .rpc('student_credit_balance', { p_school_id: school.id, p_student_id: activeChild.id }) : { data: 0 },
     ])
 
-    const totalCharged = (assessmentsRes.data || []).reduce((s, a) => s + Number(a.amount_due), 0)
-    // Applied-to-fees figure: charges/penalties increase; every other entry
-    // (payment, waiver, scholarship, discount, credit application) reduces.
-    const totalPaid = (ledgerRes.data || []).reduce((s, l) => {
-      if (l.entry_type === 'charge' || l.entry_type === 'penalty') return s
-      return s + Number(l.amount || 0)
-    }, 0)
+    const { totalCharged, totalPaid, balance } = computeFeeBalance(ledgerRes.data)
     const credit = Number(creditRes.data || 0)
-    const balance = Math.max(0, totalCharged - totalPaid)
 
     setAssessments(assessmentsRes.data || [])
     setPayments(paymentsRes.data || [])
@@ -96,7 +89,7 @@ export default function FeePayments({ activeChild, school }) {
           {aggregate.balance <= 0 ? <CheckCircle size={20} /> : <XCircle size={20} />}
           <div>
             <p className="asc-label">Balance</p>
-            <p className="asc-value">{fmt(aggregate.balance)}</p>
+            <p className="asc-value">{aggregate.balance < 0 ? `Credit: ${fmt(Math.abs(aggregate.balance))}` : fmt(aggregate.balance)}</p>
           </div>
         </div>
         <div className={`att-sum-card ${aggregate.status === 'cleared' ? 'green' : aggregate.status === 'partial' ? 'amber' : 'red'}`}>

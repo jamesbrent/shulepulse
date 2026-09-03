@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
+import { computeFeeBalance } from '../utils/feesHelpers'
 
 const DEFAULT_SUMMARY = {
   totalDue:     0,
@@ -8,6 +9,7 @@ const DEFAULT_SUMMARY = {
   paid:         0,
   partial:      0,
   pending:      0,
+  other:        0,
 }
 
 export function useFeesDashboard(schoolId, term, year) {
@@ -27,17 +29,15 @@ export function useFeesDashboard(schoolId, term, year) {
       .eq('term', term)
       .eq('year', year)
 
-    let totalDue = 0, totalPaid = 0
-    ;(ledger || []).forEach((e) => {
-      if (['charge', 'penalty'].includes(e.entry_type))                            totalDue  += Number(e.amount)
-      if (['payment', 'discount', 'waiver', 'scholarship'].includes(e.entry_type)) totalPaid += Number(e.amount)
-    })
+    const { totalCharged: totalDue, totalPaid, balance: totalBalance } = computeFeeBalance(ledger || [])
 
     // Recent payments (last 8) with student details
     const { data: payments } = await supabase
       .from('fee_payments')
       .select('*, students(full_name, class, stream, admission_number)')
       .eq('school_id', schoolId)
+      .eq('term', term)
+      .eq('year', year)
       .order('created_at', { ascending: false })
       .limit(8)
 
@@ -52,12 +52,13 @@ export function useFeesDashboard(schoolId, term, year) {
       .eq('term', term)
       .eq('year', year)
 
-    const counts = { paid: 0, partial: 0, pending: 0 }
+    const counts = { paid: 0, partial: 0, pending: 0, other: 0 }
     ;(assessments || []).forEach((a) => {
       if (counts[a.status] !== undefined) counts[a.status]++
+      else counts.other++
     })
 
-    setSummary({ totalDue, totalPaid, totalBalance: totalDue - totalPaid, ...counts })
+    setSummary({ totalDue, totalPaid, totalBalance, ...counts })
     setRecent(enriched)
     setLoading(false)
   }, [schoolId, term, year])

@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
 import { createStudentAuth, bulkCreateStudentAuth, generateAdmissionNumber } from '../../services/students/studentService'
+import { setupStudentFees, setupParentAccount } from '../../services/students/admissionService'
 import './Admissions.css'
 
 const CLASS_GROUPS = [
@@ -74,8 +75,28 @@ export default function Admissions({ onSuccess }) {
   const [creatingLogins, setCreatingLogins] = useState(false)
   const [loginResult, setLoginResult] = useState('')
   const [existingLogins, setExistingLogins] = useState(new Set())
+  const [classOptions, setClassOptions] = useState([]) // { class_name, level }[] from classes table
 
   useEffect(() => { fetchStudents() }, [])
+
+  useEffect(() => {
+    if (!profile?.school_id) return
+    supabase
+      .from('classes')
+      .select('id, class_name, level')
+      .eq('school_id', profile.school_id)
+      .order('class_name')
+      .then(({ data }) => setClassOptions(data || []))
+  }, [profile?.school_id])
+
+  const classGroups = classOptions.length
+    ? classOptions.reduce((groups, c) => {
+        const label = c.level || 'Classes'
+        if (!groups.find((g) => g.label === label)) groups.push({ label, options: [] })
+        groups.find((g) => g.label === label).options.push(c.class_name)
+        return groups
+      }, [])
+    : CLASS_GROUPS
 
   const fetchStudents = async () => {
     setLoading(true)
@@ -182,7 +203,7 @@ export default function Admissions({ onSuccess }) {
       const { data: inserted, error: insertError } = await supabase
         .from('students')
         .insert(payload)
-        .select('admission_number')
+        .select('id, admission_number')
         .single()
       if (insertError) throw insertError
 
@@ -196,12 +217,28 @@ export default function Admissions({ onSuccess }) {
         }
       }
 
+      try {
+        await setupStudentFees(inserted.id, profile.school_id, currentTerm, currentYear)
+      } catch (feeErr) {
+        console.warn('Fee assessment generation failed:', feeErr.message)
+      }
+      try {
+        await setupParentAccount(inserted.id, profile.school_id)
+      } catch (parentErr) {
+        console.warn('Parent account creation failed:', parentErr.message)
+      }
+
       setSuccess(`Admitted "${form.full_name}" — ${assigned}${form.email ? ' (login created)' : ''}`)
       const adm = await generateAdmNumber()
       setForm({ ...EMPTY_FORM, admission_number: adm })
       fetchStudents()
       if (onSuccess) onSuccess()
-    } catch (err) { setError(err.message) }
+    } catch (err) {
+      const isDup = err?.code === '23505' || /duplicate key|admission_number/i.test(err?.message || '')
+      setError(isDup
+        ? `Admission number "${form.admission_number || ''}" is already in use for this school. Use a different number or leave blank to auto-generate.`
+        : err.message)
+    }
     setSaving(false)
   }
 
@@ -351,7 +388,7 @@ export default function Admissions({ onSuccess }) {
                 <label>Class <span className="adm-required">*</span></label>
                 <select required value={form.class} onChange={e => setFormField('class', e.target.value)}>
                   <option value="">Select class</option>
-                  {CLASS_GROUPS.map(g => (
+                  {classGroups.map(g => (
                     <optgroup key={g.label} label={g.label}>
                       {g.options.map(o => <option key={o} value={o}>{o}</option>)}
                     </optgroup>

@@ -302,7 +302,8 @@ export async function loadLedgerData(supabase, schoolId) {
     supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).order('code'),
     supabase
       .from('journal_entry_lines')
-      .select('*, journal_entries!inner(entry_no, entry_date, description, source, status, posted_at)')
+      .select('*, journal_entries!inner(school_id, entry_no, entry_date, description, source, status, posted_at)')
+      .eq('journal_entries.school_id', schoolId)
       .order('created_at', { ascending: true }),
     supabase.from('journal_entries').select('*').eq('school_id', schoolId).order('created_at', { ascending: false }),
   ])

@@ -56,7 +56,7 @@ export default function StudentProfile() {
 
   const fetchStudent = async () => {
     try {
-      const data = await getStudentById(id)
+      const data = await getStudentById(id, profile?.school_id)
       setStudent(data)
     } catch (e) {
       console.error(e)

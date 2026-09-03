@@ -27,3 +27,13 @@ dist-ssr
 ~$*
 
 supabase/.temp
+
+# Capacitor / APK build artifacts
+ShulePulse.apk
+*.apk
+android/
+resources/
+
+# stray ad-hoc diagnostic SQL not part of migrations
+supabase/sql delete.sql
+supabase/sql T2-4 diagnostic.sql

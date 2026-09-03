@@ -15,6 +15,7 @@ import { ImportExcelModal } from '../../components/students/ImportExcelModal'
 import { exportToPDF } from '../../services/students/exportService'
 import { promoteStudentsAtomic, getGradeLevels } from '../../services/students/bulkPromotionService'
 import { createStudentAuth, bulkCreateStudentAuth, bulkCreateParentAccounts, generateAdmissionNumber } from '../../services/students/studentService'
+import { setupStudentFees, setupParentAccount } from '../../services/students/admissionService'
 import { StudentDocuments } from '../../components/students/StudentDocuments'
 import { ReportCard, fetchStudentComments, groupGradesBySubject, getCBEGrade } from '../../components/students/ReportCard'
 import { rankStudentsByGrades, findRank } from '../../services/grading'
@@ -69,7 +70,7 @@ const ROWS_PER_PAGE = 10
 
 export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) {
   const { profile } = useAuthStore()
-  const { school } = useSchool()
+  const { school, currentTerm, currentYear } = useSchool()
   const fileInputRef = useRef(null)
 
   const downloadProfilePdf = async (generator, filename) => {
@@ -103,6 +104,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
 
   // Data
   const [students, setStudents] = useState([])
+  const [classOptions, setClassOptions] = useState([]) // { class_name, level }[] from classes table
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -156,13 +158,8 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
   const [transcriptComment, setTranscriptComment] = useState('')
   const [promotingClass, setPromotingClass] = useState(false)
 
-  const getCurrentTerm = () => {
-    const m = new Date().getMonth()
-    if (m >= 0 && m <= 3) return 'Term 1'
-    if (m >= 4 && m <= 7) return 'Term 2'
-    return 'Term 3'
-  }
-  const getCurrentYear = () => new Date().getFullYear()
+  const getCurrentTerm = () => currentTerm || 'Term 1'
+  const getCurrentYear = () => currentYear
 
   // Close actions menu on outside click
   useEffect(() => {
@@ -237,6 +234,25 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
   }
 
   useEffect(() => { fetchStudents() }, [profile?.school_id])
+
+  useEffect(() => {
+    if (!profile?.school_id) return
+    supabase
+      .from('classes')
+      .select('id, class_name, level')
+      .eq('school_id', profile.school_id)
+      .order('class_name')
+      .then(({ data }) => setClassOptions(data || []))
+  }, [profile?.school_id])
+
+  const classGroups = classOptions.length
+    ? classOptions.reduce((groups, c) => {
+        const label = c.level || 'Classes'
+        if (!groups.find((g) => g.label === label)) groups.push({ label, options: [] })
+        groups.find((g) => g.label === label).options.push(c.class_name)
+        return groups
+      }, [])
+    : CLASS_GROUPS
 
   const fetchStudents = async () => {
     setLoading(true)
@@ -437,12 +453,25 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
             console.warn('Auth account creation failed:', authErr.message)
           }
         }
+        try {
+          await setupStudentFees(newStudent.id, profile.school_id, getCurrentTerm(), getCurrentYear())
+        } catch (feeErr) {
+          console.warn('Fee assessment generation failed:', feeErr.message)
+        }
+        try {
+          await setupParentAccount(newStudent.id, profile.school_id)
+        } catch (parentErr) {
+          console.warn('Parent account creation failed:', parentErr.message)
+        }
       }
       setSaving(false)
       setShowModal(false)
       fetchStudents()
     } catch (err) {
-      setError(err.message)
+      const isDup = err?.code === '23505' || /duplicate key|admission_number/i.test(err?.message || '')
+      setError(isDup
+        ? `Admission number "${form.admission_number || ''}" is already in use for this school. Use a different number or leave blank to auto-generate.`
+        : err.message)
       setSaving(false)
     }
   }
@@ -1326,7 +1355,7 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
 
               <p className="sp-form-label">Academic Information</p>
               <div className="sp-form-grid">
-                <div className="sp-field"><label>Class *</label><select required value={form.class} onChange={e => setForm({ ...form, class: e.target.value })}><option value="">Select class</option>{CLASS_GROUPS.map(g => (<optgroup key={g.label} label={g.label}>{g.options.map(o => <option key={o} value={o}>{o}</option>)}</optgroup>))}</select></div>
+                <div className="sp-field"><label>Class *</label><select required value={form.class} onChange={e => setForm({ ...form, class: e.target.value })}><option value="">Select class</option>{classGroups.map(g => (<optgroup key={g.label} label={g.label}>{g.options.map(o => <option key={o} value={o}>{o}</option>)}</optgroup>))}</select></div>
                 <div className="sp-field"><label>Stream</label><input placeholder="e.g. East" value={form.stream} onChange={e => setForm({ ...form, stream: e.target.value })} /></div>
                 <div className="sp-field"><label>Status</label><select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option value="active">Active</option><option value="inactive">Inactive</option><option value="alumni">Alumni</option><option value="transferred">Transferred</option></select></div>
               </div>

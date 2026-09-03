@@ -59,6 +59,7 @@ export default function TeachersPage() {
   const [teachers, setTeachers]     = useState([])
   const [classes, setClasses]       = useState([])   // { id, class_name }[]
   const [subjectsList, setSubjectsList] = useState([]) // { id, name }[]
+  const [departmentsList, setDepartmentsList] = useState([]) // { id, name }[]
   const [loading, setLoading]       = useState(true)
 
   // ── Filters ───────────────────────────────────────────────
@@ -82,7 +83,7 @@ export default function TeachersPage() {
   const [teacherPerf, setTeacherPerf]           = useState({ loading: true, grades: [] })
   const [form, setForm]                         = useState(EMPTY_FORM)
 
-  useEffect(() => { fetchTeachers(); fetchClasses(); fetchSubjects() }, [])
+  useEffect(() => { fetchTeachers(); fetchClasses(); fetchSubjects(); fetchDepartments() }, [])
 
   useEffect(() => {
     if (!selectedTeacher?.id) { setTeacherPerf({ loading: false, grades: [] }); return }
@@ -168,6 +169,15 @@ export default function TeachersPage() {
       .eq('school_id', profile.school_id)
       .order('name')
     setSubjectsList(data || [])
+  }
+
+  const fetchDepartments = async () => {
+    const { data } = await supabase
+      .from('departments')
+      .select('id, name')
+      .eq('school_id', profile.school_id)
+      .order('name')
+    setDepartmentsList(data || [])
   }
 
   // ── Helpers ───────────────────────────────────────────────
@@ -352,6 +362,9 @@ export default function TeachersPage() {
   // ── Filter & Derived ──────────────────────────────────────
   const allSubjects = [...new Set(teachers.flatMap(t => t.subjects || []))].sort()
   const allDepts    = [...new Set(teachers.flatMap(t => t.departments || []))].sort()
+  const departmentNames = departmentsList.length
+    ? departmentsList.map((d) => d.name)
+    : DEPARTMENTS
 
   const filtered = teachers.filter(t => {
     const s = search.toLowerCase()
@@ -412,7 +425,7 @@ export default function TeachersPage() {
           </select>
           <select className="filter-select" value={filterDept} onChange={e=>setFilterDept(e.target.value)}>
             <option value="all">All Depts</option>
-            {DEPARTMENTS.map(d=><option key={d} value={d}>{d}</option>)}
+            {departmentNames.map(d=><option key={d} value={d}>{d}</option>)}
           </select>
           <select className="filter-select" value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
             <option value="all">All Status</option>
@@ -539,7 +552,7 @@ export default function TeachersPage() {
           <div className="tp-analytics-card">
             <p className="tac-label">Dept Breakdown</p>
             <div className="dept-bars">
-              {DEPARTMENTS.filter(d => teachers.some(t => (t.departments||[]).includes(d))).map(d => {
+                {departmentNames.filter(d => teachers.some(t => (t.departments||[]).includes(d))).map(d => {
                 const count = teachers.filter(t => (t.departments||[]).includes(d)).length
                 const pct = Math.round((count / teachers.length) * 100)
                 return (
@@ -727,8 +740,8 @@ export default function TeachersPage() {
               {/* ── Departments ── */}
               <p className="form-section-label">Departments</p>
               <div className="picker-grid">
-                {DEPARTMENTS.map(d => (
-                  <button key={d} type="button" className={`pick-btn ${form.departments.includes(d)?'selected':''}`} onClick={()=>setForm(f=>({...f,departments:toggleArr(f.departments,d)}))}>
+                {departmentNames.map(d => (
+                <button key={d} type="button" className={`pick-btn ${form.departments.includes(d)?'selected':''}`} onClick={()=>setForm(f=>({...f,departments:toggleArr(f.departments,d)}))}>
                     {d}
                   </button>
                 ))}

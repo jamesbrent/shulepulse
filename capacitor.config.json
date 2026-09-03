@@ -1,0 +1,14 @@
+{
+  "appId": "com.shulepulse.app",
+  "appName": "ShulePulse",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#ffffff"
+  }
+}

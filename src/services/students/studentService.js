@@ -51,11 +51,12 @@ export async function fetchStudents(schoolId, filters = {}) {
   return { data, count }
 }
 
-export async function getStudentById(id) {
+export async function getStudentById(id, schoolId) {
   const { data, error } = await supabase
     .from('students')
     .select(STUDENT_FIELDS)
     .eq('id', id)
+    .eq('school_id', schoolId)
     .single()
   if (error) throw error
   return data
@@ -71,30 +72,33 @@ export async function createStudent(payload) {
   return data
 }
 
-export async function updateStudent(id, payload) {
+export async function updateStudent(id, payload, schoolId) {
   const { data, error } = await supabase
     .from('students')
     .update(payload)
     .eq('id', id)
+    .eq('school_id', schoolId)
     .select()
     .single()
   if (error) throw error
   return data
 }
 
-export async function softDeleteStudent(id, userId) {
+export async function softDeleteStudent(id, userId, schoolId) {
   const { error } = await supabase
     .from('students')
     .update({ status: 'inactive', updated_by: userId, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('school_id', schoolId)
   if (error) throw error
 }
 
-export async function bulkSoftDelete(ids, userId) {
+export async function bulkSoftDelete(ids, userId, schoolId) {
   const { error } = await supabase
     .from('students')
     .update({ status: 'inactive', updated_by: userId, updated_at: new Date().toISOString() })
     .in('id', ids)
+    .eq('school_id', schoolId)
   if (error) throw error
 }
 
@@ -213,6 +217,7 @@ export async function bulkCreateStudentAuth(schoolId) {
     .from('profiles')
     .select('email, id')
     .eq('role', 'student')
+    .eq('school_id', schoolId)
 
   const profileByEmail = {}
   for (const p of (existingProfiles || [])) {
@@ -299,6 +304,7 @@ export async function bulkCreateParentAccounts(schoolId) {
     .from('profiles')
     .select('email, id')
     .eq('role', 'parent')
+    .eq('school_id', schoolId)
 
   const profileByEmail = {}
   for (const p of (existingProfiles || [])) {

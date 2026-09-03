@@ -355,6 +355,7 @@ export const ACCOUNT_MAPPING_ITEMS = {
   basic_non_teaching:     { label: 'Non-Teaching Staff Basic Salary', defaultCode: '5020' },
   allowances:             { label: 'Allowances, Bonuses & Overtime', defaultCode: '5040' },
   employer_contributions: { label: 'Employer NSSF, Housing Levy, NITA', defaultCode: '5030' },
+  employer_items_payable: { label: 'Employer Contributions Payable', defaultCode: '2155' },
   paye:                   { label: 'PAYE Withheld', defaultCode: '2110' },
   shif:                   { label: 'SHIF/SHA Employee Contribution', defaultCode: '2115' },
   nssf:                   { label: 'NSSF (Employee + Employer)', defaultCode: '2130' },
@@ -417,13 +418,14 @@ export async function postPayrollJournal(supabase, { schoolId, userId, runId, en
   if (salaryNonTeaching > 0) journalLines.push(debit('basic_non_teaching', salaryNonTeaching, 'Non-teaching staff basic salaries'))
   if (allowances > 0) journalLines.push(debit('allowances', allowances, 'Allowances, bonuses & overtime'))
   journalLines.push(debit('employer_contributions', employerContrib + employerItemsTotal, 'Employer NSSF, Housing Levy, NITA & contributions'))
+  journalLines.push(credit('employer_items_payable', employerItemsTotal, 'Custom employer contributions payable'))
   journalLines.push(credit('paye', sum((l) => l.paye), 'PAYE tax withheld'))
   journalLines.push(credit('shif', sum((l) => l.shif), 'SHIF/SHA employee contribution'))
   journalLines.push(credit('nssf', nssfTotal, 'NSSF (employee + employer)'))
   journalLines.push(credit('housing_levy', housingTotal, 'Housing Levy (employee + employer)'))
   journalLines.push(credit('nita', sum((l) => l.nita), 'NITA levy (employer)'))
   journalLines.push(credit('helb', sum((l) => l.helb), 'HELB loan recovery'))
-  journalLines.push(credit('other_deductions', sum((l) => l.other_deductions) + employerItemsTotal, 'SACCO, union & other recoveries + employer contributions'))
+  journalLines.push(credit('other_deductions', sum((l) => l.other_deductions), 'SACCO, union & other employee recoveries'))
   journalLines.push(credit('net_pay', sum((l) => l.net_pay), 'Net pay (wages payable)'))
 
   const je = await postToJournal(supabase, {

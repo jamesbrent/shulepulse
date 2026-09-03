@@ -24,6 +24,7 @@ export default function AttendancePage({ student }) {
       .from('attendance')
       .select('*')
       .eq('student_id', student.id)
+      .eq('school_id', student?.school_id)
       .eq('date', filterDate)
       .order('created_at', { ascending: false })
     setRecords(data || [])
@@ -31,9 +32,9 @@ export default function AttendancePage({ student }) {
   }
 
   const fetchSummary = async () => {
-    const present = await supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('student_id', student.id).eq('status', 'present')
-    const absent = await supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('student_id', student.id).eq('status', 'absent')
-    const late = await supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('student_id', student.id).eq('status', 'late')
+    const present = await supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('student_id', student.id).eq('school_id', student?.school_id).eq('status', 'present')
+    const absent = await supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('student_id', student.id).eq('school_id', student?.school_id).eq('status', 'absent')
+    const late = await supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('student_id', student.id).eq('school_id', student?.school_id).eq('status', 'late')
     setSummary({
       present: present.count || 0,
       absent: absent.count || 0,

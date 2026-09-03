@@ -37,7 +37,7 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
   const { school, currentTerm, currentYear } = useSchool()
 
   const [payments, setPayments] = useState([])
-  const [feeStructures, setFeeStructures] = useState([])
+  const [feeAssessments, setFeeAssessments] = useState([])
   const [loading, setLoading] = useState(true)
   const [term, setTerm] = useState(currentTerm || '')
   const [year, setYear] = useState(String(currentYear || new Date().getFullYear()))
@@ -63,21 +63,21 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
     if (!profile?.school_id) return
     setLoading(true)
 
-    const [payRes, structRes] = await Promise.all([
+    const [payRes, assessRes] = await Promise.all([
       supabase
         .from('fee_payments')
         .select('*, students(full_name, class, stream, admission_number)')
         .eq('school_id', profile.school_id)
         .order('created_at', { ascending: false }),
       supabase
-        .from('fee_structures')
-        .select('amount, class, term, year')
-        .eq('school_id', profile.school_id)
+        .from('fee_assessments')
+        .select('student_id, amount_due, term, year, students(class)')
+        .eq('school_id', profile.school_id),
     ])
 
     const enriched = await enrichWithStaffNames(payRes.data || [])
     setPayments(enriched)
-    setFeeStructures(structRes.data || [])
+    setFeeAssessments(assessRes.data || [])
     setLoading(false)
   }, [profile?.school_id])
 
@@ -263,13 +263,14 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
   const totalCollected = filtered.reduce((s, p) => s + Number(p.amount), 0)
   const totalCount = filtered.length
 
-  const filteredStructures = feeStructures.filter((s) => {
-    const matchTerm = !term || s.term === term
-    const matchYear = !year || String(s.year) === year
-    const matchClass = !filterClass || s.class === filterClass
+  const filteredAssessments = feeAssessments.filter((a) => {
+    const matchTerm = !term || a.term === term
+    const matchYear = !year || String(a.year) === year
+    const matchClass = !filterClass || a.students?.class === filterClass
     return matchTerm && matchYear && matchClass
   })
-  const totalExpected = filteredStructures.reduce((s, st) => s + (parseFloat(st.amount) || 0), 0)
+  const assessedCount = new Set(filteredAssessments.map((a) => a.student_id)).size
+  const totalExpected = filteredAssessments.reduce((s, a) => s + (parseFloat(a.amount_due) || 0), 0)
 
   const outstanding = totalExpected - totalCollected
   const collectionRate = totalExpected > 0 ? Math.min(100, Math.round((totalCollected / totalExpected) * 100)) : 0
@@ -498,7 +499,7 @@ export default function PaymentsPage({ showRecordPayment, onRecordPaymentClose }
             <p className="pay-kpi-label">Total Expected</p>
             <p className="pay-kpi-value">{fmt(totalExpected)}</p>
           </div>
-          <span className="pay-kpi-trend flat">{filteredStructures.length} structures</span>
+          <span className="pay-kpi-trend flat">{assessedCount} assessed student{assessedCount === 1 ? '' : 's'}</span>
         </div>
         <div className="pay-kpi-card green">
           <div className="pay-kpi-icon-wrap"><CheckCircle /></div>

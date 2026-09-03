@@ -53,7 +53,7 @@ export default function RoleSwitcher({ mobile = false }) {
 
   const otherRoles = roles.filter(r => r !== profile?.role)
   // On mobile only show teacher/class-teacher/parent switch targets
-  const mobileAllowed = ['class_teacher', 'parent']
+  const mobileAllowed = ['teacher', 'class_teacher', 'parent']
   const visibleRoles = mobile ? otherRoles.filter(r => mobileAllowed.includes(r)) : otherRoles
   if (visibleRoles.length === 0) return null
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
-import { loadGradingConfig } from '../services/grading/config'
+import { loadGradingConfig, refreshGradingConfig } from '../services/grading/config'
 import { logAction } from '../features/audit/auditService'
 import { resolveMfaStatus } from '../features/auth/mfa'
 
@@ -44,6 +44,7 @@ export const useAuthStore = create((set, get) => ({
       }
       set({ selectedSchool: school, profile: { ...profile, school_id: school.id, schools: school } })
       logAction({ schoolId: school.id, action: 'school_switch', details: { user_id: profile.id, to_school: school.id } })
+      refreshGradingConfig(school.id)
     } else {
       set({ selectedSchool: null })
     }

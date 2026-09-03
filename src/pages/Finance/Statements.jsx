@@ -3,7 +3,7 @@ import { Search, Download, FileText, CheckCircle, AlertCircle, Printer } from 'l
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { useSchool } from '../admin/useSchool'
-import { fmt, fmtDate, fmtDateTime, initials, downloadFile, TERMS, YEARS } from '../admin/fees/utils/feesHelpers'
+import { fmt, fmtDate, fmtDateTime, initials, downloadFile, TERMS, YEARS, computeFeeBalance } from '../admin/fees/utils/feesHelpers'
 import { generateReceiptPdf } from '../admin/fees/utils/generateReceiptPdf'
 import { generateFeeStatementPdf } from '../admin/fees/utils/generateFeeStatementPdf'
 import { useStudentBalance } from '../admin/fees/hooks/useStudentBalance'
@@ -123,14 +123,7 @@ export default function StatementsPage() {
     return () => clearTimeout(t)
   }, [toast])
 
-  const getBalance = (entries) => {
-    let bal = 0
-    ;(entries || []).forEach((e) => {
-      if (['charge', 'penalty'].includes(e.entry_type)) bal += Number(e.amount)
-      else bal -= Number(e.amount)
-    })
-    return bal
-  }
+  const getBalance = (entries) => computeFeeBalance(entries).balance
 
   const filtered = students.filter((s) =>
     s.full_name?.toLowerCase().includes(search.toLowerCase()) ||

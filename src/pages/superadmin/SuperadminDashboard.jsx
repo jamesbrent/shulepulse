@@ -43,11 +43,12 @@ import { fetchRecentPayments } from '../../features/superadmin/paymentService'
 import { formatCurrency, formatCompactCurrency } from '../../lib/format'
 import { useAuthStore } from '../../store/authStore'
 
-const PLAN_META = [
-  { key: 'basic', label: 'Basic', color: '#334155' },
-  { key: 'pro', label: 'Pro', color: 'var(--color-primary)' },
-  { key: 'enterprise', label: 'Enterprise', color: 'var(--color-secondary)' },
-]
+import { PLAN_KEYS, getPlanLabel, getPlanColor } from '../../utils/plans'
+const PLAN_META = PLAN_KEYS.map((key) => ({
+  key,
+  label: getPlanLabel(key),
+  color: getPlanColor(key),
+}))
 
 export default function SuperadminDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard')

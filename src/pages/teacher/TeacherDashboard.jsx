@@ -237,7 +237,7 @@ export default function TeacherDashboard() {
   const handleNav = (key) => {
     setActiveNav(key)
     setMoreOpen(false)
-    if (key === 'notices') markNoticesSeen(profile?.id)
+    if (key === 'notices') markNoticesSeen(profile?.id, profile?.school_id)
     window.scrollTo({ top: 0 })
   }
 
@@ -505,7 +505,7 @@ export default function TeacherDashboard() {
             <button
               key={item.key}
               className={`nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(profile?.id); setMobileOpen(false) }}
+              onClick={() => { setActiveNav(item.key); if (item.key === 'notices') markNoticesSeen(profile?.id, profile?.school_id); setMobileOpen(false) }}
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -573,7 +573,7 @@ export default function TeacherDashboard() {
         items={filteredNavItems}
         activeNav={activeNav}
         onNavigate={handleNav}
-        onNoticesSeen={() => markNoticesSeen(profile?.id)}
+        onNoticesSeen={() => markNoticesSeen(profile?.id, profile?.school_id)}
           notifCount={notifCount}
           profile={profile}
           schoolName={schoolName}

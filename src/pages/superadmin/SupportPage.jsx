@@ -201,7 +201,7 @@ export default function SupportPage() {
   const renderDashboard = () => {
     const catData = CATEGORY_OPTIONS.filter(c => c.value).map(c => ({
       name: c.label.split('/')[0].trim(),
-      value: tickets.filter(t => t.category === c.value).length || Math.floor(Math.random() * 5),
+      value: tickets.filter(t => t.category === c.value).length,
     }))
     const statusData = Object.entries(STATUS_META).map(([k, v]) => ({
       name: v.label, value: stats?.[k] ?? 0, color: v.color,

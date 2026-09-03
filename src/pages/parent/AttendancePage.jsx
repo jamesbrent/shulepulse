@@ -24,6 +24,7 @@ export default function AttendancePage({ activeChild }) {
       .from('attendance')
       .select('*, students(full_name, class, admission_number)')
       .eq('student_id', activeChild.id)
+      .eq('school_id', activeChild?.school_id)
       .eq('date', filterDate)
       .order('created_at', { ascending: false })
 
@@ -36,18 +37,21 @@ export default function AttendancePage({ activeChild }) {
       .from('attendance')
       .select('*', { count: 'exact', head: true })
       .eq('student_id', activeChild.id)
+      .eq('school_id', activeChild?.school_id)
       .eq('status', 'present')
 
     const { count: absentCount } = await supabase
       .from('attendance')
       .select('*', { count: 'exact', head: true })
       .eq('student_id', activeChild.id)
+      .eq('school_id', activeChild?.school_id)
       .eq('status', 'absent')
 
     const { count: lateCount } = await supabase
       .from('attendance')
       .select('*', { count: 'exact', head: true })
       .eq('student_id', activeChild.id)
+      .eq('school_id', activeChild?.school_id)
       .eq('status', 'late')
 
     const total = (presentCount || 0) + (absentCount || 0) + (lateCount || 0)

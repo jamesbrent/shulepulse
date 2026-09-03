@@ -26,6 +26,25 @@ export const paidWaterfall = (assessments, totalPaid) => {
   })
 }
 
+// Authenticated fee balance — the SINGLE canonical formula used across the
+// student / parent / admin-dashboard / finance-statement screens. It mirrors
+// the server-side RPC student_term_outstanding:
+//   balance = (charges + penalties) - (every other ledger entry: payments,
+//             waivers, scholarships, discounts, credit applications, ...)
+// The sign is meaningful: a NEGATIVE balance is a real credit (overpayment)
+// and MUST NOT be clamped to zero. Callers display a credit state for < 0.
+// Returns { totalCharged, totalPaid, balance }.
+export const computeFeeBalance = (entries = []) => {
+  let totalCharged = 0
+  let totalPaid = 0
+  ;(entries || []).forEach((e) => {
+    const amt = Number(e.amount || 0)
+    if (['charge', 'penalty'].includes(e.entry_type)) totalCharged += amt
+    else totalPaid += amt
+  })
+  return { totalCharged, totalPaid, balance: totalCharged - totalPaid }
+}
+
 // ─── File Download ────────────────────────────────────────────────────────────
 import { Banknote, Smartphone, Landmark, FileText, SlidersHorizontal } from 'lucide-react'
 

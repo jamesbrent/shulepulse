@@ -46,8 +46,25 @@ export default function DebtorsPage() {
       else map[sid].totalPaid += Number(e.amount)
     })
 
+    // Unallocated student credit (separate table, migration 123). Credit offsets
+    // what the student owes, so fully credit-covered students must not be listed
+    // as debtors nor sent reminders.
+    const { data: creditTxns } = await supabase
+      .from('student_credit_transactions')
+      .select('student_id, type, amount')
+      .eq('school_id', profile.school_id)
+    const creditMap = {}
+    ;(creditTxns || []).forEach((c) => {
+      const sign = c.type === 'credit' ? 1 : -1
+      creditMap[c.student_id] = (creditMap[c.student_id] || 0) + Number(c.amount) * sign
+    })
+
     const list = Object.values(map)
-      .map((d) => ({ ...d, balance: d.totalBilled - d.totalPaid }))
+      .map((d) => ({
+        ...d,
+        credit: creditMap[d.student_id] || 0,
+        balance: d.totalBilled - d.totalPaid - (creditMap[d.student_id] || 0),
+      }))
       .filter((d) => d.balance > 0)
       .sort((a, b) => b.balance - a.balance)
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { DollarSign, CheckCircle, XCircle, AlertCircle, Receipt } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { paidWaterfall } from '../admin/fees/utils/feesHelpers'
+import { paidWaterfall, computeFeeBalance } from '../admin/fees/utils/feesHelpers'
 
 const fmt = (n) => `KES ${Number(n || 0).toLocaleString()}`
 
@@ -41,15 +41,8 @@ export default function FeeStatementPage({ student, school }) {
       school?.id ? supabase
         .rpc('student_credit_balance', { p_school_id: school.id, p_student_id: student.id }) : { data: 0 },
     ]).then(([a, p, l, c]) => {
-      const totalCharged = (a.data || []).reduce((s, x) => s + Number(x.amount_due || 0), 0)
-      // Applied-to-fees figure: charges/penalties increase; every other entry
-      // (payment, waiver, scholarship, discount, credit application) reduces.
-      const totalPaid = (l.data || []).reduce((s, x) => {
-        if (x.entry_type === 'charge' || x.entry_type === 'penalty') return s
-        return s + Number(x.amount || 0)
-      }, 0)
+      const { totalCharged, totalPaid, balance } = computeFeeBalance(l.data)
       const credit = Number(c.data || 0)
-      const balance = Math.max(0, totalCharged - totalPaid)
       setAssessments(a.data || [])
       setPayments(p.data || [])
       setLedger(l.data || [])
@@ -99,11 +92,11 @@ export default function FeeStatementPage({ student, school }) {
           </div>
         )}
         <div className="sp-stat-card">
-          <div className="sp-stat-icon-wrap" style={{ background: aggregate.balance <= 0 ? '#f0fdf4' : '#fef2f2', color: aggregate.balance <= 0 ? '#16a34a' : '#dc2626' }}>
+          <div className="sp-stat-icon-wrap" style={{ background: aggregate.balance < 0 ? '#f0fdf4' : aggregate.balance === 0 ? '#f0fdf4' : '#fef2f2', color: aggregate.balance <= 0 ? '#16a34a' : '#dc2626' }}>
             {aggregate.balance <= 0 ? <CheckCircle size={20} /> : <XCircle size={20} />}
           </div>
           <div className="sp-stat-content">
-            <p className="sp-stat-value" style={{ color: aggregate.balance <= 0 ? '#16a34a' : '#dc2626', fontSize: 16 }}>{fmt(aggregate.balance)}</p>
+            <p className="sp-stat-value" style={{ color: aggregate.balance <= 0 ? '#16a34a' : '#dc2626', fontSize: 16 }}>{aggregate.balance < 0 ? `Credit: ${fmt(Math.abs(aggregate.balance))}` : fmt(aggregate.balance)}</p>
             <p className="sp-stat-label">Balance</p>
           </div>
         </div>

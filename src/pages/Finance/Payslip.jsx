@@ -1,11 +1,26 @@
-import { Fragment } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { X, Printer } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import { fmt, fmtDate } from '../admin/fees/utils/feesHelpers'
+import { getStatutoryConfig } from './payrollUtils'
 
 // Printable payslip modal. Renders one payroll_line's breakdown in a
 // clean A4-style sheet; @media print in Payroll.css isolates this sheet.
 export default function Payslip({ line, run, school, schoolName, onClose }) {
   const b = line.breakdown || {}
+  const [shifRate, setShifRate] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!line.school_id) return () => { cancelled = true }
+    ;(async () => {
+      try {
+        const cfg = await getStatutoryConfig(supabase, line.school_id)
+        if (!cancelled) setShifRate(cfg.shif?.rate ?? null)
+      } catch { /* keep default label */ }
+    })()
+    return () => { cancelled = true }
+  }, [line.school_id])
   const oldAllowances = b.allowances || []
   const taxableAllowances = (b.taxable_allowances && b.taxable_allowances.length
     ? b.taxable_allowances
@@ -128,7 +143,7 @@ export default function Payslip({ line, run, school, schoolName, onClose }) {
               <table className="ps-table">
                 <tbody>
                   <Row label="PAYE Tax" value={line.paye} />
-                  <Row label="SHIF (2.75%)" value={line.shif} />
+                  <Row label={`SHIF (${shifRate ?? 2.75}%)`} value={line.shif} />
                   <Row label="NSSF (Employee)" value={line.nssf_employee} />
                   <Row label="Housing Levy (Employee)" value={line.housing_employee} />
                   {helbItems.map((h, i) => <Row key={`h${i}`} label={h.name} value={h.amount} />)}

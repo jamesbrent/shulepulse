@@ -1,6 +1,6 @@
 import FeesPage from './fees/FeesPage'
 import './FeesPage.css'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   LayoutDashboard, Users, DollarSign, ClipboardList,
   BarChart2, BarChart3, GraduationCap, Palette, Settings, LogOut,
@@ -439,6 +439,23 @@ export default function AdminDashboard() {
     setLoading(false)
   }
 
+  const fetchDashboardRef = useRef(fetchDashboardData)
+  fetchDashboardRef.current = fetchDashboardData
+
+  useEffect(() => {
+    const schoolId = authProfile?.school_id
+    if (!schoolId) return
+    const channel = supabase
+      .channel(`admin-dash-fees-${schoolId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'fee_payments', filter: `school_id=eq.${schoolId}` },
+        () => { fetchDashboardRef.current() },
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [authProfile?.school_id])
+
   async function enrichWithStaffNames(payments) {
     const staffIds = [...new Set(payments.map((p) => p.received_by).filter(Boolean))]
     if (!staffIds.length) return payments.map((p) => ({ ...p, staff_name: '—' }))
@@ -454,7 +471,7 @@ export default function AdminDashboard() {
     setActiveNav(key)
     setMobileOpen(false)
     setPage(1)
-    if (key === 'notifications') markNoticesSeen(authProfile?.id)
+    if (key === 'notifications') markNoticesSeen(authProfile?.id, authProfile?.school_id)
     const group = NAV_GROUPS.find(g => g.items.some(i => i.key === key))
     if (group) {
       setExpandedGroup(group.id)

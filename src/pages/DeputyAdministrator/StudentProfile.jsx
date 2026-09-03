@@ -35,7 +35,7 @@ export default function StudentProfile({ student, onBack, schoolId }) {
       supabase.from('discipline_records').select('*').eq('student_id', sid).order('date', { ascending: false }),
       supabase.from('attendance').select('date, status, notes').eq('student_id', sid).order('date', { ascending: false }).limit(100),
       supabase.from('teacher_comments').select('*, teachers(full_name)').eq('student_id', sid).order('created_at', { ascending: false }),
-      supabase.from('timetable_slots').select('*, teachers(full_name), subjects(name)').eq('class_id', student.class_id).order('day_of_week').order('start_time'),
+      student.class_id ? supabase.from('timetable_slots').select('*, teachers(full_name), subjects(name)').eq('class_id', student.class_id).order('day_of_week').order('start_time') : { data: [] },
       supabase.from('schools').select('id, name, logo_url, motto').eq('id', schoolId).single(),
     ])
 

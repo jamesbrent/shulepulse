@@ -60,13 +60,13 @@ export default function StudentList() {
 
   const handleDelete = async (student) => {
     if (!confirm(`Remove ${student.full_name}? This will mark them as inactive.`)) return
-    await bulkSoftDelete([student.id], profile?.id)
+    await bulkSoftDelete([student.id], profile?.id, profile?.school_id)
     loadData()
   }
 
   const handleBulkDelete = async () => {
     if (!confirm(`Remove ${selectedIds.length} students?`)) return
-    await bulkSoftDelete(selectedIds, profile?.id)
+    await bulkSoftDelete(selectedIds, profile?.id, profile?.school_id)
     setSelectedIds([])
     loadData()
   }

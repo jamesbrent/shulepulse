@@ -30,6 +30,7 @@ export default function useStudentAcademicHistory({ student, school }) {
         .from('grades')
         .select('term, year, class_name')
         .eq('student_id', student.id)
+        .eq('school_id', school?.id)
         .in('status', ['approved', 'published'])
 
       const rows = gradeRows || []
@@ -61,7 +62,7 @@ export default function useStudentAcademicHistory({ student, school }) {
     }
     loadOptions()
     return () => { active = false }
-  }, [student?.id, student?.class, currentTerm, currentYear])
+  }, [student?.id, student?.class, school?.id, currentTerm, currentYear])
 
   useEffect(() => {
     if (!student?.id || !optionsLoaded) return
@@ -78,6 +79,7 @@ export default function useStudentAcademicHistory({ student, school }) {
         .from('grades')
         .select('*')
         .eq('student_id', student.id)
+        .eq('school_id', school?.id)
         .eq('term', selectedTerm)
         .eq('year', Number(selectedYear))
         .eq('class_name', selectedClass)
@@ -87,6 +89,7 @@ export default function useStudentAcademicHistory({ student, school }) {
         .from('cbc_assessments')
         .select('*')
         .eq('student_id', student.id)
+        .eq('school_id', school?.id)
         .eq('term', selectedTerm)
         .eq('year', Number(selectedYear))
         .eq('class_name', selectedClass)
@@ -98,7 +101,7 @@ export default function useStudentAcademicHistory({ student, school }) {
       setLoading(false)
     }).catch(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [student?.id, optionsLoaded, selectedTerm, selectedYear, selectedClass])
+  }, [student?.id, optionsLoaded, school?.id, selectedTerm, selectedYear, selectedClass])
 
   return {
     terms,

@@ -68,6 +68,7 @@ export default function AttendanceConflictsPanel({ schoolId, assignedClasses = [
     let q = supabase
       .from('attendance_conflicts')
       .select('*')
+      .eq('school_id', schoolId)
       .eq('date', filterDate)
       .order('class_name')
     if (filterClass !== 'all') q = q.eq('class_name', filterClass)

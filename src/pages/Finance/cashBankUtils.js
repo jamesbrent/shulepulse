@@ -77,7 +77,8 @@ export async function loadCashBankData(supabase, schoolId) {
     supabase.from('chart_of_accounts').select('*').eq('school_id', schoolId).order('code'),
     supabase
       .from('journal_entry_lines')
-      .select('*, journal_entries!inner(entry_no, entry_date, description, source, status, posted_at, reference_type, reference_id)')
+      .select('*, journal_entries!inner(school_id, entry_no, entry_date, description, source, status, posted_at, reference_type, reference_id)')
+      .eq('journal_entries.school_id', schoolId)
       .order('created_at', { ascending: true }),
     supabase.from('journal_entries').select('*').eq('school_id', schoolId).order('created_at', { ascending: false }),
     supabase.from('cash_transfers').select('*').eq('school_id', schoolId).order('transfer_date', { ascending: false }),

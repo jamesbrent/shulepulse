@@ -24,7 +24,7 @@ export default function EditStudent() {
 
   const loadStudent = async () => {
     try {
-      const s = await getStudentById(id)
+      const s = await getStudentById(id, profile?.school_id)
       setForm({
         full_name: s.full_name || '',
         admission_number: s.admission_number || '',
@@ -85,7 +85,7 @@ export default function EditStudent() {
         parent_email: guardians[0]?.email || null,
         updated_by: profile?.id,
         updated_at: new Date().toISOString(),
-      })
+      }, profile?.school_id)
       navigate(`/admin/students/${id}`)
     } catch (e) {
       setError(e.message)

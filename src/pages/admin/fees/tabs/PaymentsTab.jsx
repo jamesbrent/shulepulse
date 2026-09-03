@@ -1,6 +1,7 @@
 import { useState, useEffect }         from 'react'
 import { Search, ChevronRight, Wallet, CheckCircle, Percent, Printer, Plus, CreditCard, Calendar, DollarSign, Clock, TrendingUp, Download, Sparkles, Smartphone, Landmark, Banknote, School, BadgeDollarSign, Undo2 } from 'lucide-react'
 import { supabase }                     from '../../../../lib/supabase'
+import { useSchool }                    from '../../useSchool'
 import { usePayments }                  from '../hooks/usePayments'
 import { useFeesDashboard }             from '../hooks/useFeesDashboard'
 import { Modal, ModalActions }          from '../components/Modal'
@@ -96,6 +97,7 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
   } = usePayments(profile.school_id, term, year)
 
   const { summary, collectionRate } = useFeesDashboard(profile.school_id, term, year)
+  const { school } = useSchool()
 
   const [showReceipt,  setShowReceipt]  = useState(null)
   const [showAdjModal, setShowAdjModal] = useState(false)
@@ -933,7 +935,7 @@ export function PaymentsTab({ profile, term, year, search, filterClass, filterSt
       {showReceipt && (
         <Modal title="Payment Receipt" onClose={() => setShowReceipt(null)}>
           <div className="receipt-body">
-            <div className="receipt-logo"><School size={19} style={{ verticalAlign: 'middle', marginRight: 6 }} /> ShulePulse</div>
+            <div className="receipt-logo"><School size={19} style={{ verticalAlign: 'middle', marginRight: 6 }} /> {school?.name || 'ShulePulse'}</div>
             <p className="receipt-title">Official Payment Receipt</p>
             <div className="receipt-row"><span>Receipt No.</span>  <span className="fw600">{showReceipt.receipt_number || showReceipt.receipt?.id?.slice(0, 8).toUpperCase() || '—'}</span></div>
             <div className="receipt-row"><span>Student</span>      <span>{showReceipt.student?.full_name}</span></div>
