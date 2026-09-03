@@ -222,6 +222,46 @@
     padding: 20px 0;
   }
 
+  /* ── Terms & Privacy card (after the module/Support grid) ── */
+  .tmn-terms-card {
+    margin: 0 18px 14px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    flex-shrink: 0;
+  }
+
+  .tmn-terms-title {
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  .tmn-terms-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tmn-terms-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .tmn-terms-pill:active { background: #f1f5f9; }
+
   .tmn-sheet-footer {
     border-top: 1px solid #f1f5f9;
     padding: 12px 18px;

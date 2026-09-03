@@ -124,9 +124,39 @@ export default function TeacherMobileNav({
               })}
             </div>
 
+            <div className="tmn-terms-card">
+              <p className="tmn-terms-title">Terms &amp; Privacy</p>
+              <div className="tmn-terms-pills">
+                <a
+                  href="https://master.shulepulse-landing.pages.dev/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tmn-terms-pill"
+                >
+                  Privacy
+                </a>
+                <a
+                  href="https://master.shulepulse-landing.pages.dev/terms-of-service"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tmn-terms-pill"
+                >
+                  Terms &amp; Conditions
+                </a>
+                <a
+                  href="https://master.shulepulse-landing.pages.dev/cookies-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tmn-terms-pill"
+                >
+                  Cookies
+                </a>
+              </div>
+            </div>
+
             <div className="tmn-sheet-footer">
               <div className="tmn-role-switcher">
-                <RoleSwitcher />
+                <RoleSwitcher mobile />
               </div>
               <button className="tmn-logout" onClick={() => { setMoreOpen(false); onLogout?.() }}>
                 <LogOut size={16} /> Logout

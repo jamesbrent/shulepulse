@@ -35,14 +35,7 @@ M475,240 L488,235 502,238 512,248 515,262 510,275 498,280 485,278 475,268 470,25
 `
 
 /* Subtle decorative module labels placed in open "ocean" areas */
-const MODULE_LABELS = [
-  { x: 92,  y: 55,  text: 'STUDENTS' },
-  { x: 350, y: 30,  text: 'FINANCE' },
-  { x: 885, y: 152, text: 'ATTENDANCE' },
-  { x: 58,  y: 300, text: 'ACADEMICS' },
-  { x: 262, y: 212, text: 'HR & PAYROLL' },
-  { x: 505, y: 468, text: 'REPORTS' },
-]
+const MODULE_LABELS = []
 
 export default function AnimatedDottedMap() {
   const dots = useMemo(() => {

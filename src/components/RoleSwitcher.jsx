@@ -8,7 +8,7 @@ import { ROLE_META } from '../utils/roles'
 import { logAction } from '../features/audit/auditService'
 import './RoleSwitcher.css'
 
-export default function RoleSwitcher() {
+export default function RoleSwitcher({ mobile = false }) {
   const { profile } = useAuthStore()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -52,6 +52,10 @@ export default function RoleSwitcher() {
   }
 
   const otherRoles = roles.filter(r => r !== profile?.role)
+  // On mobile only show teacher/class-teacher/parent switch targets
+  const mobileAllowed = ['class_teacher', 'parent']
+  const visibleRoles = mobile ? otherRoles.filter(r => mobileAllowed.includes(r)) : otherRoles
+  if (visibleRoles.length === 0) return null
 
   return (
     <div className="role-switcher" ref={ref}>
@@ -62,7 +66,7 @@ export default function RoleSwitcher() {
       </button>
       {open && (
         <div className="role-switcher-dropdown">
-          {otherRoles.map(r => {
+          {visibleRoles.map(r => {
             const meta = ROLE_META[r]
             if (!meta) return null
             return (

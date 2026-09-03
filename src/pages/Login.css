@@ -477,31 +477,48 @@
   .login-page {
     padding: 0;
     align-items: stretch;
+    overflow: hidden;
+    height: 100vh;
+    height: 100dvh;
   }
 
   .login-page .login-card {
     flex-direction: column;
     max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
     min-height: 100vh;
+    min-height: 100dvh;
     border-radius: 0;
     border: none;
     box-shadow: none;
+  }
+
+  .login-page .login-left {
+    width: 100%;
+    flex: 1;
+    padding: 28px 24px;
+    overflow-y: auto;
   }
 
   .login-page .login-right {
     display: none;
   }
 
-  .login-page .login-left {
-    width: 100%;
-    flex: 1;
-    padding: 32px 24px;
+  /* Constant view: no outer scrolling bar */
+  .login-page,
+  .login-page .login-right {
+    overscroll-behavior: none;
   }
 
   .login-left-content {
     max-width: 380px;
     margin: 0 auto;
   }
+
+  /* Remove portal badges + footer links on mobile */
+  .login-roles { display: none !important; }
+  .login-footer { display: none !important; }
 
   /* Shared auth pages stack on mobile */
   .login-root {
@@ -513,10 +530,6 @@
   .login-root .login-right {
     max-width: 100%;
     padding: 16px 20px;
-  }
-
-  .login-footer {
-    padding: 12px 20px;
   }
 }
 
