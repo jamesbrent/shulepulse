@@ -198,6 +198,19 @@ export default function TeacherAppHome({
   activeNav = 'home',
   hideHeader = false,
   hideNav = false,
+  greeting = 'Good morning,',
+  heroText = "Here's what's happening in your classes today.",
+  heroBadge = '',
+  statMeta = {
+    myClasses: { label: 'My classes', sublabel: 'Active' },
+    todaysLessons: { label: "Today's lessons", sublabel: 'Periods' },
+    pendingAssignments: { label: 'Pending assignments', sublabel: null },
+    attendanceAverage: { label: 'Attendance', sublabel: 'Average' },
+  },
+  scheduleTitle = "Today's schedule",
+  scheduleEmpty = 'No lessons scheduled for today.',
+  hideScheduleCard = false,
+  hideFAB = false,
   onSelectNav = () => {},
   onSelectSchool = () => {},
   onQuickAction = () => {},
@@ -237,9 +250,10 @@ export default function TeacherAppHome({
       <div className="mx-4 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-500 p-5 text-white">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm text-blue-100">Good morning,</p>
+            <p className="text-sm text-blue-100">{greeting}</p>
             <p className="text-xl font-bold leading-tight">{teacher.name}</p>
-            <p className="mt-2 text-sm text-blue-100">Here's what's happening in your classes today.</p>
+            {heroText && <p className="mt-2 text-sm text-blue-100">{heroText}</p>}
+            {heroBadge && <span className="mt-2 inline-block rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold">{heroBadge}</span>}
           </div>
           <AvatarUpload size={64} fallbackChar="T" className="shrink-0 rounded-full border-2 border-white/60 overflow-hidden" />
         </div>
@@ -278,27 +292,31 @@ export default function TeacherAppHome({
       </div>
 
       <div className="grid grid-cols-4 gap-2 px-3 pt-3">
-        <StatCard icon={Icon.Users} iconBg="bg-blue-50" iconColor="text-blue-500" value={stats.myClasses} label="My classes" sublabel="Active" />
-        <StatCard icon={Icon.ClipboardList} iconBg="bg-emerald-50" iconColor="text-emerald-500" value={stats.todaysLessons} label="Today's lessons" sublabel="Periods" />
-        <StatCard icon={Icon.FileText} iconBg="bg-violet-50" iconColor="text-violet-500" value={stats.pendingAssignments} label="Pending assignments" />
-        <StatCard icon={Icon.TrendUp} iconBg="bg-amber-50" iconColor="text-amber-500" value={`${stats.attendanceAverage}%`} label="Attendance" sublabel="Average" />
+        <StatCard icon={Icon.Users} iconBg="bg-blue-50" iconColor="text-blue-500" value={stats.myClasses} label={statMeta.myClasses.label} sublabel={statMeta.myClasses.sublabel} />
+        <StatCard icon={Icon.ClipboardList} iconBg="bg-emerald-50" iconColor="text-emerald-500" value={stats.todaysLessons} label={statMeta.todaysLessons.label} sublabel={statMeta.todaysLessons.sublabel} />
+        <StatCard icon={Icon.FileText} iconBg="bg-violet-50" iconColor="text-violet-500" value={stats.pendingAssignments} label={statMeta.pendingAssignments.label} sublabel={statMeta.pendingAssignments.sublabel} />
+        <StatCard icon={Icon.TrendUp} iconBg="bg-amber-50" iconColor="text-amber-500" value={`${stats.attendanceAverage}%`} label={statMeta.attendanceAverage.label} sublabel={statMeta.attendanceAverage.sublabel} />
       </div>
 
-      <div className="mx-4 mt-4 rounded-xl border border-slate-200 bg-white p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-base font-bold text-slate-900">Today's schedule</p>
-          <button onClick={onViewTimetable} className="text-sm font-medium text-blue-600">
-            View timetable
-          </button>
+      {!hideScheduleCard && (
+        <div className="mx-4 mt-4 rounded-xl border border-slate-200 bg-white p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-base font-bold text-slate-900">{scheduleTitle}</p>
+            {schedule.length > 0 && (
+              <button onClick={onViewTimetable} className="text-sm font-medium text-blue-600">
+                View timetable
+              </button>
+            )}
+          </div>
+          {schedule.length === 0 ? (
+            <p className="py-6 text-center text-sm text-slate-400">{scheduleEmpty}</p>
+          ) : (
+            schedule.map((period, i) => (
+              <ScheduleRow key={period.id ?? i} index={i + 1} period={period} isLast={i === schedule.length - 1} />
+            ))
+          )}
         </div>
-        {schedule.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-400">No lessons scheduled for today.</p>
-        ) : (
-          schedule.map((period, i) => (
-            <ScheduleRow key={period.id ?? i} index={i + 1} period={period} isLast={i === schedule.length - 1} />
-          ))
-        )}
-      </div>
+      )}
 
       {/* Floating action button (replaces Quick actions card) */}
       {faOpen && (
@@ -330,7 +348,7 @@ export default function TeacherAppHome({
       <button
         aria-label="Quick actions"
         onClick={() => setFaOpen((v) => !v)}
-        className="fixed z-40 bottom-24 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-transform active:scale-95"
+        className={`fixed z-40 bottom-24 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-transform active:scale-95 ${hideFAB ? 'hidden' : ''}`}
       >
         <Icon.Plus className={`h-6 w-6 transition-transform ${faOpen ? 'rotate-45' : ''}`} />
       </button>

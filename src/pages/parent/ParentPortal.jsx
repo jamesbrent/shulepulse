@@ -21,6 +21,7 @@ import './FeePaymentsPage.css'
 import './NoticesPage.css'
 import './MessagesPage.css'
 import Overview from './components/Overview'
+import ParentMobileHome from './ParentMobileHome'
 import AcademicResults from './components/AcademicResults'
 import Attendance from './components/Attendance'
 import FeePayments from './components/FeePayments'
@@ -304,42 +305,13 @@ export default function ParentPortal() {
             </div>
             {activeNav === 'dashboard' && (
               <div className="parent-mobile-home">
-                <div className="ptm-child">
-                  <div className="ptm-child-avatar">
-                    {activeChild?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'C'}
-                  </div>
-                  <div className="ptm-child-info">
-                    <p className="ptm-child-name">{activeChild?.full_name || 'Child'}</p>
-                    <p className="ptm-child-class">{activeChild?.class || ''}{activeChild?.stream ? ` ${activeChild.stream}` : ''} · {school?.name || ''}</p>
-                  </div>
-                </div>
-
-                <div className="ptm-actions">
-                  {[
-                    { label: 'Results', icon: <BarChart2 size={20} />, nav: 'grades' },
-                    { label: 'Attendance', icon: <ClipboardList size={20} />, nav: 'attendance' },
-                    { label: 'Fees', icon: <DollarSign size={20} />, nav: 'fees' },
-                    { label: 'Notices', icon: <Bell size={20} />, nav: 'notices' },
-                    { label: 'Messages', icon: <MessageSquare size={20} />, nav: 'messages' },
-                    { label: 'Pay Fees', icon: <CreditCard size={20} />, nav: 'fees' },
-                  ].map(a => (
-                    <button key={a.label} className="ptm-action" onClick={() => handleNav(a.nav)}>
-                      {a.icon}
-                      <span>{a.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="ptm-card">
-                  <p className="ptm-card-label">School Contact</p>
-                  {school?.phone ? (
-                    <a href={`tel:${school.phone}`} className="ptm-contact">
-                      <Phone size={16} /> {school.phone}
-                    </a>
-                  ) : (
-                    <p className="ptm-empty">No phone on file</p>
-                  )}
-                </div>
+                <ParentMobileHome
+                  activeChild={activeChild}
+                  school={school}
+                  children={children}
+                  profile={profile}
+                  onNavigate={handleNav}
+                />
               </div>
             )}
           </>
