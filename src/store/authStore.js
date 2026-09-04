@@ -68,9 +68,12 @@ export const useAuthStore = create((set, get) => ({
 
       // School-provision guard: only grant access to users who belong to a school
       // (or are a superadmin). Blocks auto-provisioned/arbitrary accounts (e.g.
-      // fresh Google OAuth identities) that have no school_id yet.
+      // fresh Google OAuth identities) that have no school_id yet. Parents are
+      // additionally gated on active Portal Access for at least one child.
       const provisioned = profile?.school_id || profile?.role === 'superadmin'
-      if (session.user && profile && !provisioned) {
+      const parentAllowed = profile?.role !== 'parent'
+        || await supabase.rpc('has_portal_access', { p_user_id: session.user.id }).catch(() => true)
+      if (session.user && profile && (!provisioned || !parentAllowed)) {
         await supabase.auth.signOut()
         set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
         return
@@ -98,7 +101,9 @@ export const useAuthStore = create((set, get) => ({
         }
 
         const provisioned = profile?.school_id || profile?.role === 'superadmin'
-        if (profile && !provisioned) {
+        const parentAllowed = profile?.role !== 'parent'
+          || await supabase.rpc('has_portal_access', { p_user_id: session.user.id }).catch(() => true)
+        if (profile && (!provisioned || !parentAllowed)) {
           await supabase.auth.signOut()
           set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
           return
