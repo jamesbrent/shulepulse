@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { DollarSign, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { DollarSign, CheckCircle, XCircle, AlertCircle, Download } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-import { fmt, fmtDate, computeFeeBalance } from '../../admin/fees/utils/feesHelpers'
+import { fmt, fmtDate, computeFeeBalance, downloadFile } from '../../admin/fees/utils/feesHelpers'
+import { generateReceiptPdf } from '../../admin/fees/utils/generateReceiptPdf'
 
 export default function FeePayments({ activeChild, school }) {
   const [assessments, setAssessments] = useState([])
@@ -58,6 +59,38 @@ export default function FeePayments({ activeChild, school }) {
   }
 
   if (loading) return <p className="loading-state">Loading fee statement...</p>
+
+  const handleDownloadReceipt = async (p) => {
+    try {
+      const payment = {
+        receipt_number: p.receipt_number,
+        transaction_date: p.transaction_date || p.created_at,
+        amount: p.amount,
+        ledger_total: p.amount,
+        payment_type: p.payment_type || p.payment_method,
+        provider: p.provider || '',
+        reference: p.reference || p.mpesa_code || '',
+        fee_category: p.fee_category || 'School Fees',
+        payer_name: p.payer_name || activeChild?.parent_name || '',
+        received_by_name: p.received_by_name || '',
+      }
+      const blob = await generateReceiptPdf({
+        school,
+        payment,
+        student: activeChild,
+        term: school?.current_term || 'Term 1',
+        year: school?.current_year || new Date().getFullYear(),
+      })
+      downloadFile(
+        blob,
+        `receipt_${activeChild.admission_number || 'student'}_${p.receipt_number || p.id || Date.now()}.pdf`,
+        'application/pdf'
+      )
+    } catch (err) {
+      console.error('Receipt PDF error:', err)
+      alert('Failed to download receipt. Please try again.')
+    }
+  }
 
   return (
     <div className="fees-page-view">
@@ -155,6 +188,7 @@ export default function FeePayments({ activeChild, school }) {
                   <th>Method</th>
                   <th>Reference</th>
                   <th className="text-right">Amount</th>
+                  <th>Receipt PDF</th>
                 </tr>
               </thead>
               <tbody>
@@ -165,11 +199,21 @@ export default function FeePayments({ activeChild, school }) {
                     <td style={{ textTransform: 'capitalize' }}>{p.payment_type || p.payment_method || '—'}</td>
                     <td className="adm-no">{p.reference || p.mpesa_code || '—'}</td>
                     <td className="text-right" style={{ fontWeight: 600, color: '#16a34a' }}>{fmt(p.amount)}</td>
+                    <td>
+                      <button
+                        className="receipt-dl-btn"
+                        onClick={() => handleDownloadReceipt(p)}
+                        title="Download receipt PDF"
+                      >
+                        <Download size={14} /> PDF
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 <tr style={{ background: '#f8fafc' }}>
                   <td colSpan={4} style={{ fontWeight: 700, color: '#0f172a' }}>Applied to Fees</td>
                   <td className="text-right" style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(aggregate.totalPaid)}</td>
+                  <td />
                 </tr>
               </tbody>
             </table>
