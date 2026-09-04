@@ -564,7 +564,11 @@ export default function AdminDashboard() {
           </div>
           <div className="adm-dash-actions">
             <div className="admin-avatar">
-              {authProfile?.full_name?.[0]?.toUpperCase() || 'AD'}
+              {authProfile?.photo_url ? (
+                <img className="admin-avatar-img" src={authProfile.photo_url} alt="" />
+              ) : (
+                authProfile?.full_name?.[0]?.toUpperCase() || 'AD'
+              )}
             </div>
           </div>
         </div>
@@ -891,7 +895,11 @@ export default function AdminDashboard() {
                 <UserPlus size={15} /> Add Student
               </button>
               <div className="admin-avatar">
-                {authProfile?.full_name?.[0]?.toUpperCase() || 'AD'}
+                {authProfile?.photo_url ? (
+                  <img className="admin-avatar-img" src={authProfile.photo_url} alt="" />
+                ) : (
+                  authProfile?.full_name?.[0]?.toUpperCase() || 'AD'
+                )}
               </div>
             </div>
           </header>
