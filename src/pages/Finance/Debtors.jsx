@@ -109,6 +109,7 @@ export default function DebtorsPage() {
         category: 'urgent',
         target_audience: 'parents',
         created_by: profile.id,
+        student_id: d.student_id,
       })
       sent++
     }

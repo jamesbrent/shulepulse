@@ -52,12 +52,17 @@ export default function ParentMobileHome({ activeChild, school, children, profil
             .select('*, profiles(full_name)')
             .eq('school_id', schoolId)
             .order('created_at', { ascending: false })
-            .limit(3)
+            .limit(20)
         : { data: [] },
     ])
 
+    const childIds = new Set((children || []).map(c => c.id))
+    const visibleNotices = (noticesData || [])
+      .filter(n => !n.student_id || childIds.has(n.student_id))
+      .slice(0, 3)
+
     setAnnouncements(
-      (noticesData || []).map((n) => ({
+      (visibleNotices).map((n) => ({
         id: n.id,
         title: n.title,
         body: n.body,

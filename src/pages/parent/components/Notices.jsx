@@ -16,7 +16,7 @@ function markRead(id) {
   }
 }
 
-export default function Notices({ activeChild, school }) {
+export default function Notices({ activeChild, school, children }) {
   const [notices, setNotices] = useState([])
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState('all')
@@ -39,10 +39,13 @@ export default function Notices({ activeChild, school }) {
     setLoading(false)
   }
 
-  const categories = ['all', ...new Set(notices.map(n => n.category).filter(Boolean))]
-  const filtered = category === 'all' ? notices : notices.filter(n => n.category === category)
+  const childIds = new Set((children || []).map(c => c.id))
+  const visibleNotices = (notices || []).filter(n => !n.student_id || childIds.has(n.student_id))
 
-  const unreadCount = notices.filter(n => !readIds.includes(n.id)).length
+  const categories = ['all', ...new Set(visibleNotices.map(n => n.category).filter(Boolean))]
+  const filtered = category === 'all' ? visibleNotices : visibleNotices.filter(n => n.category === category)
+
+  const unreadCount = visibleNotices.filter(n => !readIds.includes(n.id)).length
 
   if (loading) return <p className="loading-state">Loading notices...</p>
 

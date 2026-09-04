@@ -121,11 +121,11 @@ export default function ParentPortal() {
       case 'attendance':
         return <Attendance activeChild={activeChild} />
       case 'notices':
-        return <Notices activeChild={activeChild} school={school} />
+        return <Notices activeChild={activeChild} school={school} children={children} />
       case 'messages':
         return <Messages activeChild={activeChild} school={school} />
       default:
-        return <Overview activeChild={activeChild} school={school} />
+        return <Overview activeChild={activeChild} school={school} children={children} />
     }
   }
 
@@ -248,11 +248,6 @@ export default function ParentPortal() {
       </aside>
 
       <main className="parent-main">
-        <div className={`ptm-title ${activeNav === 'dashboard' ? 'ptm-title--home' : ''}`}>
-          <h1>{pageTitles[activeNav]}</h1>
-          {activeNav !== 'dashboard' && <p>{school?.name || ''}</p>}
-        </div>
-
         <header className="parent-header">
           <div>
             <h1>{pageTitles[activeNav]}</h1>

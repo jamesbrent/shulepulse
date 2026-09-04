@@ -4,7 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { fmtDate } from '../../admin/fees/utils/feesHelpers'
 import { groupGradesBySubject, getCBEGrade } from '../../../components/students/ReportCard'
 
-export default function Overview({ activeChild, school }) {
+export default function Overview({ activeChild, school, children }) {
   const [grades, setGrades] = useState([])
   const [attendance, setAttendance] = useState(null)
   const [feeBalance, setFeeBalance] = useState({ totalCharged: 0, totalPaid: 0, credit: 0, balance: 0, status: 'due' })
@@ -35,11 +35,13 @@ export default function Overview({ activeChild, school }) {
         .select('*')
         .eq('school_id', schoolId)
         .order('created_at', { ascending: false })
-        .limit(3) : { data: [] },
+        .limit(20) : { data: [] },
     ])
 
     setGrades(gradesData || [])
-    setRecentNotices(noticesData || [])
+    const childIds = new Set((children || []).map(c => c.id))
+    const visibleNotices = (noticesData || []).filter(n => !n.student_id || childIds.has(n.student_id))
+    setRecentNotices(visibleNotices.slice(0, 3))
 
     const [assessmentsRes, ledgerRes, creditRes] = await Promise.all([
       supabase
