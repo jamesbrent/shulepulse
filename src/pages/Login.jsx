@@ -105,7 +105,7 @@ export default function Login() {
     if (!profile) {
       const { data: canonicalId } = await supabase
         .rpc('link_google_to_existing', { p_user_id: session.user.id, p_email: session.user.email })
-      await supabase.auth.signOut()
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
       if (canonicalId) {
         setError('Account linked. Please sign in with Google again…')
         await handleGoogle()
@@ -118,7 +118,7 @@ export default function Login() {
     // Deny: disabled account or no school linkage (arbitrary account).
     const provisioned = profile?.school_id || profile?.role === 'superadmin'
     if (profile.disabled || !provisioned) {
-      await supabase.auth.signOut()
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
       setError('This Google account is not registered to a school. Contact your administrator.')
       return
     }
