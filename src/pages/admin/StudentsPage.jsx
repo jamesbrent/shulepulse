@@ -467,10 +467,14 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
         } catch (feeErr) {
           console.warn('Fee assessment generation failed:', feeErr.message)
         }
-        try {
-          await setupParentAccount(newStudent.id, profile.school_id)
-        } catch (parentErr) {
-          console.warn('Parent account creation failed:', parentErr.message)
+        // Grant parent portal access only when a guardian has it toggled on.
+        const hasPortalGuardian = guardians.some(g => g.portal_access && g.email)
+        if (hasPortalGuardian) {
+          try {
+            await setupParentAccount(newStudent.id, profile.school_id)
+          } catch (parentErr) {
+            console.warn('Parent account creation failed:', parentErr.message)
+          }
         }
       }
       setSaving(false)

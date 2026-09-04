@@ -25,7 +25,7 @@ const EMPTY_FORM = {
   nationality: '', county: '', sub_county: '', ward: '',
   previous_school: '', day_boarding: '',
   nemis_number: '', upi_number: '', birth_cert_number: '',
-  parent_name: '', parent_phone: '', parent_email: '',
+  parent_name: '', parent_phone: '', parent_email: '', parent_portal_access: false,
   medical_conditions: '', allergies: '', blood_group: '',
 }
 
@@ -193,6 +193,20 @@ export default function Admissions({ onSuccess }) {
       parent_name: form.parent_name || null,
       parent_phone: form.parent_phone || null,
       parent_email: form.parent_email || null,
+      guardians: form.parent_email && form.parent_portal_access
+        ? [{
+            name: form.parent_name || 'Parent',
+            email: form.parent_email,
+            phone: form.parent_phone || '',
+            address: '',
+            occupation: '',
+            national_id: '',
+            is_fee_payer: true,
+            relationship: 'father',
+            portal_access: true,
+            sms_notification: true,
+          }]
+        : [],
       status: 'active',
       created_by: profile?.id,
       created_at: now,
@@ -222,10 +236,12 @@ export default function Admissions({ onSuccess }) {
       } catch (feeErr) {
         console.warn('Fee assessment generation failed:', feeErr.message)
       }
-      try {
-        await setupParentAccount(inserted.id, profile.school_id)
-      } catch (parentErr) {
-        console.warn('Parent account creation failed:', parentErr.message)
+      if (form.parent_email && form.parent_portal_access) {
+        try {
+          await setupParentAccount(inserted.id, profile.school_id)
+        } catch (parentErr) {
+          console.warn('Parent account creation failed:', parentErr.message)
+        }
       }
 
       setSuccess(`Admitted "${form.full_name}" — ${assigned}${form.email ? ' (login created)' : ''}`)
@@ -427,6 +443,16 @@ export default function Admissions({ onSuccess }) {
               <div className="adm-field">
                 <label>Parent Email</label>
                 <input type="email" placeholder="parent@email.com" value={form.parent_email} onChange={e => setFormField('parent_email', e.target.value)} />
+              </div>
+              <div className="adm-field adm-field--full">
+                <label className="sp-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={!!form.parent_portal_access}
+                    onChange={e => setFormField('parent_portal_access', e.target.checked)}
+                  />
+                  Grant Parent Portal Access
+                </label>
               </div>
             </div>
 
