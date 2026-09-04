@@ -114,7 +114,7 @@ export default function ParentMobileHome({ activeChild, school, children, profil
     })
   }
 
-  const childClass = [activeChild?.class, activeChild?.stream].filter(Boolean).join(' ')
+  const childClass = [activeChild?.full_name, [activeChild?.class, activeChild?.stream].filter(Boolean).join(' ').trim()].filter(Boolean).join(' · ')
 
   return (
     <TeacherAppHome
@@ -123,7 +123,7 @@ export default function ParentMobileHome({ activeChild, school, children, profil
       hideScheduleCard
       hideFAB
       teacher={{
-        name: activeChild?.full_name || 'Child',
+        name: profile?.full_name || 'Parent',
         subjectRole: '',
         avatarUrl: profile?.avatar_url || null,
       }}
