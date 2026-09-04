@@ -98,9 +98,26 @@ export default function Login() {
       .eq('id', session.user.id)
       .single()
 
-    // Deny: no profile, disabled account, or no school linkage (arbitrary account).
+    // Google returned an account with no profile — e.g. a parent whose account
+    // was provisioned by password via createParentAuth. Link this Google
+    // identity into that existing account (SQL function, bypasses RLS) and then
+    // re-run Google OAuth so the parent signs in as the canonical account.
+    if (!profile) {
+      const { data: canonicalId } = await supabase
+        .rpc('link_google_to_existing', { p_user_id: session.user.id, p_email: session.user.email })
+      await supabase.auth.signOut()
+      if (canonicalId) {
+        setError('Account linked. Please sign in with Google again…')
+        await handleGoogle()
+        return
+      }
+      setError('This Google account is not registered to a school. Contact your administrator.')
+      return
+    }
+
+    // Deny: disabled account or no school linkage (arbitrary account).
     const provisioned = profile?.school_id || profile?.role === 'superadmin'
-    if (!profile || profile.disabled || !provisioned) {
+    if (profile.disabled || !provisioned) {
       await supabase.auth.signOut()
       setError('This Google account is not registered to a school. Contact your administrator.')
       return

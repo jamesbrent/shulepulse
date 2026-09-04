@@ -444,6 +444,15 @@ export default function StudentsPage({ initialAdd = false, onAddHandled } = {}) 
     try {
       if (editingStudent) {
         await supabase.from('students').update(payload).eq('id', editingStudent.id)
+        // Create parent account if any guardian has portal_access toggled on
+        const hasPortalGuardian = guardians.some(g => g.portal_access && g.email)
+        if (hasPortalGuardian) {
+          try {
+            await setupParentAccount(editingStudent.id, profile.school_id)
+          } catch (parentErr) {
+            console.warn('Parent account creation failed:', parentErr.message)
+          }
+        }
       } else {
         const { data: newStudent } = await supabase.from('students').insert(payload).select().single()
         if (newStudent?.email) {
