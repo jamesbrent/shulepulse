@@ -4,6 +4,18 @@ import { loadGradingConfig, refreshGradingConfig } from '../services/grading/con
 import { logAction } from '../features/audit/auditService'
 import { resolveMfaStatus } from '../features/auth/mfa'
 
+// Supabase builders are thenables (await/.then) but have no .catch(), so a
+// bare `.catch()` on rpc() would throw. Fail open on any RPC error so an
+// unavailable gate never blocks a legitimate parent at login.
+async function hasPortalAccess(uid) {
+  try {
+    const { error } = await supabase.rpc('has_portal_access', { p_user_id: uid })
+    return !error
+  } catch {
+    return true
+  }
+}
+
 export const useAuthStore = create((set, get) => ({
   user: null,
   profile: null,
@@ -72,7 +84,7 @@ export const useAuthStore = create((set, get) => ({
       // additionally gated on active Portal Access for at least one child.
       const provisioned = profile?.school_id || profile?.role === 'superadmin'
       const parentAllowed = profile?.role !== 'parent'
-        || await supabase.rpc('has_portal_access', { p_user_id: session.user.id }).catch(() => true)
+        || await hasPortalAccess(session.user.id)
       if (session.user && profile && (!provisioned || !parentAllowed)) {
         await supabase.auth.signOut()
         set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
@@ -102,7 +114,7 @@ export const useAuthStore = create((set, get) => ({
 
         const provisioned = profile?.school_id || profile?.role === 'superadmin'
         const parentAllowed = profile?.role !== 'parent'
-          || await supabase.rpc('has_portal_access', { p_user_id: session.user.id }).catch(() => true)
+          || await hasPortalAccess(session.user.id)
         if (profile && (!provisioned || !parentAllowed)) {
           await supabase.auth.signOut()
           set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })

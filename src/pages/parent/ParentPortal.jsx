@@ -300,19 +300,23 @@ export default function ParentPortal() {
           </div>
         ) : (
           <>
-            <div className="parent-desktop-dashboard">
-              {renderContent()}
-            </div>
-            {activeNav === 'dashboard' && (
-              <div className="parent-mobile-home">
-                <ParentMobileHome
-                  activeChild={activeChild}
-                  school={school}
-                  children={children}
-                  profile={profile}
-                  onNavigate={handleNav}
-                />
-              </div>
+            {activeNav === 'dashboard' ? (
+              <>
+                <div className="parent-desktop-dashboard">
+                  {renderContent()}
+                </div>
+                <div className="parent-mobile-home">
+                  <ParentMobileHome
+                    activeChild={activeChild}
+                    school={school}
+                    children={children}
+                    profile={profile}
+                    onNavigate={handleNav}
+                  />
+                </div>
+              </>
+            ) : (
+              renderContent()
             )}
           </>
         )}
