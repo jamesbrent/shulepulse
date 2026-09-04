@@ -743,3 +743,69 @@
   .fee-item { font-size: 12px; padding-bottom: 10px; }
   .parent-page { gap: 14px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Parent tab pages — pinch-free auto-sizing (mobile)
+   Fluid `minmax(0,1fr)` grids + overflow guards so cards fill the
+   screen like the teacher/class-teacher mobile screens, never wider.
+   `.parent-main ...` prefixes keep these above the per-tab CSS rules.
+   ═══════════════════════════════════════════════════════════ */
+
+.parent-main,
+.parent-main *,
+.parent-main *::before,
+.parent-main *::after { box-sizing: border-box; }
+
+@media (max-width: 768px) {
+  .parent-root { overflow-x: hidden; }
+  .parent-main { overflow-x: hidden; max-width: 100%; }
+
+  /* Page containers fill width and never overflow */
+  .parent-main .attendance-page,
+  .parent-main .grades-page-view,
+  .parent-main .fees-page-view,
+  .parent-main .notices-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Summary cards: fluid 2-col grid that shrinks to the screen */
+  .parent-main .att-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .parent-main .att-sum-card {
+    min-width: 0;
+    padding: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    overflow: hidden;
+  }
+  .parent-main .att-sum-card > svg { flex-shrink: 0; }
+  .parent-main .att-sum-card > div { flex: 1; min-width: 0; }
+  .parent-main .asc-label { font-size: 11px; line-height: 1.3; }
+  .parent-main .asc-value {
+    font-size: 17px;
+    line-height: 1.15;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* Section cards fill width and keep tables contained */
+  .parent-main .section-card { width: 100%; min-width: 0; overflow: hidden; }
+  .parent-main .card-header { flex-wrap: wrap; gap: 6px; }
+  .parent-main .card-header h3 { overflow-wrap: anywhere; }
+  .parent-main .att-table-wrap { width: 100%; max-width: 100%; }
+  .parent-main .att-table { width: 100%; }
+
+  /* Price/summary rows & toolbars wrap instead of widening */
+  .parent-main .fee-item,
+  .parent-main .fee-balance-row { flex-wrap: wrap; min-width: 0; overflow-wrap: anywhere; }
+  .parent-main .att-toolbar,
+  .parent-main .date-nav { max-width: 100%; }
+
+  .parent-main .notice-card-full { width: 100%; min-width: 0; overflow-wrap: anywhere; }
+}
