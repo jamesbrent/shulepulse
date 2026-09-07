@@ -32,13 +32,27 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
   const isUpgrade = diff > 0
   const noChange = selectedPlan === currentPlan
   const hasDeal = !!school.negotiated_monthly_price
+  const [dealAction, setDealAction] = useState('carry')
+  const selectedPlanChanged = selectedPlan !== currentPlan && !noChange
 
   const handleConfirm = async () => {
     if (noChange) { onClose(); return }
     setSaving(true)
     setError('')
     try {
-      await changeSchoolPlan(school.id, school.name, currentPlan, selectedPlan)
+      let options = {}
+      if (hasDeal) {
+        if (dealAction === 'carry') {
+          options = {
+            negotiated_monthly_price: school.negotiated_monthly_price,
+            negotiated_annual_price: school.negotiated_annual_price || undefined,
+            negotiated_notes: school.negotiated_notes || undefined,
+          }
+        } else {
+          options = { clear_negotiation: true }
+        }
+      }
+      await changeSchoolPlan(school.id, school.name, currentPlan, selectedPlan, options)
       setSuccess(`Plan changed to ${selectedPlan}`)
       setTimeout(() => {
         onChanged()
@@ -113,6 +127,33 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
             })}
           </div>
 
+          {hasDeal && selectedPlanChanged && !success && (
+            <div style={{ padding: '12px 14px', borderRadius: 8, background: '#fffbeb', border: '1px solid #fde68a', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#92400e', marginBottom: 8 }}>
+                <AlertTriangle size={15} />
+                This school has a negotiated deal (KES {school.negotiated_monthly_price.toLocaleString()}/mo). What should happen to it?
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#0f172a', padding: '4px 0', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="dealAction"
+                  checked={dealAction === 'carry'}
+                  onChange={() => setDealAction('carry')}
+                />
+                Carry the deal over to the new plan (same negotiated price)
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#0f172a', padding: '4px 0', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="dealAction"
+                  checked={dealAction === 'clear'}
+                  onChange={() => setDealAction('clear')}
+                />
+                Clear the deal — school pays the new plan's standard price
+              </label>
+            </div>
+          )}
+
           {!noChange && !success && (
             <div style={{
               display: 'flex',
@@ -131,12 +172,6 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
                   : `Upgrade from ${currentPlan} to ${selectedPlan} (KES ${diff.toLocaleString()}/mo increase)`
                 }
               </div>
-              {hasDeal && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, opacity: 0.9 }}>
-                  <AlertTriangle size={13} />
-                  This school has a negotiated deal (KES {school.negotiated_monthly_price.toLocaleString()}/mo). Changing the plan will clear it.
-                </div>
-              )}
             </div>
           )}
         </div>

@@ -24,13 +24,13 @@ export async function getPriceDiff(currentPlan, newPlan) {
   return (await getPlanPrice(newPlan)) - (await getPlanPrice(currentPlan))
 }
 
-export async function changeSchoolPlan(schoolId, schoolName, currentPlan, newPlan) {
+export async function changeSchoolPlan(schoolId, schoolName, currentPlan, newPlan, options = {}) {
   const diff = await getPriceDiff(currentPlan, newPlan)
 
   const { data, error } = await supabase.rpc('set_school_plan', {
     p_school_id: schoolId,
     p_plan_key: newPlan,
-    p_options: {},
+    p_options: options || {},
   })
 
   if (error) throw new Error(error.message)

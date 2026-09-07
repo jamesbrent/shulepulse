@@ -85,6 +85,47 @@
 }
 
 /* Progress */
+.su-complete-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+
+.su-complete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #15803d;
+}
+
+.su-complete-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.su-complete-body strong {
+  font-size: 14px;
+  color: #14532d;
+}
+
+.su-complete-body p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #166534;
+}
+
+@media (max-width: 640px) {
+  .su-complete-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .su-progress-card {
   background: #fff;
   border: 1px solid #e2e8f0;

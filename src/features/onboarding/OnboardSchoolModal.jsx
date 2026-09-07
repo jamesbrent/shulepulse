@@ -276,6 +276,9 @@ export default function OnboardSchoolModal({ onClose }) {
                     {p.recommended && <span className="plan-badge-rec">Recommended</span>}
                     <h4>{p.label}</h4>
                     <div className="plan-price">{p.price}<span>/mo</span></div>
+                    {p.annual_price > 0 && (
+                      <div className="plan-annual">KES {p.annual_price.toLocaleString()}/yr</div>
+                    )}
                     <ul>
                       {p.features.map((f, i) => (
                         <li key={i}><Check size={12} /> {f}</li>
@@ -477,6 +480,20 @@ export default function OnboardSchoolModal({ onClose }) {
                           <div className="review-row">
                             <span>Negotiated Price</span>
                             <span className="negoti-price">KES {negotiated.toLocaleString()}/mo {discountPct > 0 && <em>({discountPct}% off)</em>}</span>
+                          </div>
+                        )}
+                        {isNegotiated && negotiated > 0 && standard > 0 && negotiated !== standard && (
+                          <div className="review-row">
+                            <span>Discount</span>
+                            <span className="negoti-price">
+                              KES {(standard - negotiated).toLocaleString()}/mo {negotiated < standard ? 'off' : 'above standard'}
+                            </span>
+                          </div>
+                        )}
+                        {isNegotiated && Number(school.negotiatedAnnualPrice) > 0 && (
+                          <div className="review-row">
+                            <span>Negotiated Annual</span>
+                            <span className="negoti-price">KES {Number(school.negotiatedAnnualPrice).toLocaleString()}/yr</span>
                           </div>
                         )}
                       </>

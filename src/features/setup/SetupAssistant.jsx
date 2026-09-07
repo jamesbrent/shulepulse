@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   CheckCircle2, Circle, ArrowRight, Info, Sparkles,
   GraduationCap, Calendar, Users, BookOpen, ClipboardList,
-  UserPlus, UserCheck, Wallet, UserCog, Clock,
-  LayoutDashboard, Sparkles as SparkIcon,
+  UserPlus, UserCheck, Wallet, UserCog, Clock, BadgeCheck, Landmark, ReceiptText,
+  LayoutDashboard, Sparkles as SparkIcon, PartyPopper,
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useFeatureAccess } from '../access/FeatureAccessContext'
@@ -22,6 +22,9 @@ const STEP_ICONS = {
   fees: <Wallet size={18} />,
   users: <UserCog size={18} />,
   timetable: <Clock size={18} />,
+  school_code: <BadgeCheck size={18} />,
+  chart_of_accounts: <Landmark size={18} />,
+  tax_rules: <ReceiptText size={18} />,
 }
 
 export default function SetupAssistant({ onNavigate, onExit }) {
@@ -111,6 +114,19 @@ export default function SetupAssistant({ onNavigate, onExit }) {
       </div>
 
       {error && <div className="su-error">{error}</div>}
+
+      {ready && (
+        <div className="su-complete-card">
+          <div className="su-complete-icon"><PartyPopper size={22} /></div>
+          <div className="su-complete-body">
+            <strong>Setup complete — your school is ready for full operation.</strong>
+            <p>All recommended tasks are done. Head to the dashboard to start using ShulePulse.</p>
+          </div>
+          <button className="su-exit-btn" onClick={exitToDashboard}>
+            <LayoutDashboard size={15} /> Go to Dashboard
+          </button>
+        </div>
+      )}
 
       <div className="su-progress-card">
         <div className="su-progress-top">

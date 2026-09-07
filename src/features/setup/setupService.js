@@ -16,6 +16,9 @@ function buildSnapshot(counts) {
   const timetable = counts.timetable ?? 0
   const staffProfiles = counts.staffProfiles ?? 0
   const parents = counts.parents ?? 0
+  const chartOfAccounts = counts.chartOfAccounts ?? null
+  const taxRules = counts.taxRules ?? null
+  const schoolCode = school?.school_code || school?.code
 
   return {
     counts: {
@@ -31,6 +34,8 @@ function buildSnapshot(counts) {
       timetable,
       staffProfiles,
       parents,
+      chartOfAccounts,
+      taxRules,
     },
     checks: {
       schoolProfile: !!(school?.name && school?.type && school?.county),
@@ -45,6 +50,9 @@ function buildSnapshot(counts) {
       parentsReady: parents > 0,
       feesReady: feeCategories > 0 && feeStructures > 0,
       timetableReady: timetable > 0,
+      schoolCodeReady: !!schoolCode || (schoolCode === undefined && !!school),
+      coaReady: (chartOfAccounts ?? 1) > 0,
+      taxReady: (taxRules ?? 1) > 0,
     },
   }
 }
@@ -62,7 +70,7 @@ export async function fetchSetupSnapshot({ schoolId, profile }) {
   }
 
   const reqs = {
-    school: supabase.from('schools').select('name, county, type, phone, email, logo_url, current_term, current_year, plan, subscription_status').eq('id', schoolId).maybeSingle(),
+    school: supabase.from('schools').select('name, county, type, phone, email, logo_url, current_term, current_year, school_code, plan, subscription_status').eq('id', schoolId).maybeSingle(),
     classes: supabase.from('classes').select('id, class_name, stream', { count: 'exact', head: true }).eq('school_id', schoolId),
     subjects: supabase.from('subjects').select('id', { count: 'exact', head: true }).eq('school_id', schoolId),
     teachers: supabase.from('teachers').select('id', { count: 'exact', head: true }).eq('school_id', schoolId),
@@ -72,6 +80,8 @@ export async function fetchSetupSnapshot({ schoolId, profile }) {
     feeStructures: supabase.from('fee_structures').select('id', { count: 'exact', head: true }).eq('school_id', schoolId),
     gradeLevels: supabase.from('grade_levels').select('id', { count: 'exact', head: true }).eq('school_id', schoolId),
     timetable: supabase.from('timetable_slots').select('id', { count: 'exact', head: true }).eq('school_id', schoolId),
+    chartOfAccounts: supabase.from('chart_of_accounts').select('id', { count: 'exact', head: true }).eq('school_id', schoolId),
+    taxRules: supabase.from('tax_rules').select('id', { count: 'exact', head: true }).eq('school_id', schoolId),
     staffProfiles: supabase.from('profiles')
       .select('id', { count: 'exact', head: true })
       .eq('school_id', schoolId)
@@ -113,6 +123,8 @@ export async function fetchSetupSnapshot({ schoolId, profile }) {
       timetable: out.timetable?.count ?? 0,
       staffProfiles: out.staffProfiles?.count ?? 0,
       parents: out.parentProfiles?.count ?? 0,
+      chartOfAccounts: out.chartOfAccounts?.count ?? 0,
+      taxRules: out.taxRules?.count ?? 0,
     }),
     raw: out,
   }
@@ -192,6 +204,48 @@ export function buildSetupSteps(snapshot, { financeEnabled }) {
     detail: `${counts.gradeLevels || 0} grade level(s)`,
     why: 'Grades and report cards use these bands.',
     action: 'Open Settings',
+  })
+
+  steps.push({
+    key: 'school_code',
+    title: 'School Code',
+    nav: 'settings_page',
+    module: 'General Settings',
+    required: false,
+    auto: true,
+    done: !!c.schoolCodeReady,
+    hint: 'Your unique school code was generated automatically.',
+    detail: counts.school?.school_code ? `Code: ${counts.school.school_code}` : 'Auto-generated',
+    why: 'Used in imports, exports and support identification.',
+    action: 'Open Settings',
+  })
+
+  steps.push({
+    key: 'chart_of_accounts',
+    title: 'Chart of Accounts',
+    nav: 'accounting',
+    module: 'Accounting',
+    required: false,
+    auto: true,
+    done: !!c.coaReady,
+    hint: 'A starter chart of accounts was created automatically for your school.',
+    detail: counts.chartOfAccounts ? `${counts.chartOfAccounts} account(s) configured` : 'Starter accounts configured',
+    why: 'Accounting entries and financial statements reference these accounts.',
+    action: 'Open Accounting',
+  })
+
+  steps.push({
+    key: 'tax_rules',
+    title: 'Tax Rules',
+    nav: 'accounting',
+    module: 'Accounting',
+    required: false,
+    auto: true,
+    done: !!c.taxReady,
+    hint: 'Standard tax rules (VAT, withholding, capital allowances) were added automatically.',
+    detail: counts.taxRules ? `${counts.taxRules} rule(s) applicable` : 'Standard rules configured',
+    why: 'Used for automatic tax handling in payroll, expenses and invoices.',
+    action: 'Open Accounting',
   })
 
   steps.push({

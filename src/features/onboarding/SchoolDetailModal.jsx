@@ -474,9 +474,16 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
                       ) : null
                     })()}
                     {school.negotiated_annual_price ? (
-                      <div className="sc-negoti-row">
-                        <span>Annual</span><span>KES {(school.negotiated_annual_price || 0).toLocaleString()}/yr</span>
-                      </div>
+                      <>
+                        {activePlan?.annual_price > 0 && (
+                          <div className="sc-negoti-row">
+                            <span>Standard Annual</span><span>KES {(activePlan.annual_price || 0).toLocaleString()}/yr</span>
+                          </div>
+                        )}
+                        <div className="sc-negoti-row">
+                          <span>Annual</span><span>KES {(school.negotiated_annual_price || 0).toLocaleString()}/yr</span>
+                        </div>
+                      </>
                     ) : null}
                     {school.negotiated_by ? (
                       <div className="sc-negoti-row">
