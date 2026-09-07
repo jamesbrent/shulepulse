@@ -1,5 +1,4 @@
 ﻿import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { basePath } from '../lib/paths'
 import { fetchPlatformSettings, fetchMaintenanceStatus } from '../features/superadmin/platformSettingsService'
@@ -32,6 +31,10 @@ function roleRoute(role) {
   }
 }
 
+function redirectToDashboard(role) {
+  window.location.href = basePath(roleRoute(role))
+}
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -48,11 +51,6 @@ export default function Login() {
   const [pendingProfile, setPendingProfile] = useState(null)
 
   const completeMfa = useAuthStore((s) => s.completeMfa)
-  const navigate = useNavigate()
-
-  const redirectToDashboard = (role) => {
-    navigate(basePath(roleRoute(role)))
-  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

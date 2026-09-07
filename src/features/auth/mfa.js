@@ -76,21 +76,6 @@ export async function verifyTotpCode(factorId, code) {
   return { data }
 }
 
-// True when the current auth session has already reached AAL2 (i.e. the user
-// passed a TOTP challenge during this session). Supabase persists this across
-// page reloads as long as the access token is valid, so a refresh must not
-// force a re-challenge.
-export async function hasAal2() {
-  const api = mfaApi()
-  if (!api || typeof api.getAuthenticatorAssuranceLevel !== 'function') return false
-  try {
-    const { data } = await api.getAuthenticatorAssuranceLevel()
-    return data?.currentLevel === 'aal2'
-  } catch {
-    return false
-  }
-}
-
 // Resolve the MFA posture for an authenticated profile into a pair of flags the
 // auth store / route guard can act on. Never throws; returns safe defaults so a
 // project without MFA enabled behaves exactly as before.
@@ -103,10 +88,9 @@ export async function resolveMfaStatus(profile) {
     factors = []
   }
   const verified = factors.some((f) => f.status === 'verified')
-  const aal2 = await hasAal2().catch(() => false)
   const required = await isRoleMfaRequired(role).catch(() => false)
   return {
-    challengeRequired: verified && !aal2,
+    challengeRequired: verified,
     setupSuggested: required && !verified,
   }
 }
