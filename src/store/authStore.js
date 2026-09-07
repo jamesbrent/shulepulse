@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { loadGradingConfig, refreshGradingConfig } from '../services/grading/config'
 import { logAction } from '../features/audit/auditService'
-import { resolveMfaStatus } from '../features/auth/mfa'
+import { resolveMfaStatus, isMfaDoneFor, markMfaDone, clearMfaDone } from '../features/auth/mfa'
 
 // Supabase builders are thenables (await/.then) but have no .catch(), so a
 // bare `.catch()` on rpc() would throw. Fail open on any RPC error so an
@@ -27,7 +27,15 @@ export const useAuthStore = create((set, get) => ({
 
   // Completes the MFA gate after the user passes a TOTP challenge. Also called
   // by routes that hold a persistent session and gate on mfaChallengeRequired.
-  completeMfa: () => set({ mfaChallengeRequired: false }),
+  completeMfa: async () => {
+    let uid = get().user?.id
+    if (!uid) {
+      const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }))
+      uid = data?.session?.user?.id
+    }
+    markMfaDone(uid)
+    set({ mfaChallengeRequired: false })
+  },
 
   // Apply MFA posture (and the school-provision guard) to a live profile + user.
   // Non-breaking: returns safe defaults when MFA is not configured.
@@ -36,6 +44,11 @@ export const useAuthStore = create((set, get) => ({
       challengeRequired: false,
       setupSuggested: false,
     }))
+    // Once the user passed a TOTP challenge this session, a reload must not
+    // demand a second challenge.
+    if (user && isMfaDoneFor(user.id)) {
+      status.challengeRequired = false
+    }
     set({
       mfaChallengeRequired: status.challengeRequired || false,
       mfaSetupSuggested: status.setupSuggested || false,
@@ -87,6 +100,7 @@ export const useAuthStore = create((set, get) => ({
         || await hasPortalAccess(session.user.id)
       if (session.user && profile && (!provisioned || !parentAllowed)) {
         await supabase.auth.signOut()
+        clearMfaDone()
         set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
         return
       }
@@ -117,6 +131,7 @@ export const useAuthStore = create((set, get) => ({
           || await hasPortalAccess(session.user.id)
         if (profile && (!provisioned || !parentAllowed)) {
           await supabase.auth.signOut()
+          clearMfaDone()
           set({ user: null, profile: null, loading: false, mfaChallengeRequired: false, mfaSetupSuggested: false })
           return
         }
@@ -162,6 +177,7 @@ export const useAuthStore = create((set, get) => ({
     } catch (err) {
       console.error('[AuthStore] signOut error:', err)
     }
+    clearMfaDone()
     set({ user: null, profile: null, selectedSchool: null, mfaChallengeRequired: false, mfaSetupSuggested: false })
   },
 }))

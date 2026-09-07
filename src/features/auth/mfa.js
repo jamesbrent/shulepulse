@@ -10,6 +10,38 @@ import { fetchPlatformSettings } from '../superadmin/platformSettingsService'
 
 const MFA_UNAVAILABLE = { available: false, reason: 'MFA is not enabled for this project.' }
 
+// Tracks in the current browser/WebView session that the authenticated user
+// already passed a TOTP challenge. Persists across page reloads (sessionStorage)
+// so the hard MFA gate does not force a second prompt; resets automatically when
+// the app/browser session ends or the user signs out.
+const MFA_DONE_KEY = 'shulepulse_mfa_done'
+
+export function isMfaDoneFor(userId) {
+  if (!userId) return false
+  try {
+    return sessionStorage.getItem(MFA_DONE_KEY) === userId
+  } catch {
+    return false
+  }
+}
+
+export function markMfaDone(userId) {
+  if (!userId) return
+  try {
+    sessionStorage.setItem(MFA_DONE_KEY, userId)
+  } catch {
+    // storage unavailable — MFA will prompt again on reload; acceptable.
+  }
+}
+
+export function clearMfaDone() {
+  try {
+    sessionStorage.removeItem(MFA_DONE_KEY)
+  } catch {
+    // ignore
+  }
+}
+
 function mfaApi() {
   return supabase.auth.mfa
 }
