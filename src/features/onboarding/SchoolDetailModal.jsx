@@ -15,6 +15,7 @@ import {
   invalidateCache
 } from '../access/featureAccessService'
 import { setNegotiation, clearNegotiation } from '../superadmin/subscriptionService'
+import './OnboardSchoolModal.css'
 
 export default function SchoolDetailModal({ school: initialSchool, onClose, onEdit }) {
   const [school, setSchool] = useState(initialSchool)
@@ -33,6 +34,7 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
   const [negAnnual, setNegAnnual] = useState('')
   const [negNotes, setNegNotes] = useState('')
   const [confirmingClear, setConfirmingClear] = useState(false)
+  const [planDealAction, setPlanDealAction] = useState('carry')
   const modules = getModulesConfig(school)
 
   useEffect(() => {
@@ -72,20 +74,33 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
 
   const handlePlanChange = async (newPlanKey) => {
     setSaving(true)
+    const hasDeal = !!school.negotiated_monthly_price
+    const carry = hasDeal && planDealAction === 'carry'
+    const options = carry
+      ? {
+          negotiated_monthly_price: school.negotiated_monthly_price,
+          negotiated_annual_price: school.negotiated_annual_price || undefined,
+          negotiated_notes: school.negotiated_notes || undefined,
+        }
+      : { clear_negotiation: true }
     try {
-      await updateSchoolPlan(school.id, newPlanKey)
+      await updateSchoolPlan(school.id, newPlanKey, options)
       setSchool((prev) => ({
         ...prev,
         plan: newPlanKey,
-        negotiated_monthly_price: null,
-        negotiated_annual_price: null,
-        negotiated_at: null,
-        negotiated_by: null,
-        negotiated_notes: null,
+        ...(carry
+          ? {}
+          : {
+              negotiated_monthly_price: null,
+              negotiated_annual_price: null,
+              negotiated_at: null,
+              negotiated_by: null,
+              negotiated_notes: null,
+            }),
       }))
       invalidateCache()
       await loadData()
-      showToast('success', `Plan changed to ${newPlanKey}. Any negotiated deal was cleared.`)
+      showToast('success', `Plan changed to ${newPlanKey}.${carry ? ' Negotiated deal carried over.' : ''}`)
     } catch (err) {
       showToast('error', err.message)
     }
@@ -437,6 +452,32 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
               <div className="sc-sub-section" style={{ marginTop: 20 }}>
                 <h5>Change Plan</h5>
                 <div className="sc-plan-options">
+                  {school.negotiated_monthly_price ? (
+                    <div
+                      style={{
+                        marginBottom: 10,
+                        fontSize: 13,
+                        color: '#334155',
+                        background: '#fffbeb',
+                        border: '1px solid #fde68a',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, color: '#92400e', marginBottom: 4 }}>
+                        Changing plan with a negotiated deal (KES {school.negotiated_monthly_price.toLocaleString()}/mo):
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '2px 0' }}>
+                        <input type="radio" name="sdmDealAction" checked={planDealAction === 'carry'} onChange={() => setPlanDealAction('carry')} />
+                        Carry the deal over to the new plan
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '2px 0' }}>
+                        <input type="radio" name="sdmDealAction" checked={planDealAction === 'clear'} onChange={() => setPlanDealAction('clear')} />
+                        Clear the deal — school pays standard price
+                      </label>
+                    </div>
+                  ) : null}
+
                   {plans.filter((p) => p.is_active !== false).map((p) => (
                     <button
                       key={p.key}
@@ -517,9 +558,14 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
                     </div>
                   </div>
                 ) : (
-                  <p className="step-hint" style={{ margin: '0 0 12px' }}>
-                    No negotiated deal. This school pays the standard plan price.
-                  </p>
+                  <>
+                    <p className="step-hint" style={{ margin: '0 0 12px' }}>
+                      No negotiated deal. This school pays the standard plan price.
+                    </p>
+                    <button className="btn-secondary" onClick={() => { setNegShow(true); setConfirmingClear(false) }} disabled={saving}>
+                      <DollarSign size={14} /> Set Deal
+                    </button>
+                  </>
                 )}
 
                 {negShow && (
