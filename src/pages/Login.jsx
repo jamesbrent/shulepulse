@@ -98,10 +98,10 @@ export default function Login() {
       .eq('id', session.user.id)
       .single()
 
-    // Google returned an account with no profile — e.g. a parent whose account
-    // was provisioned by password via createParentAuth. Link this Google
-    // identity into that existing account (SQL function, bypasses RLS) and then
-    // re-run Google OAuth so the parent signs in as the canonical account.
+    // Google returned an account with no profile — e.g. a parent or superadmin
+    // whose account was provisioned by password. Link this Google identity into
+    // that existing account (SQL function, bypasses RLS) and then re-run Google
+    // OAuth so they sign in as the canonical account.
     if (!profile) {
       const { data: canonicalId } = await supabase
         .rpc('link_google_to_existing', { p_user_id: session.user.id, p_email: session.user.email })
@@ -115,10 +115,27 @@ export default function Login() {
       return
     }
 
-    // Deny: disabled account or no school linkage (arbitrary account).
-    const provisioned = profile?.school_id || profile?.role === 'superadmin'
-    if (profile.disabled || !provisioned) {
+    // Explicitly disabled account.
+    if (profile.disabled) {
       await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+      setError('This account has been disabled. Contact your administrator.')
+      return
+    }
+
+    // Deny: profile exists but has no school linkage (e.g. auto-provisioned by
+    // handle_new_user with role='teacher' when the real account is password
+    // based). Try linking the Google identity into the existing provisioned
+    // account first, then re-run Google OAuth in the same session.
+    const provisioned = profile?.school_id || profile?.role === 'superadmin'
+    if (!provisioned) {
+      const { data: canonicalId } = await supabase
+        .rpc('link_google_to_existing', { p_user_id: session.user.id, p_email: session.user.email })
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+      if (canonicalId) {
+        setError('Account linked. Please sign in with Google again…')
+        await handleGoogle()
+        return
+      }
       setError('This Google account is not registered to a school. Contact your administrator.')
       return
     }
