@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../audit/auditService'
 
 const STAFF_ROLES = ['admin', 'deputy_administrator', 'bursar', 'registrar', 'reception', 'hod', 'teacher', 'class_teacher', 'librarian']
 
@@ -334,16 +335,40 @@ export async function setSetupChoice(userId, value) {
   }
 }
 
-export async function markSetupCompleted(userId) {
+export async function markSetupCompleted(userId, schoolId) {
   if (!userId) return
   try {
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('setup_completed_at')
+      .eq('id', userId)
+      .maybeSingle()
+    if (existing?.setup_completed_at) return
+
     const { error } = await supabase
       .from('profiles')
       .update({ setup_completed_at: new Date().toISOString() })
       .eq('id', userId)
       .is('setup_completed_at', null)
     if (error) throw error
+
+    await logAction({ schoolId, action: 'setup.completed', details: { user_id: userId } })
   } catch (err) {
     console.warn('Could not record setup completion', err)
   }
+}
+
+export function markSetupAssistantOpened({ userId, schoolId }) {
+  if (!userId) return
+  logAction({ schoolId, action: 'setup.assistant_opened', details: { user_id: userId } })
+    .catch(() => {})
+}
+
+export function markSetupStepCompleted({ userId, schoolId, step }) {
+  if (!userId || !step) return
+  logAction({
+    schoolId,
+    action: 'setup.step_completed',
+    details: { user_id: userId, step: step.key, title: step.title, module: step.module },
+  }).catch(() => {})
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   CheckCircle2, Circle, ArrowRight, Info, Sparkles,
   GraduationCap, Calendar, Users, BookOpen, ClipboardList,
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useFeatureAccess } from '../access/FeatureAccessContext'
-import { fetchSetupSnapshot, buildSetupSteps, setSetupChoice, markSetupCompleted } from './setupService'
+import { fetchSetupSnapshot, buildSetupSteps, setSetupChoice, markSetupCompleted, markSetupAssistantOpened, markSetupStepCompleted } from './setupService'
 import './SetupAssistant.css'
 
 const STEP_ICONS = {
@@ -56,11 +56,31 @@ export default function SetupAssistant({ onNavigate, onExit }) {
   const manualSteps = steps.filter((s) => !s.auto)
   const completeCount = steps.filter((s) => s.done).length
 
+  const prevDoneRef = useRef(null)
+
+  useEffect(() => {
+    if (schoolId && profile?.id) {
+      markSetupAssistantOpened({ userId: profile.id, schoolId })
+    }
+  }, [schoolId, profile?.id])
+
+  useEffect(() => {
+    if (!schoolId || !profile?.id) return
+    const doneKeys = steps.filter((s) => s.done).map((s) => s.key).join(',')
+    const prev = prevDoneRef.current
+    prevDoneRef.current = doneKeys
+    if (prev == null) return
+    const prevSet = new Set(prev ? prev.split(',') : [])
+    steps.filter((s) => s.done && !prevSet.has(s.key)).forEach((s) => {
+      markSetupStepCompleted({ userId: profile.id, schoolId, step: s })
+    })
+  }, [steps, schoolId, profile?.id])
+
   useEffect(() => {
     if (ready && profile?.id) {
-      markSetupCompleted(profile.id)
+      markSetupCompleted(profile.id, schoolId)
     }
-  }, [ready, profile?.id])
+  }, [ready, profile?.id, schoolId])
 
   const exitToDashboard = () => {
     setSetupChoice(profile?.id, 'dashboard')

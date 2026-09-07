@@ -83,4 +83,7 @@ export const AUDIT_ACTIONS = [
   'school.deleted',
   'school.suspended',
   'school.reactivated',
+  'setup.assistant_opened',
+  'setup.step_completed',
+  'setup.completed',
 ]
