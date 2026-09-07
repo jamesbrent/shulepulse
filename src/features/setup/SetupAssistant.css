@@ -1,0 +1,463 @@
+/* ── Setup Assistant ─────────────────────────────────────────────── */
+
+.su-root {
+  padding: 20px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.su-loading,
+.su-message {
+  padding: 40px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.su-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+/* Header */
+.su-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.su-header-left {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.su-title-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #16a34a);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.su-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: #0f172a;
+}
+
+.su-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  max-width: 640px;
+}
+
+.su-exit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.su-exit-btn:hover {
+  background: #f8fafc;
+}
+
+/* Progress */
+.su-progress-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.su-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.su-progress-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-left: 8px;
+}
+
+.su-progress-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.su-progress-status {
+  text-align: right;
+}
+
+.su-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.su-not-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #b45309;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.su-progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.su-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #16a34a);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+/* Sections */
+.su-section {
+  margin-bottom: 24px;
+}
+
+.su-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 10px;
+}
+
+.su-section-sub {
+  font-weight: 400;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-left: 4px;
+}
+
+.su-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+/* Cards */
+.su-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  gap: 12px;
+}
+
+.su-card.done {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.su-card.auto {
+  border-style: dashed;
+}
+
+.su-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.su-card.done .su-card-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.su-card-body {
+  flex: 1;
+}
+
+.su-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.su-card-title-row h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  color: #0f172a;
+}
+
+.su-req-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.su-auto-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.su-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.su-status.ok {
+  color: #16a34a;
+}
+
+.su-card-hint {
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+
+.su-card-detail {
+  font-size: 12.5px;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.su-card-why {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 11.5px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.su-card-why svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.su-open-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.su-open-btn:hover {
+  background: #1d4ed8;
+}
+
+.su-open-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Welcome modal ───────────────────────────────────────────────── */
+
+.su-welcome-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.su-welcome {
+  position: relative;
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px 28px 24px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+.su-welcome-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.su-welcome-close:hover {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.su-welcome-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #16a34a);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+
+.su-welcome h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.su-welcome-sub {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0 0 20px;
+}
+
+.su-welcome-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.su-welcome-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #334155;
+}
+
+.su-welcome-opt svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.su-welcome-opt strong {
+  display: block;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.su-welcome-opt span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.su-welcome-opt:hover {
+  border-color: #bfdbfe;
+  background: #f8fafc;
+}
+
+.su-welcome-opt--primary {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.su-welcome-note {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin: 16px 0 0;
+}
+
+@media (max-width: 640px) {
+  .su-root {
+    padding: 16px 12px;
+  }
+
+  .su-header {
+    flex-direction: column;
+  }
+
+  .su-progress-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .su-progress-status {
+    text-align: left;
+  }
+}

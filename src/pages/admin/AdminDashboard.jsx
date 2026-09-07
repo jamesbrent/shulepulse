@@ -60,6 +60,10 @@ import ReportCenter from '../HOD/ReportCenter'
 import { useFeatureAccess } from '../../features/access/FeatureAccessContext'
 import { ADMIN_NAV_FEATURES, navItemAllowed } from '../../features/access/featureMap'
 import FeatureGate from '../../features/access/FeatureGate'
+import SetupAssistant from '../../features/setup/SetupAssistant'
+import '../../features/setup/SetupAssistant.css'
+import WelcomeModal from '../../features/setup/WelcomeModal'
+import { getSetupChoice, fetchSetupPreference } from '../../features/setup/setupService'
 import SubjectPerformance from '../HOD/SubjectPerformance'
 import TeacherReview from '../HOD/TeacherReview'
 import DeptExams from '../HOD/DeptExams'
@@ -232,6 +236,7 @@ const pageTitles = {
   notifications: 'Notices',
   staff_directory: 'Staff Directory',
   departments: 'Departments',
+  setup: 'Setup Assistant',
 }
 
 const QUICK_ACTIONS = [
@@ -274,6 +279,31 @@ export default function AdminDashboard() {
   const [pendingAp, setPendingAp] = useState(0)
   const [logoError, setLogoError] = useState(false)
   const notifCount = useNoticeCount(authProfile?.school_id, authProfile?.id)
+
+  const [showWelcome, setShowWelcome] = useState(false)
+
+  useEffect(() => {
+    const uid = authProfile?.id
+    if (!uid || authProfile?.role === 'superadmin') return
+    let cancelled = false
+    ;(async () => {
+      let dbChoice = null
+      try {
+        const pref = await fetchSetupPreference(uid)
+        dbChoice = pref?.setup_choice || null
+      } catch {
+        /* fall back to local */
+      }
+      if (cancelled) return
+      const choice = dbChoice || getSetupChoice(uid)
+      if (choice === 'guided') {
+        setActiveNav('setup')
+      } else if (!choice) {
+        setShowWelcome(true)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [authProfile?.id, authProfile?.role])
 
   useEffect(() => { setLogoError(false) }, [logoUrl])
 
@@ -531,6 +561,7 @@ export default function AdminDashboard() {
       case 'departments':     return <DepartmentsPage />
       case 'library':        return <LibraryContent schoolId={authProfile?.school_id} school={school} profile={authProfile} />
       case 'notifications': return <AdminNotifications />
+      case 'setup': return <SetupAssistant onNavigate={handleNav} onExit={() => setActiveNav('dashboard')} />
       default:               return renderDashboard()
     }
   }
@@ -808,6 +839,14 @@ export default function AdminDashboard() {
           <span>Dashboard</span>
         </button>
 
+        <button
+          className={`adm-nav-top ${activeNav === 'setup' ? 'active' : ''}`}
+          onClick={() => handleNav('setup')}
+        >
+          <UserCog size={16} />
+          <span>Setup Assistant</span>
+        </button>
+
         {filteredNavGroups.map(group => {
           const isOpen = expandedGroup === group.id
           const hasActive = isGroupActive(group)
@@ -881,7 +920,7 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="admin-main">
-        {activeNav !== 'dashboard' && activeNav !== 'alumni' && activeNav !== 'staff_directory' && activeNav !== 'departments' && (
+        {activeNav !== 'dashboard' && activeNav !== 'alumni' && activeNav !== 'staff_directory' && activeNav !== 'departments' && activeNav !== 'setup' && (
           <header className="admin-header">
             <div>
               <h1>{pageTitles[activeNav] || 'Dashboard'}</h1>
@@ -909,6 +948,16 @@ export default function AdminDashboard() {
           {renderContent()}
         </FeatureGate>
       </main>
+
+      {showWelcome && (
+        <WelcomeModal
+          user={authProfile}
+          onChoose={(mode) => {
+            setShowWelcome(false)
+            if (mode === 'guided') setActiveNav('setup')
+          }}
+        />
+      )}
     </div>
   )
 }
