@@ -145,7 +145,7 @@ export default function StudentPortal() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('*, schools(*)')
+        .select('*, schools!school_id(*)')
         .eq('id', user.id)
         .single()
 

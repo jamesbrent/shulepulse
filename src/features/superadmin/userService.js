@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 export async function fetchUsers({ role, search, disabled } = {}) {
   let query = supabase
     .from('profiles')
-    .select('*, schools(name)')
+    .select('*, schools!school_id(name)')
     .order('created_at', { ascending: false })
 
   if (role) query = query.eq('role', role)

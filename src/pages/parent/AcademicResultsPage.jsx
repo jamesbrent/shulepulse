@@ -40,7 +40,7 @@ export default function AcademicResultsPage({ activeChild }) {
   const fetchGrades = async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('*, schools(*)').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('*, schools!school_id(*)').eq('id', user.id).single()
 
     if (profile?.schools) setSchool(profile.schools)
 

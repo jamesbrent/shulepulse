@@ -65,7 +65,7 @@ export default function ParentPortal() {
     setUserId(user.id)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('*, schools(*)')
+      .select('*, schools!school_id(*)')
       .eq('id', user.id)
       .single()
 

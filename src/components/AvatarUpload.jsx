@@ -80,7 +80,7 @@ export default function AvatarUpload({ className, size = 36, fallbackChar = 'U' 
     }
 
     const { data: updatedProfile } = await supabase
-      .from('profiles').select('*, schools(*)').eq('id', user.id).single()
+      .from('profiles').select('*, schools!school_id(*)').eq('id', user.id).single()
 
     useAuthStore.setState({
       profile: {

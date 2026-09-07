@@ -81,7 +81,7 @@ export const useAuthStore = create((set, get) => ({
     if (session?.user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('*, schools(*)')
+        .select('*, schools!school_id(*)')
         .eq('id', session.user.id)
         .single()
 
@@ -116,7 +116,7 @@ export const useAuthStore = create((set, get) => ({
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*, schools(*)')
+          .select('*, schools!school_id(*)')
           .eq('id', session.user.id)
           .single()
 
