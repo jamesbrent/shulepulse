@@ -39,7 +39,11 @@ export default function OnboardSchoolModal({ onClose }) {
     plan: '',
     primaryColor: '#2563eb',
     secondaryColor: '#16a34a',
+    negotiatedMonthlyPrice: null,
+    negotiatedAnnualPrice: null,
+    negotiatedNotes: '',
   })
+  const [isNegotiated, setIsNegotiated] = useState(false)
 
   const [admin, setAdmin] = useState({
     fullName: '',
@@ -74,7 +78,11 @@ export default function OnboardSchoolModal({ onClose }) {
 
   const canProceed = () => {
     if (step === 0) return school.name.trim() && school.county && school.type
-    if (step === 1) return school.plan
+    if (step === 1) {
+      if (!school.plan) return false
+      if (isNegotiated && !(school.negotiatedMonthlyPrice > 0)) return false
+      return true
+    }
     if (step === 2) {
       return (
         admin.fullName.trim() &&
@@ -301,6 +309,85 @@ export default function OnboardSchoolModal({ onClose }) {
                   </div>
                 </div>
               </div>
+
+              <div className="negotiated-deal">
+                <div className="negotiated-toggle-row">
+                  <div>
+                    <strong>Negotiated price deal</strong>
+                    <p className="step-hint">Offer this school a discounted subscription price, approved by you. Billing only — does not change features.</p>
+                  </div>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={isNegotiated}
+                      onChange={(e) => {
+                        setIsNegotiated(e.target.checked)
+                        if (!e.target.checked) {
+                          updateSchool('negotiatedMonthlyPrice', null)
+                          updateSchool('negotiatedAnnualPrice', null)
+                          updateSchool('negotiatedNotes', '')
+                        }
+                      }}
+                    />
+                    <span className="slider" />
+                  </label>
+                </div>
+
+                {isNegotiated && (() => {
+                  const selected = plans.find((p) => p.key === school.plan)
+                  const standard = selected?.monthly_price || 0
+                  const negotiated = Number(school.negotiatedMonthlyPrice) || 0
+                  const discountAmen = standard > 0 ? Math.round(((standard - negotiated) / standard) * 100) : 0
+                  return (
+                    <div className="negotiated-fields">
+                      <div className="form-field">
+                        <label>Standard Price (unchanged)</label>
+                        <input type="text" value={selected ? `KES ${standard.toLocaleString()}/mo` : 'Select a plan first'} readOnly className="standard-price-display" />
+                      </div>
+                      <div className="form-grid two-col">
+                        <div className="form-field">
+                          <label>Negotiated Monthly Price (KES)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={school.negotiatedMonthlyPrice ?? ''}
+                            onChange={(e) => updateSchool('negotiatedMonthlyPrice', Number(e.target.value))}
+                            placeholder="e.g. 1200 or 0 to clear"
+                          />
+                          {standard > 0 && negotiated > 0 && (
+                            <span className="discount-hint">
+                              {negotiated < standard
+                                ? `${(standard - negotiated).toLocaleString()} KES/mo off (${discountAmen}% discount)`
+                                : negotiated === standard
+                                  ? 'Same as standard price'
+                                  : `${(negotiated - standard).toLocaleString()} KES/mo above standard`}
+                            </span>
+                          )}
+                        </div>
+                        <div className="form-field">
+                          <label>Negotiated Annual Price (KES) <em>optional</em></label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={school.negotiatedAnnualPrice ?? ''}
+                            onChange={(e) => updateSchool('negotiatedAnnualPrice', Number(e.target.value))}
+                            placeholder="e.g. 12000"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-field">
+                        <label>Reason / Notes <em>optional</em></label>
+                        <textarea
+                          rows="2"
+                          value={school.negotiatedNotes}
+                          onChange={(e) => updateSchool('negotiatedNotes', e.target.value)}
+                          placeholder="e.g. Long-term partner since 2023 — 20% goodwill discount"
+                        />
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
           )}
 
@@ -378,6 +465,23 @@ export default function OnboardSchoolModal({ onClose }) {
                 <div className="review-section">
                   <h4><CreditCard size={14} /> Plan</h4>
                   <div className="review-row"><span>Plan</span><span className="plan-tag">{school.plan}</span></div>
+                  {(() => {
+                    const selected = plans.find((p) => p.key === school.plan)
+                    const standard = selected?.monthly_price || 0
+                    const negotiated = Number(school.negotiatedMonthlyPrice) || 0
+                    const discountPct = standard > 0 && negotiated > 0 ? Math.round(((standard - negotiated) / standard) * 100) : 0
+                    return (
+                      <>
+                        {standard > 0 && <div className="review-row"><span>Standard Price</span><span>KES {standard.toLocaleString()}/mo</span></div>}
+                        {isNegotiated && negotiated > 0 && (
+                          <div className="review-row">
+                            <span>Negotiated Price</span>
+                            <span className="negoti-price">KES {negotiated.toLocaleString()}/mo {discountPct > 0 && <em>({discountPct}% off)</em>}</span>
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()}
                   <div className="review-row">
                     <span>Colors</span>
                     <span className="color-dots">

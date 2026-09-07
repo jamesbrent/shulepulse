@@ -25,12 +25,13 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
   }, [])
 
   const currentPlan = school.plan
-  const currentPrice = plans.find((p) => p.key === currentPlan)?.monthly_price || 0
+  const currentPrice = school.negotiated_monthly_price || plans.find((p) => p.key === currentPlan)?.monthly_price || 0
   const selectedPrice = plans.find((p) => p.key === selectedPlan)?.monthly_price || 0
   const diff = selectedPrice - currentPrice
   const isDowngrade = diff < 0
   const isUpgrade = diff > 0
   const noChange = selectedPlan === currentPlan
+  const hasDeal = !!school.negotiated_monthly_price
 
   const handleConfirm = async () => {
     if (noChange) { onClose(); return }
@@ -115,19 +116,27 @@ export default function PlanChangeModal({ school, onClose, onChanged }) {
           {!noChange && !success && (
             <div style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: 8,
+              flexDirection: 'column',
+              gap: 6,
               padding: '10px 14px',
               borderRadius: 8,
               background: isDowngrade ? '#fef9c3' : '#dcfce7',
               color: isDowngrade ? '#854d0e' : '#166534',
               fontSize: 13,
             }}>
-              <AlertTriangle size={15} />
-              {isDowngrade
-                ? `Downgrade from ${currentPlan} to ${selectedPlan} (KES ${Math.abs(diff).toLocaleString()}/mo decrease)`
-                : `Upgrade from ${currentPlan} to ${selectedPlan} (KES ${diff.toLocaleString()}/mo increase)`
-              }
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertTriangle size={15} />
+                {isDowngrade
+                  ? `Downgrade from ${currentPlan} to ${selectedPlan} (KES ${Math.abs(diff).toLocaleString()}/mo decrease)`
+                  : `Upgrade from ${currentPlan} to ${selectedPlan} (KES ${diff.toLocaleString()}/mo increase)`
+                }
+              </div>
+              {hasDeal && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, opacity: 0.9 }}>
+                  <AlertTriangle size={13} />
+                  This school has a negotiated deal (KES {school.negotiated_monthly_price.toLocaleString()}/mo). Changing the plan will clear it.
+                </div>
+              )}
             </div>
           )}
         </div>

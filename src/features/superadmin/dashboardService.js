@@ -25,7 +25,7 @@ export async function fetchDashboardStats() {
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'parent'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('fee_payments').select('amount'),
-    supabase.from('schools').select('plan'),
+    supabase.from('schools').select('plan, negotiated_monthly_price'),
     supabase.from('schools').select('created_at').order('created_at', { ascending: true }),
     supabase.rpc('get_monthly_revenue'),
     supabase.from('plans').select('key, monthly_price'),
@@ -37,7 +37,7 @@ export async function fetchDashboardStats() {
   })
   const planPrices = {}
   ;(plansData || []).forEach((p) => { planPrices[p.key] = p.monthly_price || 0 })
-  const mrr = Object.entries(planCounts).reduce((sum, [plan, count]) => sum + count * (planPrices[plan] || 0), 0)
+  const mrr = (schoolsByPlan || []).reduce((sum, s) => sum + (s.negotiated_monthly_price || planPrices[s.plan] || 0), 0)
 
   const schoolGrowthMap = {}
   ;(signups || []).forEach((s) => {

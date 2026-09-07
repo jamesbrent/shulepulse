@@ -14,6 +14,7 @@ import {
   updateSchoolPlan, suspendSchool, reactivateSchool, setTrialSchool,
   invalidateCache
 } from '../access/featureAccessService'
+import { setNegotiation, clearNegotiation } from '../superadmin/subscriptionService'
 
 export default function SchoolDetailModal({ school: initialSchool, onClose, onEdit }) {
   const [school, setSchool] = useState(initialSchool)
@@ -27,6 +28,11 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
   const [overrides, setOverrides] = useState([])
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
+  const [negShow, setNegShow] = useState(false)
+  const [negMonthly, setNegMonthly] = useState('')
+  const [negAnnual, setNegAnnual] = useState('')
+  const [negNotes, setNegNotes] = useState('')
+  const [confirmingClear, setConfirmingClear] = useState(false)
   const modules = getModulesConfig(school)
 
   useEffect(() => {
@@ -68,10 +74,63 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
     setSaving(true)
     try {
       await updateSchoolPlan(school.id, newPlanKey)
-      setSchool((prev) => ({ ...prev, plan: newPlanKey }))
+      setSchool((prev) => ({
+        ...prev,
+        plan: newPlanKey,
+        negotiated_monthly_price: null,
+        negotiated_annual_price: null,
+        negotiated_at: null,
+        negotiated_by: null,
+        negotiated_notes: null,
+      }))
       invalidateCache()
       await loadData()
-      showToast('success', `Plan changed to ${newPlanKey}`)
+      showToast('success', `Plan changed to ${newPlanKey}. Any negotiated deal was cleared.`)
+    } catch (err) {
+      showToast('error', err.message)
+    }
+    setSaving(false)
+  }
+
+  const handleSetNegotiation = async () => {
+    const price = Number(negMonthly)
+    if (!(price > 0)) {
+      showToast('error', 'Enter a valid negotiated monthly price (KES).')
+      return
+    }
+    const standard = activePlan?.monthly_price || 0
+    if (standard > 0 && price > standard) {
+      showToast('error', 'Negotiated price must not exceed the standard price.')
+      return
+    }
+    setSaving(true)
+    try {
+      const result = await setNegotiation(school.id, {
+        monthlyPrice: price,
+        annualPrice: Number(negAnnual) > 0 ? Number(negAnnual) : null,
+        notes: negNotes.trim() || null,
+      })
+      setSchool((prev) => ({ ...prev, ...result }))
+      setNegShow(false)
+      setNegMonthly('')
+      setNegAnnual('')
+      setNegNotes('')
+      invalidateCache()
+      showToast('success', 'Negotiated deal saved.')
+    } catch (err) {
+      showToast('error', err.message)
+    }
+    setSaving(false)
+  }
+
+  const handleClearNegotiation = async () => {
+    setSaving(true)
+    setConfirmingClear(false)
+    try {
+      const result = await clearNegotiation(school.id)
+      setSchool((prev) => ({ ...prev, ...result }))
+      invalidateCache()
+      showToast('success', 'Negotiated deal cleared. Standard pricing restored.')
     } catch (err) {
       showToast('error', err.message)
     }
@@ -336,7 +395,14 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
                   <DollarSign size={14} />
                   <span className="sc-info-label">Amount</span>
                   <span className="sc-info-value">
-                    KES {(activePlan?.monthly_price || 0).toLocaleString()}/mo
+                    {school.negotiated_monthly_price ? (
+                      <>
+                        <s style={{ color: '#94a3b8', fontSize: 12 }}>KES {(activePlan?.monthly_price || 0).toLocaleString()}</s>{' '}
+                        KES {(school.negotiated_monthly_price || 0).toLocaleString()}/mo
+                      </>
+                    ) : (
+                      `KES ${(activePlan?.monthly_price || 0).toLocaleString()}/mo`
+                    )}
                   </span>
                 </div>
                 <div className="sc-info-item">
@@ -384,6 +450,112 @@ export default function SchoolDetailModal({ school: initialSchool, onClose, onEd
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="sc-sub-section" style={{ marginTop: 20 }}>
+                <h5>Negotiated Deal</h5>
+                {school.negotiated_monthly_price ? (
+                  <div className="sc-negoti-summary">
+                    <div className="sc-negoti-row">
+                      <span>Standard</span><span>KES {(activePlan?.monthly_price || 0).toLocaleString()}/mo</span>
+                    </div>
+                    <div className="sc-negoti-row highlight">
+                      <span>Negotiated</span>
+                      <span>KES {(school.negotiated_monthly_price || 0).toLocaleString()}/mo</span>
+                    </div>
+                    {(() => {
+                      const std = activePlan?.monthly_price || 0
+                      const neg = school.negotiated_monthly_price || 0
+                      const pct = std > 0 && neg > 0 ? Math.round(((std - neg) / std) * 100) : 0
+                      return pct > 0 ? (
+                        <div className="sc-negoti-row">
+                          <span>Discount</span><span style={{ color: '#059669', fontWeight: 600 }}>{((std - neg)).toLocaleString()} KES/mo ({pct}%)</span>
+                        </div>
+                      ) : null
+                    })()}
+                    {school.negotiated_annual_price ? (
+                      <div className="sc-negoti-row">
+                        <span>Annual</span><span>KES {(school.negotiated_annual_price || 0).toLocaleString()}/yr</span>
+                      </div>
+                    ) : null}
+                    {school.negotiated_by ? (
+                      <div className="sc-negoti-row">
+                        <span>Approved By</span><span>{(school.negotiated_by || '').slice(0, 8)}</span>
+                      </div>
+                    ) : null}
+                    {school.negotiated_at ? (
+                      <div className="sc-negoti-row">
+                        <span>Approved</span><span>{new Date(school.negotiated_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      </div>
+                    ) : null}
+                    {school.negotiated_notes ? (
+                      <div className="sc-negoti-notes">{school.negotiated_notes}</div>
+                    ) : null}
+                    <div className="sc-detail-actions" style={{ marginTop: 12 }}>
+                      <button className="btn-secondary" onClick={() => { setNegShow(true); setConfirmingClear(false) }} disabled={saving}>
+                        <Edit size={14} /> Adjust Deal
+                      </button>
+                      {confirmingClear ? (
+                        <>
+                          <button className="btn-secondary" style={{ color: '#ef4444' }} onClick={handleClearNegotiation} disabled={saving}>
+                            {saving ? <Loader size={14} className="spin" /> : <AlertTriangle size={14} />} Confirm Clear
+                          </button>
+                          <button className="btn-ghost" onClick={() => setConfirmingClear(false)}>Cancel</button>
+                        </>
+                      ) : (
+                        <button className="btn-secondary" style={{ color: '#ef4444' }} onClick={() => setConfirmingClear(true)} disabled={saving}>
+                          <XCircle size={14} /> Clear Deal
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="step-hint" style={{ margin: '0 0 12px' }}>
+                    No negotiated deal. This school pays the standard plan price.
+                  </p>
+                )}
+
+                {negShow && (
+                  <div className="sc-negoti-form">
+                    <div className="form-grid two-col">
+                      <div className="form-field">
+                        <label>Negotiated Monthly Price (KES)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={negMonthly}
+                          onChange={(e) => setNegMonthly(e.target.value)}
+                          placeholder={`Standard: ${(activePlan?.monthly_price || 0).toLocaleString()}`}
+                        />
+                      </div>
+                      <div className="form-field">
+                        <label>Annual Price (KES) <em>optional</em></label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={negAnnual}
+                          onChange={(e) => setNegAnnual(e.target.value)}
+                          placeholder="e.g. 12000"
+                        />
+                      </div>
+                    </div>
+                    <div className="form-field" style={{ marginTop: 10 }}>
+                      <label>Reason / Notes <em>optional</em></label>
+                      <textarea
+                        rows="2"
+                        value={negNotes}
+                        onChange={(e) => setNegNotes(e.target.value)}
+                        placeholder="e.g. Long-term partner discount approved by ownership"
+                      />
+                    </div>
+                    <div className="sc-detail-actions">
+                      <button className="btn-primary" onClick={handleSetNegotiation} disabled={saving}>
+                        {saving ? <Loader size={14} className="spin" /> : <Save size={14} />} Save Deal
+                      </button>
+                      <button className="btn-ghost" onClick={() => setNegShow(false)}>Cancel</button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="sc-sub-section" style={{ marginTop: 20 }}>

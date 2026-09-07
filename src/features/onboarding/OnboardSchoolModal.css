@@ -371,6 +371,100 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
+.negotiated-deal {
+  margin-top: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 16px;
+}
+
+.negotiated-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.negotiated-toggle-row strong {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.negotiated-fields {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.standard-price-display {
+  background: #f1f5f9 !important;
+  font-weight: 600;
+  color: #475569;
+}
+
+.discount-hint {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  color: #059669;
+}
+
+.negoti-price {
+  color: #059669;
+  font-weight: 600;
+}
+
+.negoti-price em {
+  font-style: normal;
+  font-size: 12px;
+  color: #059669;
+  margin-left: 4px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #cbd5e1;
+  transition: 0.2s;
+  border-radius: 22px;
+}
+
+.switch .slider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background: #2563eb;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(18px);
+}
+
 .review-section h4 svg {
   color: var(--color-primary);
 }
@@ -1035,4 +1129,45 @@
     grid-template-columns: 1fr;
   }
   .sc-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.sc-negoti-summary {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+
+.sc-negoti-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: #475569;
+  padding: 4px 0;
+}
+
+.sc-negoti-row.highlight span:last-child {
+  color: #059669;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.sc-negoti-notes {
+  margin-top: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: #64748b;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.sc-negoti-form {
+  margin-top: 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 14px;
+  background: #fff;
 }

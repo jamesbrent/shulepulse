@@ -19,6 +19,7 @@ export async function fetchPlans() {
     key: p.key,
     label: p.label,
     price: p.price_label,
+    monthly_price: p.monthly_price,
     features: p.features || [],
     color: p.color,
     bg: p.bg,

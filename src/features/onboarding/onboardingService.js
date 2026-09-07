@@ -52,24 +52,39 @@ export async function onboardSchool({ school, admin, acceptedLegal }) {
 
   let newSchool
   try {
+    const insertPayload = {
+      name: school.name.trim(),
+      county: school.county,
+      type: school.type,
+      address: school.address,
+      phone: school.phone,
+      email: school.email,
+      plan: school.plan,
+      primary_color: school.primaryColor,
+      secondary_color: school.secondaryColor,
+      status: 'active',
+      subscription_start: now.toISOString(),
+      subscription_end: trialEnd.toISOString(),
+      subscription_status: 'trial',
+      accepted_terms_at: acceptedLegal ? now.toISOString() : null,
+    }
+
+    if (school.negotiatedMonthlyPrice > 0) {
+      let approvedBy = null
+      try {
+        const { data: authData } = await supabase.auth.getUser()
+        approvedBy = authData?.user?.id || null
+      } catch { /* ignore */ }
+      insertPayload.negotiated_monthly_price = school.negotiatedMonthlyPrice
+      insertPayload.negotiated_annual_price = school.negotiatedAnnualPrice || null
+      insertPayload.negotiated_at = now.toISOString()
+      insertPayload.negotiated_by = approvedBy
+      insertPayload.negotiated_notes = school.negotiatedNotes || null
+    }
+
     const { data, error } = await supabase
       .from('schools')
-      .insert({
-        name: school.name.trim(),
-        county: school.county,
-        type: school.type,
-        address: school.address,
-        phone: school.phone,
-        email: school.email,
-        plan: school.plan,
-        primary_color: school.primaryColor,
-        secondary_color: school.secondaryColor,
-        status: 'active',
-        subscription_start: now.toISOString(),
-        subscription_end: trialEnd.toISOString(),
-        subscription_status: 'trial',
-        accepted_terms_at: acceptedLegal ? now.toISOString() : null,
-      })
+      .insert(insertPayload)
       .select()
       .single()
 
@@ -171,10 +186,16 @@ export async function onboardSchool({ school, admin, acceptedLegal }) {
     }
   }
 
+  const details = { schoolName: newSchool.name, plan: school.plan, adminEmail: admin.email }
+  if (school.negotiatedMonthlyPrice > 0) {
+    details.negotiated_monthly_price = school.negotiatedMonthlyPrice
+    details.negotiated_notes = school.negotiatedNotes || null
+  }
+
   await logAction({
     schoolId: newSchool.id,
     action: 'school.onboarded',
-    details: { schoolName: newSchool.name, plan: school.plan, adminEmail: admin.email },
+    details,
   })
 
   await supabase.auth.signOut()

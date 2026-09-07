@@ -46,6 +46,7 @@ export default function BillingPage() {
   const totalSchools = data.schools.length
   const planEntries = Object.entries(data.planGroups)
   const getPrice = (planKey) => plansMeta[planKey]?.monthly_price || 0
+  const getSchoolPrice = (s) => s.negotiated_monthly_price || getPrice(s.plan)
 
   return (
     <div className="billing-page">
@@ -56,7 +57,12 @@ export default function BillingPage() {
           </div>
           <p className="su-stat-label">Monthly Recurring Revenue</p>
           <p className="su-stat-value" style={{ color: '#2563eb' }}>KES {data.totalMrr.toLocaleString()}</p>
-          <p className="su-stat-sub">Across {totalSchools} schools</p>
+          <p className="su-stat-sub">
+            Across {totalSchools} schools
+            {data.totalStandardMrr !== data.totalMrr && (
+              <> · Standard would be KES {data.totalStandardMrr.toLocaleString()}</>
+            )}
+          </p>
         </div>
         <div className="su-stat-card">
           <div className="stat-card-top">
@@ -107,7 +113,16 @@ export default function BillingPage() {
                   </td>
                   <td><span className={`plan-badge ${s.plan}`}>{s.plan}</span></td>
                   <td>{s.subscription_end ? new Date(s.subscription_end).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
-                  <td>KES {getPrice(s.plan).toLocaleString()}</td>
+                  <td>
+                    {s.negotiated_monthly_price ? (
+                      <>
+                        <s style={{ color: '#94a3b8', fontSize: 11 }}>KES {getPrice(s.plan).toLocaleString()}</s>{' '}
+                        KES {getSchoolPrice(s).toLocaleString()}
+                      </>
+                    ) : (
+                      `KES ${getSchoolPrice(s).toLocaleString()}`
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -141,6 +156,7 @@ export default function BillingPage() {
                     <th>School Name</th>
                     <th>Status</th>
                     <th>Started</th>
+                    <th>Price</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -150,6 +166,9 @@ export default function BillingPage() {
                       <td className="school-name-cell">
                         <div className="school-icon">{s.name?.[0]}</div>
                         {s.name}
+                        {s.negotiated_monthly_price && (
+                          <span className="billing-negoti-badge">Deal</span>
+                        )}
                       </td>
                       <td><span className={`status-dot ${s.status}`}></span>{s.status}</td>
                       <td style={{ fontSize: 12, color: '#64748b' }}>
@@ -158,6 +177,16 @@ export default function BillingPage() {
                           : s.created_at
                             ? new Date(s.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
                             : '—'}
+                      </td>
+                      <td style={{ fontSize: 12 }}>
+                        {s.negotiated_monthly_price ? (
+                          <>
+                            <s style={{ color: '#94a3b8' }}>KES {getPrice(s.plan).toLocaleString()}</s>{' '}
+                            <span style={{ color: '#059669', fontWeight: 600 }}>KES {getSchoolPrice(s).toLocaleString()}</span>
+                          </>
+                        ) : (
+                          <span>KES {getSchoolPrice(s).toLocaleString()}</span>
+                        )}
                       </td>
                       <td>
                         <button className="action-btn" onClick={() => setChangePlanSchool(s)}>
