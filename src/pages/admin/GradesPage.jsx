@@ -51,6 +51,11 @@ const getPrevTerm = (term, year) => {
   return { term: 'Term 2', year }
 }
 
+// Class names are stored inconsistently across sources ('GRADE 3' vs 'Grade 3',
+// trailing spaces, etc.). Normalize before comparing so filtering/reporting
+// is case- and whitespace-insensitive.
+const normClass = (v) => String(v || '').trim().toLowerCase()
+
 // Helper to pick the CSS-friendly band/grade string used for cbe-* classes
 const cbeClassKey = (cbe) => (cbe.band || cbe.grade || 'me1').toLowerCase()
 
@@ -129,7 +134,7 @@ export default function GradesPage() {
 
   useEffect(() => {
     fetchPending()
-  }, [profile?.school_id])
+  }, [profile?.school_id, filterTerm, filterYear, filterClass, filterSubject, filterAssessment])
 
   // ── Fetches ───────────────────────────────────────────────
   const fetchSchool = async () => {
@@ -199,15 +204,21 @@ export default function GradesPage() {
   // ── Pending Approvals ────────────────────────────────────
   const fetchPending = async () => {
     if (!profile?.school_id) return
-    const { data } = await supabase
+    let q = supabase
       .from('grades')
       .select('*, students(full_name, class, stream, admission_number)')
       .eq('school_id', profile.school_id)
       .eq('status', 'submitted')
+    if (filterTerm) q = q.eq('term', filterTerm)
+    if (filterYear) q = q.eq('year', filterYear)
+    if (filterSubject !== 'all') q = q.eq('subject', filterSubject)
+    const { data } = await q
       .order('subject')
       .order('created_at', { ascending: false })
 
-    const rows = data || []
+    const rows = (data || []).filter(r =>
+      filterAssessment === 'all' || (r.exam_type || 'End Term') === filterAssessment
+    )
 
     // Fetch teacher names for all distinct teacher_ids in one go
     const teacherIds = [...new Set(rows.map(r => r.teacher_id).filter(Boolean))]
@@ -237,7 +248,9 @@ export default function GradesPage() {
       }
       grouped[key].entries.push(g)
     })
-    setPendingExams(Object.values(grouped))
+    setPendingExams(Object.values(grouped).filter(e =>
+      filterClass === 'all' || normClass(e.className) === normClass(filterClass)
+    ))
   }
 
   const handleApprove = async (examId) => {
@@ -352,7 +365,7 @@ export default function GradesPage() {
     setReportStudent(student)
     setReportTeacherComment('')
     setReportClassRank(findRank(
-      rankStudentsByGrades(grades.filter(g => g.students?.class === student.class), { scope: 'class' }),
+      rankStudentsByGrades(grades.filter(g => normClass(g.students?.class) === normClass(student.class)), { scope: 'class' }),
       student.id
     ))
     if (profile?.school_id && student?.id) {
@@ -376,7 +389,7 @@ export default function GradesPage() {
     const exam = g.exam_type || 'End Term'
     const matchSearch  = !s || g.students?.full_name?.toLowerCase().includes(s) ||
       g.students?.admission_number?.toLowerCase().includes(s)
-    const matchClass   = filterClass === 'all' || g.students?.class === filterClass
+    const matchClass   = filterClass === 'all' || normClass(g.students?.class) === normClass(filterClass)
     const matchSubject = filterSubject === 'all' || g.subject === filterSubject
     const matchAssessment = filterAssessment === 'all' || exam === filterAssessment
     return matchSearch && matchClass && matchSubject && matchAssessment
@@ -394,26 +407,35 @@ export default function GradesPage() {
     return compareExamTypes(a.exam_type || 'End Term', b.exam_type || 'End Term')
   })
 
-  // Summary cards
+  // Summary cards — honour the active filters
   const summary = {
-    total:   grades.length,
-    avg:     grades.length ? Math.round(weightedScoreMean(grades)) : 0,
-    highest: Math.max(...grades.map(g => Number(g.total_score || 0)), 0),
-    lowest:  grades.length ? Math.min(...grades.map(g => Number(g.total_score || 0))) : 0,
+    total:   filtered.length,
+    avg:     filtered.length ? Math.round(weightedScoreMean(filtered)) : 0,
+    highest: Math.max(...filtered.map(g => Number(g.total_score || 0)), 0),
+    lowest:  filtered.length ? Math.min(...filtered.map(g => Number(g.total_score || 0))) : 0,
   }
 
-  // Mean per subject
-  const subjectMeans = subjectsList.map(s => {
-    const sg = grades.filter(g => g.subject === s.name)
-    const avg = sg.length
-      ? Math.round(weightedScoreMean(sg))
-      : null
-    return { name: s.name, avg, count: sg.length }
-  }).filter(s => s.count > 0).sort((a, b) => b.avg - a.avg)
+  // Mean per subject — honours the active class/subject/assessment/search filters
+  const subjectMeans = (() => {
+    const bySubject = new Map()
+    filtered.forEach(g => {
+      const name = g.subject
+      if (!bySubject.has(name)) bySubject.set(name, [])
+      bySubject.get(name).push(g)
+    })
+    return [...bySubject.entries()]
+      .map(([name, rows]) => ({ name, avg: Math.round(weightedScoreMean(rows)), count: rows.length }))
+      .sort((a, b) => b.avg - a.avg)
+  })()
 
-  // Mean per student (across all subjects this term)
-  const studentMeans = students.map(s => {
-    const sg = grades.filter(g => g.student_id === s.id)
+  // Students matching the active class filter (all when 'all')
+  const classActiveStudents = filterClass === 'all'
+    ? students
+    : students.filter(s => normClass(s.class) === normClass(filterClass))
+
+  // Mean per student — honours the active class/subject/assessment/search filters
+  const studentMeans = classActiveStudents.map(s => {
+    const sg = filtered.filter(g => g.student_id === s.id)
     const avg = sg.length
       ? Math.round(weightedScoreMean(sg))
       : null
@@ -422,26 +444,29 @@ export default function GradesPage() {
   }).filter(s => s.avg !== null).sort((a, b) => b.avg - a.avg)
 
   // Top students leaderboard — same central ranking engine as merit list/report cards
-  // (competition ties 1,2,2,4), scoped to the current class filter.
+  // (competition ties 1,2,2,4), scoped to the current filters.
   const studentMeansById = new Map(studentMeans.map(s => [s.id, s]))
   const studentRanked = rankStudentsByGrades(
-    grades.filter(g => !filterClass || filterClass === 'all' || g.students?.class === filterClass),
+    filtered,
     { scope: filterClass && filterClass !== 'all' ? 'class' : 'school' }
   ).map(e => ({ ...e, ...(studentMeansById.get(e.studentId) || {}) }))
 
-  // Mean per class
+  // Mean per class — honours the active filters (uses the same filtered rows)
   const classMeans = classes.map(c => {
-    const cg = grades.filter(g => g.students?.class === c.class_name)
+    const cg = filtered.filter(g => normClass(g.students?.class) === normClass(c.class_name))
     const avg = cg.length
       ? Math.round(weightedScoreMean(cg))
       : null
     return { ...c, avg, count: cg.length }
   }).filter(c => c.avg !== null).sort((a, b) => b.avg - a.avg)
 
-  // Most improved — compare avg score this term vs previous term
-  const mostImproved = students.map(s => {
-    const curr = grades.filter(g => g.student_id === s.id)
-    const prev = prevGrades.filter(g => g.student_id === s.id)
+  // Most improved — compare avg score this term vs previous term, scoped to the
+  // active class and subject filters
+  const mostImproved = classActiveStudents.map(s => {
+    const curr = filtered.filter(g => g.student_id === s.id)
+    const prev = prevGrades.filter(g => g.student_id === s.id &&
+      normClass(g.students?.class) === normClass(s.class || '') &&
+      (filterSubject === 'all' || g.subject === filterSubject))
     if (!curr.length || !prev.length) return null
     const currAvg = weightedScoreMean(curr)
     const prevAvg = weightedScoreMean(prev)
@@ -463,6 +488,7 @@ export default function GradesPage() {
   const reportClassCards = (() => {
     const byClass = new Map()
     ;(grades || []).forEach(g => {
+      if (filterAssessment !== 'all' && (g.exam_type || 'End Term') !== filterAssessment) return
       const cn = g.students?.class
       if (!cn) return
       if (!byClass.has(cn)) byClass.set(cn, [])
@@ -488,8 +514,10 @@ export default function GradesPage() {
   // are never counted as subjects. Average stays on the central aggregation engine.
   const reportStudents = filterClass === 'all'
     ? []
-    : students.filter(s => s.class === filterClass).map(s => {
-        const sg = grades.filter(g => g.student_id === s.id && (filterSubject === 'all' || g.subject === filterSubject))
+    : students.filter(s => normClass(s.class) === normClass(filterClass)).map(s => {
+        const sg = grades.filter(g => g.student_id === s.id &&
+          (filterSubject === 'all' || g.subject === filterSubject) &&
+          (filterAssessment === 'all' || (g.exam_type || 'End Term') === filterAssessment))
         if (!sg.length) return null
         const avg = Math.round(weightedScoreMean(sg))
         const subjectCount = new Set(sg.map(g => g.subject)).size
@@ -500,6 +528,10 @@ export default function GradesPage() {
   const reportStudentsFiltered = reportStudents.filter(st =>
     !sQuery || st.full_name?.toLowerCase().includes(sQuery) ||
     st.admission_number?.toLowerCase().includes(sQuery))
+
+  // Pending approvals honour the active search box client-side
+  const visiblePendingExams = pendingExams.filter(e =>
+    !sQuery || e.entries.some(g => g.students?.full_name?.toLowerCase().includes(sQuery)))
 
   return (
     <div className="grades-page">
@@ -1045,30 +1077,30 @@ export default function GradesPage() {
           ) : (
             <>
               <div className="grades-summary grades-approval-stats">
-                <div className={`grade-sum-card ${pendingExams.length > 0 ? 'red' : 'green'}`}>
+                <div className={`grade-sum-card ${visiblePendingExams.length > 0 ? 'red' : 'green'}`}>
                   <ShieldCheck size={20} />
                   <div>
                     <p className="gsc-label">Pending Approvals</p>
-                    <p className="gsc-value">{pendingExams.length}</p>
+                    <p className="gsc-value">{visiblePendingExams.length}</p>
                   </div>
                 </div>
                 <div className="grade-sum-card green">
                   <CheckCircle size={20} />
                   <div>
                     <p className="gsc-label">Total Student Entries</p>
-                    <p className="gsc-value">{pendingExams.reduce((s, e) => s + e.entries.length, 0)}</p>
+                    <p className="gsc-value">{visiblePendingExams.reduce((s, e) => s + e.entries.length, 0)}</p>
                   </div>
                 </div>
               </div>
 
-              {pendingExams.length === 0 ? (
+              {visiblePendingExams.length === 0 ? (
                 <div className="empty-grades">
                   <ShieldCheck size={40} color="#cbd5e1" />
                   <p>No pending submissions from teachers</p>
                 </div>
               ) : (
                 <div className="grades-pending-grid">
-                  {pendingExams.map(exam => {
+                  {visiblePendingExams.map(exam => {
                     const avg = exam.entries.length
                       ? Math.round(exam.entries.reduce((s, g) => s + Number(g.total_score || 0), 0) / exam.entries.length)
                       : 0
